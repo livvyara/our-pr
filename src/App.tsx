@@ -1,6 +1,4 @@
 // src/App.tsx
-
-import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';       // 👈 HomePage 임포트 확인
 import LoginPage from './pages/LoginPage';     // 👈 LoginPage 임포트 확인

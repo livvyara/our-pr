@@ -42,7 +42,6 @@ const SignUpPage: React.FC = () => {
     const [isCodeSent, setIsCodeSent] = useState(false);
     const [verificationAttempts, setVerificationAttempts] = useState(0); 
     const [canRequestCodeAt, setCanRequestCodeAt] = useState<Date | null>(null);
-    const [lastRequestTime, setLastRequestTime] = useState<Date | null>(null); 
     const [timer, setTimer] = useState(180); 
     const timerRef = useRef<number | null>(null); 
 
@@ -120,7 +119,6 @@ const SignUpPage: React.FC = () => {
                 const success = Math.random() > 0.1; 
                 if (success) {
                     setVerificationAttempts(prev => prev + 1); 
-                    setLastRequestTime(new Date()); 
                     
                     startTimer(); 
                     alert('인증번호가 발송되었습니다.');
