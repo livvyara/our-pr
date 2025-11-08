@@ -49,7 +49,7 @@ const SignUpPage: React.FC = () => {
     // 요청 제한 및 타이머 상태
     const [verificationAttempts, setVerificationAttempts] = useState(0); 
     const [canRequestCodeAt, setCanRequestCodeAt] = useState<Date | null>(null);
-    const [lastRequestTime, setLastRequestTime] = useState<Date | null>(null); 
+    const [_lastRequestTime, setLastRequestTime] = useState<Date | null>(null); 
     const [timer, setTimer] = useState(180); 
     const timerRef = useRef<number | null>(null); 
 
