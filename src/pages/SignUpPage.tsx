@@ -339,7 +339,7 @@ const SignUpPage: React.FC = () => {
                     {/* --- 5. 휴대폰 인증 (휴대폰 번호) --- */}
                     <TitleWithDescription title="휴대폰 번호" description="'-' 없이 숫자만 입력해주세요."/>
                     <div className="phone-row">
-                        <input type="tel" placeholder="휴대폰 번호" ref={phoneRef} className="signup-input" readOnly={isPhoneVerified} required />
+                        <input type="number" placeholder="휴대폰 번호" ref={phoneRef} className="signup-input" readOnly={isPhoneVerified} required />
                         <button type="button" className="send-code-button" onClick={requestVerificationCode} disabled={isLoadingSend || isPhoneVerified || verificationAttempts >= MAX_ATTEMPTS}>
                             {isLoadingSend ? '발송 중...' : '인증번호 발송'}
                         </button>
