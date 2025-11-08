@@ -1,0 +1,35 @@
+/* src/components/common/SubNav.css */
+
+.sub-nav-container {
+  height: 40px;
+  background-color: white;
+  border-bottom: 1px solid #e0e0e0; /* Colors.grey.shade200 */
+  display: flex;
+  justify-content: center;
+}
+
+.sub-nav-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 20px; /* 좌우 패딩 */
+}
+
+.sub-menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 16px; /* EdgeInsets.symmetric(horizontal: 16.0) */
+  margin: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.87); /* Colors.black87 */
+  font-weight: bold;
+  transition: color 0.1s;
+}
+
+.sub-menu-button:hover {
+  color: #000;
+  text-decoration: underline;
+}

@@ -1,0 +1,113 @@
+/* src/pages/LoginPage.css */
+
+.login-page-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center; /* Center 위젯 역할 */
+    align-items: center; /* mainAxisAlignment: center 역할 */
+    background-color: white;
+}
+
+.login-box-wrapper {
+    max-width: 450px; /* ConstrainedBox(maxWidth: 450.0) */
+    width: 100%;
+    padding: 32px; /* EdgeInsets.symmetric(horizontal: 32.0) */
+    /* Scaffold, Center 역할은 .login-page-container에서 수행 */
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column; /* Column 역할 */
+}
+
+/* 1. 로고 */
+.logo-text {
+    font-size: 28px;
+    font-weight: bold;
+    color: black;
+    text-align: center;
+    margin: 0;
+}
+
+/* 2. 입력 필드 (TextField 역할) */
+.login-input {
+    /* Flutter의 InputDecoration 스타일 반영 */
+    border: 1px solid #ccc; /* Colors.grey.shade300 */
+    padding: 12px 16px; /* contentPadding */
+    border-radius: 0; /* Flutter의 기본 TextField는 둥글지 않음. (회원가입 페이지와 통일하려면 5px 추천) */
+    box-sizing: border-box;
+    width: 100%;
+    font-size: 16px;
+    height: 48px; /* 입력 영역 높이 지정 */
+}
+.login-input:focus {
+    outline: none;
+    border-color: #aaa; 
+}
+
+/* 4. 로그인 버튼 (ElevatedButton 역할) */
+.login-submit-btn {
+    height: 48px; /* SizedBox(height: 48.0) */
+    border: none;
+    cursor: pointer;
+    color: black;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.1s;
+    padding: 0;
+}
+.login-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 5. 링크 Row */
+.link-row {
+    display: flex;
+    justify-content: center; /* mainAxisAlignment: center */
+    align-items: center;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: black;
+    font-size: 14px;
+    padding: 0 8px;
+}
+.divider-text {
+    color: #bdbdbd; /* Colors.grey[400] */
+    padding: 0 4px; 
+}
+
+/* 6. SNS Text */
+.sns-text {
+    text-align: center;
+    color: #666; /* Colors.grey[700] */
+    font-size: 14px;
+    margin: 0;
+}
+
+/* 7. SNS 아이콘 Row */
+.sns-icons-row {
+    display: flex;
+    justify-content: center; /* mainAxisAlignment: center */
+    align-items: center;
+}
+.sns-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.sns-icon-text {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* 8. 문제 해결 링크 */
+.problem-link {
+    text-decoration: underline;
+    padding: 0;
+}

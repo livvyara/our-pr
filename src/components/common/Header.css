@@ -1,0 +1,116 @@
+/* src/components/common/Header.css */
+
+/* --- 공통 스타일 (AppBar 배경 및 경계) --- */
+.desktop-header, .mobile-header {
+  background-color: white;
+  box-shadow: none; /* elevation: 0.0 */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* AppBar 경계선 */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  color: black;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+/* --- 데스크톱 스타일 --- */
+.desktop-header {
+  height: 64px; /* kToolbarHeight와 유사 */
+  display: flex;
+  justify-content: center; /* Center 위젯 역할 */
+}
+
+.desktop-header-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Row children 배치를 위해 */
+  padding: 0 20px; /* 좌우 여백 */
+}
+
+.main-nav {
+  display: flex;
+  margin-left: auto; /* Spacer() 역할 */
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 10px; /* EdgeInsets.symmetric(horizontal: 10.0) */
+  color: black;
+  font-weight: bold;
+  font-size: 16px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.1s;
+}
+
+.menu-button:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* hoverColor 효과 */
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* 두 번째 Spacer() 역할 */
+}
+
+.search-container {
+  width: 200px;
+  height: 40px;
+  margin: 8px 20px; /* margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8) */
+}
+
+.search-container input {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ccc; /* Colors.grey.shade300 */
+  border-radius: 8px; /* BorderRadius.circular(8) */
+  padding: 0 10px 0 35px; /* contentPadding + prefixIcon 공간 */
+  box-sizing: border-box;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M15 15l6 6M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16z'/%3E%3C/svg%3E"); /* Icons.search 대체 */
+  background-repeat: no-repeat;
+  background-position: 10px center;
+}
+
+.login-button, .signup-button {
+  height: 36px;
+  padding: 0 12px;
+  margin-left: 10px; /* SizedBox(width: 10) */
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.1s;
+  white-space: nowrap;
+}
+
+.login-button {
+  background: none;
+  color: black;
+}
+
+.signup-button {
+  color: black; /* Flutter 코드와 동일하게 검은색 텍스트 유지 */
+}
+
+/* --- 모바일 스타일 --- */
+.mobile-header {
+  height: 56px; /* 모바일 앱바 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+
+.mobile-header .menu-icon {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: black;
+}
