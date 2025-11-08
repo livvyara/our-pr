@@ -5,6 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../constants'; 
 import './SignUpPage.css';
 
+// Firebase Functions 호출을 위한 임포트
+import { httpsCallable } from "firebase/functions";
+// ⚠️ 이 경로는 실제 firebase-config 파일의 위치에 맞게 조정해야 합니다.
+import { functions } from '../firebase-config'; 
+
 // ----------------------------------------------------
 // Helper Type & Components
 // ----------------------------------------------------
@@ -25,7 +30,7 @@ const TitleWithDescription: React.FC<TitleDescProps> = ({ title, description }) 
 const SignUpPage: React.FC = () => {
     const navigate = useNavigate();
     
-    // 1. Ref 변수 정의
+    // 1. Ref 변수 정의 (DOM 엘리먼트 참조용)
     const formRef = useRef<HTMLFormElement>(null); 
     const emailIdRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);
@@ -33,15 +38,18 @@ const SignUpPage: React.FC = () => {
     const phoneRef = useRef<HTMLInputElement>(null);
     const codeRef = useRef<HTMLInputElement>(null);
     
-    // 2. 상태 변수 정의
+    // 2. 상태 변수 정의 (모든 상태는 useState로 관리)
     const [selectedDomain, setSelectedDomain] = useState<string | undefined>(DOMAIN_LIST[0]);
     const [isLoadingSend, setIsLoadingSend] = useState(false);
     const [isLoadingCheck, setIsLoadingCheck] = useState(false);
     const [isLoadingSignUp, setIsLoadingSignUp] = useState(false);
     const [isPhoneVerified, setIsPhoneVerified] = useState(false);
     const [isCodeSent, setIsCodeSent] = useState(false);
+    
+    // 요청 제한 및 타이머 상태
     const [verificationAttempts, setVerificationAttempts] = useState(0); 
     const [canRequestCodeAt, setCanRequestCodeAt] = useState<Date | null>(null);
+    const [lastRequestTime, setLastRequestTime] = useState<Date | null>(null); 
     const [timer, setTimer] = useState(180); 
     const timerRef = useRef<number | null>(null); 
 
@@ -100,7 +108,7 @@ const SignUpPage: React.FC = () => {
         }, 1000);
     };
     
-    // 6. 인증번호 발송 (시뮬레이션 및 상태 업데이트 적용)
+    // 6. 인증번호 발송 (실제 Functions 호출 구조 반영)
     const requestVerificationCode = async () => {
         const phoneNumber = phoneRef.current?.value || '';
 
@@ -115,21 +123,23 @@ const SignUpPage: React.FC = () => {
         setIsLoadingSend(true);
         
         try {
-            await new Promise((resolve, reject) => setTimeout(() => {
-                const success = Math.random() > 0.1; 
-                if (success) {
-                    setVerificationAttempts(prev => prev + 1); 
-                    
-                    startTimer(); 
-                    alert('인증번호가 발송되었습니다.');
-                    resolve(true); 
-                } else {
-                    reject({ message: '인증번호 발송에 실패했습니다.' });
-                }
-            }, 1000));
+            const sendCode = httpsCallable(functions, 'sendVerificationCode');
+            const result: any = await sendCode({ phoneNumber: phoneNumber });
+            
+            // Functions에서 success: true를 반환하면 성공
+            if (result.data && result.data.success) {
+                setVerificationAttempts(prev => prev + 1);
+                setLastRequestTime(new Date()); 
+                startTimer();
+                alert(result.data.message || '인증번호가 발송되었습니다.');
+            } else {
+                 // Functions에서 에러가 아닌 형태로 실패 메시지를 보낸 경우
+                 alert(result.data.message || '인증번호 발송에 실패했습니다.');
+            }
             
         } catch (error: any) {
-            alert(`오류: ${error.message || '발송 실패'}`);
+            // Functions 호출 또는 실행 중 Firebase Functions Exception이 발생한 경우
+            alert(`발송 오류: ${error.message || error.code || '알 수 없는 오류'}`);
         } finally {
             setIsLoadingSend(false);
              if (verificationAttempts + 1 >= MAX_ATTEMPTS) {
@@ -138,22 +148,40 @@ const SignUpPage: React.FC = () => {
         }
     };
     
-    // 7. 인증번호 확인 (시뮬레이션)
+    // 7. 인증번호 확인 (실제 Functions 호출 구조 반영)
     const checkVerificationCode = async () => {
+        const phoneNumber = phoneRef.current?.value || '';
         const code = codeRef.current?.value || '';
-        if (code !== '123456') {
-            alert('잘못된 인증번호입니다.');
-            return;
-        }
+        
+        if (!phoneNumber || !code) { alert('휴대폰 번호와 인증번호를 입력해주세요.'); return; }
         
         setIsLoadingCheck(true);
-        
-        setTimeout(() => {
+
+        try {
+            const checkCode = httpsCallable(functions, 'checkVerificationCodeForSignup');
+            const result: any = await checkCode({ 
+                phoneNumber: phoneNumber, 
+                code: code 
+            });
+            
+            // Functions에서 success: true를 반환하면 성공
+            if (result.data && result.data.success) {
+                if (timerRef.current) clearInterval(timerRef.current);
+                alert(result.data.message || '휴대폰 번호가 인증되었습니다.');
+
+                setIsPhoneVerified(true);
+                setIsCodeSent(false);
+            } else {
+                // Functions에서 에러가 아닌 형태로 실패 메시지를 보낸 경우
+                alert(result.data.message || '인증번호 확인에 실패했습니다.');
+            }
+
+        } catch (error: any) {
+            alert(`인증 오류: ${error.message || error.code || '인증 실패'}`);
+            setIsPhoneVerified(false);
+        } finally {
             setIsLoadingCheck(false);
-            setIsPhoneVerified(true);
-            if (timerRef.current) clearInterval(timerRef.current);
-            alert('휴대폰 인증이 완료되었습니다.');
-        }, 500);
+        }
     };
 
     // 8. 최종 회원가입 (시뮬레이션)
@@ -168,10 +196,16 @@ const SignUpPage: React.FC = () => {
             alert('휴대폰 인증을 완료해주세요.');
             return;
         }
-
+        
+        // 비밀번호 확인 로직 (Ref를 이용한 즉석 검사)
+        if (passwordRef.current?.value !== passwordConfirmRef.current?.value) {
+             alert('비밀번호가 일치하지 않습니다.');
+             return;
+        }
+        
         setIsLoadingSignUp(true);
         
-        // ... 실제 서버 가입 로직 ...
+        // ... 실제 서버 가입 로직 (Firebase Auth & Firestore 저장) ...
         
         setTimeout(() => {
             setIsLoadingSignUp(false);
@@ -196,53 +230,55 @@ const SignUpPage: React.FC = () => {
                     <h1 className="logo-text">My WebApp Logo</h1>
                     <div style={{ height: '48px' }}></div>
 
-                    {/* --- 1. 이메일 (동적 전환 적용) --- */}
+                    {/* --- 1. 이메일 (디자인 개선 및 동적 전환 적용) --- */}
                     <TitleWithDescription title="이메일" description="회원가입 후 아이디로 사용됩니다." />
                     <div className="email-row">
-                        {/* 1. 아이디 입력 필드 */}
+                        {/* 아이디 입력 필드 */}
                         <input type="text" placeholder="아이디" ref={emailIdRef} className="signup-input email-id-input" required />
                         
                         <span className="email-at">@</span>
                         
-                        {/* 2. 도메인 선택/입력 영역 */}
-                        {selectedDomain === '직접입력' ? (
-                            // 3-A. '직접입력' 선택 시 나타나는 도메인 입력 칸
-                            <input 
-                                type="text" 
-                                placeholder="도메인 입력" 
-                                className="signup-input domain-input-field" // 클래스 이름 변경
-                                value={selectedDomain === '직접입력' ? '' : selectedDomain} // 직접입력 시 초기값 제거
-                                onChange={(e) => { 
-                                    setSelectedDomain(e.target.value); // 입력된 값을 상태로 저장
-                                }}
-                                required 
-                            />
-                        ) : (
-                            // 3-B. 일반 도메인 선택 드롭다운 박스
-                            <div className="domain-select-wrapper">
+                        {/* 도메인 입력 및 선택 박스 컨테이너 */}
+                        <div className="domain-input-group"> 
+                            {selectedDomain === '직접입력' ? (
+                                // '직접입력' 선택 시 나타나는 입력 칸
                                 <input 
                                     type="text" 
-                                    className="signup-input domain-text-input" 
-                                    value={selectedDomain} 
-                                    readOnly 
-                                />
-                                <select 
-                                    className="signup-input domain-select"
-                                    value={selectedDomain}
-                                    onChange={(e) => {
+                                    placeholder="도메인 입력" 
+                                    className="signup-input domain-input-field" 
+                                    value={selectedDomain === '직접입력' ? '' : selectedDomain}
+                                    onChange={(e) => { 
                                         setSelectedDomain(e.target.value);
                                     }}
-                                >
-                                    {DOMAIN_LIST.map(domain => (
-                                        <option key={domain} value={domain}>{domain}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {/* 4. '직접입력' 옵션을 제공하는 별도 드롭다운 (항상 표시) */}
+                                    required 
+                                />
+                            ) : (
+                                // 일반 도메인 선택 드롭다운 박스 (디자인 개선된 select)
+                                <div className="domain-select-wrapper">
+                                    <input 
+                                        type="text" 
+                                        className="signup-input domain-text-input" 
+                                        value={selectedDomain} 
+                                        readOnly 
+                                    />
+                                    <select 
+                                        className="signup-input domain-select"
+                                        value={selectedDomain}
+                                        onChange={(e) => {
+                                            setSelectedDomain(e.target.value);
+                                        }}
+                                    >
+                                        {DOMAIN_LIST.map(domain => (
+                                            <option key={domain} value={domain}>{domain}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* '직접입력' 옵션을 포함한 별도 드롭다운 */}
                         <select 
-                            className="signup-input domain-option-select" // 새로운 클래스
+                            className="signup-input domain-option-select" 
                             value={selectedDomain === '직접입력' ? '직접입력' : '도메인선택'}
                             onChange={(e) => {
                                 setSelectedDomain(e.target.value === '직접입력' ? '직접입력' : e.target.value);
