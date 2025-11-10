@@ -4,6 +4,8 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../constants'; 
 import './LoginPage.css';
+import { signInWithEmailAndPassword } from 'firebase/auth'; 
+import { auth } from '../firebase-config'; // Firebase Auth 서비스 임포트
 
 // SNS 아이콘 컴포넌트는 생략하고, 로직에 필요한 부분만 표시합니다.
 // ----------------------------------------------------
@@ -41,15 +43,43 @@ const LoginPage: React.FC = () => {
   const passwordRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false); 
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => { // ⭐ async 추가
     e.preventDefault();
     setIsLoading(true);
     
-    // ... 로그인 로직
-    
-    setTimeout(() => {
+    const email = emailRef.current?.value;
+    const password = passwordRef.current?.value;
+
+    if (!email || !password) {
+        alert('이메일과 비밀번호를 입력해주세요.');
         setIsLoading(false);
-    }, 1500);
+        return;
+    }
+
+    try {
+        // ⭐ 실제 Firebase 로그인 로직
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        // 로그인 성공 처리
+        alert('로그인 성공!');
+        navigate('/'); // 메인 페이지로 이동
+        
+    } catch (error: any) {
+        let message = '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+        
+        // Firebase 에러 코드에 따른 맞춤 메시지
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            message = '존재하지 않는 이메일이거나 비밀번호가 일치하지 않습니다.';
+        } else if (error.code === 'auth/invalid-email') {
+            message = '유효하지 않은 이메일 형식입니다.';
+        }
+        
+        alert(message);
+        console.error(error); // 개발자용 콘솔 출력
+        
+    } finally {
+        setIsLoading(false);
+    }
   };
   
   // GoRouter.context.push() 역할

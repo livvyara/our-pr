@@ -111,7 +111,7 @@ exports.sendVerificationCode = functions
         const docRef = admin.firestore().collection("phone_verifications").doc(phoneNumber);
         await docRef.set({ code: verificationCode, expiresAt: expiresAt });
 
-        const message = `[MyWebApp] 인증번호 [${verificationCode}]를 입력해주세요.`;
+        const message = `[아워프로젝트] 인증번호 [${verificationCode}]를 입력해주세요.`;
         await executeSmsSend(phoneNumber, message, "휴대폰 인증번호 발송");
 
         return { success: true, message: "인증번호가 발송되었습니다." };

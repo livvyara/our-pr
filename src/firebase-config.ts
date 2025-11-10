@@ -2,6 +2,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getFunctions } from "firebase/functions";
+import { getAuth } from "firebase/auth";
 
 // ⚠️ YOUR_... 부분을 실제 Firebase 프로젝트 값으로 교체하세요.
 const firebaseConfig = {
@@ -19,3 +20,4 @@ const app = initializeApp(firebaseConfig);
 // 2. Cloud Functions 초기화 (리전은 asia-northeast3로 설정되어 있습니다.)
 // 이 값은 여러분의 Firebase Functions 배포 리전과 일치해야 합니다.
 export const functions = getFunctions(app, 'asia-northeast3');
+export const auth = getAuth(app);
