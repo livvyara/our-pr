@@ -1,20 +1,20 @@
-// src/pages/SignUpPage.tsx
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../constants'; 
 import './SignUpPage.css';
 
-// ⭐ Firebase 및 Firestore 임포트 추가 (인증 및 데이터 저장)
+// Firebase Modules
 import { httpsCallable } from "firebase/functions";
-import { functions, auth } from '../firebase-config'; // auth 객체 임포트 추가
-import { createUserWithEmailAndPassword } from 'firebase/auth'; // Auth 함수 임포트
-import { doc, setDoc, getFirestore } from 'firebase/firestore'; // Firestore 임포트
+import { functions, auth } from '../firebase-config';
+import { createUserWithEmailAndPassword } from 'firebase/auth'; 
+import { doc, setDoc, getFirestore } from 'firebase/firestore'; 
+import logoImage from '../assets/logo.png';
 
-const db = getFirestore(auth.app); // Firestore 인스턴스 초기화
+
+const db = getFirestore(auth.app);
 
 // ----------------------------------------------------
-// Helper Type & Components
+// Helper Type & Constants
 // ----------------------------------------------------
 const DOMAIN_LIST = ['naver.com', 'gmail.com', 'daum.net', 'hanmail.net', '직접입력'];
 const MAX_ATTEMPTS = 3; 
@@ -35,16 +35,18 @@ const SignUpPage: React.FC = () => {
     
     // 1. Ref 변수 정의
     const formRef = useRef<HTMLFormElement>(null); 
-    const emailIdRef = useRef<HTMLInputElement>(null);
+    const emailIdRef = useRef<HTMLInputElement>(null); // (수정됨: 이메일은 State로 관리)
     const passwordRef = useRef<HTMLInputElement>(null);
     const passwordConfirmRef = useRef<HTMLInputElement>(null);
     const phoneRef = useRef<HTMLInputElement>(null);
     const codeRef = useRef<HTMLInputElement>(null);
-    const domainDirectRef = useRef<HTMLInputElement>(null); // ⭐ 도메인 직접 입력 Ref 추가
+    const domainDirectRef = useRef<HTMLInputElement>(null); 
+    const nameRef = useRef<HTMLInputElement>(null); // [요청 4] 추가
+    const birthRef = useRef<HTMLInputElement>(null); // [요청 4] 추가
     
     // 2. 상태 변수 정의
-    const [selectedDomain, setSelectedDomain] = useState<string>(DOMAIN_LIST[0]); // 초기값은 첫 번째 도메인
-    const [isDirectInput, setIsDirectInput] = useState(false); // ⭐ 도메인 직접 입력 상태 추가
+    const [selectedDomain, setSelectedDomain] = useState<string>(DOMAIN_LIST[0]);
+    const [isDirectInput, setIsDirectInput] = useState(false); 
     const [isLoadingSend, setIsLoadingSend] = useState(false);
     const [isLoadingCheck, setIsLoadingCheck] = useState(false);
     const [isLoadingSignUp, setIsLoadingSignUp] = useState(false);
@@ -55,30 +57,22 @@ const SignUpPage: React.FC = () => {
     const [_lastRequestTime, setLastRequestTime] = useState<Date | null>(null); 
     const [timer, setTimer] = useState(180); 
     const timerRef = useRef<number | null>(null); 
+    const debounceTimerRef = useRef<number | null>(null); 
 
-    // 닉네임 상태
+    // 닉네임 상태 (자동 검사 관련)
     const [nicknameInput, setNicknameInput] = useState('');
     const [isNicknameChecked, setIsNicknameChecked] = useState(false);
     const [nicknameMessage, setNicknameMessage] = useState<string | null>(null);
     const [isCheckingNickname, setIsCheckingNickname] = useState(false);
-    
-    // ⭐ 이메일 주소 완성 헬퍼 함수
-    const getFullEmail = (): string | null => {
-        const emailId = emailIdRef.current?.value || '';
-        let domain = '';
-        
-        if (isDirectInput) {
-            domain = domainDirectRef.current?.value || ''; // 직접 입력 Ref 사용
-        } else if (selectedDomain && selectedDomain !== '도메인선택') {
-            domain = selectedDomain;
-        }
 
-        if (emailId && domain && domain !== '직접입력') {
-            return `${emailId}@${domain}`;
-        }
-        return null;
-    };
-    
+    // [요청 3] 이메일 ID 상태 (한글 방지용)
+    const [emailId, setEmailId] = useState('');
+    
+    // 휴대폰 입력 상태 및 유효성 (11자리)
+    const [phoneNumberInput, setPhoneNumberInput] = useState('');
+    const isPhoneValid = phoneNumberInput.length === 11;
+
+
     // 3. 타이머 시작/취소 함수 (useCallback으로 최적화)
     const startTimer = useCallback(() => {
         if (timerRef.current) clearInterval(timerRef.current);
@@ -96,91 +90,260 @@ const SignUpPage: React.FC = () => {
             });
         }, 1000);
     }, []);
-
+    
     // 4. 컴포넌트 정리 (dispose 역할)
     useEffect(() => {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
     }, []);
-    
-    // 5. 닉네임 중복 확인 (시뮬레이션)
-    const checkNicknameAvailability = async () => {
-        const nickname = nicknameInput.trim();
-        if (!nickname) { setNicknameMessage('닉네임을 입력해주세요.'); setIsNicknameChecked(false); return; }
+
+    // [요청 3] 이메일 아이디 한글 입력 방지 핸들러
+    const handleEmailIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // 정규식을 사용하여 한글 입력을 방지합니다.
+        const value = e.target.value.replace(/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g, '');
+        setEmailId(value);
+    };
+
+
+    // ⭐ 5. 닉네임 중복 확인 (디바운스를 통해 자동 호출될 함수)
+    const checkNicknameAvailability = useCallback(async (nickname: string) => {
+        const trimmedNickname = nickname.trim();
+        
+        if (!trimmedNickname) {
+            setNicknameMessage(null);
+            setIsNicknameChecked(false);
+            return;
+        }
+
+        // 유효성 검사 (2~8자, 한글/영문/숫자)
+        const nicknameRegExp = /^[a-zA-Z0-9가-힣]{2,8}$/;
+        if (!nicknameRegExp.test(trimmedNickname)) {
+            setNicknameMessage('2~8자, 한글/영문/숫자만 입력 가능합니다.');
+            setIsNicknameChecked(false);
+            return;
+        }
 
         setIsCheckingNickname(true);
-        setNicknameMessage('중복 확인 중...');
+        setNicknameMessage('확인 중...');
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        setTimeout(() => {
-            setIsCheckingNickname(false);
-            if (nickname === 'testuser') { 
-                setNicknameMessage('이미 사용 중인 닉네임입니다.');
-                setIsNicknameChecked(false);
-            } else {
-                setNicknameMessage('사용 가능합니다.');
-                setIsNicknameChecked(true);
+        const isDuplicate = ['testuser', 'admin'].includes(trimmedNickname.toLowerCase());
+
+        setIsCheckingNickname(false);
+        if (isDuplicate) {
+            setNicknameMessage('중복된 닉네임입니다.');
+            setIsNicknameChecked(false);
+        } else {
+            setNicknameMessage('사용 가능한 닉네임입니다.');
+            setIsNicknameChecked(true);
+        }
+    }, []);
+
+    // ⭐ 5-B. 닉네임 디바운스 useEffect
+    useEffect(() => {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        
+        if (!nicknameInput.trim()) {
+            setNicknameMessage(null);
+            setIsNicknameChecked(false);
+            return;
+        }
+
+        debounceTimerRef.current = window.setTimeout(() => {
+            checkNicknameAvailability(nicknameInput);
+        }, 500);
+
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
             }
-        }, 1000);
+        };
+    }, [nicknameInput, checkNicknameAvailability]); // 닉네임 입력 변경 시 실행
+
+
+    // 6. 휴대폰 입력 변경 핸들러 (숫자 필터링)
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^0-9]/g, ''); 
+        setPhoneNumberInput(value.slice(0, 11));
     };
-    // 6. 인증번호 발송 (Functions 호출)
-    const requestVerificationCode = async () => { /* ... 기존 Functions 호출 로직 유지 ... */ };
-    // 7. 인증번호 확인 (Functions 호출)
-    const checkVerificationCode = async () => { /* ... 기존 Functions 호출 로직 유지 ... */ };
+
+    // 7. 이메일 주소 완성 헬퍼 함수
+    const getFullEmail = (): string | null => {
+        // const emailId = emailIdRef.current?.value || ''; // [요청 3] 삭제
+        // [요청 3] emailId state를 직접 사용
+        let domain = '';
+        
+        if (isDirectInput) {
+            domain = domainDirectRef.current?.value || '';
+        } else if (selectedDomain && selectedDomain !== '도메인선택') {
+            domain = selectedDomain;
+        }
+
+        if (emailId && domain && domain !== '직접입력') { // [요청 3] emailId state 사용
+            return `${emailId}@${domain}`;
+        }
+        return null;
+    };
+    
+    // 8. 인증번호 발송 (Functions 호출)
+    const requestVerificationCode = async () => {
+        const phoneNumber = phoneNumberInput; 
+
+        if (!isPhoneValid) { 
+            alert('휴대폰 번호 11자리를 입력해주세요.'); 
+            return; 
+        } 
+        if (verificationAttempts >= MAX_ATTEMPTS) { 
+            alert('인증번호 요청 횟수(3회)를 초과하여 24시간 후에 다시 시도할 수 있습니다.'); 
+            return; 
+        }
+        if (canRequestCodeAt && new Date() < canRequestCodeAt) { 
+            alert('인증번호 요청은 24시간 후에 다시 시도할 수 있습니다.'); 
+            return; 
+        }
+        
+        setIsLoadingSend(true);
+        
+        try {
+            const sendCode = httpsCallable(functions, 'sendVerificationCode');
+            const result: any = await sendCode({ phoneNumber: phoneNumber });
+            
+            if (result.data && result.data.success) {
+                setVerificationAttempts(prev => prev + 1);
+                setLastRequestTime(new Date()); 
+                startTimer();
+                alert(result.data.message || '인증번호가 발송되었습니다.');
+            } else {
+                 alert(result.data.message || '인증번호 발송에 실패했습니다.');
+            }
+            
+        } catch (error: any) {
+            alert(`발송 오류: ${error.message || error.code || '알 수 없는 오류'}`);
+        } finally {
+            setIsLoadingSend(false);
+             if (verificationAttempts + 1 >= MAX_ATTEMPTS) {
+                 setCanRequestCodeAt(new Date(Date.now() + 24 * 60 * 60 * 1000));
+             }
+        }
+    };
+
+    // 9. 인증번호 확인 (Functions 호출)
+    const checkVerificationCode = async () => {
+        const phoneNumber = phoneNumberInput;
+        const code = codeRef.current?.value || '';
+        
+        if (!phoneNumber || !code) { 
+            alert('휴대폰 번호와 인증번호를 입력해주세요.'); 
+            return; 
+        }
+        
+        setIsLoadingCheck(true);
+
+        try {
+            const checkCode = httpsCallable(functions, 'checkVerificationCodeForSignup');
+            const result: any = await checkCode({ 
+                phoneNumber: phoneNumber, 
+                code: code 
+            });
+            
+            if (result.data && result.data.success) {
+                if (timerRef.current) clearInterval(timerRef.current);
+                alert(result.data.message || '휴대폰 번호가 인증되었습니다.');
+
+                setIsPhoneVerified(true);
+                setIsCodeSent(false);
+            } else {
+                alert(result.data.message || '인증번호 확인에 실패했습니다.');
+            }
+
+        } catch (error: any) {
+            alert(`인증 오류: ${error.message || error.code || '인증 실패'}`);
+            setIsPhoneVerified(false);
+        } finally {
+            setIsLoadingCheck(false);
+        }
+    };
 
 
-    // ⭐ 8. 최종 회원가입 (Firebase Authentication 및 Firestore 저장)
+    // ⭐ 10. 최종 회원가입 (Firebase Authentication 및 Firestore 저장)
     const finalSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // 1. 필수 유효성 검사
-        if (!isNicknameChecked || nicknameMessage !== '사용 가능합니다.') { alert('닉네임 중복 확인을 완료해주세요.'); return; }
-        if (!isPhoneVerified) { alert('휴대폰 인증을 완료해주세요.'); return; }
-        if (passwordRef.current?.value !== passwordConfirmRef.current?.value) { alert('비밀번호가 일치하지 않습니다.'); return; }
-        
-        const fullEmail = getFullEmail();
-        const password = passwordRef.current?.value || '';
-        const nickname = nicknameInput;
-        const phoneNumber = phoneRef.current?.value || '';
 
-        if (!fullEmail) {
-            alert('이메일 주소를 정확히 입력해주세요.');
+        // --- [핵심] 비밀번호 및 추가 필드 유효성 검사 ---
+        const password = passwordRef.current?.value || '';
+        const passwordConfirm = passwordConfirmRef.current?.value || '';
+        const name = nameRef.current?.value || '';
+        const birth = birthRef.current?.value || '';
+
+        // 1. 필수 유효성 검사
+        if (!isNicknameChecked) { 
+    alert('닉네임 중복 확인을 완료해주세요. (사용 가능한 닉네임이어야 합니다)'); 
+    return; 
+}
+        if (!isPhoneVerified) { alert('휴대폰 인증을 완료해주세요.'); return; }
+        if (!name) { alert('이름을 입력해주세요.'); return; } // [요청 4] 이름 검사
+        if (!birth || birth.length !== 8) { alert('생년월일 8자리를 정확히 입력해주세요.'); return; } // [요청 4] 생년월일 검사
+        if (password !== passwordConfirm) { alert('비밀번호가 일치하지 않습니다.'); return; }
+
+        // --- [핵심] 비밀번호 정규식 검사 (가입 실패 원인) ---
+        // UI 설명: 8~16자, 영문/숫자/특수문자 중 2가지 이상 조합
+        let types = 0;
+        if (/[A-Za-z]/.test(password)) types++; // 영문
+        if (/\d/.test(password)) types++; // 숫자
+        if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password)) types++; // 특수문자
+
+        if (password.length < 8 || password.length > 16 || types < 2) {
+            alert('비밀번호는 8~16자, 영문/숫자/특수문자 중 2가지 이상을 조합해야 합니다.');
             return;
         }
+        
+        const fullEmail = getFullEmail();
+        const nickname = nicknameInput;
+        const phoneNumber = phoneNumberInput; 
+
+        if (!fullEmail) { alert('이메일 주소를 정확히 입력해주세요.'); return; }
         
         setIsLoadingSignUp(true);
         
         try {
-            // 2. Firebase Authentication에 사용자 생성
-            const userCredential = await createUserWithEmailAndPassword(auth, fullEmail, password);
-            const user = userCredential.user;
+            // 2. Firebase Authentication에 사용자 생성
+            const userCredential = await createUserWithEmailAndPassword(auth, fullEmail, password);
+            const user = userCredential.user;
 
-            // 3. Firestore에 추가 정보 저장 (컬렉션 이름: users)
-            await setDoc(doc(db, "users", user.uid), {
-                email: fullEmail,
-                nickname: nickname,
-                phone: phoneNumber,
-                createdAt: new Date(),
-            });
+            // 3. Firestore에 추가 정보 저장 (role: 'customer' 포함)
+            await setDoc(doc(db, "users", user.uid), {
+                email: fullEmail,
+                nickname: nickname,
+                name: name, // [요청 4] 추가
+                birth: birth, // [요청 4] 추가
+                phone: phoneNumber,
+                role: 'customer', 
+                createdAt: new Date(),
+            });
 
-            alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
-            navigate('/login'); // 로그인 페이지로 이동
-            
-        } catch (error: any) {
-            let message = '회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.';
-            if (error.code === 'auth/email-already-in-use') {
-                message = '이미 사용 중인 이메일입니다. 다른 이메일을 사용해 주세요.';
-            } else if (error.code === 'auth/weak-password') {
-                message = '비밀번호는 최소 6자 이상이어야 합니다.';
-            }
-            alert(`오류: ${message}`);
-            console.error(error);
-        } finally {
+            alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+            navigate('/login'); 
+            
+        } catch (error: any) {
+    // 👇👇👇 이 두 줄을 추가해 정확한 오류를 확인하세요
+    console.error("Firebase 회원가입 오류:", error); 
+    console.log("Firebase 오류 코드:", error.code);
+
+    let message = '회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.';
+    if (error.code === 'auth/email-already-in-use') { message = '이미 사용 중인 이메일입니다. 다른 이메일을 사용해 주세요.'; } 
+    else if (error.code === 'auth/weak-password') { message = '비밀번호는 최소 6자 이상이어야 합니다.'; }
+    alert(`오류: ${message}`);
+} finally {
             setIsLoadingSignUp(false);
         }
     };
-    
-    // 9. 헬퍼: 타이머 포맷
+    
+    // 11. 헬퍼: 타이머 포맷
     const formatTimer = (seconds: number) => {
       const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
       const remainingSeconds = (seconds % 60).toString().padStart(2, '0');
@@ -193,65 +356,74 @@ const SignUpPage: React.FC = () => {
                 <form ref={formRef} onSubmit={finalSignUp} className="signup-form">
                 
                     {/* --- 로고 --- */}
-                    <h1 className="logo-text">My WebApp Logo</h1>
-                    <div style={{ height: '48px' }}></div>
+                    <Link to="/"> 
+                        <img src={logoImage} alt="My WebApp Logo" className="logo-image" />
+                    </Link>
+                    <div className="spacing-medium"></div>
 
                     {/* --- 1. 이메일 (UI 및 동적 전환 적용) --- */}
                     <TitleWithDescription title="이메일" description="회원가입 후 아이디로 사용됩니다." />
                     <div className="email-row">
-                        {/* 아이디 입력 필드 (flex-grow: 1 적용) */}
-                        <input type="text" placeholder="아이디" ref={emailIdRef} className="signup-input email-id-input" required />
+                        {/* [요청 3] 아이디 입력 필드 (Ref -> State) */}
+                        <input 
+                            type="text" 
+                            placeholder="아이디" 
+                            // ref={emailIdRef} // 삭제
+                            value={emailId} // 추가
+                            onChange={handleEmailIdChange} // 추가
+                            className="signup-input email-id-input" 
+                            required 
+                        />
                         
                         <span className="email-at">@</span>
                         
-                        {/* 도메인 선택 컨테이너 */}
-                        <div className="domain-selection-area">
-                            {/* 1. 도메인 입력란 (직접 입력 시에만 표시) */}
-                            {isDirectInput && (
-                                <input 
-                                    type="text" 
-                                    placeholder="도메인 입력" 
-                                    ref={domainDirectRef} 
-                                    className="signup-input domain-input-field" 
-                                    required 
-                                />
-                            )}
-                            {/* 2. 도메인 선택 드롭다운 (항상 표시 - '직접입력' 옵션 포함) */}
-                            <select 
-                                className="signup-input domain-select-control" // ⭐ CSS 제어를 위한 새로운 클래스
-                                value={selectedDomain}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setSelectedDomain(value);
-                                    setIsDirectInput(value === '직접입력'); // ⭐ 상태 업데이트
-                                }}
-                                style={{ 
-                                    // isDirectInput일 때, select가 입력 필드의 공간을 차지하지 않도록 숨김
-                                    visibility: isDirectInput ? 'hidden' : 'visible',
-                                    position: isDirectInput ? 'absolute' : 'relative',
-                                    width: isDirectInput ? '0' : '120px' // 크기 제어
-                                }}
-                            >
-                                <option value="도메인선택" disabled>도메인 선택</option>
-                                {DOMAIN_LIST.map(domain => (
-                                    <option key={domain} value={domain}>{domain}</option>
-                                ))}
-                            </select>
+                        {/* 도메인 입력 및 선택 박스 컨테이너 */}
+                        <div className="domain-input-group"> 
+                            {/* 1. 도메인 입력란 (직접 입력 시에만 표시) */}
+                            {isDirectInput && (
+                                <input 
+                                    type="text" 
+                                    placeholder="도메인 입력" 
+                                    ref={domainDirectRef} 
+                                    className="signup-input domain-input-field" 
+                                    required 
+                                />
+                            )}
+                            {/* 2. 도메인 선택 드롭다운 (isDirectInput이 false일 때만 표시) */}
+                            {!isDirectInput && (
+                                <select 
+                                    className="signup-input domain-select-control"
+                                    value={selectedDomain}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setSelectedDomain(value);
+                                        setIsDirectInput(value === '직접입력');
+                                    }}
+                                >
+                                    <option value="도메인선택" disabled>도메인 선택</option>
+                                    {DOMAIN_LIST.map(domain => (
+                                        <option key={domain} value={domain}>{domain}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                     </div>
-                    <div style={{ height: '24px' }}></div>
                     
+                    <div className="spacing-narrow"></div>
+
                     {/* --- 2. 비밀번호 --- */}
                     <TitleWithDescription title="비밀번호" description="8~16자, 영문/숫자/특수문자 중 2가지 이상을 조합해주세요." />
+
                     <input type="password" placeholder="비밀번호" ref={passwordRef} className="signup-input" required />
-                    <div style={{ height: '16px' }}></div>
+                    <div className="spacing-narrow"></div>
 
                     {/* --- 3. 비밀번호 확인 --- */}
                     <TitleWithDescription title="비밀번호 확인" />
                     <input type="password" placeholder="비밀번호 재확인" ref={passwordConfirmRef} className="signup-input" required />
-                    <div style={{ height: '24px' }}></div>
+                    
+                    <div className="spacing-narrow"></div>
 
-                    {/* --- 4. 닉네임 --- */}
+                    {/* --- 4. 닉네임 (자동 검사 적용) --- */}
                     <TitleWithDescription title="닉네임" description="2~8자, 한글/영문/숫자만 사용 가능합니다." />
                     <div className="nickname-row">
                         <input 
@@ -267,33 +439,87 @@ const SignUpPage: React.FC = () => {
                             }}
                             required 
                         />
-                        <button 
-                            type="button" 
-                            className="check-nickname-button" 
-                            onClick={checkNicknameAvailability}
-                            disabled={isCheckingNickname || isNicknameChecked}
-                            style={{ 
-                                backgroundColor: isNicknameChecked ? '#0070c0' : K_BRAND_COLOR, 
-                                color: isNicknameChecked ? 'white' : 'black',
-                            }}
-                        >
-                            {isCheckingNickname ? '확인 중' : (isNicknameChecked ? '확인 완료' : '중복 확인')}
-                        </button>
                     </div>
-                    {nicknameMessage && (
-                        <p className={`message-text ${isNicknameChecked ? 'success' : 'error'}`}>{nicknameMessage}</p>
-                    )}
-                    <div style={{ height: '24px' }}></div>
                     
+                    {/* 닉네임 메시지 영역 */}
+                    {isCheckingNickname && (
+                        <p className="message-text checking">확인 중...</p>
+                    )}
+                    
+                    {!isCheckingNickname && nicknameMessage && (
+                        <p className={`message-text ${isNicknameChecked ? 'success' : 'error'}`}>
+                            {isNicknameChecked 
+                                ? <span style={{ color: 'green' }}>{nicknameMessage}</span> 
+                                : <span style={{ color: 'red', fontWeight: 'bold' }}>{nicknameMessage}</span>
+                            }
+                        </p>
+                    )}
+
+                    <div className="spacing-narrow"></div>
+                    
+                    {/* --- [요청 4] 이름 입력란 추가 --- */}
+                    <TitleWithDescription title="이름" />
+                    <input 
+                        type="text" 
+                        placeholder="이름" 
+                        ref={nameRef} 
+                        className="signup-input" 
+                        required 
+                    />
+                    <div className="spacing-narrow"></div>
+
+                    {/* --- [요청 4] 생년월일 입력란 추가 --- */}
+                    <TitleWithDescription title="생년월일" description="예: 19900101 (8자리)" />
+                    <input 
+                        type="tel" 
+                        placeholder="생년월일 8자리 (예: 19900101)" 
+                        ref={birthRef} 
+                        className="signup-input" 
+                        maxLength={8}
+                        onKeyDown={e => {
+                            if (!((e.key >= '0' && e.key <= '9') || e.key === 'Backspace' || e.key === 'Tab' || e.key === 'Enter' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Delete')) {
+                                e.preventDefault();
+                            }
+                        }}
+                        required 
+                    />
+                    <div className="spacing-narrow"></div>
+
                     {/* --- 5. 휴대폰 인증 (휴대폰 번호) --- */}
                     <TitleWithDescription title="휴대폰 번호" description="'-' 없이 숫자만 입력해주세요."/>
                     <div className="phone-row">
-                        <input type="number" placeholder="휴대폰 번호" ref={phoneRef} className="signup-input" readOnly={isPhoneVerified} required />
-                        <button type="button" className="send-code-button" onClick={requestVerificationCode} disabled={isLoadingSend || isPhoneVerified || verificationAttempts >= MAX_ATTEMPTS}>
-                            {isLoadingSend ? '발송 중...' : '인증번호 발송'}
+                        <input 
+                            type="number" 
+                            placeholder="휴대폰 번호" 
+                            ref={phoneRef} 
+                            className="signup-input phone-input" 
+                            readOnly={isPhoneVerified} 
+                            value={phoneNumberInput} 
+                            onKeyDown={e => {
+                                if (
+                                    !((e.key >= '0' && e.key <= '9') || 
+                                    e.key === 'Backspace' || 
+                                    e.key === 'Tab' || 
+                                    e.key === 'Enter' ||
+                                    e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Delete')
+                                ) {
+                                    e.preventDefault();
+                                }
+                            }}
+                            onChange={handlePhoneChange} 
+                            maxLength={11} 
+                            required
+                        />
+                        <button 
+                            type="button" 
+                            className="send-code-button" 
+                            onClick={requestVerificationCode} 
+                            disabled={isLoadingSend || isPhoneVerified || verificationAttempts >= MAX_ATTEMPTS || !isPhoneValid} 
+                        >
+                            {isLoadingSend ? '발송 중...' : '인증발송'}
                         </button>
                     </div>
-                    <div style={{ height: '16px' }}></div>
+                    <div className="spacing-small"></div>
 
                     {/* --- 6. 인증번호 6자리 --- */}
                     {(isCodeSent || isPhoneVerified) && (
@@ -308,10 +534,10 @@ const SignUpPage: React.FC = () => {
                                     {isLoadingCheck ? '확인 중' : '확인'}
                                 </button>
                             </div>
-                            <div style={{ height: '32px' }}></div>
+                            <div className="spacing-medium"></div>
                         </>
                     )}
-                    {!(isCodeSent || isPhoneVerified) && <div style={{ height: '48px' }}></div>}
+                    {!isCodeSent && !isPhoneVerified && <div className="spacing-medium"></div>}
 
 
                     {/* --- 최종 가입 버튼 --- */}
@@ -323,7 +549,7 @@ const SignUpPage: React.FC = () => {
                     >
                         {isLoadingSignUp ? '가입 처리 중...' : '가입하기'}
                     </button>
-                    <div style={{ height: '24px' }}></div>
+                    <div className="spacing-medium"></div>
 
                     {/* --- 로그인으로 돌아가기 --- */}
                     <button

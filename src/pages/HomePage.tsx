@@ -4,7 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/common/Header';
 import SubNav from '../components/common/SubNav';
 import MobileMenu from '../components/common/MobileMenu'; 
-// import Footer from '../components/common/Footer'; // 푸터 컴포넌트가 있다면 주석을 해제하세요.
+import Footer from '../components/common/Footer';
+import RoleHeader from '../components/common/RoleHeader';
+
+// [수정] 임포트 경로 변경
+import './HomePage.css'; 
 
 const HomePage: React.FC = () => {
   // 1. 선택된 메인 메뉴 상태 (SubNav 연결용, 초기값은 'menu1'로 설정)
@@ -50,7 +54,15 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div>
+    // page-container 클래스 적용 (HomePage.css에 정의됨)
+    <div className="page-container">
+
+      {/* [⭐ 2. 추가] 
+          모바일이 아닐 때만 RoleHeader를 렌더링합니다. 
+          (Header 컴포넌트 *위에* 위치해야 합니다.)
+      */}
+      {!isMobile && <RoleHeader />}
+      
       {/* 1. 메인 상단바 (CommonAppBar1) */}
       <Header
         onMenuSelected={handleMenuSelect}
@@ -62,7 +74,8 @@ const HomePage: React.FC = () => {
       {/* 모바일이 아닐 때만 표시 */}
       {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
 
-      <main style={{ padding: isMobile ? '16px' : '32px 0', minHeight: '80vh' }}>
+      {/* main-content 클래스 적용 (HomePage.css에 정의됨) */}
+      <main className="main-content" style={{ padding: isMobile ? '16px' : '32px 0' }}>
         {/* 콘텐츠 영역 (maxWidth는 Header/SubNav의 1160px과 일치시키기 위해 임의로 설정) */}
         <h2 style={{ maxWidth: 1160, margin: '0 auto', padding: '0 20px' }}>
             현재 선택된 메뉴: {selectedMenu}
@@ -74,17 +87,16 @@ const HomePage: React.FC = () => {
         </div>
       </main>
 
+      {/* 4. 푸터 영역 (main 바깥으로 이동) */}
+      <Footer /> 
+
       {/* 3. 모바일 햄버거 메뉴 (CommonDrawer) */}
-      {/* 모바일일 때, 메뉴가 열렸을 때만 표시 */}
+      {/* 모바일일 때, 메뉴가 열렸을 때만 표시 (오버레이이므로 위치는 무관) */}
       {isMobileMenuOpen && isMobile && (
         <MobileMenu 
             onClose={handleMenuClose}
         />
       )}
-      
-      {/* 4. 푸터 영역 */}
-      {/* Footer 컴포넌트가 있다면 아래 주석을 해제하고 isMobile prop을 전달합니다. */}
-      {/* <Footer isMobile={isMobile} /> */}
     </div>
   );
 };

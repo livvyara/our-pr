@@ -12,35 +12,46 @@
     width: 100%;
 }
 
-.signup-form {
-    padding: 48px 32px; 
-    display: flex;
-    flex-direction: column;
+.signup-form > a {
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    text-decoration: none;
+}
+.logo-image {
+    display: block;
+    width: 400px;
+    height: auto;
 }
 
-.logo-text {
-    font-size: 28px;
-    font-weight: bold;
-    color: black;
-    text-align: center;
-    margin: 0;
+/* --- ⭐ 간격 최적화 클래스 (JSX에서 사용됨) --- */
+.spacing-small {
+    height: 8px; 
 }
+.spacing-medium {
+    height: 0px; 
+    
+}
+/* ------------------------------------------- */
+
 
 /* --- 공통 필드 스타일 --- */
+/* Title/Desc와 입력 필드 사이 간격 최적화 */
 .title-desc-wrapper {
-    margin-bottom: 8px; 
+    margin-bottom: 5px; 
 }
 
 .field-title {
     font-weight: bold;
     font-size: 16px;
-    margin-bottom: 4px;
+    margin-bottom: -20px;
 }
 
 .field-description {
     font-size: 12px;
     color: #757575; 
-    margin: 0;
+    margin-bottom: -10px;
 }
 
 .signup-input {
@@ -60,65 +71,57 @@
     background-color: #f5f5f5;
 }
 
-/* 1. 이메일 Row */
+/* --- 1. 이메일 Row (Flex 비율 조정) --- */
 .email-row {
     display: flex;
     align-items: center;
     gap: 8px; /* 아이디, @, 도메인 사이 간격 */
 }
+
+/* ⭐ 이메일 아이디 입력란 크기 (70% 비율) */
 .email-id-input {
-    flex: 3; /* 아이디 영역 */
+    flex-grow: 7; /* 70% 비율 할당 */
+    min-width: 100px;
 }
+
 .email-at {
+    /* @ 기호 스타일 */
+    flex-shrink: 0;
     font-size: 16px;
     color: #333;
+    white-space: nowrap;
 }
 
-/* 도메인 텍스트 입력 필드 (직접 입력 시) */
+/* 도메인 입력 그룹 컨테이너 (나머지 30% 공간) */
+.domain-input-group { 
+    flex-grow: 3; /* 30% 비율 할당 */
+    display: flex;
+    position: relative; 
+    align-items: center;
+    min-width: 140px; /* 최소 너비 지정 */
+}
+
+/* 도메인 입력 필드 (직접 입력 시) */
 .domain-input-field {
-    flex: 4; /* 직접 입력 시 도메인 입력 필드가 flex: 4 */
+    flex: 1;
 }
 
-/* 도메인 선택 드롭다운 영역 */
-.domain-select-wrapper {
-    flex: 4; /* 선택 시 도메인 영역 */
-    position: relative;
-    /* 드롭다운의 기본 화살표를 Input 텍스트의 끝 부분에 숨기기 위함 */
+/* 도메인 선택 드롭다운 컨트롤 */
+.signup-input.domain-select-control {
+ width: 100%;
+ flex: 1;
+ 
+ /* ❗ 브라우저 기본 드롭다운 화살표 제거 */
+ -webkit-appearance: none;
+ -moz-appearance: none;
+ appearance: none;
+ 
+ /* ⬇️ 배경색과 이미지를 'background' 단축 속성으로 한번에 지정 ⬇️ */
+ background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 8px center;
 }
 
-.domain-select-wrapper input {
-    width: 100%;
-    /* readOnly 상태이므로 배경색 변경 (선택되어 있음을 표시) */
-    background-color: #f0f0f0; 
-    padding-right: 30px; /* 드롭다운 버튼을 가릴 공간 확보 */
-}
 
-/* 드롭다운 버튼 (Input 위에 위치시키기) */
-.domain-select {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0; /* 드롭다운 자체는 투명하게 만들어 클릭만 가능하도록 함 */
-    cursor: pointer;
-}
-
-/* 도메인 옵션 드롭다운 (직접입력 선택용) */
-.domain-option-select {
-    width: 140px; 
-    
-    /* 브라우저 기본 드롭다운 화살표 제거 */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    
-    /* 커스텀 화살표 추가 */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center; 
-}
-/* 4. 닉네임 Row */
+/* --- 4. 닉네임 Row --- */
 .nickname-row {
     display: flex;
     gap: 8px;
@@ -141,11 +144,12 @@
 .message-text.error { color: red; }
 
 
-/* 5 & 6. 휴대폰 인증 Row */
+/* --- 5 & 6. 휴대폰 인증 Row --- */
 .phone-row, .verification-row {
     display: flex;
     align-items: center;
     gap: 8px;
+        margin-bottom: 20px;
 }
 
 .send-code-button {
@@ -162,7 +166,7 @@
 .timer-text {
     width: 80px; 
     text-align: right;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
 }
 .timer-text.red { color: red; }
@@ -178,6 +182,7 @@
     color: #444;
     font-weight: bold;
     cursor: pointer;
+    
 }
 
 /* 최종 가입 버튼 */
@@ -189,6 +194,8 @@
     font-size: 16px;
     font-weight: bold;
     transition: opacity 0.1s;
+    margin-bottom: 5px;
+    width: 100%
 }
 .final-signup-button:disabled {
     opacity: 0.5;
@@ -199,9 +206,23 @@
 .back-to-login-btn {
     background: none;
     border: none;
-    color: black;
+    color: rgb(100, 100, 100);
     cursor: pointer;
     font-size: 14px;
     text-align: center;
     width: 100%;
 }
+
+.phone-input {
+    -moz-appearance: textfield; 
+}
+
+/* Chrome, Safari, Edge */
+.phone-input::-webkit-outer-spin-button,
+.phone-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.spacing-narrow {
+ margin-bottom:  -20px;}

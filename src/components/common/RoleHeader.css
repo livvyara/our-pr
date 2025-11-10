@@ -1,0 +1,23 @@
+/* src/components/common/RoleHeader.css */
+
+.role-header-bar {
+  width: 100%; /* 화면 좌우 가득 채우기 */
+  height: 40px; /* 임의의 높이 지정 */
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 텍스트 중앙 정렬 */
+  
+  /* 배경색은 .tsx 파일에서 K_BRAND_COLOR로 직접 주입합니다. */
+}
+
+.role-header-link {
+  color: black; /* 텍스트 색상 (브랜드 컬러에 따라 'white'가 나을 수 있습니다) */
+  font-size: 14px;
+  font-weight: bold;
+  text-decoration: none; /* 밑줄 제거 */
+  transition: opacity 0.1s;
+}
+
+.role-header-link:hover {
+  opacity: 0.7; /* 호버 효과 */
+}

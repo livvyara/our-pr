@@ -1,0 +1,37 @@
+/* src/pages/admin/AdminPage.css */
+
+/* AdminPage.tsx의 <main> 태그에 적용할 클래스입니다.
+  (HomePage.css의 'main-content'와 함께 사용됩니다.)
+*/
+.admin-main-layout {
+  /* 부모(main-content)가 가진 flex-grow: 1 속성을 이어받아
+    남은 공간을 모두 채우면서, 스스로 flex 컨테이너가 됩니다.
+  */
+  display: flex;
+  flex-direction: row; /* 좌->우 배치 */
+  flex-grow: 1;
+  
+  /* AdminPage.tsx에서 인라인으로 적용했던 
+    padding: 32px 0 등을 제거하기 위해 0으로 설정합니다.
+  */
+  padding: 0; 
+}
+
+/* 사이드바를 제외한 실제 콘텐츠가 표시될 영역입니다.
+  (AdminSidebar는 220px 고정 너비를 가짐)
+*/
+.admin-content-area {
+  flex-grow: 1; /* 사이드바를 제외한 모든 너비 차지 */
+  padding: 30px; /* 콘텐츠 영역 내부 여백 */
+  box-sizing: border-box;
+  
+  /* 콘텐츠가 길어질 경우 스크롤 허용 */
+  overflow-y: auto; 
+}
+
+/* 콘텐츠 영역의 타이틀 스타일 (예시) */
+.admin-content-area h2 {
+  margin-top: 0;
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+}

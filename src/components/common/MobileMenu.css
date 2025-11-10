@@ -93,14 +93,14 @@
 
 /* 서브 메뉴 리스트 */
 .sub-menu-list {
-  background-color: #f9f9f9;
+  background-color: #ffffff;
 }
 
 .sub-menu-item {
   padding: 10px 30px; /* contentPadding: EdgeInsets.only(left: 30.0) */
   font-size: 14px;
   cursor: pointer;
-  color: #333;
+  color: #2b2b2b;
 }
 
 .single-item {
@@ -112,5 +112,5 @@
 .divider {
     margin: 8px 0;
     border: none;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #ffffff00;
 }

@@ -1,0 +1,43 @@
+.admin-sidebar {
+  width: 220px; /* 사이드바 너비 고정 */
+  flex-shrink: 0; /* (flex 레이아웃에서 찌그러들지 않게 함) */
+  background-color: #f8f9fa; /* 사이드바 배경색 */
+  
+  /* 사이드바의 높이는 부모 컨테이너(main-content)에 의해
+    자동으로 100% 채워지게 됩니다. (AdminPage.css에서 설정 필요)
+  */
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.admin-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0; /* 상단 여백 */
+}
+
+.admin-menu-item {
+  display: block;
+  width: 100%;
+  padding: 15px 20px; /* 버튼 내부 여백 */
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  
+  /* (선택) 메뉴 하단 구분선 */
+  /* border-bottom: 1px solid rgba(0, 0, 0, 0.02); */
+}
+
+.admin-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* 마우스 오버 효과 */
+}
+
+/* 활성화된 메뉴 아이템 스타일 */
+.admin-menu-item.active {
+  background-color: #e9ecef; /* (활성 메뉴 배경색) */
+  color: black;
+}

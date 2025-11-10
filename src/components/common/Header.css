@@ -1,5 +1,9 @@
 /* src/components/common/Header.css */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 /* --- 공통 스타일 (AppBar 배경 및 경계) --- */
 .desktop-header, .mobile-header {
   background-color: white;
@@ -11,9 +15,28 @@
 }
 
 .logo {
-  color: black;
-  font-weight: bold;
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  height: 80px;
+  /* [수정 1] 기본 수직 마진 제거 */
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: -30px;
+}
+
+.logo > * {
+  margin: 0px;
+  padding: 0;
+}
+
+/* [수정]
+   .logo-image 대신 .logo .logo-image 로 수정하여
+   우선순위를 높입니다.
+*/
+.logo .logo-image {
+  height: 80px;
+  width: auto;
+    /* 1px은 너무 작으니 30px 정도로 테스트해 보세요 */
 }
 
 /* --- 데스크톱 스타일 --- */
@@ -21,49 +44,65 @@
   height: 64px; /* kToolbarHeight와 유사 */
   display: flex;
   justify-content: center; /* Center 위젯 역할 */
+  align-items: center; 
 }
 
 .desktop-header-content {
   width: 100%;
+  height: 100%; /* 이 속성은 64px를 상속받기 위해 필요합니다 (정상) */
   display: flex;
-  align-items: center;
-  justify-content: space-between; /* Row children 배치를 위해 */
-  padding: 0 20px; /* 좌우 여백 */
+  align-items: center; /* 이 속성이 로고, 메뉴, 액션을 중앙 정렬합니다 */
+  justify-content: space-between; 
+  padding: 0 20px; 
 }
 
 .main-nav {
   display: flex;
-  margin-left: auto; /* Spacer() 역할 */
+  margin-left: 20px;
+  /* [수정 3] ul 태그일 경우를 대비해 margin과 padding 모두 제거 */
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: 0; /* (추가) ul 태그의 기본 왼쪽 패딩 제거 */
+  list-style: none; /* (추가) ul 태그의 점 제거 */
 }
 
 .menu-button {
   background: none;
-  border: none;
+  border: 10px;
   cursor: pointer;
-  padding: 0 10px; /* EdgeInsets.symmetric(horizontal: 10.0) */
+  padding: 0 0px; /* EdgeInsets.symmetric(horizontal: 10.0) */
   color: black;
   font-weight: bold;
   font-size: 16px;
   height: 64px;
+  margin: 10px 0 0 0 ;
   display: flex;
-  align-items: center;
+  align-items: left;
   transition: background-color 0.1s;
+  white-space: nowrap;
+  width:auto;
+  padding:15px;
 }
 
 .menu-button:hover {
-  background-color: rgba(0, 0, 0, 0.05); /* hoverColor 효과 */
+  background-color: rgba(255, 255, 255, 0); /* hoverColor 효과 */
 }
 
 .actions {
   display: flex;
   align-items: center;
-  margin-left: auto; /* 두 번째 Spacer() 역할 */
+  margin-left: auto;
+  height: 64px;
+  /* [수정 4] 기본 수직 마진 제거 */
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .search-container {
   width: 200px;
   height: 40px;
-  margin: 8px 20px; /* margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8) */
+  /* [수정] 수직 마진을 제거하여 부모의 align-items: center로 정렬합니다. */
+  margin: -20px 0 -20px -0px; 
 }
 
 .search-container input {
@@ -79,7 +118,8 @@
 }
 
 .login-button, .signup-button {
-  height: 36px;
+  /* [수정] 검색창 높이(40px)와 맞춥니다. */
+  height: 40px; 
   padding: 0 12px;
   margin-left: 10px; /* SizedBox(width: 10) */
   border: none;
@@ -113,4 +153,25 @@
   font-size: 24px;
   cursor: pointer;
   color: black;
+  margin: 0px;
+  width: 56px;
+
+  /* --- [수정된 부분] --- */
+
+  /* 1. 버튼의 기본 여백을 모두 제거합니다. */
+  padding: 0;
+
+  /* 2. 버튼의 높이를 부모(.mobile-header)의 높이(56px)와 동일하게 설정합니다. */
+  height: 100%;
+  
+  /* 3. 버튼 자체를 flex 컨테이너로 만들어, 
+     내부의 햄버거 텍스트(☰)를 완벽하게 중앙 정렬합니다. 
+  */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* (참고) 아이콘 영역을 더 넓게 하려면 
+     height: 100% 대신 width를 추가할 수 있습니다. (예: width: 56px;)
+  */
 }

@@ -1,0 +1,51 @@
+/* src/components/admin/RoleManagementTab.css */
+
+.role-management-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 600px;
+}
+
+.admin-dropdown {
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.permissions-checklist {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.permission-item {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.permission-item input {
+  margin-right: 10px;
+  /* (선택) 체크박스 크기 조절 */
+  transform: scale(1.2);
+}
+
+.admin-save-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff; /* (임시) 저장 버튼 색상 */
+  color: white;
+}
+
+.admin-save-button:disabled {
+  background-color: #ccc;
+}

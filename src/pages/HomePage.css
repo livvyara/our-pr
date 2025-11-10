@@ -1,0 +1,18 @@
+/* src/pages/HomePage.css */
+
+/*
+  스티키 푸터(Sticky Footer) 레이아웃
+  페이지 내용이 짧아도 푸터가 화면 하단에 고정됩니다.
+*/
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 화면 전체 높이를 최소 높이로 설정 */
+}
+
+.main-content {
+  /* Header와 Footer를 제외한 나머지 공간을
+    모두 차지하도록 설정합니다.
+  */
+  flex-grow: 1; 
+}

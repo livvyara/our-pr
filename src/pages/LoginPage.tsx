@@ -1,14 +1,22 @@
 // src/pages/LoginPage.tsx
 
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../constants'; 
 import './LoginPage.css';
-import { signInWithEmailAndPassword } from 'firebase/auth'; 
-import { auth } from '../firebase-config'; // Firebase Auth 서비스 임포트
 
-// SNS 아이콘 컴포넌트는 생략하고, 로직에 필요한 부분만 표시합니다.
-// ----------------------------------------------------
+// ... (Firebase G imports) ...
+import { 
+  signInWithEmailAndPassword, 
+  setPersistence, 
+  browserLocalPersistence, 
+  browserSessionPersistence 
+} from 'firebase/auth'; 
+import { auth } from '../firebase-config';
+import logoImage from '../assets/logo.png';
+import RoleHeader from '../components/common/RoleHeader';
+
+// ... (SnsIcon 컴포넌트) ...
 interface SnsIconProps {
   color: string;
   text: string;
@@ -37,19 +45,43 @@ const SnsIcon: React.FC<SnsIconProps> = ({ color, text, onClick, textColor = 'wh
 };
 // ----------------------------------------------------
 
+
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [saveId, setSaveId] = useState(false);
+  const [autoLogin, setAutoLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false); 
 
-  const handleLogin = async (e: React.FormEvent) => { // ⭐ async 추가
+  // [⭐ 1. 추가] isMobile 상태 (HomePage.tsx와 동일)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // [⭐ 2. 추가] 반응형 및 저장된 이메일 로드 useEffect
+  useEffect(() => {
+    // 2-1. 저장된 이메일 불러오기
+    const savedEmail = localStorage.getItem('savedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setSaveId(true);
+    }
+
+    // 2-2. 윈도우 크기 변경 이벤트 핸들러 (isMobile 상태 관리)
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    // 컴포넌트 언마운트 시 리스너 제거
+    return () => window.removeEventListener('resize', handleResize);
+
+  }, []); // 빈 배열: 마운트 시 1회만 실행
+
+  // ... (handleLogin, handleNavigation 함수는 동일) ...
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    const email = emailRef.current?.value;
-    const password = passwordRef.current?.value;
-
     if (!email || !password) {
         alert('이메일과 비밀번호를 입력해주세요.');
         setIsLoading(false);
@@ -57,17 +89,25 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-        // ⭐ 실제 Firebase 로그인 로직
-        await signInWithEmailAndPassword(auth, email, password);
+      const persistence = autoLogin 
+        ? browserLocalPersistence
+        : browserSessionPersistence; 
+
+      await setPersistence(auth, persistence);
+      
+      await signInWithEmailAndPassword(auth, email, password);
         
-        // 로그인 성공 처리
-        alert('로그인 성공!');
-        navigate('/'); // 메인 페이지로 이동
+      if (saveId) {
+        localStorage.setItem('savedEmail', email);
+      } else {
+        localStorage.removeItem('savedEmail');
+      }
+
+      navigate('/');
         
     } catch (error: any) {
         let message = '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
         
-        // Firebase 에러 코드에 따른 맞춤 메시지
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
             message = '존재하지 않는 이메일이거나 비밀번호가 일치하지 않습니다.';
         } else if (error.code === 'auth/invalid-email') {
@@ -75,34 +115,73 @@ const LoginPage: React.FC = () => {
         }
         
         alert(message);
-        console.error(error); // 개발자용 콘솔 출력
+        console.error(error); 
         
     } finally {
         setIsLoading(false);
     }
   };
-  
-  // GoRouter.context.push() 역할
+
   const handleNavigation = (path: string) => {
       navigate(path);
   };
 
   return (
     <div className="login-page-container">
+      {/* [수정] RoleHeader를 폼 바깥으로 이동 (페이지 상단 고정) */}
+      {!isMobile && <RoleHeader />}
+
       <div className="login-box-wrapper">
         <form onSubmit={handleLogin} className="login-form">
           
+          {/* [수정] RoleHeader를 폼 내부에서 제거 */}
+
           {/* 1. 로고 */}
-          <h1 className="logo-text">My WebApp Logo</h1>
+          <Link to="/"> 
+            <img src={logoImage} alt="My WebApp Logo" className="logo-image" />
+          </Link>
           <div style={{ height: '48px' }}></div>
 
-          {/* 2 & 3. 입력 필드 */}
-          <input type="email" placeholder="이메일" ref={emailRef} className="login-input" required />
+          {/* ... (이하 나머지 JSX 코드는 모두 동일) ... */}
+          <input 
+            type="email" 
+            placeholder="이메일" 
+            className="login-input" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required 
+          />
           <div style={{ height: '16px' }}></div>
-          <input type="password" placeholder="비밀번호" ref={passwordRef} className="login-input" required />
+          <input 
+            type="password" 
+            placeholder="비밀번호" 
+            className="login-input" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required 
+          />
+          
+          <div style={{ height: '12px' }}></div>
+          <div className="login-options">
+            <label>
+              <input 
+                type="checkbox" 
+                checked={saveId} 
+                onChange={(e) => setSaveId(e.target.checked)} 
+              />
+              아이디 저장
+            </label>
+            <label>
+              <input 
+                type="checkbox" 
+                checked={autoLogin} 
+                onChange={(e) => setAutoLogin(e.target.checked)} 
+              />
+              자동로그인
+            </label>
+          </div>
           <div style={{ height: '24px' }}></div>
 
-          {/* 4. 로그인 버튼 */}
           <button 
             type="submit"
             className="login-submit-btn"
@@ -113,8 +192,15 @@ const LoginPage: React.FC = () => {
           </button>
           <div style={{ height: '16px' }}></div>
 
-          {/* 5. 비밀번호 재설정 / 회원가입 */}
           <div className="link-row">
+            <button 
+              type="button"
+              className="link-button" 
+              onClick={() => handleNavigation('/find-id')}
+            >
+              아이디 찾기
+            </button>
+            <span className="divider-text">|</span>
             <button 
               type="button"
               className="link-button" 
@@ -126,7 +212,6 @@ const LoginPage: React.FC = () => {
             <button 
               type="button"
               className="link-button" 
-              // ⭐ 회원가입 페이지로 연결
               onClick={() => handleNavigation('/signup')} 
             >
               회원가입
@@ -134,7 +219,6 @@ const LoginPage: React.FC = () => {
           </div>
           <div style={{ height: '32px' }}></div>
 
-          {/* 6 & 7. SNS 아이콘 */}
           <p className="sns-text">SNS계정으로 로그인/회원가입</p>
           <div style={{ height: '16px' }}></div>
           <div className="sns-icons-row">
@@ -146,7 +230,6 @@ const LoginPage: React.FC = () => {
           </div>
           <div style={{ height: '32px' }}></div>
           
-          {/* 8. 로그인 문제 */}
           <button 
             type="button"
             className="link-button problem-link" 

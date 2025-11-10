@@ -1,56 +1,78 @@
 // src/components/common/Header.tsx
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom'; // GoRouter 대신 useNavigate 사용
-import { kAppMenus } from '../../types/menuData'; 
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { kAppMenus } from '../../types/menuData';
 import { CONTENT_MAX_WIDTH, K_BRAND_COLOR } from '../../constants';
-import './Header.css'; // 스타일링을 위한 CSS 파일 임포트
+import './Header.css';
+import logoSrc from '../../assets/logo.png';
 
-// Props 타입 정의: Flutter의 CommonAppBar1 생성자 인수와 동일
+// Firebase 인증 관련 모듈 추가
+import { auth } from '../../firebase-config';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import type { User } from 'firebase/auth'; // 'User' 타입을 분리해서 임포트
+
 interface HeaderProps {
   onMenuSelected: (key: string) => void;
-  isMobile: boolean; // 반응형 처리를 부모에서 받아옴
+  isMobile: boolean;
   onHamburgerPressed: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
-  onMenuSelected, 
-  isMobile, 
-  onHamburgerPressed 
+const Header: React.FC<HeaderProps> = ({
+  onMenuSelected,
+  isMobile,
+  onHamburgerPressed
 }) => {
-  const navigate = useNavigate(); // GoRouter.goNamed 대신 React Router의 navigate 사용
+  const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // ----------------------------------------------------
-  // 모바일 뷰 (_buildMobileAppBar)
-  // ----------------------------------------------------
+  // Firebase 인증 상태 실시간 감지
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []); // 마운트 시 1회만 실행
+
+  // 로그아웃 함수
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/'); // 로그아웃 후 홈으로 이동
+    } catch (error) {
+      console.error("로그아웃 중 오류 발생:", error);
+    }
+  };
+
+  // --- 모바일 뷰 ---
   if (isMobile) {
     return (
       <header className="mobile-header">
         <button className="menu-icon" onClick={onHamburgerPressed}>
-          ☰ {/* Icons.menu 대신 유니코드 문자 또는 SVG 사용 */}
+          ☰
         </button>
-        <div className="logo">
-          My WebApp Logo
-        </div>
-        {/* actions: SizedBox(width: 56.0) 역할 (여백 유지) */}
-        <div style={{ width: '56px' }}></div> 
+        
+        {/* [수정] div.logo를 Link to="/"로 변경 */}
+        <Link to="/" className="logo">
+          <img src={logoSrc} alt="My WebApp Logo" className="logo-image" />
+        </Link>
+
+        <div style={{ width: '56px' }}></div>
       </header>
     );
   }
 
-  // ----------------------------------------------------
-  // 데스크톱 뷰 (_buildDesktopAppBar)
-  // ----------------------------------------------------
+  // --- 데스크톱 뷰 ---
   return (
     <header className="desktop-header">
       <div className="desktop-header-content" style={{ maxWidth: CONTENT_MAX_WIDTH }}>
-        
-        {/* 로고 */}
-        <div className="logo">
-          My WebApp Logo
-        </div>
-        
-        {/* 메뉴 */}
+
+        {/* [수정] div.logo를 Link to="/"로 변경 */}
+        <Link to="/" className="logo">
+          <img src={logoSrc} alt="My WebApp Logo" className="logo-image" />
+        </Link>
+
+        {/* 메뉴 (수정 없음) */}
         <nav className="main-nav">
           {kAppMenus.map((menu) => (
             <button
@@ -63,28 +85,38 @@ const Header: React.FC<HeaderProps> = ({
           ))}
         </nav>
 
-        {/* 검색창, 로그인/회원가입 */}
+        {/* ⭐ [수정된 부분] ⭐ */}
         <div className="actions">
-          {/* 검색창 */}
+          {/* 검색창 (수정 없음) */}
           <div className="search-container">
             <input type="text" placeholder="검색..." />
           </div>
 
-          {/* 로그인 버튼 */}
-          <button 
+          {/* 1. 첫 번째 버튼 (텍스트 버튼) */}
+          <button
             className="login-button"
-            onClick={() => navigate('/login')} // GoRouter.goNamed('login') 대신 경로 사용
+            onClick={
+              currentUser 
+                ? handleLogout // 로그인 시: 로그아웃
+                : () => navigate('/login') // 로그아웃 시: 로그인
+            }
           >
-            로그인
+            {/* 텍스트만 변경 */}
+            {currentUser ? '로그아웃' : '로그인'}
           </button>
-          
-          {/* 회원가입 버튼 (배경색 버튼: radius 5 적용) */}
-          <button 
+
+          {/* 2. 두 번째 버튼 (브랜드 색상 버튼) */}
+          <button
             className="signup-button"
-            style={{ backgroundColor: K_BRAND_COLOR, borderRadius: '5px' }} // 저장된 요청 반영
-            onClick={() => navigate('/signup')} // GoRouter.goNamed('signup') 대신 경로 사용
+            style={{ backgroundColor: K_BRAND_COLOR, borderRadius: '5px' }}
+            onClick={
+              currentUser
+                ? () => navigate('/mypage') // 로그인 시: 마이페이지
+                : () => navigate('/signup') // 로그아웃 시: 회원가입
+            }
           >
-            회원가입
+            {/* 텍스트만 변경 (요청사항 반영: 회원가입 -> 마이페이지) */}
+            {currentUser ? '마이페이지' : '회원가입'}
           </button>
         </div>
       </div>
