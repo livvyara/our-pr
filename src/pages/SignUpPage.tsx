@@ -35,7 +35,6 @@ const SignUpPage: React.FC = () => {
     
     // 1. Ref 변수 정의
     const formRef = useRef<HTMLFormElement>(null); 
-    const emailIdRef = useRef<HTMLInputElement>(null); // (수정됨: 이메일은 State로 관리)
     const passwordRef = useRef<HTMLInputElement>(null);
     const passwordConfirmRef = useRef<HTMLInputElement>(null);
     const phoneRef = useRef<HTMLInputElement>(null);
