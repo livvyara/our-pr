@@ -8,10 +8,11 @@ import MobileMenu from '../components/common/MobileMenu';
 import Footer from '../components/common/Footer';
 import RoleHeader from '../components/common/RoleHeader';
 
-// [⭐ 수정] Firebase 모듈 (updateDoc, serverTimestamp 추가)
+// [⭐ 1. 수정] 'type Timestamp' 제거
 import { auth } from '../firebase-config';
-import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, type Timestamp } from 'firebase/firestore';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+// [⭐ 2. 수정] 'type User' 제거
+import { onAuthStateChanged } from 'firebase/auth';
 
 // CSS 임포트
 import './HomePage.css'; 
@@ -56,8 +57,7 @@ const MyPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true); 
   
-  // [⭐ 1. 빌드 오류 수정] currentUser state 제거 (onAuthStateChanged의 user 직접 사용)
-  // const [currentUser, setCurrentUser] = useState<User | null>(null); 
+  // [⭐ 빌드 오류 수정] currentUser state 제거
   
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -65,20 +65,20 @@ const MyPage: React.FC = () => {
   const [nickname, setNickname] = useState('');
   const [phone, setPhone] = useState('');
 
-  // [⭐ 2. 90일 로직] 닉네임 관련 state 추가
-  const [originalNickname, setOriginalNickname] = useState(''); // DB에서 불러온 닉네임
-  const [nicknameLastChanged, setNicknameLastChanged] = useState<Date | null>(null); // 마지막 변경일
-  const [canChangeNickname, setCanChangeNickname] = useState(false); // 변경 가능 여부 (기본 false)
-  const [isUpdatingNickname, setIsUpdatingNickname] = useState(false); // 변경 API 실행 중
+  // [⭐ 90일 로직] 닉네임 관련 state 추가
+  const [originalNickname, setOriginalNickname] = useState(''); 
+  const [nicknameLastChanged, setNicknameLastChanged] = useState<Date | null>(null); 
+  const [canChangeNickname, setCanChangeNickname] = useState(false); 
+  const [isUpdatingNickname, setIsUpdatingNickname] = useState(false); 
 
 
-  // [⭐ 3. 90일 로직] Firebase 데이터 로드 (nicknameLastChanged 추가)
+  // [⭐ 90일 로직] Firebase 데이터 로드
   useEffect(() => {
     const db = getFirestore();
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // [⭐ 1. 빌드 오류 수정] setCurrentUser(user) 제거
+        // [⭐ 빌드 오류 수정] setCurrentUser(user) 제거
         
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
@@ -90,19 +90,15 @@ const MyPage: React.FC = () => {
           setName(userData.name || '');
           setBirth(userData.birth || ''); 
           setPhone(formatPhoneNumber(userData.phone || ''));
-
-          // 닉네임 state 설정
           setNickname(userData.nickname || '');
-          setOriginalNickname(userData.nickname || ''); // '원래' 닉네임 저장
+          setOriginalNickname(userData.nickname || ''); 
 
-          // [⭐ 3. 90일 로직] 마지막 변경일 로드
-          // 1. nicknameLastChanged 필드 확인 (Firestore Timestamp)
-          // 2. 없으면 createdAt (가입일) 필드 확인
+          // 90일 로직
           let lastChangeDate: Date | null = null;
           if (userData.nicknameLastChanged && userData.nicknameLastChanged.toDate) {
             lastChangeDate = userData.nicknameLastChanged.toDate();
           } else if (userData.createdAt && userData.createdAt.toDate) {
-            lastChangeDate = userData.createdAt.toDate(); // 가입일을 기준으로
+            lastChangeDate = userData.createdAt.toDate(); 
           }
           setNicknameLastChanged(lastChangeDate);
 
@@ -122,24 +118,19 @@ const MyPage: React.FC = () => {
   }, [navigate]); 
 
 
-  // [⭐ 4. 90일 로직] 닉네임 변경 가능 여부 계산
-  // nicknameLastChanged 날짜가 state에 설정될 때마다 실행
+  // [⭐ 90일 로직] 닉네임 변경 가능 여부 계산
   useEffect(() => {
     if (!nicknameLastChanged) {
-      setCanChangeNickname(false); // 날짜 정보가 없으면 변경 불가
+      setCanChangeNickname(false);
       return;
     }
-
     const now = new Date();
-    // 90일 (밀리초 단위)
     const ninetyDaysInMs = 90 * 24 * 60 * 60 * 1000;
     const lastChangeTime = nicknameLastChanged.getTime();
     const ninetyDaysAgoTime = now.getTime() - ninetyDaysInMs;
 
-    // 마지막 변경일(lastChangeTime)이 90일 전(ninetyDaysAgoTime)보다 
-    // *이전*이어야 변경 가능
     if (lastChangeTime < ninetyDaysAgoTime) {
-      setCanChangeNickname(true); // [⭐ 1. 빌드 오류 수정] setCanChangeNickname 사용됨
+      setCanChangeNickname(true);
     } else {
       setCanChangeNickname(false);
     }
@@ -148,7 +139,6 @@ const MyPage: React.FC = () => {
 
   // 휴대폰 번호 하이픈 자동 입력 포맷터 (변경 없음)
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // ... (기존 코드와 동일) ...
     const rawValue = e.target.value.replace(/-/g, ''); 
     if (rawValue.length > 11 || !/^\d*$/.test(rawValue)) return;
     let formattedValue = rawValue;
@@ -160,15 +150,13 @@ const MyPage: React.FC = () => {
     setPhone(formattedValue);
   };
 
-  // [⭐ 5. 90일 로직] 닉네임 변경 버튼 클릭 핸들러
+  // [⭐ 90일 로직] 닉네임 변경 버튼 클릭 핸들러
   const handleNicknameChange = async () => {
     const user = auth.currentUser;
     if (!user) {
       alert("로그인 상태가 유효하지 않습니다. 다시 로그인해주세요.");
       return;
     }
-
-    // (유효성 검사)
     if (nickname.trim().length < 2) {
       alert("닉네임은 2자 이상 입력해야 합니다.");
       return;
@@ -183,19 +171,14 @@ const MyPage: React.FC = () => {
     const docRef = doc(db, "users", user.uid);
 
     try {
-      // Firestore 문서 업데이트
       await updateDoc(docRef, {
-        nickname: nickname, // 새 닉네임
-        nicknameLastChanged: serverTimestamp() // 현재 서버 시간으로 변경일 업데이트
+        nickname: nickname, 
+        nicknameLastChanged: serverTimestamp() 
       });
-
       alert("닉네임이 성공적으로 변경되었습니다.");
-      
-      // 로컬 state 즉시 갱신 (페이지 새로고침 방지)
-      setOriginalNickname(nickname); // '원래' 닉네임을 새 닉네임으로
-      setCanChangeNickname(false); // 변경했으므로 90일간 다시 잠금
-      setNicknameLastChanged(new Date()); // 마지막 변경일을 지금으로
-
+      setOriginalNickname(nickname); 
+      setCanChangeNickname(false); 
+      setNicknameLastChanged(new Date()); 
     } catch (error) {
       console.error("닉네임 변경 오류:", error);
       alert("닉네임 변경 중 오류가 발생했습니다.");
@@ -207,7 +190,13 @@ const MyPage: React.FC = () => {
 
   // 로딩 중 표시
   if (isLoading) {
-    // ... (기존 코드와 동일) ...
+    return (
+      <div className="page-container">
+        <main className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <h2>데이터를 불러오는 중입니다...</h2>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -228,7 +217,6 @@ const MyPage: React.FC = () => {
         <div className="mypage-container">
           <h2 className="mypage-title">마이페이지</h2>
 
-          {/* ... (이메일, 비밀번호 폼 그룹은 동일) ... */}
           <div className="form-group">
             <label className="form-label" htmlFor="email">이메일 주소</label>
             <input id="email" className="form-input" value={email} disabled />
@@ -244,7 +232,6 @@ const MyPage: React.FC = () => {
             </div>
           </div>
 
-          {/* --- 닉네임 (90일 1회 변경) --- */}
           <div className="form-group">
             <label className="form-label" htmlFor="nickname">닉네임</label>
             <div className="input-group">
@@ -254,12 +241,10 @@ const MyPage: React.FC = () => {
                 className="form-input" 
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                // [⭐ 6. 90일 로직] 닉네임 변경 가능할 때만 활성화 (기본 비활성화)
                 disabled={!canChangeNickname || isUpdatingNickname} 
               />
               <button 
                 className="form-button btn-primary"
-                // [⭐ 7. 90일 로직] 클릭 핸들러 및 비활성화 조건 수정
                 onClick={handleNicknameChange}
                 disabled={!canChangeNickname || isUpdatingNickname || nickname === originalNickname}
               >
@@ -267,7 +252,6 @@ const MyPage: React.FC = () => {
               </button>
             </div>
             
-            {/* [⭐ 8. 90일 로직] 비활성화 사유 안내 */}
             {!canChangeNickname && nicknameLastChanged && (
               <span className="form-caption">
                 닉네임은 90일마다 변경할 수 있습니다.
@@ -280,7 +264,6 @@ const MyPage: React.FC = () => {
             )}
           </div>
 
-          {/* ... (이름, 생년월일, 휴대폰 폼 그룹은 동일) ... */}
           <div className="form-group">
             <label className="form-label" htmlFor="name">이름</label>
             <input id="name" className="form-input" value={name} disabled />
