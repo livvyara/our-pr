@@ -13,7 +13,7 @@ import { K_BRAND_COLOR, CONTENT_MAX_WIDTH } from '../constants';
 
 // CSS
 import './HomePage.css'; // 스티키 푸터 레이아웃 (필수)
-import './PartnerApply.css'; // 탭 전용 CSS
+import './partnerApply.css'; // 탭 전용 CSS
 
 // ----------------------------------------------------
 // 탭 콘텐츠 데이터 정의
