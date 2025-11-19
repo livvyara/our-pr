@@ -1,0 +1,97 @@
+/* src/components/admin/ActivityLogTab.css */
+
+.activity-log-container {
+  padding: 10px;
+}
+
+.activity-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.activity-log-header h2 {
+  margin: 0;
+}
+
+.activity-log-header button {
+  padding: 5px 10px;
+  font-size: 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.activity-log-header button:hover {
+  background-color: #e5e5e5;
+}
+
+.log-caption {
+  font-size: 13px;
+  color: #666;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+.activity-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.activity-log-table th,
+.activity-log-table td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.activity-log-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+
+/* 컬럼 너비 고정 */
+.activity-log-table .col-time {
+  width: 180px;
+  color: #555;
+  white-space: nowrap;
+}
+.activity-log-table .col-admin {
+  width: 120px;
+  font-weight: bold;
+}
+.activity-log-table .col-message {
+  width: auto;
+  word-break: break-all; /* 긴 메시지 줄바꿈 */
+}
+
+.load-more-button {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+.load-more-button:disabled {
+  background-color: #ccc;
+}
+
+.log-end-marker {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin-top: 20px;
+}

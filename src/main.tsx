@@ -3,7 +3,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom'; // 👈 BrowserRouter 임포트 확인
-import App from './App.tsx';
+import App from './pages/App.tsx';
 // import './index.css'; // 전역 스타일
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

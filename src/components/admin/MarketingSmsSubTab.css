@@ -1,0 +1,65 @@
+/* src/components/admin/MarketingSmsSubTab.css */
+.sms-tab-container {
+  padding: 10px;
+}
+.sms-tab-container h3 {
+  margin-top: 0;
+}
+.consent-info-box {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.consent-info-box strong {
+  font-size: 16px;
+  color: #007bff;
+}
+.consent-info-box button {
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sms-form-group {
+  margin-bottom: 20px;
+}
+.sms-form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.sms-textarea,
+.sms-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.sms-textarea {
+  resize: vertical;
+}
+
+.sms-send-button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.sms-send-button:disabled {
+  background-color: #ccc;
+}

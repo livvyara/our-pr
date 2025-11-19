@@ -1,0 +1,65 @@
+/* src/pages/program/SiteDetailPage.css */
+
+.site-detail-page {
+  /* 2x2 그리드 레이아웃 */
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 50% 50% */
+  grid-template-rows: 50vh 1fr; /* 상단 50vh, 하단 나머지 */
+  gap: 20px;
+  width: 100%;
+  height: 100%; /* 부모(.program-content-area)의 높이를 채움 */
+  
+  grid-template-areas: 
+    "info memo"
+    "files actions";
+}
+
+/* --- 4개 사분면(Quadrant) --- */
+.quadrant-box {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #ffffff; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 5px;
+
+  /* 자식 위젯이 높이를 100% 채우도록 함 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* (내부 스크롤은 자식 요소가 담당) */
+}
+
+/* 1. 현장 정보 (좌상단) */
+.quadrant-info {
+  grid-area: info;
+}
+
+/* 2. 메모 (우상단) */
+.quadrant-memo {
+  grid-area: memo;
+}
+
+/* 3. 자료 등록 (좌하단) */
+.quadrant-files {
+  grid-area: files;
+}
+
+/* 4. 기타 등록 (우하단) */
+.quadrant-actions {
+  grid-area: actions;
+}
+
+/* 공통 헤더 */
+.quadrant-box h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+  flex-shrink: 0; /* (고정) */
+  margin-bottom: 0px;
+}
+
+/*
+ [⭐ 수정됨]
+ .info-form-grid, .form-group, .form-label, .form-input, .info-form-actions 등
+ 폼 관련 스타일을 모두 SiteInfoWidget.css로 옮겼으므로
+ 이 파일에서 모두 삭제합니다.
+*/

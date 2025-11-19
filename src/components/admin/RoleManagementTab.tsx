@@ -6,6 +6,8 @@ import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, query, where
 // [⭐ 수정] 같은 폴더에 있으므로 경로 변경
 import { ALL_ADMIN_MENUS } from './adminMenuData';
 import './RoleManagementTab.css'; 
+import { functions } from '../../firebase-config'; // [⭐ 1. 추가]
+import { httpsCallable } from 'firebase/functions'; // [⭐ 1. 추가]
 
 // ... (Interface UserData) ...
 interface UserData {
@@ -14,6 +16,8 @@ interface UserData {
   nickname: string;
   adminPermissions?: string[]; 
 }
+
+const logActivity = httpsCallable(functions, 'logAdminActivity');
 
 const RoleManagementTab: React.FC = () => {
   const [subadminList, setSubadminList] = useState<UserData[]>([]);
@@ -81,10 +85,21 @@ const RoleManagementTab: React.FC = () => {
     
     setIsLoading(true);
     try {
+      // 1. 권한 업데이트
       const userDocRef = doc(db, 'users', selectedSubadminId);
       await updateDoc(userDocRef, {
         adminPermissions: newPermsArray
       });
+
+      // 2. 로그 기록
+      const selectedUser = subadminList.find(u => u.uid === selectedSubadminId);
+      const targetUserName = selectedUser?.nickname || selectedUser?.name || 'UnknownUser';
+      const permsString = newPermsArray.length > 0 ? newPermsArray.join(', ') : '(없음)';
+      
+      await logActivity({
+        message: `[${targetUserName}]님의 관리자 권한을 [${permsString}] (으)로 설정했습니다.`
+      });
+
       alert('권한이 성공적으로 저장되었습니다.');
     } catch (error) {
       alert('저장 중 오류가 발생했습니다.');

@@ -1,7 +1,8 @@
 // src/components/common/RoleHeader.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+// [⭐ 1. 수정] useLocation 임포트 추가
+import { Link, useLocation } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../../constants';
 import './RoleHeader.css';
 
@@ -19,18 +20,21 @@ interface RoleData {
 }
 
 const ROLE_MAP: Record<string, RoleData> = {
-  // [⭐ 수정] admin 등급 추가
   admin: {
     text: '관리자 페이지로 이동',
-    link: '/admin', // (지정된 경로)
+    link: '/admin', 
   },
     employee: {
     text: '임직원 페이지로 이동',
-    link: '/employee', // (지정된 경로)
+    link: '/employee', 
   },
   partner: {
     text: '파트너 서포터 페이지로 이동',
-    link: '/partnersupport',
+    link: '/program',
+  },
+    sub_partner: {
+    text: '파트너 서포터 페이지로 이동',
+    link: '/program',
   },
   seller: {
     text: '셀러 서포터 페이지로 이동',
@@ -47,6 +51,9 @@ const ROLE_MAP: Record<string, RoleData> = {
 const RoleHeader: React.FC = () => {
   const [roleData, setRoleData] = useState<RoleData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // [⭐ 2. 추가] useLocation 훅 실행
+  const location = useLocation();
 
   useEffect(() => {
     const db = getFirestore();
@@ -58,8 +65,6 @@ const RoleHeader: React.FC = () => {
 
         if (docSnap.exists()) {
           const userRole = docSnap.data().role; 
-          
-          // [수정] admin이 맵에 추가되었으므로 자동으로 처리됨
           setRoleData(ROLE_MAP[userRole] || null);
         } else {
           setRoleData(null);
@@ -73,10 +78,18 @@ const RoleHeader: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // [⭐ 3. 수정] 로딩/데이터 없음 조건
   if (isLoading || !roleData) {
     return null;
   }
+  
+  // [⭐ 4. 추가] 파트너가 /program 경로에 있을 때 숨기는 조건
+  // (roleData.link가 '/program'인 경우는 'partner' 역할임)
+  if (roleData.link === '/program' && location.pathname.startsWith('/program')) {
+    return null;
+  }
 
+  // (모든 조건을 통과한 경우에만 헤더 렌더링)
   return (
     <div 
       className="role-header-bar" 

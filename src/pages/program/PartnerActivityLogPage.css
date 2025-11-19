@@ -1,0 +1,97 @@
+/* src/pages/program/PartnerActivityLogPage.css */
+
+.activity-log-list-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+/* 상단 타이틀 영역 */
+.activity-log-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  /* 하단 굵은 줄 제거 */
+}
+
+.activity-log-header-row h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+/* 검색창 스타일 */
+.activity-log-search-bar {
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 400px;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+/* 테이블 래퍼 */
+.activity-log-table-wrapper {
+  overflow-x: auto;
+  border-top: 1px solid #ddd; /* 상단 얇은 회색 줄 */
+}
+
+.activity-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.activity-log-table th,
+.activity-log-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.activity-log-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.activity-log-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* 뱃지 스타일 (로그 타입 구분용) */
+.log-type-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  min-width: 60px;
+}
+
+.log-type-badge.worklog {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.log-type-badge.default {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* 내용이 길 경우 말줄임 처리 */
+.log-content-cell {
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,76 @@
+/* src/components/partner/EmployeeAddTab.css */
+/* (PartnerPermissionTab.css의 초대 섹션 스타일 재사용) */
+
+.permission-invite-box {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 20px;
+  border-radius: 5px;
+  margin-bottom: 30px;
+  padding: 10px 20px;
+}
+.permission-invite-box h4 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.permission-invite-box p {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+/* (PartnerPermissionTab.css에서 .admin-save-button 가져옴) */
+.admin-save-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+.admin-save-button:disabled {
+  background-color: #ccc;
+}
+.permission-invite-box .admin-save-button {
+  margin-top: 0;
+}
+
+.invite-link-wrapper {
+  display: flex;
+  margin-top: 15px;
+  gap: 10px;
+}
+.invite-link-input {
+  flex-grow: 1;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  font-size: 14px;
+}
+.invite-link-copy {
+  flex-shrink: 0;
+  padding: 8px 15px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.invite-info-box {
+  border: 1px solid #eee;
+  padding: 20px;
+  border-radius: 5px;
+}
+.invite-info-box h4 {
+  margin-top: 0;
+}
+.invite-info-box ol {
+  font-size: 14px;
+  line-height: 1.8;
+  padding-left: 20px;
+}

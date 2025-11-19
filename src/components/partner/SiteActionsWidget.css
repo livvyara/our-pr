@@ -1,0 +1,53 @@
+/* src/components/partner/SiteActionsWidget.css */
+
+.actions-widget-container {
+  /* 부모(.quadrant-box)의 높이를 100% 채움 */
+  height: 100%; 
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2x4 그리드 컨테이너 */
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr; /* 가로 2열 */
+  grid-template-rows: repeat(2, 1fr); /* 세로 4줄 */
+  gap: 15px; /* 버튼 사이 간격 */
+  
+  flex-grow: 1; /* (남은 공간을 모두 차지) */
+  padding: 10px 0; /* (위아래 여백) */
+}
+
+/* 8개 버튼 공통 스타일 */
+.action-grid-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  width: 100%;
+  height: 100%;
+  min-height: 50px; /* (최소 높이) */
+  
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  
+  background-color: #f8f9fa; /* (기본 버튼 배경) */
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.action-grid-button:hover {
+  background-color: #ffffff;
+  border-color: #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.action-grid-button:disabled {
+  background-color: #e9ecef;
+  color: #aaa;
+  cursor: not-allowed;
+}

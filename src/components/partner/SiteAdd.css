@@ -1,0 +1,143 @@
+/* src/components/partner/SiteAdd.css */
+
+.site-add-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%; /* 화면 꽉 차게 변경 */
+  padding-bottom: 40px;
+}
+
+/* 헤더 (목록 페이지와 동일한 스타일) */
+.add-header {
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+.add-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+/* --- 상단 라디오 버튼 (탭 스타일) --- */
+.form-radio-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.form-radio-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  border-radius: 5px; /* Radius 5px */
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.form-radio-label input {
+  display: none; /* 라디오 버튼 숨김 (깔끔하게 탭처럼) */
+}
+
+/* 선택된 상태 */
+.form-radio-label.active {
+  background-color: #333; /* 선택 시 진한 배경 */
+  color: #fff;
+  border-color: #333;
+}
+
+/* --- 폼 그리드 --- */
+.site-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 1:1 비율 */
+  gap: 24px 30px; /* 세로간격 가로간격 */
+}
+
+/* 폼 그룹 */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 2열 전체 너비 차지 */
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+.form-label .required {
+  color: #dc3545;
+  margin-left: 3px;
+}
+
+/* 입력창 (목록 검색창과 스타일 통일) */
+.form-input {
+  height: 45px; /* 높이 통일 */
+  padding: 0 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px; /* Radius 5px */
+  font-size: 15px;
+  box-sizing: border-box;
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.form-input::placeholder {
+  color: #bbb;
+}
+
+/* --- 하단 버튼 영역 --- */
+.submit-button-container {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end; /* 우측 정렬 */
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.submit-button {
+  padding: 12px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #333; /* 가독성 위해 검은 글씨 */
+  border: none;
+  border-radius: 5px; /* Radius 5px */
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.submit-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

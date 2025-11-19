@@ -1,0 +1,298 @@
+/* src/components/admin/PartnerManagementTab.css */
+
+/* 1. 전체 컨테이너 */
+.partner-tab-content {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. 메인 탭 스타일 */
+.partner-main-tabs {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  
+}
+
+.partner-tab-button {
+  position: relative; /* 알림 뱃지 위치 기준 */
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #666;
+  font-weight: bold;
+  border-radius: 5px; /* Radius 5px */
+  transition: all 0.2s;
+}
+
+.partner-tab-button.active {
+  background-color: #333;
+  color: #fff;
+}
+
+.partner-tab-button:hover:not(.active) {
+  background-color: #f0f0f0;
+}
+
+/* 알림 뱃지 (N) */
+.new-notification {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #dc3545;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+/* 3. 하위 탭 스타일 (신규 신청, 정보 변경 등) */
+.partner-sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.partner-sub-tab-button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.partner-sub-tab-button.active {
+  background-color: #666;
+  color: #fff;
+  border-color: #666;
+}
+
+/* 4. 검색창 및 헤더 영역 */
+.search-wrapper {
+  margin-bottom: 15px;
+}
+
+.admin-search-bar {
+  width: 300px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+/* [헤더 버튼 그룹] 정렬/노출 변경 버튼 */
+.header-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto; /* 우측 정렬 */
+}
+
+.header-btn {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 8px 15px;
+  border-radius: 5px; /* Radius 5px */
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s;
+}
+
+.header-btn:hover {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* 5. 테이블 스타일 */
+.application-table-wrapper {
+  overflow-x: auto;
+  border-top: 1px solid #333; /* 상단 진한 줄 */
+}
+
+.application-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.application-table th,
+.application-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.application-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #333;
+  text-align: center; /* 헤더만 가운데 정렬 */
+}
+
+.application-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* 테이블 내 버튼들 */
+.detail-button {
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.detail-button:hover {
+  opacity: 0.9;
+}
+
+/* 텍스트 링크 버튼 (현장명 등) */
+.text-link-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-size: 14px;
+}
+
+/* 6. 삭제된 행 스타일 (빨간 취소선) */
+.row-deleted td {
+  color: #999;
+  text-decoration: line-through;
+  text-decoration-color: red;
+  text-decoration-thickness: 2px;
+}
+
+.row-deleted button {
+  color: #999 !important;
+  text-decoration: line-through !important;
+  text-decoration-color: red !important;
+}
+
+/* 7. 모달 공통 스타일 (정렬/노출 설정) */
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex; justify-content: center; align-items: center;
+}
+
+.sort-modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 320px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column;
+}
+
+.sort-modal-content h3 {
+  margin: 0 0 15px 0;
+  text-align: center;
+  font-size: 18px;
+  color: #333;
+}
+
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.modal-item {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  font-size: 14px;
+}
+
+.modal-item:last-child {
+  border-bottom: none;
+}
+
+/* 정렬 화살표 버튼 */
+.sort-controls button {
+  background: #f1f3f5;
+  border: 1px solid #ddd;
+  padding: 2px 8px;
+  margin-left: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.sort-controls button:hover {
+  background-color: #e2e6ea;
+}
+
+/* 노출 체크박스 라벨 */
+.visibility-label {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+}
+.visibility-label input {
+  margin-right: 10px;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+/* 모달 하단 버튼 */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-save {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px; /* Radius 5 */
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-close {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px; /* Radius 5 */
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* 미구현 메뉴 스타일 */
+.unimplemented-submenu {
+  color: #999;
+  font-style: italic;
+  list-style-type: disc;
+  padding-left: 20px;
+}

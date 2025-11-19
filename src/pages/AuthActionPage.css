@@ -1,0 +1,81 @@
+/* src/pages/AuthActionPage.css */
+
+.auth-action-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh; /* 헤더/푸터 제외하고 중앙 정렬 */
+  background-color: #f8f9fa;
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  border: 1px solid #eee;
+}
+
+.auth-card h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.auth-card p {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-group {
+  text-align: left;
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px; /* Radius 5px */
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.btn-submit, .btn-login {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 5px; /* Radius 5px */
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  color: #333;
+}
+
+.btn-submit:hover, .btn-login:hover {
+  opacity: 0.9;
+}
+
+.error-view button {
+  padding: 10px 20px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

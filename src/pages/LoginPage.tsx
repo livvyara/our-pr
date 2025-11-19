@@ -5,12 +5,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../constants'; 
 import './LoginPage.css';
 
-// ... (Firebase G imports) ...
 import { 
   signInWithEmailAndPassword, 
   setPersistence, 
   browserLocalPersistence, 
-  browserSessionPersistence 
+  browserSessionPersistence,
+  signOut // [⭐ 1. 추가] signOut (강제 로그아웃용)
 } from 'firebase/auth'; 
 import { auth } from '../firebase-config';
 import logoImage from '../assets/logo.png';
@@ -53,31 +53,23 @@ const LoginPage: React.FC = () => {
   const [saveId, setSaveId] = useState(false);
   const [autoLogin, setAutoLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false); 
-
-  // [⭐ 1. 추가] isMobile 상태 (HomePage.tsx와 동일)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // [⭐ 2. 추가] 반응형 및 저장된 이메일 로드 useEffect
   useEffect(() => {
-    // 2-1. 저장된 이메일 불러오기
     const savedEmail = localStorage.getItem('savedEmail');
     if (savedEmail) {
       setEmail(savedEmail);
       setSaveId(true);
     }
-
-    // 2-2. 윈도우 크기 변경 이벤트 핸들러 (isMobile 상태 관리)
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-
     window.addEventListener('resize', handleResize);
-    // 컴포넌트 언마운트 시 리스너 제거
     return () => window.removeEventListener('resize', handleResize);
+  }, []); 
 
-  }, []); // 빈 배열: 마운트 시 1회만 실행
-
-  // ... (handleLogin, handleNavigation 함수는 동일) ...
+  
+  // [⭐ 2. 수정] handleLogin 함수 (Custom Claim 확인 로직 추가)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -95,27 +87,54 @@ const LoginPage: React.FC = () => {
 
       await setPersistence(auth, persistence);
       
-      await signInWithEmailAndPassword(auth, email, password);
-        
-      if (saveId) {
-        localStorage.setItem('savedEmail', email);
-      } else {
-        localStorage.removeItem('savedEmail');
-      }
+      // 1. Firebase Auth 로그인 (백엔드는 이제 오류를 던지지 않음)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      if (userCredential.user) {
+          // [⭐ 3. 추가] 토큰을 강제 새로고침하여 Cloud Function이 설정한 custom claim을 가져옴
+          await userCredential.user.getIdToken(true); 
+          const idTokenResult = await userCredential.user.getIdTokenResult();
 
-      navigate('/');
+          // [⭐ 4. 추가] custom claim에 'bannedUntil' (낙인)이 있는지 확인
+          if (idTokenResult.claims.bannedUntil) {
+              
+              // 금지 메시지 (Cloud Function에서 설정한 값)
+              const banMessage = idTokenResult.claims.bannedUntil as string;
+              
+              // 팝업으로 금지 메시지 표시
+              alert(banMessage);
+              
+              // [⭐ 5. 추가] 사용자를 즉시 강제 로그아웃시킴
+              await signOut(auth);
+              
+          } else {
+              // [⭐ 6. 수정] 정상 로그인 (금지되지 않음)
+              if (saveId) {
+                localStorage.setItem('savedEmail', email);
+              } else {
+                localStorage.removeItem('savedEmail');
+              }
+              navigate('/'); // 메인 페이지로 이동
+          }
+      } else {
+          throw new Error("사용자 정보를 가져오지 못했습니다.");
+      }
         
     } catch (error: any) {
-        let message = '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+        // [⭐ 7. 수정] 로그인 실패 (아이디/비번 틀림, 함수 오류 등)
+        console.error("로그인 오류:", error.code, error.message);
+        let message = '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
         
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            message = '존재하지 않는 이메일이거나 비밀번호가 일치하지 않습니다.';
+        if (error.code === 'auth/invalid-credential') { 
+            message = '이메일 또는 비밀번호가 올바르지 않습니다.';
         } else if (error.code === 'auth/invalid-email') {
             message = '유효하지 않은 이메일 형식입니다.';
+        } else if (error.code === 'auth/internal-error') {
+            // (Cloud Function이 실행에 실패한 경우)
+            message = '로그인 처리 중 서버 오류가 발생했습니다.';
         }
         
         alert(message);
-        console.error(error); 
         
     } finally {
         setIsLoading(false);
@@ -128,21 +147,16 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="login-page-container">
-      {/* [수정] RoleHeader를 폼 바깥으로 이동 (페이지 상단 고정) */}
       {!isMobile && <RoleHeader />}
 
       <div className="login-box-wrapper">
         <form onSubmit={handleLogin} className="login-form">
           
-          {/* [수정] RoleHeader를 폼 내부에서 제거 */}
-
-          {/* 1. 로고 */}
           <Link to="/"> 
             <img src={logoImage} alt="My WebApp Logo" className="logo-image" />
           </Link>
           <div style={{ height: '48px' }}></div>
 
-          {/* ... (이하 나머지 JSX 코드는 모두 동일) ... */}
           <input 
             type="email" 
             placeholder="이메일" 

@@ -1,0 +1,174 @@
+/* src/components/admin/ApplicationDetailModal.css */
+
+/* 모달 기본 (UserManagementTab.css와 유사) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 700px; /* (정보가 많으므로 너비를 700px로) */
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+/* --- 신청 정보 표시 영역 --- */
+.application-details {
+  display: grid;
+  /* 2열 그리드 (라벨 / 값) */
+  grid-template-columns: 150px 1fr; 
+  gap: 20px 10px; /* (간격 증가) */
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #555;
+  padding-top: 8px; /* (input 높이와 중앙 정렬) */
+}
+
+.detail-value {
+  font-size: 16px;
+}
+
+/* [⭐ 추가] 폼 입력/선택 스타일 (UserManagementTab.css에서 가져옴) */
+.modal-input,
+.modal-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.modal-input:disabled {
+  background-color: #f5f5f5;
+  color: #888;
+}
+
+/* 파일 링크 */
+.detail-file-link {
+  font-weight: bold;
+  color: #007bff;
+  text-decoration: none;
+}
+.detail-file-link:hover {
+  text-decoration: underline;
+}
+.detail-file-link.optional {
+  color: #888;
+  font-weight: normal;
+}
+
+/* --- 승인/부결 처리 영역 --- */
+.processing-section {
+  border-top: 1px solid #eee;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+/* 부결 사유 입력란 */
+.rejection-reason {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-button {
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+}
+
+/* [⭐ 추가] '변경 사항 저장' 버튼 스타일 */
+.btn-save-changes {
+  background-color: #17a2b8; /* (Info color) */
+  color: white;
+}
+.btn-save-changes:disabled {
+  background-color: #ccc;
+}
+
+.btn-approve {
+  background-color: #28a745;
+  color: white;
+}
+.btn-reject {
+  background-color: #dc3545;
+  color: white;
+}
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+.modal-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* [⭐ 추가] 변경 로그(히스토리) 영역 */
+.log-section {
+  border-top: 1px solid #eee;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.log-section h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+.log-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  font-size: 12px;
+  color: #555;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: #f8f8f8;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: 5px;
+}
+.log-entry {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed #ddd;
+}
+.log-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}

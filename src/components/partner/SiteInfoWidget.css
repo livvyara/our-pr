@@ -1,0 +1,146 @@
+/* src/components/partner/SiteInfoWidget.css */
+
+/* [⭐] 이 파일은 SiteDetailPage의 현장 정보(편집) 위젯 전용 스타일입니다. */
+
+/* --- [quadrant-info 내부 폼 스타일] --- */
+.info-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2열 */
+  gap: 10px 20px; /* (세로 10px, 가로 20px) */
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 5px; 
+}
+
+/* [⭐] "라벨(좌) - 입력창(우)" 레이아웃 */
+.form-group {
+  display: flex;
+  flex-direction: row; /* 가로 배치 */
+  align-items: center; /* 세로 중앙 정렬 */
+  gap: 10px; /* 라벨과 입력창 사이 간격 */
+  margin-bottom: 0px;
+}
+.form-group.full-width {
+  grid-column: 1 / -1; 
+}
+
+/* [⭐] 라벨 너비 고정 */
+.form-label {
+  font-weight: bold;
+  font-size: 14px;
+  width: 100px; /* 라벨 너비 고정 (조절 가능) */
+  flex-shrink: 0; /* 줄어들지 않도록 */
+}
+.form-label .required {
+  color: #dc3545; 
+  margin-left: 4px;
+}
+
+/* [⭐] 콤팩트한 입력창 (높이 32px, 폰트 12px) */
+.form-input,
+.form-select { 
+  height: 32px; /* [⭐ 수정] 높이 */
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px; /* [⭐ 수정] 폰트 */
+  box-sizing: border-box; 
+  flex-grow: 1; /* 남은 공간 모두 차지 */
+  width: 100%; 
+}
+
+.info-form-actions {
+  margin-top: 0px;
+  padding-top: 0px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0; 
+  
+  /* [⭐ 추가] 버튼을 가로로 배치 */
+  display: flex;
+  gap: 10px; /* 버튼 사이 간격 */
+}
+.btn-save-changes {
+  /* [⭐ 수정] flex: 1로 균등 분할 */
+  flex: 1;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #28a745; /* (JSX에서 인라인 스타일로 덮어씀) */
+  color: #333;
+  transition: opacity 0.2s;
+}
+.btn-invite-contractor {
+  flex: 1; /* 균등 분할 */
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  
+  /* 튀는 색상 (보라색) */
+  background-color: #6f42c1; 
+  color: white;
+  transition: opacity 0.2s;
+}
+
+.btn-save-changes:disabled {
+  background-color: #ccc;
+}
+
+.site-info-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* 부모(quadrant)의 높이를 100% 채움 */
+}
+
+/* [ ⭐⭐ 2. 추가 ⭐⭐ ] 위젯 헤더 (타이틀 + 상태 드롭다운) */
+.widget-title-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-shrink: 0; /* (헤더는 줄어들지 않음) */
+}
+
+.widget-title-header h3 {
+  margin: 0;
+  font-size: 18px; /* (위젯 타이틀 폰트 크기) */
+}
+
+/* [ ⭐⭐ 3. 추가 ⭐⭐ ] 상태 드롭다운 */
+.site-status-selector {
+  display: flex;
+  align-items: center;
+  font-size: 14px; /* 요청사항: 14px */
+}
+
+.status-label {
+  margin-right: 8px;
+  color: #555;
+  white-space: nowrap;
+  font-size: 14px; /* (CSS에서 폰트 크기 지정) */
+  font-weight: bold; /* [추가] 라벨 텍스트 강조 */
+}
+
+.status-dropdown {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  
+  /* [추가] CSS의 .form-select 스타일과 높이/폰트 맞춤 */
+  height: 32px;
+}
+
+.status-dropdown:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #eee;
+}

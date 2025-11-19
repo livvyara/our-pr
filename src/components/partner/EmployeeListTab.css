@@ -1,0 +1,45 @@
+/* src/components/partner/EmployeeListTab.css */
+/* (UserManagementTab.css의 테이블 스타일 재사용) */
+
+.employee-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 5px; /* (적용 안 될 수 있음) */
+}
+
+.employee-table th,
+.employee-table td {
+  border-bottom: 1px solid #eee;
+  padding: 12px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap; 
+}
+
+.employee-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+
+.employee-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.delete-button {
+  background-color: #dc3545; /* 빨간색 */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+.delete-button:hover {
+  background-color: #c82333;
+}
+.delete-button:disabled {
+  background-color: #ccc;
+}

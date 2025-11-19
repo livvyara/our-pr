@@ -1,0 +1,116 @@
+/* src/components/partner/GalleryModal.css */
+
+/* 1. 모달 배경 (오버레이) */
+.gallery-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 2. 모달 본문 (흰색 박스) */
+.gallery-modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 1000px; /* (기본 너비) */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* (내용이 넘치지 않도록) */
+  position: relative; /* (닫기 버튼용) */
+}
+
+/* 3. 닫기 버튼 */
+.gallery-modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 36px;
+  line-height: 1;
+  color: #fff; /* (배경이 어두울 때 대비) */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  z-index: 1010;
+  padding: 0;
+}
+.gallery-modal-close-btn:hover {
+  color: #ddd;
+}
+
+/* 4. 메인 이미지 래퍼 (줌 영역) */
+.gallery-main-image-wrapper {
+  flex-grow: 1; /* 남은 공간 모두 차지 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #f0f0f0;
+  height: 60vh; /* (최소 높이 확보) */
+}
+
+.gallery-main-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.1s ease-out; /* 줌 트랜지션 */
+  transform-origin: center center;
+  /* [⭐ 수정] 기본 커서 (이동 불가) */
+  cursor: default; 
+}
+
+/* [⭐ 1. 추가] 확대된 상태 (이동 가능: 잡기) */
+.gallery-main-image.zoomed {
+  cursor: grab;
+}
+
+/* [⭐ 2. 추가] 이동 중인 상태 (잡음) */
+.gallery-main-image.zoomed.panning {
+  cursor: grabbing;
+}
+
+
+/* 5. 하단 썸네일 리스트 (가로 스크롤) */
+.gallery-thumbnail-list {
+  flex-shrink: 0; /* 높이 고정 */
+  background-color: #eee;
+  padding: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-top: 1px solid #ccc;
+}
+
+.gallery-thumbnail-item {
+  display: inline-block;
+  width: 80px;
+  height: 60px;
+  margin-right: 10px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.gallery-thumbnail-item:last-child {
+  margin-right: 0;
+}
+
+.gallery-thumbnail-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 활성화된 썸네일 (파란색 테두리) */
+.gallery-thumbnail-item.active {
+  border-color: #007bff;
+}

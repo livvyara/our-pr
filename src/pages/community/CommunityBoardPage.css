@@ -1,0 +1,218 @@
+/* src/pages/community/CommunityBoardPage.css */
+
+.community-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #fff;
+}
+
+.community-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  flex-grow: 1;
+  box-sizing: border-box;
+}
+
+/* 헤더 영역 */
+.community-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.community-header h2 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.community-header p {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* 액션 바 (글쓰기 버튼 등) */
+.board-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.btn-write-community {
+  padding: 10px 24px;
+  background-color: rgb(248, 239, 153); /* 브랜드 컬러 */
+  border: none;
+  border-radius: 5px; /* Radius 5 */
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+.btn-write-community:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* 테이블 스타일 */
+.board-list-wrapper {
+  overflow-x: auto;
+}
+
+.community-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  table-layout: fixed; /* [⭐ 중요] 테이블 셀 너비 고정을 위해 추가 */
+}
+
+.community-table th {
+  border-top: 2px solid #333;
+  border-bottom: 1px solid #ddd;
+  padding: 15px 10px;
+  background-color: #f9f9f9;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+}
+
+.community-table td {
+  border-bottom: 1px solid #eee;
+  padding: 15px 10px;
+  text-align: center;
+  color: #555;
+  vertical-align: middle;
+}
+
+/* 제목 열 스타일 */
+.community-table .post-title {
+  text-align: left;
+  color: #333;
+  font-weight: 500;
+  padding-left: 15px;
+}
+
+/* 행 인터랙션 */
+.post-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.post-row:hover {
+  background-color: #f8f8f8;
+}
+
+.post-row:hover .post-title {
+  text-decoration: underline;
+  color: #000;
+}
+
+/* 데이터 없음/로딩 */
+.no-posts, .loading-state {
+  padding: 60px;
+  text-align: center;
+  color: #999;
+  font-size: 15px;
+}
+
+/* 상태 뱃지 (기능 제안용) */
+.status-badge {
+  font-size: 12px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+}
+.status-badge.pending {
+  background-color: #fff3e0;
+  color: #f57c00;
+  border: 1px solid #ffe0b2;
+}
+.status-badge.completed {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+.admin-filter-bar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.admin-filter-bar button {
+  padding: 6px 14px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-filter-bar button.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+.admin-filter-bar button:hover {
+  background: #f0f0f0;
+}
+
+/* [⭐ 수정] 상태 뱃지 스타일 */
+.status-badge {
+  font-size: 11px;
+  padding: 2px 2px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+}
+.status-badge.pending {
+  background-color: #fff3e0;
+  color: #f57c00;
+  border: 1px solid #ffe0b2;
+}
+.status-badge.completed {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+.status-badge.additional {
+  background-color: #fce4ec; /* 분홍색 */
+  color: #c2185b;
+  border: 1px solid #f8bbd0;
+}
+
+.new-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ff5722;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+.post-author {
+  white-space: nowrap;      /* 줄바꿈 금지 */
+  overflow: hidden;         /* 넘치는 텍스트 숨김 */
+  text-overflow: ellipsis;  /* 말줄임표(...) 표시 */
+  
+  /* [⭐ 중요] 6글자 + ... 이 들어갈 수 있도록 너비 확대 (기존 100px -> 120px) */
+  max-width: 120px;         
+  
+  display: block;           
+  margin: 0 auto;           
+  text-align: center;       /* 텍스트 가운데 정렬 */
+}

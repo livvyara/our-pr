@@ -2,26 +2,35 @@
 
 import React, { useMemo } from 'react';
 import './AdminSidebar.css';
-// [⭐ 1. 수정] 공통 메뉴 파일 임포트
-import { ALL_ADMIN_MENUS, ROLE_MANAGE_MENU, type AdminMenu } from '../admin/adminMenuData'
+import { ALL_ADMIN_MENUS, ROLE_MANAGE_MENU, type AdminMenu } from './adminMenuData';
 
 interface AdminSidebarProps {
   onMenuClick: (menu: string) => void; 
   activeMenu: string; 
-  
-  // [⭐ 2. 추가] 현재 사용자의 role과 허용된 메뉴 목록
   userRole: 'admin' | 'subadmin';
-  allowedMenus: string[]; // (admin의 경우 모든 메뉴, subadmin의 경우 DB에 저장된 메뉴)
+  allowedMenus: string[]; 
+  partnerPendingCount: number; 
+  partnerInfoChangeCount: number; 
+  sellerPendingCount: number; // [⭐ 1. 추가]
+  sellerInfoChangeCount: number; // [⭐ 1. 추가]
+  supporterPendingCount: number; // [⭐ 1. 추가]
+  supporterInfoChangeCount: number; // [⭐ 1. 추가]
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ 
   onMenuClick, 
   activeMenu,
   userRole,
-  allowedMenus 
+  allowedMenus,
+  partnerPendingCount,
+  partnerInfoChangeCount,
+  sellerPendingCount,
+  sellerInfoChangeCount,
+  supporterPendingCount,
+  supporterInfoChangeCount
 }) => {
   
-  // [⭐ 3. 수정] useMemo를 사용해 role과 권한에 따라 메뉴 목록을 필터링
+  // (menusToRender 로직은 변경 없음)
   const menusToRender = useMemo(() => {
     let menus: AdminMenu[] = [];
 
@@ -39,19 +48,36 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     return menus;
   }, [userRole, allowedMenus]);
 
+  // [⭐ 2. 수정] 3종류의 알림 개수 계산
+  const totalPartnerNotifications = partnerPendingCount + partnerInfoChangeCount;
+  const totalSellerNotifications = sellerPendingCount + sellerInfoChangeCount; 
+  const totalSupporterNotifications = supporterPendingCount + supporterInfoChangeCount; // [추가]
 
   return (
     <nav className="admin-sidebar">
       <ul className="admin-menu-list">
         
-        {/* [⭐ 4. 수정] 필터링된 menusToRender를 사용 */}
         {menusToRender.map((menu) => (
           <li key={menu.key}>
             <button
               className={`admin-menu-item ${activeMenu === menu.key ? 'active' : ''}`}
               onClick={() => onMenuClick(menu.key)}
             >
-              {menu.title}
+              <span>{menu.title}</span>
+              
+              {/* [⭐ 3. 수정] 알림 배지 분기 */}
+              {menu.key === 'partner-manage' && totalPartnerNotifications > 0 && (
+                <span className="new-notification">N</span>
+              )}
+              
+              {menu.key === 'seller-manage' && totalSellerNotifications > 0 && (
+                <span className="new-notification">N</span>
+              )}
+
+              {menu.key === 'supporter-manage' && totalSupporterNotifications > 0 && (
+                <span className="new-notification">N</span>
+              )}
+
             </button>
           </li>
         ))}

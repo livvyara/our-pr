@@ -1,0 +1,203 @@
+/* src/components/partner/ConstructionScheduleModal.css */
+
+.schedule-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  display: flex; justify-content: center; align-items: center;
+}
+
+.schedule-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 600px;
+  max-width: 95%;
+  max-height: 90vh;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #333;
+}
+
+/* --- 폼 영역 --- */
+.schedule-form {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group-date, .form-group-check {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group-check {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.form-grid label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+}
+
+.form-grid input[type="date"],
+.form-grid textarea {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-grid textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-group-check input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-right: 5px;
+}
+
+.help-text {
+  font-size: 12px;
+  color: #888;
+  margin: 5px 0 0 0;
+}
+
+/* --- 폼 액션 버튼 --- */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-primary, .btn-cancel {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-primary {
+  background-color: #28a745; /* 브랜드 컬러 (초록색) */
+  color: white;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* --- 리스트 영역 --- */
+.schedule-list-wrapper {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.schedule-list-wrapper h4 {
+  margin: 0 0 10px 0;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+  font-size: 16px;
+  color: #333;
+}
+
+.schedule-list {
+  list-style: none;
+  padding: 0;
+}
+
+.schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.schedule-item.noisy {
+  font-weight: bold;
+  color: #dc3545; /* 시끄러운 날은 적색 볼드체 */
+}
+
+.schedule-info {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.schedule-date {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.schedule-processes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.process-tag {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 11px;
+}
+
+.schedule-controls button {
+  margin-left: 8px;
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  background: #fff;
+}
+.schedule-controls .btn-edit { color: #007bff; border-color: #007bff; }
+.schedule-controls .btn-delete { color: #dc3545; border-color: #dc3545; }
+
+.loading-text, .no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  margin-top: 15px;
+  align-self: flex-end;
+  font-size: 14px;
+}

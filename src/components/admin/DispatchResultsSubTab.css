@@ -1,0 +1,53 @@
+/* src/components/admin/DispatchResultsSubTab.css */
+.dispatch-log-container {
+  padding: 10px;
+}
+.dispatch-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 14px;
+}
+.dispatch-log-table th,
+.dispatch-log-table td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.dispatch-log-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+.dispatch-log-table .col-time {
+  width: 140px;
+  white-space: nowrap;
+}
+.dispatch-log-table .col-admin {
+  width: 100px;
+}
+.dispatch-log-table .col-type {
+  width: 120px;
+}
+.dispatch-log-table .col-count {
+  width: 80px;
+  text-align: center;
+}
+.dispatch-log-table .col-message {
+  word-break: break-all;
+}
+.load-more-button {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+.load-more-button:disabled {
+  background-color: #ccc;
+}

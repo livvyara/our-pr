@@ -1,0 +1,123 @@
+/* src/components/admin/SupporterManagementTab.css */
+
+/* --- 1. 상단 메인 탭 (서포터 관리 / 신규 신청 / 정보 변경) --- */
+.supporter-main-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ccc;
+}
+
+.supporter-tab-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px; 
+}
+
+.supporter-tab-button.active {
+  color: #000;
+  border-bottom-color: #000;
+}
+
+/* (알림 N 아이콘) */
+.new-notification {
+  margin-left: 8px;
+  background-color: #dc3545; 
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%; 
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* --- 2. 탭 콘텐츠 영역 --- */
+.supporter-tab-content {
+  padding: 10px 0;
+}
+
+/* --- [⭐ 3. 추가] 하위 탭 (신청/승인/부결) --- */
+.supporter-sub-tabs {
+  display: flex;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eee;
+}
+
+.supporter-sub-tab-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #555;
+  font-weight: bold;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.supporter-sub-tab-button:hover {
+  background-color: #f8f8f8;
+}
+
+.supporter-sub-tab-button.active {
+  color: #007bff; /* (임시 활성 색상) */
+  border-bottom-color: #007bff;
+}
+
+/* --- 4. (미구현) 서브메뉴 목록 --- */
+.unimplemented-submenu {
+  list-style: none;
+  padding-left: 20px;
+}
+.unimplemented-submenu li {
+  color: #777;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* --- [⭐ 5. 추가] 신청 목록 테이블 --- */
+.application-table-wrapper {
+  overflow-x: auto;
+}
+
+.application-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.application-table th,
+.application-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.application-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+/* 상세 보기 버튼 */
+.detail-button {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+}

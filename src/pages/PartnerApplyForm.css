@@ -1,0 +1,160 @@
+/* src/styles/PartnerApplyForm.css (MyPage 스타일이 적용된 최종본) */
+
+/* --- 1. 폼 전체 레이아웃 (MyPage.css 스타일 적용) --- */
+.partnerapplyform {
+  max-width: 700px; /* [수정] MyPage.css와 너비 통일 */
+  margin: 0 auto;
+  padding: 48px 24px; /* [추가] MyPage.css와 여백 통일 */
+  box-sizing: border-box;
+}
+
+.partnerapplyform .apply-form-title {
+  font-size: 32px; /* [수정] MyPage.css 타이틀과 통일 */
+  font-weight: 700;
+  margin-bottom: 40px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #333;
+}
+
+/* --- 2. 폼 요소 공통 (MyPage.css 스타일 적용) --- */
+.partnerapplyform .form-group {
+  margin-bottom: 36px; /* [수정] MyPage.css와 간격 통일 */
+}
+
+.partnerapplyform .form-label {
+  display: block;
+  margin-bottom: 0px; /* [수정] MyPage.css와 간격 통일 */
+  font-size: 17px; /* [수정] MyPage.css와 폰트 통일 */
+  font-weight: 600;
+  color: #555;
+  min-width: 130px; /* [추가] 줄바꿈 방지 */
+  flex-shrink: 0;
+  
+}
+
+
+.partnerapplyform .form-caption {
+  font-size: 14px; /* [수정] MyPage.css 캡션과 통일 */
+  color: #666;
+  margin-top: -15px;
+  margin-bottom: 25px;
+}
+
+/* [수정] Input/Select 높이 및 폰트 통일 */
+.partnerapplyform .form-input,
+.partnerapplyform .form-select,
+.partnerapplyform .form-file-input {
+  width: 100%;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  line-height: 1.4;
+  background-color: #fff;
+  
+  /* [제거] 고정 height: 40px 제거 */
+}
+
+.partnerapplyform .form-input{
+  width: calc(100% - 140px); 
+  max-width: 100%; 
+  padding: 16px 16px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  line-height: 1.4;
+  height: 48px;}
+
+.partnerapplyform .form-file-input {
+  padding: 12px 16px; /* [수정] MyPage.css와 높이 통일 */
+}
+
+/* [추가] 드롭박스(select) 높이 보정 */
+.partnerapplyform .form-select {
+  height: 48px; /* input 높이와 강제 맞춤 */
+  padding: 0 16px;
+}
+
+.partnerapplyform .form-file-input {
+  height: auto;
+}
+
+/* --- 3. 소재지 (가로 2열) --- */
+.partnerapplyform .location-row {
+  display: flex;
+  gap: 15px;
+}
+.partnerapplyform .location-row .form-group {
+  flex: 1;
+}
+
+/* --- 4. 신청 버튼 (MyPage 브랜드 컬러 적용) --- */
+.partnerapplyform .submit-button {
+  width: 100%;
+  padding: 12px 16px; /* [수정] MyPage.css 버튼과 통일 */
+  font-size: 16px;
+  font-weight: 600; /* [수정] bold -> 600 */
+  
+  /* [수정] 브랜드 컬러 적용 */
+  background-color: rgb(248, 239, 153);
+  border: 1px solid rgb(248, 239, 153);
+  color: #333; /* [수정] black -> #333 */
+  
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
+  box-sizing: border-box;
+  /* [제거] 고정 height: 48px 제거 */
+}
+
+.partnerapplyform .submit-button:hover:not(:disabled) {
+  background-color: rgb(245, 235, 130);
+  border-color: rgb(245, 235, 130);
+  opacity: 1;
+}
+.partnerapplyform .submit-button:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  color: #666;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* --- 5. 접근 거부 UI --- */
+.partnerapplyform .rejection-box {
+  max-width: 800px;
+  margin: 40px auto;
+  text-align: center;
+  padding: 50px;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.partnerapplyform .rejection-text {
+  font-size: 18px;
+  color: #d93025;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+/* [수정] .home-button (MyPage btn-secondary 스타일 적용) */
+.partnerapplyform .home-button {
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #6c757d;
+  color: white;
+  border: 1px solid #6c757d;
+  border-radius: 5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.partnerapplyform .home-button:hover {
+  background-color: #5a6268;
+  border-color: #5a6268;
+}

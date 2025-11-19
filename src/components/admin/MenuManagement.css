@@ -1,0 +1,130 @@
+/* src/components/admin/MenuManagement.css */
+
+.menu-management-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* --- 메뉴 목록 테이블 --- */
+.menu-table-wrapper {
+  overflow-x: auto;
+}
+
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.menu-table th,
+.menu-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.menu-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.menu-table .roles-list {
+  font-size: 12px;
+  color: #555;
+}
+
+.menu-table .actions-cell {
+  width: 100px; /* 버튼 2개용 */
+  text-align: center;
+}
+
+.menu-table .action-button {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+.btn-edit {
+  background-color: #007bff;
+  color: white;
+}
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* --- 메뉴 추가/수정 폼 --- */
+.menu-form-container {
+  border-top: 2px solid #333;
+  padding-top: 20px;
+}
+
+.menu-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 600px;
+  border: 1px solid #eee;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #fdfdfd;
+}
+
+.menu-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-form .form-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.menu-form .form-input {
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.role-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.role-checkbox-label {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.menu-form .form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.form-button {
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+}
+.btn-save {
+  background-color: #28a745;
+  color: white;
+}
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}

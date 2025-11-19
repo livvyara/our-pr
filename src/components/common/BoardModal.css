@@ -1,0 +1,319 @@
+/* src/components/common/BoardModal.css */
+
+/* 모달 배경 */
+.board-modal-backdrop {
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background-color: rgba(0,0,0,0.6);
+  z-index: 3000;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+}
+
+/* 모달 컨텐츠 박스 */
+.board-modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  display: flex; 
+  flex-direction: column;
+  position: relative;
+}
+
+/* 크기 옵션 */
+.board-modal-content.write-mode {
+  width: 600px; 
+  height: 70vh;
+  max-width: 95%;
+}
+
+.board-modal-content.detail-mode {
+  width: 700px; 
+  max-height: 85vh;
+  max-width: 95%;
+}
+
+/* 헤더 영역 */
+.board-modal-header {
+  border-bottom: 2px solid #333;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.board-modal-header h3 { 
+  margin: 0; 
+  font-size: 20px; 
+  color: #333;
+}
+
+/* 상세 보기 헤더 */
+.board-detail-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.detail-category-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #eee;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.detail-title { 
+  margin: 0 0 10px 0; 
+  font-size: 22px; 
+  line-height: 1.4; 
+  color: #333;
+}
+
+.detail-meta { 
+  font-size: 13px; 
+  color: #888; 
+}
+.detail-meta .divider { 
+  margin: 0 8px; 
+  color: #ddd; 
+}
+
+/* 바디 영역 (스크롤) */
+.board-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px;
+}
+
+.board-detail-body {
+  overflow-y: auto;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap; /* 줄바꿈 유지 */
+  font-size: 15px;
+}
+
+/* 폼 그룹 */
+.board-form-group {
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px;
+}
+
+.board-form-group label { 
+  font-weight: bold; 
+  font-size: 14px; 
+  color: #555;
+}
+
+.board-form-group input, 
+.board-form-group textarea {
+  padding: 12px; 
+  border: 1px solid #ccc; 
+  border-radius: 5px; 
+  font-size: 14px;
+  resize: none;
+}
+
+.board-form-group input:focus,
+.board-form-group textarea:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.board-form-group.full-height { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column;
+}
+.board-form-group.full-height textarea {
+  flex: 1;
+}
+
+/* 댓글 섹션 */
+.comment-section {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* flex item overflow fix */
+}
+
+/* 하단 버튼 영역 */
+.board-modal-footer {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 10px;
+}
+
+.btn-close {
+  padding: 10px 20px; 
+  border: 1px solid #ddd; 
+  background: #fff; 
+  border-radius: 5px; 
+  cursor: pointer; 
+  font-weight: bold;
+  color: #555;
+}
+.btn-close:hover { background-color: #f5f5f5; }
+
+.btn-save {
+  padding: 10px 25px; 
+  border: none; 
+  background: rgb(248, 239, 153); /* 브랜드 컬러 */
+  color: #333; 
+  border-radius: 5px; 
+  cursor: pointer; 
+  font-weight: bold;
+}
+.btn-save:hover { opacity: 0.9; }
+.btn-save:disabled { background-color: #eee; color: #aaa; cursor: not-allowed; }
+
+.btn-delete-post {
+  padding: 10px 20px; 
+  border: none; 
+  background: #dc3545; 
+  color: #fff; 
+  border-radius: 5px; 
+  cursor: pointer; 
+  font-weight: bold; 
+  margin-right: auto; /* 왼쪽 정렬 */
+}
+.btn-delete-post:hover { background-color: #c82333; }
+.detail-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.btn-icon-close {
+  background: none; border: none; font-size: 24px; cursor: pointer; color: #999; line-height: 1;
+}
+
+/* [⭐ 추가] 수정 모드 입력창 스타일 */
+.edit-input-title {
+  width: 100%;
+  font-size: 20px;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+
+.edit-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.edit-input-meta {
+  width: 80px;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-left: 5px;
+}
+
+/* [⭐ 중요] 조회 모드 컨텐츠 스타일 (이미지 리사이징) */
+.view-content {
+  line-height: 1.6;
+  color: #333;
+  font-size: 15px;
+}
+
+.view-content img {
+  max-width: 100%; /* 이미지가 팝업 너비를 넘지 않도록 */
+  height: auto;    /* 비율 유지 */
+  cursor: zoom-in; /* 클릭 가능 표시 */
+  border-radius: 4px;
+  margin: 10px 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* 하단 버튼 그룹 분리 */
+.board-modal-footer {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  display: flex; 
+  justify-content: space-between; /* 좌우 배치 */
+  align-items: center;
+}
+
+.left-actions { display: flex; }
+.right-actions { display: flex; gap: 10px; }
+
+/* 수정 버튼 스타일 */
+.btn-edit-post {
+  padding: 10px 20px;
+  border: 1px solid #007bff;
+  background: #fff;
+  color: #007bff;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.btn-edit-post:hover {
+  background: #007bff;
+  color: #fff;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  background: #f8f9fa;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #555;
+}
+
+/* [⭐ 추가] 이미지 확대 모달 (Lightbox) */
+.image-zoom-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 4000; /* 가장 위에 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: zoom-out;
+}
+
+.image-zoom-backdrop img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1);
+  cursor: default;
+}
+
+.btn-zoom-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 40px;
+  cursor: pointer;
+}

@@ -1,0 +1,103 @@
+/* src/components/partner/SiteFilesWidget.css */
+
+.file-widget-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* 부모(quadrant-box)의 높이를 100% 채움 */
+}
+
+/* [⭐ 수정] 2x2 그리드 컨테이너로 변경 */
+.file-category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1; /* 남은 공간을 차지 */
+  overflow-y: auto; /* (필요시 스크롤) */
+
+  /* 2x2 그리드 설정 */
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr; 
+  gap: 15px;
+}
+
+/* [⭐ 수정] 그리드 아이템 스타일 */
+.file-category-item {
+  display: flex;
+  flex-direction: column; /* 썸네일 + 제목/버튼 (세로 배치) */
+  border: 1px solid #eee;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden; /* 썸네일이 둥근 모서리를 넘지 않도록 */
+}
+/*
+.file-category-item:last-child {
+  (그리드에서는 더 이상 필요 없음)
+}
+*/
+
+/* [⭐ 수정] 1. 썸네일 영역 (가로 100%, 비율 유지) */
+.thumbnail-preview {
+  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 16 / 10; /* 썸네일 비율 (조정 가능) */
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #eee; /* 하단 제목과 구분선 */
+  /* (기존) border: 1px dashed #ccc; */
+  border-radius: 0; /* (아이템에서 관리) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  overflow: hidden; 
+}
+.thumbnail-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.category-title-wrapper {
+  flex-grow: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column; /* [⭐ 수정] 세로 배치 */
+  /* [⭐ 수정] 아래 2줄 삭제 또는 flex-start로 변경 */
+  /* align-items: center; */
+  /* justify-content: space-between; */
+}
+.category-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+  /* (제목이 길어질 경우 대비) */
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/*
+.category-file-count {
+  (TSX에서 삭제됨)
+}
+*/
+
+/* 3. 자료등록 버튼 */
+.add-file-button {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  /* margin-left: 10px; <-- [⭐ 수정] 이 줄 삭제 */
+  margin-top: 8px; /* [⭐ 추가] 제목과의 상단 간격 */
+}
+.add-file-button:hover {
+  background-color: #e5e5e5;
+}
+

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { kAppMenus } from '../../types/menuData'; 
+// [⭐ 1. 삭제] kAppMenus 임포트 삭제
+// import { kAppMenus } from '../../types/menuData'; 
 import { K_BRAND_COLOR } from '../../constants';
 import './MobileMenu.css'; // 스타일링을 위한 CSS 파일 임포트
 
@@ -11,6 +12,9 @@ import { auth } from '../../firebase-config';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth'; // 'User' 타입을 분리해서 임포트
 
+// [⭐ 2. 추가] useMenu 컨텍스트 임포트
+import { useMenu } from '../../contexts/MenuContext';
+
 // Props 타입 정의: 닫기 함수를 필수로 받습니다.
 interface MobileMenuProps {
   onClose: () => void;
@@ -18,11 +22,14 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
   const navigate = useNavigate();
-  // 확장된 메뉴의 키를 저장하는 상태 (Flutter의 ExpansionTile 역할)
+  // 확장된 메뉴의 키를 저장하는 상태
   const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
   
   // 현재 사용자 정보 State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // [⭐ 3. 추가] 컨텍스트에서 동적 메뉴 데이터 가져오기
+  const { mainMenus, subMenus: subMenusMap } = useMenu();
 
   // Firebase 인증 상태 실시간 감지
   useEffect(() => {
@@ -43,21 +50,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
     }
   };
 
-  // 메뉴 타이틀 클릭 핸들러 (서브 메뉴 토글)
+  // 메뉴 타이틀 클릭 핸들러
   const handleMenuClick = (key: string) => {
     setOpenMenuKey(openMenuKey === key ? null : key);
   };
   
-  // 라우팅 및 메뉴 닫기 핸들러 (GoRouter goNamed 역할)
+  // 라우팅 및 메뉴 닫기 핸들러
   const handleNavigation = (path: string) => {
     navigate(path);
-    onClose(); // Flutter의 Navigator.pop(context) 역할
+    onClose(); 
   };
 
   return (
     // 오버레이 및 Drawer 배경 역할
     <div className="mobile-menu-overlay" onClick={onClose}>
-      {/* Drawer 내부 컨텐츠 (오버레이 클릭 시 닫히지 않도록 이벤트 전파 막음) */}
+      {/* Drawer 내부 컨텐츠 */}
       <div className="mobile-menu-drawer" onClick={(e) => e.stopPropagation()}>
         <div className="drawer-header">
           <div className="logo-text">My WebApp Logo</div>
@@ -81,7 +88,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
                 className="auth-button signup-btn"
                 style={{ 
                   backgroundColor: K_BRAND_COLOR, 
-                  borderRadius: '5px', // 저장된 요청 반영
+                  borderRadius: '5px', 
                   color: 'black',
                 }}
                 onClick={() => handleNavigation('/mypage')} // 마이페이지 이동
@@ -102,7 +109,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
                 className="auth-button signup-btn"
                 style={{ 
                   backgroundColor: K_BRAND_COLOR, 
-                  borderRadius: '5px', // 저장된 요청 반영
+                  borderRadius: '5px', 
                   color: 'black',
                 }}
                 onClick={() => handleNavigation('/signup')} 
@@ -114,41 +121,41 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
         </div>
 
         <div className="menu-list">
-          {kAppMenus.map((menu) => (
-            <div key={menu.key} className="menu-item">
-              {/* ExpansionTile의 타이틀 부분 */}
-              <button 
-                className="menu-title-button" 
-                onClick={() => handleMenuClick(menu.key)}
-              >
-                <span>{menu.title}</span>
-                {/* trailing 역할: 서브 메뉴가 있으면 아이콘 표시 */}
-                {menu.subMenus.length > 0 && <span>{openMenuKey === menu.key ? '▲' : '▼'}</span>}
-              </button>
+          {/* [⭐ 4. 수정] kAppMenus -> mainMenus */}
+          {mainMenus.map((menu) => {
+            // [⭐ 4. 추가] 현재 메인메뉴의 서브메뉴 목록 가져오기
+            const subMenus = subMenusMap.get(menu.key) || [];
+            
+            return (
+              <div key={menu.key} className="menu-item">
+                {/* ExpansionTile의 타이틀 부분 */}
+                <button 
+                  className="menu-title-button" 
+                  onClick={() => handleMenuClick(menu.key)}
+                >
+                  <span>{menu.title}</span>
+                  {/* [⭐ 4. 수정] subMenus.length로 변경 */}
+                  {subMenus.length > 0 && <span>{openMenuKey === menu.key ? '▲' : '▼'}</span>}
+                </button>
 
-              {/* ExpansionTile의 Children 부분 */}
-              {openMenuKey === menu.key && menu.subMenus.length > 0 && (
-                <div className="sub-menu-list">
-                  
-                  {/* [⭐ 수정된 부분 ⭐] */}
-                  {/* 'subMenuTitle' -> 'subMenu' 객체로 변경 */}
-                  {menu.subMenus.map((subMenu, index) => (
-                    <div 
-                      key={index} 
-                      className="sub-menu-item"
-                      // onClick 시 subMenu.path를 handleNavigation으로 전달
-                      onClick={() => handleNavigation(subMenu.path)}
-                    >
-                      {/* subMenu.title로 텍스트 표시 */}
-                      {subMenu.title}
-                    </div>
-                  ))}
-                  {/* [⭐ 수정 완료 ⭐] */}
-
-                </div>
-              )}
-            </div>
-          ))}
+                {/* ExpansionTile의 Children 부분 */}
+                {openMenuKey === menu.key && subMenus.length > 0 && (
+                  <div className="sub-menu-list">
+                    {/* [⭐ 5. 수정] subMenu 객체 사용 */}
+                    {subMenus.map((subMenu, index) => (
+                      <div 
+                        key={index} 
+                        className="sub-menu-item"
+                        onClick={() => handleNavigation(subMenu.path)}
+                      >
+                        {subMenu.title}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           
           <hr className="divider" />
           

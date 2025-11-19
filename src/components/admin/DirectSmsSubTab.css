@@ -1,0 +1,41 @@
+/* src/components/admin/DirectSmsSubTab.css */
+/* (MarketingSmsSubTab.css 스타일 재사용) */
+.search-bar-group {
+  display: flex;
+  gap: 10px;
+}
+.search-bar-group .sms-input {
+  flex-grow: 1;
+}
+.search-bar-group button {
+  padding: 0 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.search-bar-group button:disabled {
+  background-color: #ccc;
+}
+
+.search-result-box {
+  background-color: #e6f7ff;
+  border: 1px solid #007bff;
+  color: #0056b3;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.clear-target {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #007bff;
+  cursor: pointer;
+}

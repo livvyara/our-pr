@@ -1,0 +1,231 @@
+/* src/components/admin/UserManagementTab.css */
+
+/* --- [⭐ 1. 회원관리 메인 탭 스타일 (신규)] --- */
+/* (UserManagementTab.tsx가 사용) */
+
+.user-main-tabs {
+  display: flex;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
+}
+
+.user-tab-button {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-tab-button:hover {
+  color: #333;
+}
+
+.user-tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.user-tab-button .new-notification {
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.user-tab-content {
+  padding: 10px;
+}
+
+/* --- 하위 탭 (예: 파트너 관리) --- */
+.user-sub-tabs {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+
+.user-sub-tab-button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.user-sub-tab-button.active {
+  color: #007bff;
+  font-weight: bold;
+  border-bottom-color: #007bff;
+}
+
+
+/* --- [⭐ 2. 회원 목록 스타일 (기존 복원)] --- */
+/* (UserListSubTab.tsx가 사용) */
+
+.user-manage-container {
+  padding: 10px;
+}
+
+.user-search-bar {
+  width: 100%;
+  max-width: 400px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.user-table-wrapper {
+  width: 100%;
+  overflow-x: auto; /* 모바일 등에서 가로 스크롤 */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.user-table th,
+.user-table td {
+  border-bottom: 1px solid #eee;
+  padding: 12px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.user-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+
+.user-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* 수정 버튼 (스크린샷의 파란 버튼) */
+.edit-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+.edit-button:hover {
+  background-color: #0056b3;
+}
+
+/* --- [⭐ 3. 수정 모달 스타일 (기존 복원)] --- */
+/* (UserListSubTab.tsx가 사용) */
+
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.edit-modal-content {
+  background-color: white;
+  padding: 20px 25px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.edit-modal-content h3 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+.modal-form-group {
+  margin-bottom: 15px;
+}
+
+.modal-form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.modal-input,
+.modal-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.modal-input:disabled {
+  background-color: #f5f5f5;
+  color: #777;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-save {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-save:disabled {
+  background-color: #ccc;
+}

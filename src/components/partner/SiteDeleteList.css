@@ -1,0 +1,105 @@
+/* src/components/partner/SiteDeleteList.css */
+
+.site-delete-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;      /* [수정] 화면 꽉 차게 */
+  max-width: 100%;  /* [수정] 너비 제한 해제 */
+  padding: 0;       /* [수정] 불필요한 여백 제거 (상위 컨테이너 패딩 따름) */
+}
+
+/* 상단 헤더 (현장 목록과 동일) */
+.section-header {
+  border-bottom: 2px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  margin: 0 0 5px 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.section-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 섹션 구분 타이틀 */
+.list-section h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* 테이블 래퍼 (현장 목록과 동일) */
+.table-wrapper {
+  overflow-x: auto;
+  border-top: 1px solid #333; /* 상단 진한 줄 */
+  margin-bottom: 40px; /* 섹션 간 간격 */
+}
+
+/* 테이블 스타일 (SiteList와 100% 동일하게 맞춤) */
+.delete-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.delete-table th,
+.delete-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px 10px;
+  text-align: left; /* [수정] 좌측 정렬 */
+  white-space: nowrap;
+}
+
+.delete-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #333;
+  text-align: center; /* 헤더만 가운데 정렬 */
+  border-bottom: 1px solid #ccc;
+}
+
+/* 삭제 대기 행 스타일 */
+.row-deleted {
+  background-color: #fff5f5;
+}
+
+.row-deleted td {
+  color: #888;
+}
+
+.empty-cell {
+  text-align: center !important;
+  padding: 50px !important;
+  color: #999;
+}
+
+/* 버튼 스타일 */
+.btn-action {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.btn-action.delete {
+  background-color: #dc3545;
+}
+
+.btn-action.restore {
+  background-color: #28a745;
+}
+
+.btn-action:hover {
+  opacity: 0.9;
+}
