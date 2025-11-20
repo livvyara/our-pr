@@ -1,0 +1,9 @@
+.guide-write-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+.write-form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+.write-form-row select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 200px; }
+.guide-title-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; margin-bottom: 20px; box-sizing: border-box; }
+.editor-wrapper { margin-bottom: 60px; }
+.write-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; padding-top: 20px; }
+.write-actions button { padding: 10px 25px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+.write-actions .btn-cancel { background: #eee; color: #555; }
+.write-actions .btn-save { color: #333; }

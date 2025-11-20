@@ -2,91 +2,86 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// 공통 컴포넌트
 import Header from '../components/common/Header';
 import SubNav from '../components/common/SubNav';
 import MobileMenu from '../components/common/MobileMenu'; 
 import Footer from '../components/common/Footer';
 import RoleHeader from '../components/common/RoleHeader';
 import { K_BRAND_COLOR, CONTENT_MAX_WIDTH } from '../constants'; 
+import './HomePage.css'; 
+import './partnerApply.css'; 
 
-// CSS
-import './HomePage.css'; // 스티키 푸터 레이아웃 (필수)
-import './partnerApply.css'; // 탭 전용 CSS
-
-// ----------------------------------------------------
-// 탭 콘텐츠 데이터 정의
-// ----------------------------------------------------
+// [⭐ 추가] 이미지 에셋 (실제 경로에 맞게 수정 필요, 없으면 placeholder 사용)
+const IMG_DASHBOARD = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop"; 
+const IMG_SCHEDULE = "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=800&auto=format&fit=crop"; 
+// [⭐ 여기를 수정하세요] 더 안정적이고 모바일 현장 관리 느낌이 나는 다른 이미지로 교체
+const IMG_APP = "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=800&auto=format&fit=crop";
+// 다른 대안: "https://images.unsplash.com/photo-1579532501657-3f338d35ed56?q=80&w=800&auto=format&fit=crop"
+// 다른 대안: "https://images.unsplash.com/photo-1522204523234-8729aa67e2e6?q=80&w=800&auto=format&fit=crop"
 const tabsData = [
   {
     key: 'partner',
-    title: '파트너 신청하기',
-    contentTitle: '인테리어 업체이신가요?',
-    // [수정] <p> 태그 대신 React Fragment(<>)를 사용합니다.
-    description: <>아워프로젝트가 제공하는 강력한 기능으로 <br />고객 관리 및 포트폴리오를 관리해보세요.</>,
-    buttonText: '파트너 신청하기'
+    title: '인테리어 파트너',
+    contentTitle: '성공적인 비즈니스를 위한 최고의 파트너',
+    description: (
+      <>
+        아워프로젝트는 인테리어 사업에 필요한 모든 도구를 제공합니다.<br/>
+        고객 관리부터 현장 관리, 정산까지 한 곳에서 해결하세요.
+      </>
+    ),
+    features: [
+      { title: '통합 대시보드', desc: '모든 현황을 한눈에 파악하고 관리하세요.', img: IMG_DASHBOARD },
+      { title: '스마트 일정관리', desc: '공정표 자동 생성 및 알림으로 일정을 놓치지 마세요.', img: IMG_SCHEDULE },
+      { title: '모바일 현장관리', desc: '언제 어디서나 현장 상황을 체크하고 소통하세요.', img: IMG_APP },
+    ],
+    buttonText: '파트너 입점 신청하기'
   },
-]
-// ----------------------------------------------------
+  // (추후 판매자, 시공팀 등 탭 추가 가능)
+];
 
 
 const PartnerApply: React.FC = () => {
-    const navigate = useNavigate();
-  // --- 1. HomePage의 반응형/메뉴 상태 로직 ---
-  const [selectedMenu, setSelectedMenu] = useState('menu3'); 
+  const navigate = useNavigate();
+  const [selectedMenu, setSelectedMenu] = useState(''); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
+  const [activeTab, setActiveTab] = useState('partner');
 
   useEffect(() => {
     const handleResize = () => {
       const isCurrentlyMobile = window.innerWidth < 768;
       setIsMobile(isCurrentlyMobile);
-      if (!isCurrentlyMobile) {
-          setIsMobileMenuOpen(false);
-      }
+      if (!isCurrentlyMobile) setIsMobileMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleMenuSelect = (key: string) => { setSelectedMenu(key); };
-  const handleHamburgerPressed = () => { setIsMobileMenuOpen(true); };
-  const handleMenuClose = () => { setIsMobileMenuOpen(false); };
-
-  // --- 2. [신규] 탭 상태 관리 ---
-  const [activeTab, setActiveTab] = useState('partner'); // 기본 탭
+  const handleMenuSelect = (key: string) => setSelectedMenu(key);
   
-  // 현재 활성화된 탭의 콘텐츠 데이터 찾기
   const currentTabData = tabsData.find(tab => tab.key === activeTab) || tabsData[0];
 
   return (
     <div className="page-container">
-      
       {!isMobile && <RoleHeader />}
-
-      <Header
-        onMenuSelected={handleMenuSelect}
-        isMobile={isMobile}
-        onHamburgerPressed={handleHamburgerPressed}
-      />
-      
+      <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
       {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
 
-      {/* --- 3. [수정] <main> 영역에 래퍼 추가 --- */}
-      <main className="main-content" style={{ padding: isMobile ? '16px' : '32px 20px' }}>
-        
-        {/* [ ⭐⭐ 1. 여기를 수정하세요 ⭐⭐ ] */}
-        {/* className을 "partner-apply"로 변경 */}
-        {/* 불필요한 인라인 style 제거 */}
-        <div className="partner-apply">
+      <main className="main-content partner-apply-wrapper">
+        <div className="partner-apply-container">
+          
+          {/* 1. 헤더 섹션 */}
+          <div className="apply-header">
+            <h2>파트너 신청</h2>
+            <p>아워프로젝트와 함께 성장할 전문가님을 모십니다.</p>
+          </div>
 
-          {/* 3-1. 탭 네비게이션 */}
-          <div className="tab-nav-container">
+          {/* 2. 탭 네비게이션 */}
+          <div className="apply-tabs">
             {tabsData.map(tab => (
               <button
                 key={tab.key}
-                className={`tab-nav-button ${activeTab === tab.key ? 'active' : ''}`}
+                className={`apply-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.key)}
               >
                 {tab.title}
@@ -94,65 +89,50 @@ const PartnerApply: React.FC = () => {
             ))}
           </div>
 
-          {/* 3-2. 탭 콘텐츠 */}
-          <div className="tab-content-area">
-            <h3 className="tab-content-title">{currentTabData.contentTitle}</h3>
-            
-            <p className="tab-content-description">{currentTabData.description}</p>
-            
-            {/* 사용자가 수정한 이미지 갤러리 (그대로 유지) */}
-            <div className="tab-image-gallery">
-              <div className="image-placeholder">이미지 1</div>
-              <h3 className="tab-content-title" style={{ fontSize: '20px', marginTop: '20px' }} 
-              >그림1 설명 </h3>
-            <p className="tab-content-description" style={{ fontSize: '15px' }} >
-                그림1 설명
-            </p>
-              <div className="image-placeholder">이미지 2</div>
-              <h3 className="tab-content-title" style={{ fontSize: '20px', marginTop: '20px' }} 
-              >그림2 설명 </h3>
-            <p className="tab-content-description" style={{ fontSize: '15px' }} >
-                그림2 설명
-            </p>
-              <div className="image-placeholder">이미지 3</div>
-              <h3 className="tab-content-title" style={{ fontSize: '20px', marginTop: '20px' }} 
-              >그림3 설명 </h3>
-            <p className="tab-content-description" style={{ fontSize: '15px' }} >
-                그림3 설명
-            </p>
+          {/* 3. 탭 콘텐츠 */}
+          <div className="apply-content">
+            <div className="content-intro">
+              <h3>{currentTabData.contentTitle}</h3>
+              <p className="intro-desc">{currentTabData.description}</p>
             </div>
 
-            {/* [⭐ 수정] 여기가 오류가 발생한 버튼입니다. */}
-            <button
-              className="apply-button"
-              style={{ 
-                backgroundColor: K_BRAND_COLOR, 
-                borderRadius: '5px'
-              }}
-              onClick={() => { 
-                if (activeTab === 'partner') {
-                  navigate('/apply/partner'); // 파트너 폼으로 이동
-                } else if (activeTab === 'seller') {
-                  // navigate('/apply/seller'); // (셀러 폼 경로)
-                } else if (activeTab === 'contract') {
-                  // navigate('/apply/contract'); // (협력사 폼 경로)
-                }
-              }}
-            >
-              {currentTabData.buttonText}
-            </button> 
-            {/* [⭐ 수정] 닫는 태그가 </button> 인지 확인 */}
-            
+            {/* 기능 소개 그리드 (이미지 + 텍스트) */}
+            <div className="features-grid">
+              {currentTabData.features?.map((feature, idx) => (
+                <div key={idx} className="feature-item">
+                  <div className="feature-img">
+                    <img src={feature.img} alt={feature.title} />
+                  </div>
+                  <h4>{feature.title}</h4>
+                  <p>{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 하단 CTA 버튼 */}
+            <div className="apply-cta">
+              <button
+                className="btn-apply-large"
+                style={{ backgroundColor: K_BRAND_COLOR }}
+                onClick={() => { 
+                  if (activeTab === 'partner') navigate('/apply/partner');
+                  // else navigate(...)
+                }}
+              >
+                {currentTabData.buttonText}
+              </button>
+              <p className="cta-help">
+                * 승인까지 영업일 기준 1~3일이 소요될 수 있습니다.
+              </p>
+            </div>
+
           </div>
-        </div> {/* 래퍼 닫기 */}
+
+        </div>
       </main>
 
       <Footer /> 
-      
-      {/* 모바일 메뉴 오버레이 */}
-      {isMobileMenuOpen && isMobile && (
-        <MobileMenu onClose={handleMenuClose} />
-      )}
+      {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
     </div>
   );
 };

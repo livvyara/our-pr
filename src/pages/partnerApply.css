@@ -1,122 +1,179 @@
-/* src/styles/PartnerApply.css */
+/* src/pages/partnerApply.css */
 
-/* --- 1. 탭 네비게이션 바 (MyPage.css 스타일 적용) --- */
-.partner-apply .tab-nav-container {
-  display: flex;
-  justify-content: center; /* [유지] 파트너 신청 페이지 고유 스타일 */
-  border-bottom: 2px solid #f0f0f0; /* [수정] #eee -> #f0f0f0 */
-  margin-bottom: 48px; /* [수정] 30px -> 48px */
+.partner-apply-wrapper {
+  background-color: #f9f9f9; /* 전체 배경색 */
+  padding-bottom: 60px;
 }
 
-.partner-apply .tab-nav-button {
-  padding: 16px 24px; /* [수정] MyPage와 동일하게 */
-  font-size: 18px; /* [수정] 16px -> 18px */
-  font-weight: 500; /* [수정] bold -> 500 */
-  color: #888;
-  background-color: transparent;
-  border: none;
-  border-bottom: 3px solid transparent; /* [수정] 2px -> 3px */
-  cursor: pointer;
-  margin-bottom: -2px; 
-  transition: color 0.2s, border-color 0.2s;
-  white-space: nowrap;
-}
-
-.partner-apply .tab-nav-button:hover {
-  color: #555; /* [수정] #333 -> #555 */
-}
-
-.partner-apply .tab-nav-button.active {
-  color: #333; /* [수정] #000 -> #333 */
-  font-weight: 700; /* [추가] */
-  border-bottom-color: #333; /* [수정] #000 -> #333 */
-}
-
-/* --- 2. 전체 콘텐츠 정렬 래퍼 --- */
-/* .apply-content-wrapper 대신 .partner-apply를 
-  tsx 파일의 최상위 div에 className="partner-apply"로 적용하는 것을 권장합니다.
-  (MyPage.css의 .mypage-container와 같은 역할)
-*/
-.partner-apply {
-  max-width: 1160px; 
+.partner-apply-container {
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 48px 24px; /* [추가] MyPage와 유사한 여백 */
-  box-sizing: border-box;
+  padding: 40px 20px;
 }
 
-/* --- 3. 탭 콘텐츠 영역 --- */
-.partner-apply .tab-content-area {
-  padding: 20px 0;
-}
-
-.partner-apply .tab-content-title {
-  font-size: 32px; /* [수정] 24px -> 32px (MyPage 타이틀과 통일) */
-  font-weight: 700; /* [수정] bold -> 700 */
-  margin-bottom: 40px; /* [수정] 15px -> 40px */
+/* 헤더 */
+.apply-header {
   text-align: center;
+  margin-bottom: 40px;
 }
-
-.partner-apply .tab-content-description {
+.apply-header h2 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #333;
+}
+.apply-header p {
   font-size: 16px;
-  color: #555;
-  line-height: 1.6;
-  margin-bottom: 30px;
-  text-align: center;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  color: #666;
 }
 
-/* --- 4. 이미지 갤러리 (유지) --- */
-.partner-apply .tab-image-gallery {
+/* 탭 네비게이션 */
+.apply-tabs {
   display: flex;
-  flex-direction: column; 
-  align-items: center; 
-  gap: 20px;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: 40px;
 }
 
-.partner-apply .image-placeholder {
-  width: 100%; 
-  max-width: 600px; 
-  height: 200px;
-  background-color: #f0f0f0;
-  border: 1px dashed #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: #999;
-}
-
-/* --- 5. 신청 버튼 (MyPage .btn-save-changes 스타일 적용) --- */
-.partner-apply .apply-button {
-  width: 100%;
-  padding: 12px 16px; /* [수정] 높이 12px로 적용 */
+.apply-tab-btn {
+  padding: 12px 30px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 30px;
   font-size: 16px;
-  font-weight: 600; /* [수정] bold -> 600 */
-  
-  /* [추가] 요청하신 브랜드 컬러 */
-  background-color: rgb(248, 239, 153);
-  border: 1px solid rgb(248, 239, 153); /* [수정] border: none -> 1px ... */
-  color: #333; /* [수정] black -> #333 */
-  
-  border-radius: 5px; /* 사용자 요청 */
+  font-weight: 600;
+  color: #555;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
-  box-sizing: border-box; 
+  transition: all 0.2s;
 }
 
-.partner-apply .apply-button:hover:not(:disabled) {
-  background-color: rgb(245, 235, 130);
-  border-color: rgb(245, 235, 130);
-  opacity: 1;
+.apply-tab-btn.active {
+  background-color: #333;
+  color: #fff;
+  border-color: #333;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.partner-apply .apply-button:disabled {
-  background-color: #ccc;
-  border-color: #ccc;
+/* 콘텐츠 영역 */
+.apply-content {
+  background-color: #fff;
+  padding: 60px 40px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.content-intro {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.content-intro h3 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.intro-desc {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* 기능 소개 그리드 */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3열 */
+  gap: 30px;
+  margin-bottom: 60px;
+}
+
+.feature-item {
+  text-align: center;
+}
+
+.feature-img {
+  width: 100%; /* 너비 100% */
+  height: 220px; /* 고정 높이 */
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background-color: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex; /* 이미지가 중앙에 오도록 flex 추가 */
+  justify-content: center;
+  align-items: center;
+}
+
+.feature-img img {
+  width: 100%; /* 부모에 맞춰 너비 100% */
+  height: 100%; /* 부모에 맞춰 높이 100% */
+  object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 */
+  object-position: center; 
+  transition: transform 0.4s ease;
+}
+
+.feature-item:hover .feature-img img {
+  transform: scale(1.05);
+}
+
+.feature-item h4 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.feature-item p {
+  font-size: 15px;
   color: #666;
-  opacity: 0.7;
-  cursor: not-allowed;
+  line-height: 1.5;
+}
+
+/* 하단 CTA */
+.apply-cta {
+  text-align: center;
+  margin-top: 40px;
+  border-top: 1px solid #eee;
+  padding-top: 40px;
+}
+
+.btn-apply-large {
+  padding: 18px 60px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.btn-apply-large:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.cta-help {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #888;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr; /* 1열 */
+  }
+  .apply-content {
+    padding: 40px 20px;
+  }
+  .content-intro h3 {
+    font-size: 24px;
+  }
+  .intro-desc {
+    font-size: 16px;
+  }
+  .btn-apply-large {
+    width: 100%;
+    padding: 15px 0;
+  }
 }

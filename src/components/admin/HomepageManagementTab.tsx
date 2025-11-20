@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import './HomepageManagementTab.css';
 import MainMenuManager from './MainMenuManager'; 
 import SubMenuManager from './SubMenuManager'; // [⭐ 1. 추가]
+import GuideManagementTab from './GuideManagementTab';
 
 // Props 정의 (AdminPage로부터 받음 - 현재는 없음)
 interface HomepageManagementTabProps {
@@ -50,10 +51,19 @@ const HomepageManagementTab: React.FC<HomepageManagementTabProps> = () => {
         >
           서브헤더 메뉴관리
         </button>
+      {/* [⭐ 추가] 이용안내 관리 탭 */}
+        <button
+          className={`homepage-tab-button ${activeTab === 'guide' ? 'active' : ''}`}
+          onClick={() => setActiveTab('guide')}
+        >
+          이용안내 관리
+        </button>
       </div>
       
-      {/* 2. 탭 콘텐츠 렌더링 */}
-      {activeTab === 'main-header' ? renderMainHeaderTab() : renderSubHeaderTab()}
+      {activeTab === 'main-header' ? renderMainHeaderTab() : 
+       activeTab === 'sub-header' ? renderSubHeaderTab() : 
+       <GuideManagementTab /> // [⭐ 추가]
+      }
     </div>
   );
 };

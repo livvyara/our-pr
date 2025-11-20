@@ -10,6 +10,8 @@ import PartnerApply from './PartnerApply';
 import PartnerApplyForm from './PartnerApplyForm';
 import CommunityBoardPage from '../pages/community/CommunityBoardPage';
 import AuthActionPage from '../pages/AuthActionPage';
+import GuideMainPC from '../pages/guide/GuideMainPC';
+import GuideWritePage from '../pages/admin/GuideWritePage';
 
 // [⭐ 1. 추가] 파트너 전산 메인 페이지 임포트
 import PartnerProgramPage from './program/PartnerProgramPage';
@@ -86,7 +88,13 @@ function App() {
 />
 {/* [⭐ 추가] 비밀번호 재설정 등 인증 액션 페이지 */}
   <Route path="/auth/action" element={<AuthActionPage />} />
-  
+
+ {/* 이용안내 (유저용) */}
+  <Route path="/guide/mainpc" element={<GuideMainPC />} />
+
+  {/* 이용안내 글쓰기 (관리자용) */}
+  <Route path="/admin/guide/write" element={<GuideWritePage />} />
+
 </Routes>
         
     </MenuProvider>
