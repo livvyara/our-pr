@@ -14,6 +14,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// =============================================================================
+// [Interfaces]
+// =============================================================================
+
 export interface CashReceipt {
   id: string; 
   tradeDate: string;        
@@ -38,14 +42,23 @@ export interface CashReceipt {
   remark2?: string;         
 }
 
+// [수정] status 추가
 interface Site {
   id: string;
   name: string;
+  status: string;
 }
+
+// 현장 상태 목록
+const SITE_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'];
 
 const PROCESS_CATEGORIES = ['식대', '자재', '잡비', '회식', '교통비', '비품', '기타'];
 const SALES_CATEGORIES = ['현금매출', '기타'];
 const LIMIT_PER_PAGE = 20;
+
+// =============================================================================
+// [Main Component]
+// =============================================================================
 
 const AccountingCashReceiptPage: React.FC = () => {
   const [list, setList] = useState<CashReceipt[]>([]);
@@ -72,9 +85,14 @@ const AccountingCashReceiptPage: React.FC = () => {
   const [searchType, setSearchType] = useState<'all' | '매출' | '매입'>('all');
   const [searchVendor, setSearchVendor] = useState('');
 
-  // [NEW] 귀속/미귀속 필터 상태 (기본값: 모두 보기)
-  const [showUnassigned, setShowUnassigned] = useState(true); // 미귀속
-  const [showAssigned, setShowAssigned] = useState(true);     // 귀속
+  // [NEW] 현장 선택 관련 상태
+  const [searchSiteId, setSearchSiteId] = useState<string>(''); 
+  const [searchSiteName, setSearchSiteName] = useState<string>('전체 현장');
+  const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
+
+  // 귀속/미귀속 필터
+  const [showUnassigned, setShowUnassigned] = useState(true);
+  const [showAssigned, setShowAssigned] = useState(true);
 
   const [dateMode, setDateMode] = useState<'custom' | 'month' | 'quarter'>('custom');
   const [selYear, setSelYear] = useState(new Date().getFullYear());
@@ -100,15 +118,14 @@ const AccountingCashReceiptPage: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // 필터 변경 시 재조회 (귀속 필터 포함)
+  // 필터 변경 시 재조회 (현장 필터 추가됨)
   useEffect(() => {
     if (currentUid) {
         fetchData(true);    
         fetchSummary();     
     }
-  }, [currentUid, searchStartDate, searchEndDate, searchType, showUnassigned, showAssigned]); // 의존성 추가
+  }, [currentUid, searchStartDate, searchEndDate, searchType, showUnassigned, showAssigned, searchSiteId]);
 
-  // 검색어 변경 시 (리스트만 갱신)
   useEffect(() => {
       if(currentUid) fetchData(true);
   }, [searchVendor]);
@@ -141,32 +158,29 @@ const AccountingCashReceiptPage: React.FC = () => {
       const snap = await getDocs(userSitesRef);
       const sites: Site[] = [];
       snap.forEach(doc => {
-        sites.push({ id: doc.id, name: doc.data().siteName });
+        // status 필드 추가
+        sites.push({ id: doc.id, name: doc.data().siteName, status: doc.data().status || '공사중' });
       });
       setSiteList(sites);
     } catch (e) { console.error(e); }
   };
 
   // ==================================================================
-  // 합계 계산 (필터 적용을 위해 직접 계산 방식 우선 사용)
+  // 합계 계산
   // ==================================================================
   const fetchSummary = async () => {
       if (!currentUid) return;
 
-      // 하나라도 필터가 꺼져있으면(부분 조회면) 서버 집계 대신 직접 계산 사용
-      // (Firestore 집계 쿼리는 단순 where만 지원하므로 복잡한 필터링엔 부적합할 수 있음)
-      const useManualCalc = !showUnassigned || !showAssigned;
+      // 현장 선택됨 OR 부분 필터링 -> 직접 계산
+      const useManualCalc = searchSiteId !== '' || !showUnassigned || !showAssigned;
 
       try {
           if (!useManualCalc) {
-              // 1. 필터 없을 땐 빠른 서버 집계 사용 (인덱스 필요)
               await calculateSummaryServer();
           } else {
-              // 2. 필터 있을 땐 직접 계산 (정확도 우선)
               await calculateSummaryManually();
           }
       } catch (e) {
-          // 서버 집계 실패 시(인덱스 없음 등) 직접 계산으로 Fallback
           await calculateSummaryManually();
       }
   };
@@ -186,25 +200,26 @@ const AccountingCashReceiptPage: React.FC = () => {
       let pCount=0, pSupply=0, pTax=0, pTotal=0;
 
       if (searchType === 'all' || searchType === '매출') {
-          const snap = await getAggregateFromServer(createSumQuery('CASH_SALES'), {
+          const salesSnapshot = await getAggregateFromServer(createSumQuery('CASH_SALES'), {
               count: count(), totalSupply: sum('supplyAmount'), totalTax: sum('taxAmount'), totalAmt: sum('totalAmount')
           });
-          const d = snap.data();
+          const d = salesSnapshot.data();
           sCount=d.count; sSupply=d.totalSupply; sTax=d.totalTax; sTotal=d.totalAmt;
       }
       if (searchType === 'all' || searchType === '매입') {
-          const snap = await getAggregateFromServer(createSumQuery('CASH_PURCHASE'), {
+          const purchaseSnapshot = await getAggregateFromServer(createSumQuery('CASH_PURCHASE'), {
               count: count(), totalSupply: sum('supplyAmount'), totalTax: sum('taxAmount'), totalAmt: sum('totalAmount')
           });
-          const d = snap.data();
+          const d = purchaseSnapshot.data();
           pCount=d.count; pSupply=d.totalSupply; pTax=d.totalTax; pTotal=d.totalAmt;
       }
       setSummary({ salesCount: sCount, salesSupply: sSupply, salesTax: sTax, salesTotal: sTotal, purchaseCount: pCount, purchaseSupply: pSupply, purchaseTax: pTax, purchaseTotal: pTotal });
   };
 
-  // [직접 계산] - 귀속/미귀속 필터 적용
+  // [직접 계산]
   const calculateSummaryManually = async () => {
       if (!currentUid) return;
+      
       const createQuery = (colName: string) => query(
           collection(db, 'users', currentUid, colName),
           where('tradeDate', '>=', searchStartDate),
@@ -217,16 +232,26 @@ const AccountingCashReceiptPage: React.FC = () => {
       const calc = (snap: any, isSales: boolean) => {
           snap.forEach((d: any) => {
               const v = d.data();
-              const isAssigned = !!v.siteId; // 현장ID가 있으면 귀속
+              const itemSiteId = v.siteId || '';
+              const isAssigned = !!itemSiteId; 
 
-              // [필터링 로직]
-              if (!showUnassigned && !isAssigned) return; // 미귀속 끄기 -> 미귀속이면 건너뜀
-              if (!showAssigned && isAssigned) return;    // 귀속 끄기 -> 귀속이면 건너뜀
+              // 1. 현장 필터
+              if (searchSiteId && itemSiteId !== searchSiteId) return;
+
+              // 2. 귀속/미귀속 필터 (전체 현장일 때만)
+              if (!searchSiteId) {
+                  if (!showUnassigned && !isAssigned) return; 
+                  if (!showAssigned && isAssigned) return;    
+              }
+
+              const supply = Number(v.supplyAmount) || 0;
+              const tax = Number(v.taxAmount) || 0;
+              const total = Number(v.totalAmount) || 0;
 
               if (isSales) {
-                  sCount++; sSupply+=(v.supplyAmount||0); sTax+=(v.taxAmount||0); sTotal+=(v.totalAmount||0);
+                  sCount++; sSupply+=supply; sTax+=tax; sTotal+=total;
               } else {
-                  pCount++; pSupply+=(v.supplyAmount||0); pTax+=(v.taxAmount||0); pTotal+=(v.totalAmount||0);
+                  pCount++; pSupply+=supply; pTax+=tax; pTotal+=total;
               }
           });
       };
@@ -266,7 +291,7 @@ const AccountingCashReceiptPage: React.FC = () => {
                 where('tradeDate', '>=', searchStartDate),
                 where('tradeDate', '<=', searchEndDate),
                 orderBy('tradeDate', 'desc'),
-                limit(LIMIT_PER_PAGE)
+                limit(LIMIT_PER_PAGE * 2) // 필터링 고려 넉넉히
             );
             if (lastDoc) q = query(q, startAfter(lastDoc));
             return q;
@@ -277,13 +302,18 @@ const AccountingCashReceiptPage: React.FC = () => {
             snap.forEach((doc: any) => {
                 const d = doc.data();
                 
-                // 1. 검색어 필터링
+                // 1. 검색어
                 if (searchVendor && !d.franchiseName.includes(searchVendor)) return;
 
-                // 2. [NEW] 귀속/미귀속 필터링
+                // 2. 현장 필터
+                if (searchSiteId && d.siteId !== searchSiteId) return;
+
+                // 3. 귀속/미귀속 필터
                 const isAssigned = !!d.siteId;
-                if (!showUnassigned && !isAssigned) return; // 미귀속 숨김
-                if (!showAssigned && isAssigned) return;    // 귀속 숨김
+                if (!searchSiteId) {
+                    if (!showUnassigned && !isAssigned) return;
+                    if (!showAssigned && isAssigned) return;
+                }
 
                 items.push({
                     id: doc.id,
@@ -323,21 +353,17 @@ const AccountingCashReceiptPage: React.FC = () => {
 
         newItems.sort((a, b) => new Date(b.tradeDate).getTime() - new Date(a.tradeDate).getTime());
 
-        if (isReset) setList(newItems);
-        else setList(prev => [...prev, ...newItems]);
+        // 페이지네이션 컷
+        const finalItems = newItems.slice(0, LIMIT_PER_PAGE);
+
+        if (isReset) setList(finalItems);
+        else setList(prev => [...prev, ...finalItems]);
 
         setLastSalesDoc(currentLastSales);
         setLastPurchaseDoc(currentLastPurchase);
 
-        // 더 불러올 데이터가 없으면 버튼 숨김 (필터링 때문에 실제 데이터보다 적게 로드될 수 있음)
-        if (newItems.length === 0 && (currentLastSales || currentLastPurchase)) {
-             // 주의: 필터링으로 인해 이번 페이지가 0건일 수도 있음. 
-             // 완전히 끝인지 알기 어려우므로, 스냅샷이 비었는지를 기준으로 해야하나, 
-             // 현재 구조상 사용자 편의를 위해 데이터가 0건이면 더보기 중단 처리함.
-             setHasMore(false); 
-        } else if (newItems.length === 0) {
-             setHasMore(false);
-        }
+        if (newItems.length === 0) setHasMore(false);
+        else setHasMore(true);
 
     } catch (error) {
         console.error("Data Load Error:", error);
@@ -354,7 +380,6 @@ const AccountingCashReceiptPage: React.FC = () => {
           const docRef = doc(db, 'users', currentUid, collectionName, id);
           await updateDoc(docRef, { [field]: value });
           
-          // 값이 변경되면(특히 siteId) 합계나 리스트에 영향을 줄 수 있으므로 합계만 재계산
           if (field === 'siteId') fetchSummary();
 
       } catch (e) { console.error("저장 실패:", e); }
@@ -409,8 +434,21 @@ const AccountingCashReceiptPage: React.FC = () => {
                           <option value="매입">매입</option>
                       </select>
                   </div>
-                  
-                  {/* [NEW] 귀속/미귀속 체크박스 */}
+
+                  {/* [NEW] 현장 선택 버튼 */}
+                  <div className="filter-item" style={{marginLeft:'10px'}}>
+                      <button 
+                        onClick={() => setIsSiteModalOpen(true)}
+                        style={{
+                            padding:'0 15px', height:'38px', 
+                            background:'#fff', border:'1px solid #ccc', borderRadius:'5px',
+                            cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center', gap:'5px'
+                        }}
+                      >
+                          <span style={{fontSize:'16px'}}>🏗️</span> {searchSiteName}
+                      </button>
+                  </div>
+
                   <div className="filter-item checkbox-group" style={{marginLeft:'10px', display:'flex', gap:'10px'}}>
                       <label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}>
                           <input 
@@ -440,6 +478,7 @@ const AccountingCashReceiptPage: React.FC = () => {
           </div>
       </div>
 
+      {/* 요약 카드 */}
       <div className="summary-section">
           <div className="summary-card sales">
               <div className="card-header">🔵 현금 매출 ({summary.salesCount}건)</div>
@@ -459,7 +498,6 @@ const AccountingCashReceiptPage: React.FC = () => {
           </div>
       </div>
 
-      {/* 리스트 테이블 (기존 코드 동일) */}
       <div className="hometax-result-section">
         <div className="result-table-wrapper">
           <table className="hometax-table">
@@ -493,18 +531,7 @@ const AccountingCashReceiptPage: React.FC = () => {
                         <span className={`type-badge ${item.inOut === '매출' ? 'sales' : 'purchase'}`}>{item.inOut}</span>
                     </td>
                     <td style={{textAlign:'center', fontSize:'12px', color:'#666'}}>{item.type}</td>
-                    <td 
-                        className="vendor-name-cell"
-                        title={item.franchiseName}
-                        onClick={() => setSelectedReceipt(item)}
-                        style={{
-                          textAlign: 'center',
-                          maxWidth: '140px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                    >
+                    <td className="vendor-name-cell" title={item.franchiseName} onClick={() => setSelectedReceipt(item)} style={{textAlign: 'center', maxWidth: '140px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                         {item.franchiseName}
                     </td>
                     <td style={{textAlign:'center', width:'90px', ...separatorStyle, borderRight:'none'}}>
@@ -591,8 +618,111 @@ const AccountingCashReceiptPage: React.FC = () => {
           onUpdate={(field, value) => handleFieldChange(selectedReceipt.id, selectedReceipt.inOut, field, value)}
         />
       )}
+
+      {/* [NEW] 현장 선택 모달 */}
+      {isSiteModalOpen && (
+        <SiteSelectionModal
+            sites={siteList}
+            onClose={() => setIsSiteModalOpen(false)}
+            onSelect={(siteId, siteName) => {
+                setSearchSiteId(siteId);
+                setSearchSiteName(siteName);
+                setIsSiteModalOpen(false);
+            }}
+        />
+      )}
     </div>
   );
+};
+
+// =============================================================================
+// [Sub Component] SiteSelectionModal (현장 선택 팝업 - 재사용)
+// =============================================================================
+const SiteSelectionModal: React.FC<{
+    sites: Site[],
+    onClose: () => void,
+    onSelect: (id: string, name: string) => void
+}> = ({ sites, onClose, onSelect }) => {
+    
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['공사중', '공사전', '미팅중', '계약대기', '계약완료']);
+
+    const filteredSites = sites.filter(site => {
+        const matchesSearch = site.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = selectedStatuses.includes(site.status);
+        return matchesSearch && matchesStatus;
+    });
+
+    const handleStatusChange = (status: string) => {
+        setSelectedStatuses(prev => 
+            prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+        );
+    };
+
+    return (
+        <div className="invoice-modal-backdrop" onClick={onClose} style={{zIndex: 2000}}>
+            <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width: '500px', maxHeight: '80vh', padding: '20px'}}>
+                <div style={{borderBottom:'1px solid #eee', paddingBottom:'10px', marginBottom:'15px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                    <h3 style={{margin:0}}>현장 선택</h3>
+                    <button onClick={onClose} style={{border:'none', background:'transparent', fontSize:'20px', cursor:'pointer'}}>×</button>
+                </div>
+
+                {/* 1. 검색창 */}
+                <div style={{marginBottom:'15px'}}>
+                    <input 
+                        type="text" 
+                        placeholder="현장명 검색..." 
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        style={{width:'100%', padding:'8px', borderRadius:'5px', border:'1px solid #ddd'}}
+                    />
+                </div>
+
+                {/* 2. 상태 필터 */}
+                <div style={{marginBottom:'15px', display:'flex', flexWrap:'wrap', gap:'8px'}}>
+                    {SITE_STATUSES.map(status => (
+                        <label key={status} style={{fontSize:'12px', cursor:'pointer', display:'flex', alignItems:'center', padding:'4px 8px', background:'#f5f5f5', borderRadius:'15px'}}>
+                            <input 
+                                type="checkbox" 
+                                checked={selectedStatuses.includes(status)}
+                                onChange={() => handleStatusChange(status)}
+                                style={{marginRight:'4px'}}
+                            />
+                            {status}
+                        </label>
+                    ))}
+                </div>
+
+                {/* 3. 현장 리스트 */}
+                <div style={{height:'300px', overflowY:'auto', border:'1px solid #eee', borderRadius:'5px'}}>
+                    {/* 전체 선택 버튼 */}
+                    <div 
+                        onClick={() => onSelect('', '전체 현장')}
+                        style={{padding:'10px', borderBottom:'1px solid #eee', cursor:'pointer', fontWeight:'bold', background:'#f9f9f9'}}
+                    >
+                        🏢 전체 현장 보기
+                    </div>
+
+                    {filteredSites.length > 0 ? (
+                        filteredSites.map(site => (
+                            <div 
+                                key={site.id} 
+                                onClick={() => onSelect(site.id, site.name)}
+                                style={{padding:'10px', borderBottom:'1px solid #f0f0f0', cursor:'pointer', display:'flex', justifyContent:'space-between'}}
+                                onMouseOver={(e) => e.currentTarget.style.background = '#f0f8ff'}
+                                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                                <span>{site.name}</span>
+                                <span style={{fontSize:'11px', color:'#888', background:'#eee', padding:'2px 6px', borderRadius:'4px'}}>{site.status}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{padding:'20px', textAlign:'center', color:'#999'}}>검색된 현장이 없습니다.</div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 // (CashReceiptModal 컴포넌트는 기존과 동일 - 생략하지 않고 포함)
@@ -635,18 +765,11 @@ const CashReceiptModal: React.FC<{
                     <div className="invoice-footer-section">
                         <div className="remarks-row">
                             <div className="remark-box">
-                                <label>비고 (홈택스)</label>
-                                <div className="text-content">{receipt.remark || "-"}</div>
+                                <label>비고 (홈택스)</label><div className="text-content">{receipt.remark || "-"}</div>
                             </div>
                             <div className="remark-box user-memo">
                                 <label>메모 (비고2)</label>
-                                <textarea 
-                                    className="memo-input"
-                                    placeholder="사용자 메모 입력..."
-                                    value={memo}
-                                    onChange={(e) => setMemo(e.target.value)}
-                                    onBlur={() => { if (memo !== receipt.remark2) onUpdate('remark2', memo); }}
-                                />
+                                <textarea className="memo-input" placeholder="사용자 메모 입력..." value={memo} onChange={(e) => setMemo(e.target.value)} onBlur={() => { if (memo !== receipt.remark2) onUpdate('remark2', memo); }} />
                             </div>
                         </div>
                     </div>
