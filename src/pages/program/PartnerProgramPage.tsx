@@ -24,6 +24,7 @@ import DashboardSiteListWidget from '../../components/partner/DashboardSiteListW
 import AccountingHometaxPage from './AccountingHometaxPage';
 // [⭐ 추가] 세금계산서 통합 조회 페이지 임포트
 import AccountingTaxInvoicePage from './AccountingTaxInvoicePage'; 
+import AccountingCashReceiptPage from './AccountingCashReceiptPage'; 
 
 import WorkLogPage from './WorkLogPage';
 import SiteDeleteList from '../../components/partner/SiteDeleteList';
@@ -213,9 +214,8 @@ const PartnerProgramPage: React.FC = () => {
                   <Route path="accounting-sales" element={<ProtectedContent requiredPerm="accounting-sales"><h2>매출자료 등록(제공예정)</h2></ProtectedContent>} />
                   <Route path="accounting-purchase" element={<ProtectedContent requiredPerm="accounting-purchase"><h2>매입자료 등록(제공예정)</h2></ProtectedContent>} />
                   <Route path="accounting-hometax" element={<ProtectedContent requiredPerm="accounting"><AccountingHometaxPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                  
-                  {/* [⭐ 추가됨] 세금계산서 통합 조회 페이지 */}
                   <Route path="accounting-tax-invoice" element={<ProtectedContent requiredPerm="accounting"><AccountingTaxInvoicePage /></ProtectedContent>} />
+                  <Route path="accounting-cash-receipt" element={<ProtectedContent requiredPerm="accounting"><AccountingCashReceiptPage /></ProtectedContent>} />
 
                   <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
                   <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />

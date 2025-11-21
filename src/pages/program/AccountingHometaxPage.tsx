@@ -17,7 +17,8 @@ const db = getFirestore(app);
 const ICON_CERT = "🔒";
 const ICON_HOMETAX = "🏠";
 
-// --- [OID 매핑 테이블] ---
+// ... (OID 매핑 테이블 및 CertInfo, TaxInvoiceData 인터페이스 등 기존 코드 생략 - 동일함) ...
+// [OID 매핑 테이블]
 const CERT_POLICY_OID: { [key: string]: string } = {
     "1.2.410.200004.5.2.1.2": "법인(범용)",
     "1.2.410.200004.5.2.1.1": "개인(범용)",
@@ -52,7 +53,7 @@ interface Props {
 interface TaxInvoiceData {
   id: string;
   date: string;
-  type: '세금계산서' | '현금영수증' | '신용카드';
+  type: '세금계산서' | '현금영수증' 
   inOut: '매입' | '매출';
   vendorName: string; 
   amount: number; 
@@ -75,7 +76,7 @@ const readFileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-// [헬퍼] 인증서 파일 분석
+// [헬퍼] 인증서 파일 분석 (기존과 동일)
 const parseCertFile = (file: File): Promise<CertInfo> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -143,13 +144,23 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
   const [isKeypadModalOpen, setIsKeypadModalOpen] = useState(false);
 
   const [dataList, setDataList] = useState<TaxInvoiceData[]>([]);
+  
+  // [수정] 수집 유형 상태 추가
+  const [scrapeType, setScrapeType] = useState<'tax_invoice' | 'cash_receipt'>('tax_invoice');
+
+  // 세금계산서용 날짜 상태
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 7) + '-01');
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // debugImage 관련 state 삭제
+  // [수정] 현금영수증용 연도 상태 (기본값: 현재 연도)
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
+
+  // 최근 3개년 옵션 생성
+  const yearOptions = [currentYear, currentYear - 1, currentYear - 2];
 
   // 1. 초기 로드
   useEffect(() => {
@@ -172,7 +183,7 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
     checkCert();
   }, [partnerUid]);
 
-  // 2. 실시간 리스너
+  // 2. 실시간 리스너 (기존 유지)
   useEffect(() => {
     if (!isScraping || !partnerUid || !currentSessionId) return;
 
@@ -201,17 +212,20 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
   }, [isScraping, partnerUid, currentSessionId]); 
 
 
-  // 3. 수집 시작 핸들러
+  // 3. 수집 시작 핸들러 (수정됨)
   const handleStartScraping = async () => {
     if (!partnerUid) return;
     if (!isCertRegistered) return alert("먼저 홈택스 공동인증서를 등록해주세요.");
     if (isScraping) return;
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)); 
-    if (diffDays > 90) return alert("조회 기간은 최대 90일까지만 설정 가능합니다.");
-    if (start > end) return alert("종료일이 시작일보다 앞설 수 없습니다.");
+    // [수정] 세금계산서일 때만 날짜 유효성 검사 진행
+    if (scrapeType === 'tax_invoice') {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)); 
+        if (diffDays > 90) return alert("조회 기간은 최대 90일까지만 설정 가능합니다.");
+        if (start > end) return alert("종료일이 시작일보다 앞설 수 없습니다.");
+    }
 
     const certData = localStorage.getItem(`hometax_cert_${partnerUid}`);
     if (!certData) return alert("브라우저에 저장된 인증서 정보가 없습니다. 다시 등록해주세요.");
@@ -224,7 +238,6 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
     setCurrentSessionId(newSessionId);
 
     setIsScraping(true);
-    // setDebugImage(null); // 삭제됨
     setKeypadRequest(null);
     setDataList([]); 
     setCompletionMessage(null);
@@ -234,36 +247,49 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
       
       const scrapFunc = httpsCallable(functions, 'scrapHometaxData', { timeout: 300000 });
       
-      const result: any = await scrapFunc({
-          startDate: startDate.replace(/-/g, ''), 
-          endDate: endDate.replace(/-/g, ''),
+      // [수정] Payload 구성: 수집 타입과 연도 정보 추가
+      const payload: any = {
           certFileDer: der,
           certFileKey: key,
           certPassword: password,
           partnerUid: partnerUid,
-          sessionId: newSessionId
-      });
+          sessionId: newSessionId,
+          scrapeType: scrapeType // 'tax_invoice' or 'cash_receipt'
+      };
+
+      if (scrapeType === 'tax_invoice') {
+          payload.startDate = startDate.replace(/-/g, '');
+          payload.endDate = endDate.replace(/-/g, '');
+      } else {
+          // 현금영수증인 경우 선택한 연도 전달 (백엔드에서 1~4분기 처리)
+          payload.targetYear = selectedYear;
+      }
+
+      const result: any = await scrapFunc(payload);
 
       setScrapingStep("완료");
       
-      // 스크린샷 로직 삭제됨
-
       if (result.data.success) {
-          setCompletionMessage("서버에서 수집요청한 자료를 정리중입니다.\n잠시 후 [회계관리-세금계산서] 페이지에서 확인해 주세요.");
+          let msg = "";
+          if (scrapeType === 'tax_invoice') {
+            msg = "서버에서 세금계산서 수집요청한 자료를 정리중입니다.\n잠시 후 [회계관리-세금계산서] 페이지에서 확인해 주세요.";
+          } else {
+            msg = `서버에서 ${selectedYear}년도(1~4분기) 현금영수증 자료를 정리중입니다.\n잠시 후 [회계관리-현금영수증] 페이지에서 확인해 주세요.`;
+          }
+          setCompletionMessage(msg);
       } else {
           throw new Error(result.data.message || "수집 실패");
       }
 
     } catch (e: any) {
       console.error("Scraping Error:", e);
-      // 스크린샷 표시 로직 삭제됨
 
       if (e.code === 'deadline-exceeded' || e.message.includes('timeout')) {
-          setCompletionMessage("서버에서 수집요청한 자료를 정리중입니다.\n잠시 후 [회계관리-세금계산서] 페이지에서 확인해 주세요.");
+          setCompletionMessage("서버에서 수집요청한 자료를 정리중입니다.\n잠시 후 해당 페이지에서 확인해 주세요.");
       } else if (e.details && e.details.isWrongPassword) {
           alert("❌ 비밀번호가 일치하지 않습니다.\n다시 시도해주세요.");
       } else {
-          setCompletionMessage("수집 요청이 접수되었습니다.\n잠시 후 [회계관리-세금계산서] 페이지에서 확인해 주세요.");
+          setCompletionMessage("수집 요청이 접수되었습니다.\n잠시 후 해당 페이지에서 확인해 주세요.");
       }
 
     } finally {
@@ -278,7 +304,7 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
     <div className="hometax-page-container">
       <div className="hometax-header">
         <h2>홈택스 자동 수집</h2>
-        <p>세금계산서, 현금영수증, 신용카드 내역을 홈택스에서 자동으로 가져옵니다.</p>
+        <p>세금계산서, 현금영수증 내역을 홈택스에서 자동으로 가져옵니다.</p>
       </div>
 
       <div className="hometax-top-grid">
@@ -306,24 +332,77 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
 
         <div className="hometax-card scrape-card">
           <div className="card-title"><span className="icon">{ICON_HOMETAX}</span> 자료 수집 실행</div>
-          <div className="date-range-picker">
-            <div className="date-input-group">
-              <label>시작일</label>
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-            </div>
-            <span className="tilde">~</span>
-            <div className="date-input-group">
-              <label>종료일</label>
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-            </div>
+          
+          {/* [수정] 수집 유형 선택 라디오 버튼 */}
+          <div className="scrape-type-selector" style={{ marginBottom: '15px', padding: '10px', background: '#f1f3f5', borderRadius: '5px' }}>
+              <label style={{ marginRight: '15px', cursor: 'pointer', fontWeight: scrapeType === 'tax_invoice' ? 'bold' : 'normal' }}>
+                  <input 
+                      type="radio" 
+                      name="scrapeType" 
+                      checked={scrapeType === 'tax_invoice'} 
+                      onChange={() => setScrapeType('tax_invoice')}
+                      disabled={isScraping}
+                      style={{ marginRight: '5px' }}
+                  />
+                  세금계산서
+              </label>
+              <label style={{ cursor: 'pointer', fontWeight: scrapeType === 'cash_receipt' ? 'bold' : 'normal' }}>
+                  <input 
+                      type="radio" 
+                      name="scrapeType" 
+                      checked={scrapeType === 'cash_receipt'} 
+                      onChange={() => setScrapeType('cash_receipt')}
+                      disabled={isScraping}
+                      style={{ marginRight: '5px' }}
+                  />
+                  현금영수증
+              </label>
           </div>
+
+          {/* 세금계산서 선택 시: 기존 날짜 범위 선택 */}
+          {scrapeType === 'tax_invoice' && (
+              <div className="date-range-picker">
+                <div className="date-input-group">
+                  <label>시작일</label>
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} disabled={isScraping} />
+                </div>
+                <span className="tilde">~</span>
+                <div className="date-input-group">
+                  <label>종료일</label>
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} disabled={isScraping} />
+                </div>
+              </div>
+          )}
+
+          {/* [수정] 현금영수증 선택 시: 연도 선택 Dropdown */}
+          {scrapeType === 'cash_receipt' && (
+              <div className="year-picker" style={{ marginBottom: '20px' }}>
+                  <div className="date-input-group" style={{ width: '100%' }}>
+                      <label>수집 연도 (최근 3년)</label>
+                      <select 
+                          value={selectedYear} 
+                          onChange={(e) => setSelectedYear(Number(e.target.value))}
+                          disabled={isScraping}
+                          style={{ 
+                              width: '100%', padding: '10px', borderRadius: '4px', 
+                              border: '1px solid #ccc', fontSize: '14px', marginTop: '5px' 
+                          }}
+                      >
+                          {yearOptions.map(year => (
+                              <option key={year} value={year}>{year}년 (1~4분기 전체)</option>
+                          ))}
+                      </select>
+                  </div>
+              </div>
+          )}
+
           <button 
             className="btn-start-scrape" 
             style={{ backgroundColor: K_BRAND_COLOR }}
             onClick={handleStartScraping}
             disabled={isScraping || !isCertRegistered}
           >
-            {isScraping ? '수집 진행 중...' : '내역 불러오기'}
+            {isScraping ? '수집 진행 중...' : (scrapeType === 'tax_invoice' ? '세금계산서 불러오기' : '현금영수증 불러오기')}
           </button>
         </div>
       </div>
@@ -335,8 +414,6 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
           {isKeypadModalOpen && <p className="warning-text" style={{color:'#ff4d4f', fontWeight:'bold', animation: 'blink 1s infinite'}}>⚠️ 보안 키패드 입력이 필요합니다!</p>}
         </div>
       )}
-
-      {/* 디버깅 이미지 영역 삭제됨 */}
 
       {completionMessage && (
           <div className="hometax-result-section" style={{textAlign:'center', padding:'60px 20px', backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #eee', marginTop: '30px'}}>
@@ -516,12 +593,18 @@ const KeypadInputModal: React.FC<{
     }
 
     return (
-        <div className="cert-modal-backdrop" style={{zIndex: 9999}}>
-            <div className="cert-modal-content" style={{
-                width: 'auto', minWidth: '300px', maxWidth: '95vw', 
-                textAlign:'center', padding: '20px', backgroundColor: '#fff',
-                borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
-            }}>
+        /* [수정됨] 1. 배경 클릭 시 닫기 기능 추가 */
+        <div className="cert-modal-backdrop" style={{zIndex: 9999}} onClick={onClose}>
+            {/* [수정됨] 2. 내부 컨텐츠 클릭 시 이벤트 전파 중단 (stopPropagation) */}
+            <div 
+                className="cert-modal-content" 
+                onClick={(e) => e.stopPropagation()} 
+                style={{
+                    width: 'auto', minWidth: '300px', maxWidth: '95vw', 
+                    textAlign:'center', padding: '20px', backgroundColor: '#fff',
+                    borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+                }}
+            >
                 <h3 style={{color: '#2d3436', marginBottom:'5px', fontSize: '18px'}}>{headerText}</h3>
                 <p style={{fontSize:'13px', color:'#666', marginBottom:'15px'}}>{subText}</p>
                 
@@ -581,9 +664,6 @@ const KeypadInputModal: React.FC<{
     );
 };
 
-// =============================================================================
-// [Sub Component 2] CertificateModal
-// =============================================================================
 const CertificateModal: React.FC<{ partnerUid: string | null, onClose: () => void, onSuccess: (info: CertInfo) => void }> = ({ partnerUid, onClose, onSuccess }) => {
     const [fileDer, setFileDer] = useState<File | null>(null);
     const [fileKey, setFileKey] = useState<File | null>(null);

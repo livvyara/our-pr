@@ -41,6 +41,7 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     subMenus: [
       { key: 'accounting-hometax', title: '홈택스 수집', path: '/program/accounting-hometax' },
       { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' }, // [추가됨]
+      { key: 'accounting-tax-invoice', title: '현금영수증', path: '/program/accounting-cash-receipt' }, // [추가됨]
       { key: 'accounting-sales', title: '매출자료 등록', path: '/program/accounting-sales' },
       { key: 'accounting-purchase', title: '매입자료 등록', path: '/program/accounting-purchase' },
     ]

@@ -1393,8 +1393,8 @@ exports.redeemSiteInvitation = functions
             throw new functions.https.HttpsError("internal", "초대 수락 중 오류가 발생했습니다.");
         }
     });
-    // -----------------------------------------------------------------
-// --- [⭐ 추가] 홈택스 실제 스크래핑 함수 ---
+ // -----------------------------------------------------------------
+// --- [⭐ 홈택스 실제 스크래핑 함수 (현금영수증 기능 추가됨)] ---
 // -----------------------------------------------------------------
 if (!admin.apps.length) {
     admin.initializeApp();
@@ -1403,40 +1403,38 @@ if (!admin.apps.length) {
 exports.scrapHometaxData = functions
     .region("asia-northeast3")
     .runWith({
-        timeoutSeconds: 300, // 스크래핑 시간 고려 (5분)
-        memory: "2GB"        // 브라우저 실행을 위한 메모리 확보
+        timeoutSeconds: 300, // 5분 (현금영수증 4분기 조회 시 시간 필요)
+        memory: "2GB"
     })
     .https.onCall(async (data, context) => {
         
         // 1. 환경 설정 및 라이브러리 로드
-        // (Firebase Functions 환경에서 브라우저를 찾을 수 있도록 경로 지정)
         process.env.PLAYWRIGHT_BROWSERS_PATH = '0';
         const { chromium } = require('playwright-chromium');
         const fs = require('fs');
         const path = require('path');
         const os = require('os');
-        const admin = require('firebase-admin'); // 여기서 admin 로드
-        const db = admin.firestore(); // [중요] db 변수를 함수 최상위 스코프에서 선언
+        const admin = require('firebase-admin');
+        const db = admin.firestore();
 
         // 2. 권한 확인
         if (!context.auth) {
             throw new functions.https.HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        // 프론트엔드에서 전달받은 데이터
+        // 프론트엔드 데이터
         const { certPassword, certFileDer, certFileKey } = data;
         
-        // 임시 파일 경로 설정 (/tmp 폴더는 쓰기 가능)
+        // 임시 파일 경로
         const tempDir = os.tmpdir();
         const derPath = path.join(tempDir, `signCert_${context.auth.uid}.der`);
         const keyPath = path.join(tempDir, `signPri_${context.auth.uid}.key`);
 
         let browser = null;
         let page = null;
-        let screenshotBase64 = null;
 
         try {
-            // 3. 인증서 파일 생성 (Base64 -> 실제 파일로 변환)
+            // 3. 인증서 파일 생성
             if (certFileDer && certFileKey) {
                 fs.writeFileSync(derPath, Buffer.from(certFileDer, 'base64'));
                 fs.writeFileSync(keyPath, Buffer.from(certFileKey, 'base64'));
@@ -1453,15 +1451,15 @@ exports.scrapHometaxData = functions
                     '--disable-setuid-sandbox', 
                     '--disable-dev-shm-usage', 
                     '--single-process',
-                    '--window-size=1920,1080' // [⭐ 추가] 창 크기 강제 설정
+                    '--window-size=1920,1080'
                 ]
             });
             
-            const context = await browser.newContext({ 
-                viewport: { width: 1920, height: 1080 }, // [⭐ 수정] 뷰포트 크게 설정
-                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' // [⭐ 수정] 최신 PC 버전으로 위장
+            const browserContext = await browser.newContext({ 
+                viewport: { width: 1920, height: 1080 }, 
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             });
-            page = await context.newPage();
+            page = await browserContext.newPage();
 
             // 4. 홈택스 메인 접속
             console.log("STEP 1: 홈택스 메인 접속 시도");
@@ -1747,7 +1745,7 @@ exports.scrapHometaxData = functions
                     const actualX = currentOffset.x + clickPoint.x;
                     const actualY = currentOffset.y + clickPoint.y;
 
-                    const cdp = await context.newCDPSession(page);
+                    const cdp = await browserContext.newCDPSession(page);
                     await page.mouse.move(actualX, actualY);
                     await page.mouse.down();
                     await page.waitForTimeout(50); // 클릭 시간도 단축 (50ms)
@@ -1854,76 +1852,94 @@ exports.scrapHometaxData = functions
             }
 
             await page.waitForTimeout(2000); 
-
-            // ------------------------------------------------------------
-            // [중요] 전역 Dialog 리스너 제거 (다운로드 충돌 방지)
+// ------------------------------------------------------------
+            // (B) 데이터 수집 로직 분기 (NEW)
             // ------------------------------------------------------------
             page.removeAllListeners('dialog');
-            console.log("   전역 알림창 리스너 제거 완료");
-
-            // ------------------------------------------------------------
-            // (B) 데이터 수집 로직
-            // ------------------------------------------------------------
+            
             const results = [];
-            const formatDate = (d) => d ? `${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}` : '';
-            const startDt = formatDate(data.startDate);
-            const endDt = formatDate(data.endDate);
+            const isCashReceipt = data.scrapeType === 'cash_receipt';
 
-            console.log(`   📅 수집 기간: ${startDt} ~ ${endDt}`);
+            if (isCashReceipt) {
+                // ========================================================
+                // [CASE 1] 현금영수증 수집 (매입/매출 1~4분기)
+                // ========================================================
+                const targetYear = String(data.targetYear || new Date().getFullYear());
+                console.log(` 📅 현금영수증 수집 시작 (연도: ${targetYear})`);
 
-            // 1. [매출] 세금계산서 수집
-            try {
-                console.log("   🚀 [매출] 세금계산서 수집 시작...");
-                const salesData = await scrapTaxInvoices(page, startDt, endDt, '매출');
-                if (salesData.length > 0) {
-                    await saveToFirestore(db, data.partnerUid, 'TAX_SALES', salesData);
+                // 1. [매출] 현금영수증
+                try {
+                    console.log("   🚀 [매출] 현금영수증 수집 중...");
+                    const salesData = await scrapCashReceipts(page, targetYear, '매출');
+                    if (salesData.length > 0) {
+                        await saveToFirestore(db, data.partnerUid, 'CASH_SALES', salesData);
+                    }
+                    results.push({ type: '매출', count: salesData.length });
+                    console.log(`   ✅ [매출] ${salesData.length}건 저장 완료`);
+                } catch (e) {
+                    console.error("   ⚠️ [매출] 실패:", e);
+                    results.push({ type: '매출', error: e.message });
                 }
-                results.push({ type: '매출', count: salesData.length });
-                console.log(`   ✅ [매출] ${salesData.length}건 저장 완료`);
-            } catch (e) {
-                console.error("   ⚠️ [매출] 수집 실패:", e);
-                results.push({ type: '매출', error: e.message });
+
+                // 2. [매입] 현금영수증
+                try {
+                    console.log("   🚀 [매입] 현금영수증 수집 중...");
+                    const purchaseData = await scrapCashReceipts(page, targetYear, '매입');
+                    if (purchaseData.length > 0) {
+                        await saveToFirestore(db, data.partnerUid, 'CASH_PURCHASE', purchaseData);
+                    }
+                    results.push({ type: '매입', count: purchaseData.length });
+                    console.log(`   ✅ [매입] ${purchaseData.length}건 저장 완료`);
+                } catch (e) {
+                    console.error("   ⚠️ [매입] 실패:", e);
+                    results.push({ type: '매입', error: e.message });
+                }
+
+            } else {
+                // ========================================================
+                // [CASE 2] 세금계산서 수집 (기존 로직 유지)
+                // ========================================================
+                const formatDate = (d) => d ? `${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}` : '';
+                const startDt = formatDate(data.startDate);
+                const endDt = formatDate(data.endDate);
+
+                console.log(` 📅 세금계산서 수집 기간: ${startDt} ~ ${endDt}`);
+
+                // 매출
+                try {
+                    console.log("   🚀 [매출] 세금계산서 수집 시작...");
+                    const salesData = await scrapTaxInvoices(page, startDt, endDt, '매출');
+                    if (salesData.length > 0) {
+                        await saveToFirestore(db, data.partnerUid, 'TAX_SALES', salesData);
+                    }
+                    results.push({ type: '매출', count: salesData.length });
+                } catch (e) {
+                    results.push({ type: '매출', error: e.message });
+                }
+
+                // 매입
+                try {
+                    console.log("   🚀 [매입] 세금계산서 수집 시작...");
+                    const purchaseData = await scrapTaxInvoices(page, startDt, endDt, '매입');
+                    if (purchaseData.length > 0) {
+                        await saveToFirestore(db, data.partnerUid, 'TAX_PURCHASE', purchaseData);
+                    }
+                    results.push({ type: '매입', count: purchaseData.length });
+                } catch (e) {
+                    results.push({ type: '매입', error: e.message });
+                }
             }
 
-            // 2. [매입] 세금계산서 수집
-            try {
-                console.log("   🚀 [매입] 세금계산서 수집 시작...");
-                const purchaseData = await scrapTaxInvoices(page, startDt, endDt, '매입');
-                if (purchaseData.length > 0) {
-                    await saveToFirestore(db, data.partnerUid, 'TAX_PURCHASE', purchaseData);
-                }
-                results.push({ type: '매입', count: purchaseData.length });
-                console.log(`   ✅ [매입] ${purchaseData.length}건 저장 완료`);
-            } catch (e) {
-                console.error("   ⚠️ [매입] 수집 실패:", e);
-                results.push({ type: '매입', error: e.message });
-            }
-
-            const finalTitle = await page.title();
-            return { 
-                success: true, 
-                message: "수집 작업이 완료되었습니다.",
-                data: results 
-            };
+            return { success: true, message: "수집 완료", data: results };
 
         } catch (error) {
             console.error("스크래핑 로직 실패:", error);
-            let screenshotBase64 = null;
-            if (page) {
-                try {
-                    const buffer = await page.screenshot({ fullPage: true });
-                    screenshotBase64 = buffer.toString('base64');
-                } catch(e) {}
-            }
-            
             let errorMessage = error.message;
             if (errorMessage.includes('WRONG_PASSWORD')) errorMessage = "인증서 비밀번호가 일치하지 않습니다.";
-
+            
             throw new functions.https.HttpsError('internal', errorMessage, {
-                screenshot: screenshotBase64,
                 isWrongPassword: error.message.includes('WRONG_PASSWORD')
             });
-
         } finally {
             try {
                 if (fs.existsSync(derPath)) fs.unlinkSync(derPath);
@@ -1932,7 +1948,6 @@ exports.scrapHometaxData = functions
             if (browser) await browser.close();
         }
     });
-
 // =============================================================================
 // [Helper 1] 세금계산서 수집 및 다운로드 (매출/매입 선택 로직 강화)
 // =============================================================================
@@ -2061,6 +2076,326 @@ async function scrapTaxInvoices(page, startDate, endDate, type) {
     } catch(e) {}
 
     return allData;
+}
+// =============================================================================
+// [Helper B] ⭐ 현금영수증 수집 함수 (매입/매출 탭 ID 분기 처리)
+// =============================================================================
+async function scrapCashReceipts(page, year, type) {
+    const isSales = type === '매출';
+    
+    // 1. 메뉴 이동 ID
+    const targetMenuId = isSales ? 'menuAtag_4606010100' : 'menuAtag_4605010100';
+    
+    console.log(`   🎯 [${type}] 메뉴 이동 ID: ${targetMenuId}`);
+
+    // 1. 메뉴 이동 (JS 강제 클릭)
+    try {
+        await page.waitForSelector('#mf_wfHeader_menu46Scrollbox', { state: 'attached', timeout: 10000 });
+        const clicked = await page.evaluate((id) => {
+            const el = document.getElementById(id);
+            if (el) { el.click(); return true; }
+            return false;
+        }, targetMenuId);
+
+        if (!clicked) throw new Error(`메뉴 ID(${targetMenuId})를 찾을 수 없습니다.`);
+        await page.waitForTimeout(5000); 
+
+    } catch(e) {
+        console.error(`     ⚠️ 메뉴 이동 실패: ${e.message}`);
+        return [];
+    }
+
+    // 2. 타겟 설정 (메인 페이지)
+    const targetFrame = page; 
+
+    // 3. [핵심 수정] 탭 전환 ("분기별") - ID 기반 타겟팅
+    try {
+        console.log("     🔄 [분기별] 탭 전환 시도...");
+        
+        // 매입/매출에 따라 탭 ID가 다름 (사용자 제공 HTML 기반)
+        // 매입: mf_txppWframe_tabControl1_UTECRCB005_tab_tabs4
+        // 매출: mf_txppWframe_tabControl1_UTECRCB057_tab_tabs4
+        const tabId = isSales 
+            ? 'mf_txppWframe_tabControl1_UTECRCB057_tab_tabs4' 
+            : 'mf_txppWframe_tabControl1_UTECRCB005_tab_tabs4';
+
+        // JS로 직접 클릭 (가장 확실함)
+        const tabClicked = await targetFrame.evaluate((id) => {
+            const tab = document.getElementById(id);
+            if (tab) {
+                tab.click(); // li 태그 클릭
+                // 혹시 li 안의 a 태그를 눌러야 할 수도 있으니 둘 다 시도
+                const link = tab.querySelector('a');
+                if (link) link.click();
+                return true;
+            }
+            return false;
+        }, tabId);
+
+        if (tabClicked) {
+            console.log(`     ✅ 탭 클릭 성공 (ID: ${tabId})`);
+            await page.waitForTimeout(2000); // 탭 전환 및 UI 렌더링 대기
+        } else {
+            throw new Error(`탭 ID(${tabId})를 찾을 수 없음`);
+        }
+
+    } catch (e) {
+        console.warn("     ⚠️ 탭 전환 실패 (Fallback 시도):", e.message);
+        // 실패 시 텍스트로 재시도 (이번엔 정확한 선택자 사용)
+        const fallbackTab = targetFrame.locator('li[id*="tab_tabs4"] a[title*="분기별"]');
+        if (await fallbackTab.count() > 0) {
+            await fallbackTab.first().click({ force: true });
+            await page.waitForTimeout(2000);
+        }
+    }
+
+    let allData = [];
+    const quarters = [1, 2, 3, 4];
+
+    for (const q of quarters) {
+        console.log(`   Processing ${year}년 ${q}분기...`);
+        
+        try {
+            // 3-1. 연도/분기 선택 (WebSquare 강제 주입)
+            const forceSelect = async (selector, text) => {
+                await targetFrame.evaluate(({sel, txt}) => {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        for (let i = 0; i < el.options.length; i++) {
+                            if (el.options[i].text.includes(txt)) {
+                                el.selectedIndex = i;
+                                el.dispatchEvent(new Event('change', { bubbles: true })); 
+                                break;
+                            }
+                        }
+                    }
+                }, { sel: selector, txt: text });
+            };
+
+            await forceSelect('#mf_txppWframe_selectTrsYr', `${year}년`);
+            await forceSelect('#mf_txppWframe_selectQrt', `${q}분기`);
+            await page.waitForTimeout(500);
+
+            // 3-2. 조회 버튼 클릭
+            console.log("     🔍 [조회] 버튼 클릭 시도...");
+            
+            // ID 기반 JS 클릭
+            await targetFrame.evaluate(() => {
+                const btn = document.getElementById('mf_txppWframe_trigger1');
+                if (btn) btn.click();
+            });
+            
+            // 데이터 로딩 대기 (5초)
+            await page.waitForTimeout(5000); 
+            
+            // 3-3. 내려받기 버튼 클릭
+            console.log("     ⬇️ [내려받기] 버튼 클릭 시도...");
+            const downBtn = targetFrame.locator('#mf_txppWframe_trigger12');
+            
+            try { await downBtn.waitFor({ state: 'attached', timeout: 3000 }); } catch(e) {}
+
+            if (await downBtn.count() > 0) {
+                // 알림창 감지
+                let hasNoDataAlert = false;
+                const tempDialogHandler = async (dialog) => {
+                    const msg = dialog.message();
+                    if (msg.includes('없') || msg.includes('존재하지')) {
+                        hasNoDataAlert = true;
+                        console.log(`     🚨 알림창 감지: ${msg}`);
+                    }
+                    await dialog.accept();
+                };
+                page.on('dialog', tempDialogHandler);
+
+                await downBtn.click({ force: true });
+                await page.waitForTimeout(2000);
+
+                page.off('dialog', tempDialogHandler);
+
+                if (hasNoDataAlert) {
+                    console.log(`     -> ${q}분기 데이터 없음`);
+                    continue;
+                }
+
+                // 4. 다운로드 팝업 처리
+                const textBtn = targetFrame.locator('input[value="텍스트"]');
+                if (await textBtn.count() > 0) {
+                    console.log(`     ✅ 다운로드 팝업 확인됨.`);
+                    const qData = await processDownloadPopup(page, targetFrame, type);
+                    allData.push(...qData);
+                    console.log(`     -> ${q}분기 ${qData.length}건 수집 완료`);
+                } else {
+                    // 팝업 안 떴으면 JS로 재시도
+                    console.log(`     ⚠️ 팝업 안 뜸 (재시도)`);
+                    await targetFrame.evaluate(() => {
+                        const btn = document.getElementById('mf_txppWframe_trigger12');
+                        if (btn) btn.click();
+                    });
+                    await page.waitForTimeout(2000);
+                    
+                    if (await textBtn.count() > 0) {
+                        const qData = await processDownloadPopup(page, targetFrame, type);
+                        allData.push(...qData);
+                    }
+                }
+
+            } else {
+                console.log(`     -> ⚠️ ${q}분기 [내려받기] 버튼 없음`);
+            }
+
+        } catch (err) {
+            console.error(`     -> ${q}분기 처리 중 오류:`, err.message);
+        }
+    }
+
+    return allData;
+}
+// =============================================================================
+// [Helper C] 다운로드 팝업 처리 (ZIP 제거 -> TXT 직접 파싱)
+// =============================================================================
+async function processDownloadPopup(page, frame, type) {
+    // const AdmZip = require('adm-zip'); // 현금영수증은 ZIP 아님 -> 제거
+    const iconv = require('iconv-lite');
+    let parsedData = [];
+
+    // 1. 범위 선택 SelectBox
+    // ID: mf_txppWframe_UTECRCB055_wframe_selectDwldRngForExcel
+    const rangeSelect = frame.locator('select[id*="selectDwldRngForExcel"]');
+    
+    let optionCount = 1;
+    if (await rangeSelect.count() > 0) {
+        optionCount = await rangeSelect.locator('option').count();
+    }
+
+    console.log(`     ⬇️ 분할 다운로드 진행 (총 ${optionCount}회)`);
+
+    for (let i = 0; i < optionCount; i++) {
+        // 범위 선택
+        if (optionCount > 1) {
+            await rangeSelect.selectOption({ index: i });
+            await page.waitForTimeout(500);
+        }
+
+        // 2. 텍스트 버튼 클릭
+        const textBtn = frame.locator('input[id*="trigger5"][value="텍스트"]');
+        
+        // 다운로드 리스너 설정
+        const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
+        
+        // 확인창 처리
+        const dialogHandler = async (dialog) => { await dialog.accept(); };
+        page.on('dialog', dialogHandler);
+
+        if (await textBtn.count() > 0) {
+            await textBtn.first().click();
+        } else {
+            await frame.locator('input[value="텍스트"]').click();
+        }
+
+        try {
+            const download = await downloadPromise;
+            const stream = await download.createReadStream();
+            
+            // 스트림을 버퍼로 변환
+            const chunks = [];
+            for await (const chunk of stream) chunks.push(chunk);
+            const fileBuffer = Buffer.concat(chunks);
+
+            // [핵심 수정] ZIP 해제 로직 삭제 -> 바로 텍스트 변환
+            // 사용자가 요청한 UTF-8로 디코딩
+            const text = iconv.decode(fileBuffer, 'utf-8');
+            
+            // 파싱 수행
+            const rows = parseCashReceiptText(text, type);
+            parsedData.push(...rows);
+            
+            console.log(`     📄 파일 파싱 완료: ${rows.length}건`);
+
+        } catch (e) {
+            console.error(`     ❌ 다운로드 및 파싱 실패 (Range ${i+1}):`, e.message);
+        } finally {
+            page.off('dialog', dialogHandler);
+        }
+        
+        await page.waitForTimeout(1000);
+    }
+
+    // 3. 팝업 닫기
+    const closeBtn = frame.locator('input[value="닫기"]').last();
+    if (await closeBtn.count() > 0) {
+        await closeBtn.click();
+    }
+    await page.waitForTimeout(1000);
+
+    return parsedData;
+}
+// =============================================================================
+// [Helper D] 현금영수증 텍스트 파서 (매입/매출 헤더 분석 완벽 적용)
+// =============================================================================
+function parseCashReceiptText(text, type) {
+    const lines = text.split('\n');
+    const data = [];
+    const isSales = type === '매출';
+
+    // [규칙] 첫번째 줄 무시, 두번째 줄 헤더, 세번째 줄(Index 2)부터 데이터
+    for (let i = 2; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const row = line.split('\t');
+        
+        // 금액 파싱 헬퍼 (콤마 제거)
+        const parseNum = (val) => parseInt(val?.replace(/,/g, '') || '0');
+
+        let item = {};
+
+        if (isSales) {
+            // [매출] (사용자 제공 헤더 기준)
+            // 0:발행구분, 1:매출일시, 2:공급가액, 3:부가세, 4:봉사료, 5:총금액, 
+            // 6:승인번호, 7:신분확인뒷4자리, 8:거래구분, 9:용도구분, 10:비고
+            
+            item = {
+                tradeDate: row[1]?.trim(),        // 매출일시
+                franchiseName: row[7]?.trim(),    // 신분확인뒷4자리 (구매자 식별정보로 사용)
+                approvalNo: row[6]?.trim(),       // 승인번호
+                
+                supplyAmount: parseNum(row[2]),   // 공급가액
+                taxAmount: parseNum(row[3]),      // 부가세
+                serviceAmount: parseNum(row[4]),  // 봉사료
+                totalAmount: parseNum(row[5]),    // 총금액
+                
+                type: row[8]?.trim() || '승인',   // 거래구분 (승인거래/취소거래)
+                remark: row[9]?.trim(),           // 용도구분 (소비자소득공제용 등)
+                inOut: '매출'
+            };
+        } else {
+            // [매입] (이전 분석 기준 유지)
+            // 0:매입일시, 1:사용자명, 2:가맹점사업자번호, 3:가맹점명, 4~6:업종코드 등
+            // 7:공급가액, 8:부가세, 9:봉사료, 10:매입금액, 11:승인번호, 12:발급수단, 13:거래구분, 14:공제여부
+            
+            item = {
+                tradeDate: row[0]?.trim(),       // 매입일시
+                franchiseRegNo: row[2]?.trim(),  // 가맹점사업자번호
+                franchiseName: row[3]?.trim(),   // 가맹점명
+                
+                supplyAmount: parseNum(row[7]),  // 공급가액
+                taxAmount: parseNum(row[8]),     // 부가세
+                serviceAmount: parseNum(row[9]), // 봉사료
+                totalAmount: parseNum(row[10]),  // 매입금액
+                
+                approvalNo: row[11]?.trim(),     // 승인번호
+                type: row[13]?.trim() || '승인', // 거래구분
+                remark: row[14]?.trim(),         // 공제여부 등
+                inOut: '매입'
+            };
+        }
+
+        // 유효성 검사: 승인번호가 있고 합계가 0이 아니거나 유효한 데이터일 경우
+        if (item.approvalNo && (item.totalAmount !== 0 || item.type.includes('취소'))) {
+            data.push(item);
+        }
+    }
+    return data;
 }
 // =============================================================================
 // [Helper 2] ZIP 다운로드 및 파싱 (UTF-8 인코딩 수정)
@@ -2208,21 +2543,25 @@ function parseItem(text) {
     return data;
 }
 // =============================================================================
-// [Helper 5] Firestore 저장 함수
+// [Helper 5] Firestore 저장 함수 (기존과 동일 - 현금영수증도 같은 로직 사용)
 // =============================================================================
 async function saveToFirestore(db, uid, collectionName, dataList) {
     if (dataList.length === 0) return;
     
-    const batchSize = 400; // Firestore 배치 제한 고려
+    const batchSize = 400; 
     for (let i = 0; i < dataList.length; i += batchSize) {
         const batch = db.batch();
         const chunk = dataList.slice(i, i + batchSize);
         
         chunk.forEach(item => {
-            // 문서 ID를 '승인번호'로 설정하여 중복 저장 시 덮어쓰기(갱신) 되도록 함
+            // 현금영수증은 '승인번호'를 ID로 사용 (중복 방지)
+            const docId = item.approvalNo || `unknown_${Date.now()}_${Math.random()}`;
             const docRef = db.collection('users').doc(uid)
-                             .collection(collectionName).doc(item.approvalNo);
-            batch.set(docRef, item, { merge: true });
+                             .collection(collectionName).doc(docId);
+            
+            // 기존 데이터가 있으면 merge, 없으면 생성
+            // (옵션: scrapeDate 등을 추가하여 언제 수집했는지 기록 가능)
+            batch.set(docRef, { ...item, lastScraped: new Date().toISOString() }, { merge: true });
         });
         
         await batch.commit();
