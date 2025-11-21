@@ -13,6 +13,7 @@ import AuthActionPage from '../pages/AuthActionPage';
 import GuideMainPC from '../pages/guide/GuideMainPC';
 import GuideWritePage from '../pages/admin/GuideWritePage';
 
+
 // [⭐ 1. 추가] 파트너 전산 메인 페이지 임포트
 import PartnerProgramPage from './program/PartnerProgramPage';
 
@@ -64,38 +65,39 @@ function App() {
 
         {/* [⭐ 추가] 도급인 현장 초대 수락 페이지 */}
         <Route path="/join-site/:inviteId" element={<JoinSitePage />} />
+        
         {/* 1. 공지사항 */}
-  <Route 
-    path="/community/notice" 
-    element={<CommunityBoardPage category="notice" />} 
-  />
+        <Route 
+          path="/community/notice" 
+          element={<CommunityBoardPage category="notice" />} 
+        />
   
-  {/* 2. 업데이트 */}
-  <Route 
-    path="/community/update" 
-    element={<CommunityBoardPage category="update" />} 
-  />
+        {/* 2. 업데이트 */}
+        <Route 
+          path="/community/update" 
+          element={<CommunityBoardPage category="update" />} 
+        />
 
-  {/* 3. 기능 제안 (추가됨) */}
-  <Route 
-    path="/community/suggestion" 
-    element={<CommunityBoardPage category="suggestion" />} 
-  />
-  <Route 
-  path="/community/inquiry" 
-  element={<CommunityBoardPage category="inquiry" />} 
+        {/* 3. 기능 제안 (추가됨) */}
+        <Route 
+          path="/community/suggestion" 
+          element={<CommunityBoardPage category="suggestion" />} 
+        />
+        <Route 
+          path="/community/inquiry" 
+          element={<CommunityBoardPage category="inquiry" />} 
+        />
 
-/>
-{/* [⭐ 추가] 비밀번호 재설정 등 인증 액션 페이지 */}
-  <Route path="/auth/action" element={<AuthActionPage />} />
+        {/* [⭐ 추가] 비밀번호 재설정 등 인증 액션 페이지 */}
+        <Route path="/auth/action" element={<AuthActionPage />} />
 
- {/* 이용안내 (유저용) */}
-  <Route path="/guide/mainpc" element={<GuideMainPC />} />
+        {/* 이용안내 (유저용) */}
+        <Route path="/guide/mainpc" element={<GuideMainPC />} />
 
-  {/* 이용안내 글쓰기 (관리자용) */}
-  <Route path="/admin/guide/write" element={<GuideWritePage />} />
-
-</Routes>
+        {/* 이용안내 글쓰기 (관리자용) */}
+        <Route path="/admin/guide/write" element={<GuideWritePage />} />
+  
+      </Routes>
         
     </MenuProvider>
   );

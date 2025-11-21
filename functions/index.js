@@ -1393,3 +1393,838 @@ exports.redeemSiteInvitation = functions
             throw new functions.https.HttpsError("internal", "초대 수락 중 오류가 발생했습니다.");
         }
     });
+    // -----------------------------------------------------------------
+// --- [⭐ 추가] 홈택스 실제 스크래핑 함수 ---
+// -----------------------------------------------------------------
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
+
+exports.scrapHometaxData = functions
+    .region("asia-northeast3")
+    .runWith({
+        timeoutSeconds: 300, // 스크래핑 시간 고려 (5분)
+        memory: "2GB"        // 브라우저 실행을 위한 메모리 확보
+    })
+    .https.onCall(async (data, context) => {
+        
+        // 1. 환경 설정 및 라이브러리 로드
+        // (Firebase Functions 환경에서 브라우저를 찾을 수 있도록 경로 지정)
+        process.env.PLAYWRIGHT_BROWSERS_PATH = '0';
+        const { chromium } = require('playwright-chromium');
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const admin = require('firebase-admin'); // 여기서 admin 로드
+        const db = admin.firestore(); // [중요] db 변수를 함수 최상위 스코프에서 선언
+
+        // 2. 권한 확인
+        if (!context.auth) {
+            throw new functions.https.HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        // 프론트엔드에서 전달받은 데이터
+        const { certPassword, certFileDer, certFileKey } = data;
+        
+        // 임시 파일 경로 설정 (/tmp 폴더는 쓰기 가능)
+        const tempDir = os.tmpdir();
+        const derPath = path.join(tempDir, `signCert_${context.auth.uid}.der`);
+        const keyPath = path.join(tempDir, `signPri_${context.auth.uid}.key`);
+
+        let browser = null;
+        let page = null;
+        let screenshotBase64 = null;
+
+        try {
+            // 3. 인증서 파일 생성 (Base64 -> 실제 파일로 변환)
+            if (certFileDer && certFileKey) {
+                fs.writeFileSync(derPath, Buffer.from(certFileDer, 'base64'));
+                fs.writeFileSync(keyPath, Buffer.from(certFileKey, 'base64'));
+                console.log("인증서 파일 임시 생성 완료");
+            } else {
+                throw new Error("인증서 파일 데이터가 누락되었습니다.");
+            }
+
+            console.log("브라우저 실행 중...");
+            browser = await chromium.launch({ 
+                headless: true, 
+                args: [
+                    '--no-sandbox', 
+                    '--disable-setuid-sandbox', 
+                    '--disable-dev-shm-usage', 
+                    '--single-process',
+                    '--window-size=1920,1080' // [⭐ 추가] 창 크기 강제 설정
+                ]
+            });
+            
+            const context = await browser.newContext({ 
+                viewport: { width: 1920, height: 1080 }, // [⭐ 수정] 뷰포트 크게 설정
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' // [⭐ 수정] 최신 PC 버전으로 위장
+            });
+            page = await context.newPage();
+
+            // 4. 홈택스 메인 접속
+            console.log("STEP 1: 홈택스 메인 접속 시도");
+            await page.goto('https://www.hometax.go.kr', { waitUntil: 'networkidle', timeout: 60000 });
+            
+            // 리다이렉트 체크
+            if (page.url().includes('security') || page.url().includes('install')) {
+                throw new Error("보안 프로그램 설치 페이지로 이동되었습니다.");
+            }
+            
+            await page.waitForTimeout(3000);
+
+            // [⭐ 추가] 혹시 팝업이 떠서 가렸을 수 있으니 닫기 시도 (선택사항)
+            // (홈택스는 메인에 공지 팝업이 많음)
+            const closePopups = page.locator('.w2window_close'); 
+            if (await closePopups.count() > 0) {
+                console.log("   메인 팝업 닫기 시도...");
+                // 모든 닫기 버튼 클릭 (위험할 수 있으니 try-catch로 감쌈)
+                try {
+                    const buttons = await closePopups.all();
+                    for (const btn of buttons) {
+                        if (await btn.isVisible()) await btn.click();
+                    }
+                } catch(e) {}
+            }
+
+
+            // 5. [공동·금융인증서] 버튼 클릭
+            console.log("STEP 2: [공동·금융인증서] 버튼 탐색 및 클릭");
+            
+            // [⭐ 수정] waitForSelector를 사용하여 버튼이 나타날 때까지 기다림 (최대 10초)
+            // 텍스트보다는 ID가 확실하므로 ID 우선 사용
+            const certBtnSelector = '#mf_txppWframe_loginboxFrame_anchor22'; 
+            const loginBtnSelector = '#mf_wfHeader_group1503'; // 상단 로그인 버튼
+
+            try {
+                // 메인 화면의 '공동인증서' 버튼 기다리기
+                const certBtn = page.locator(certBtnSelector).or(page.locator('text=공동·금융인증서')).first();
+                await certBtn.waitFor({ state: 'visible', timeout: 10000 });
+                
+                console.log("   메인 화면에서 버튼 발견! 클릭합니다.");
+                await certBtn.click();
+
+            } catch (e) {
+                console.log("   메인에 버튼 없음. 상단 [로그인] 버튼 클릭 시도...");
+                
+                // 상단 로그인 버튼 기다리기
+                const topLoginBtn = page.locator(loginBtnSelector).or(page.getByText('로그인')).first();
+                
+                if (await topLoginBtn.isVisible()) {
+                    await topLoginBtn.click();
+                    await page.waitForTimeout(3000); // 로그인 페이지 이동 대기
+                    
+                    // 이동 후 다시 버튼 찾기
+                    console.log("   로그인 페이지 이동 후 버튼 재탐색...");
+                    const certBtnRetry = page.locator('text=공동·금융인증서').first();
+                    await certBtnRetry.waitFor({ state: 'visible', timeout: 10000 });
+                    await certBtnRetry.click();
+                } else {
+                    // [⭐ 중요] 버튼을 못 찾았을 때 화면을 캡처해서 저장 (에러 메시지에 포함)
+                    const buffer = await page.screenshot({ fullPage: true });
+                    screenshotBase64 = buffer.toString('base64');
+                    throw new Error("상단 '로그인' 버튼도 찾을 수 없습니다. (스크린샷 확인 필요)");
+                }
+            }
+            
+            console.log("   팝업 대기 중...");
+            await page.waitForTimeout(4000); // 팝업(iframe) 뜨는 시간 대기
+
+
+            // 6. 인증서 팝업(iframe) 탐색 및 제어
+            console.log("STEP 3: 인증서 선택창(iframe) 탐색");
+            
+            let targetFrame = null;
+            const frames = page.frames();
+            
+            // 모든 프레임을 순회하며 '인증서 찾기(#in_browser)' 버튼이 있는 프레임을 찾음
+            for (const frame of frames) {
+                try {
+                    if (await frame.locator('#in_browser').count() > 0) {
+                        targetFrame = frame;
+                        console.log(`   ✅ 인증서 팝업 프레임 발견: ${frame.url()}`);
+                        break;
+                    }
+                } catch (e) {
+                    // 접근 불가능한 프레임은 무시
+                }
+            }
+
+            // iframe이 아니라 메인 페이지에 레이어로 떴을 경우 확인
+            if (!targetFrame) {
+                if (await page.locator('#in_browser').count() > 0) {
+                    targetFrame = page;
+                    console.log("   ✅ 메인 프레임 내 레이어 팝업 발견");
+                }
+            }
+
+            // 팝업을 찾지 못한 경우: 스크린샷 찍고 종료
+            if (!targetFrame) {
+                console.log("❌ 인증서 팝업을 찾을 수 없습니다. 현재 화면을 캡처합니다.");
+                const buffer = await page.screenshot({ fullPage: false });
+                screenshotBase64 = buffer.toString('base64');
+                return { 
+                    success: false, 
+                    screenshot: screenshotBase64, 
+                    message: "인증서 선택창(팝업)을 찾을 수 없습니다. 스크린샷을 확인하세요." 
+                };
+            }
+
+
+           // ============================================================
+            // 7. 파일 업로드 (수정: 2단계 팝업 구조 완벽 대응)
+            // ============================================================
+            console.log("STEP 4: 인증서 파일 주입 (인증서 찾기 -> 등록 팝업 진입)");
+            
+            // [1단계] 첫 번째 팝업(#ML_window)에서 '인증서 찾기' 버튼 클릭
+            try {
+                // 버튼이 상호작용 가능할 때까지 대기
+                const findBtn = targetFrame.locator('#in_browser');
+                await findBtn.waitFor({ state: 'visible', timeout: 10000 });
+                
+                console.log("   [1/3] '인증서 찾기(#in_browser)' 버튼 클릭");
+                await findBtn.click();
+                
+            } catch (e) {
+                throw new Error(`'인증서 찾기' 버튼을 클릭할 수 없습니다: ${e.message}`);
+            }
+
+            // [2단계] 두 번째 팝업(#ML_Dialog_common)이 뜰 때까지 대기
+            // 클릭 후 화면에 새로운 레이어가 그려질 시간을 줘야 합니다.
+            console.log("   [2/3] '브라우저인증서 등록하기' 팝업 대기 중...");
+            await page.waitForTimeout(2000); // 애니메이션 대기
+
+            try {
+                // 제공해주신 HTML의 두 번째 팝업 ID(#ML_Dialog_common)가 보일 때까지 대기
+                const registerPopup = targetFrame.locator('#ML_Dialog_common');
+                await registerPopup.waitFor({ state: 'visible', timeout: 10000 });
+                console.log("   ✅ 등록 팝업(#ML_Dialog_common) 확인됨");
+
+                // [3단계] 파일 주입 (#filefile2)
+                // 팝업 내의 파일 입력창 찾기
+                const fileInput = targetFrame.locator('#filefile2');
+                await fileInput.waitFor({ state: 'attached', timeout: 5000 });
+
+                console.log("   [3/3] 파일 입력창(#filefile2)에 인증서 주입 시도");
+                await fileInput.setInputFiles([derPath, keyPath]);
+                console.log("   ✅ 파일 주입 완료");
+
+                // 파일 처리 시간 대기 (파일이 들어가야 비밀번호창이 활성화됨)
+                await page.waitForTimeout(1500);
+
+            } catch (e) {
+                // 만약 #filefile2를 못 찾으면 비상 대책으로 type="file"을 찾음
+                console.warn("   ID로 찾기 실패, 범용 검색 시도...");
+                try {
+                    await targetFrame.locator('input[type="file"]').first().setInputFiles([derPath, keyPath]);
+                    console.log("   ✅ 범용 입력창에 파일 주입 성공");
+                } catch(fatalError) {
+                    throw new Error(`파일 주입 실패: ${fatalError.message}`);
+                }
+            }
+// ============================================================
+            // [수정] 알림창(Alert) 감지 리스너 등록 (실패 원인 파악용)
+            // ============================================================
+            page.on('dialog', async dialog => {
+                console.log(`   🚨 [경고창 감지] 내용: ${dialog.message()}`);
+                await dialog.dismiss(); // 창 닫기
+            });
+// ============================================================
+            // 8. 비밀번호 입력 단계 (최종: 고속 폴링 - 0.2초 간격 감지)
+            // ============================================================
+            console.log("STEP 5: 사용자 실시간 원격 입력 (High Speed Polling)");
+            
+            try {
+                const pwInputSelector = '#add_browser_password';
+                const admin = require('firebase-admin'); 
+                const db = admin.firestore();
+                
+                // 1. 입력창 활성화
+                const pwInput = targetFrame.locator(pwInputSelector);
+                await pwInput.waitFor({ state: 'attached', timeout: 10000 });
+                await targetFrame.evaluate((sel) => {
+                    const el = document.querySelector(sel);
+                    if(el) { el.focus(); el.click(); }
+                }, pwInputSelector);
+                await pwInput.click({ force: true });
+                await page.waitForTimeout(2000);
+
+                // 2. 세션 준비
+                let requestId = data.sessionId; 
+                if (!requestId) requestId = `${data.partnerUid || 'unknown'}_session`;
+                const docRef = db.collection('scraping_requests').doc(requestId);
+
+                // 설정 로드
+                const configRef = db.collection('system_settings').doc('hometax_keypad_config');
+                const configSnap = await configRef.get();
+                let config = configSnap.exists ? configSnap.data() : {}; 
+
+                // 3. 입력 루프
+                let isKeypadActive = true;
+                let loopCount = 0;
+                
+                // [최적화] 불필요한 스크린샷 방지용 캐시
+                let lastScreenshotBase64 = null; 
+
+                while (isKeypadActive && loopCount < 50) {
+                    loopCount++;
+                    console.log(`   [Round ${loopCount}] 입력 대기...`);
+
+                    // (A) 스크린샷 (필요할 때만 찍음)
+                    // 이전 라운드에서 '화면 갱신'이 필요하다고 판단했을 때만 찍고, 아니면 재활용
+                    let screenshotBase64 = lastScreenshotBase64;
+                    let currentOffset = { x: 0, y: 0 };
+                    
+                    // 첫 턴이거나, 이전 액션이 Refresh/Submit 이었다면 새로 찍음
+                    // (여기서는 로직 단순화를 위해 매번 찍되, 조건부로 생략 가능)
+                    // 하지만 사용자가 Shift를 언제 눌렀는지 모르니, 매 라운드 초반에는 찍어두는 게 안전합니다.
+                    // 다만 속도를 위해 'Round 1'이 아니면 스킵하는 전략도 가능.
+                    
+                    if (!lastScreenshotBase64 || loopCount === 1) {
+                        if (config.cropArea) {
+                            try {
+                                const buffer = await page.screenshot({ clip: config.cropArea });
+                                screenshotBase64 = buffer.toString('base64');
+                                currentOffset = { x: config.cropArea.x, y: config.cropArea.y };
+                            } catch(e) {
+                                const buffer = await page.screenshot({ fullPage: true });
+                                screenshotBase64 = buffer.toString('base64');
+                            }
+                        } else {
+                            const buffer = await page.screenshot({ fullPage: true });
+                            screenshotBase64 = buffer.toString('base64');
+                        }
+                        lastScreenshotBase64 = screenshotBase64;
+                    } else {
+                        // 이미지는 재활용하되 좌표 오프셋은 유지
+                        if (config.cropArea) currentOffset = { x: config.cropArea.x, y: config.cropArea.y };
+                    }
+
+                    // (B) DB 업데이트
+                    await docRef.set({
+                        status: 'WAITING_FOR_INPUT',
+                        image: screenshotBase64,
+                        mode: config.cropArea ? (config.zones ? 'INPUT' : 'CALIBR_ZONES') : 'CALIBR_CROP',
+                        round: loopCount,
+                        userId: data.partnerUid || 'unknown',
+                        zones: config.zones || null,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // (C) [핵심] 고속 폴링 (Fast Polling)
+                    let res = null;
+                    // 0.2초 간격으로 600번 확인 (총 2분 대기)
+                    for (let i = 0; i < 1200; i++) {
+                        await page.waitForTimeout(100); // 0.2초 대기 (반응속도 5배 향상)
+                        const snap = await docRef.get();
+                        const d = snap.data();
+                        
+                        // 프론트엔드가 응답을 보냈는지 확인
+                        if (d && d.status === 'INPUT_RECEIVED' && d.round === loopCount) {
+                            res = d;
+                            break;
+                        }
+                    }
+                    
+                    if (!res) throw new Error("사용자 입력 시간 초과");
+
+                    // (D) 동작 처리
+                    if (res.action === 'set_crop') {
+                        config.cropArea = res.data;
+                        await configRef.set(config, { merge: true });
+                        lastScreenshotBase64 = null; // 설정 바뀌었으니 새로 찍어야 함
+                        continue;
+                    }
+                    else if (res.action === 'set_zones') {
+                        config.zones = res.data;
+                        await configRef.set(config, { merge: true });
+                        continue;
+                    }
+                    
+                    // [입력] 클릭 실행
+                    const clickPoint = res.coordinate;
+                    const actualX = currentOffset.x + clickPoint.x;
+                    const actualY = currentOffset.y + clickPoint.y;
+
+                    const cdp = await context.newCDPSession(page);
+                    await page.mouse.move(actualX, actualY);
+                    await page.mouse.down();
+                    await page.waitForTimeout(50); // 클릭 시간도 단축 (50ms)
+                    await page.mouse.up();
+                    
+                    console.log(`   🖱️ 클릭 실행 (${actualX}, ${actualY}) - Action: ${res.action}`);
+
+                    // (E) Action별 분기
+                    if (res.action === 'submit') {
+                        console.log("   ✅ [Submit] 감지. 루프 종료.");
+                        isKeypadActive = false;
+                        break; 
+                    } 
+                    else if (res.action === 'refresh_click') {
+                        // Shift: 화면이 바뀌어야 하므로 대기 후, 다음 라운드에서 새 스크린샷 찍게 함
+                        await page.waitForTimeout(1000);
+                        lastScreenshotBase64 = null; // 이미지 갱신 트리거
+                    } 
+                    else {
+                        // 일반 클릭: 화면 안 바뀌므로 대기 없이 바로 다음 라운드 진행
+                        // 이미지도 재활용 (lastScreenshotBase64 유지)
+                        await page.waitForTimeout(50); // 최소한의 간격
+                    }
+                }
+
+                // 4. 세션 종료
+                await docRef.update({ status: 'SESSION_COMPLETED' });
+
+                // 5. 최종 확인 버튼 클릭
+                console.log("STEP 5-End: [확인] 버튼 클릭");
+                await page.waitForTimeout(500);
+                
+                await targetFrame.evaluate(() => {
+                    const obstacles = document.querySelectorAll('div[class*="transkey"], div[id*="layout"], div[id*="keyboard"]');
+                    obstacles.forEach(el => el.style.display = 'none');
+                });
+
+                const finalConfirmBtn = targetFrame.locator('#ML_Dialog_common #btn_common_confirm');
+                try {
+                    await finalConfirmBtn.click({ force: true });
+                    console.log("   🖱️ 클릭 성공!");
+                } catch (err) {
+                    await targetFrame.evaluate(() => {
+                        const btn = document.querySelector('#ML_Dialog_common #btn_common_confirm');
+                        if (btn) btn.click();
+                        if (window.DSDialog && window.DSDialog.releaseDialog) window.DSDialog.releaseDialog();
+                    });
+                }
+
+            } catch (e) {
+                 throw new Error(`원격 입력 단계 실패: ${e.message}`);
+            }
+
+            console.log("   로그인 처리 중... (대기)");
+            // ============================================================
+            // 9. 결과 판독 (성공 vs 비밀번호 오류)
+            // ============================================================
+            console.log("STEP 9: 결과 확인 및 데이터 수집");
+
+            // (A) 로그인 성공/실패 여부 판단
+            try {
+                const successSelector = '#mf_wfm_header_btn_logout';
+                const errorPopupSelector = '#popup_alert';
+
+                const checkError = async () => {
+                    try {
+                        await Promise.any([
+                            page.waitForSelector(errorPopupSelector, { state: 'visible', timeout: 10000 }),
+                            targetFrame.waitForSelector(errorPopupSelector, { state: 'visible', timeout: 10000 })
+                        ]);
+                        return 'ERROR';
+                    } catch(e) { return null; }
+                };
+
+                const checkSuccess = async () => {
+                    try {
+                        await page.locator('text=로그아웃').or(page.locator(successSelector)).first().waitFor({ state: 'visible', timeout: 15000 });
+                        return 'SUCCESS';
+                    } catch(e) { return null; }
+                };
+
+                const resultState = await Promise.race([checkError(), checkSuccess()]);
+
+                if (resultState === 'ERROR') {
+                    console.warn("   🚨 [경고] 비밀번호 오류 팝업 감지됨!");
+                    const errorMsg = await page.evaluate(() => {
+                        const msgEl = document.querySelector('#alert_msg');
+                        return msgEl ? msgEl.innerText : "비밀번호 불일치";
+                    }).catch(() => "비밀번호 불일치");
+
+                    await page.evaluate(() => { const btn = document.querySelector('#btn_alert_confirm'); if(btn) btn.click(); }).catch(()=>{});
+                    throw new Error(`WRONG_PASSWORD: ${errorMsg}`);
+                }
+
+                if (resultState === 'SUCCESS') {
+                    console.log("   🎉 [성공] 로그인 확인됨! 데이터 수집 시작...");
+                } else {
+                    throw new Error("로그인 상태를 확인할 수 없습니다. (타임아웃)");
+                }
+
+            } catch (e) {
+                if (e.message.includes('WRONG_PASSWORD')) throw e;
+                throw new Error(`로그인 검증 실패: ${e.message}`);
+            }
+
+            await page.waitForTimeout(2000); 
+
+            // ------------------------------------------------------------
+            // [중요] 전역 Dialog 리스너 제거 (다운로드 충돌 방지)
+            // ------------------------------------------------------------
+            page.removeAllListeners('dialog');
+            console.log("   전역 알림창 리스너 제거 완료");
+
+            // ------------------------------------------------------------
+            // (B) 데이터 수집 로직
+            // ------------------------------------------------------------
+            const results = [];
+            const formatDate = (d) => d ? `${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}` : '';
+            const startDt = formatDate(data.startDate);
+            const endDt = formatDate(data.endDate);
+
+            console.log(`   📅 수집 기간: ${startDt} ~ ${endDt}`);
+
+            // 1. [매출] 세금계산서 수집
+            try {
+                console.log("   🚀 [매출] 세금계산서 수집 시작...");
+                const salesData = await scrapTaxInvoices(page, startDt, endDt, '매출');
+                if (salesData.length > 0) {
+                    await saveToFirestore(db, data.partnerUid, 'TAX_SALES', salesData);
+                }
+                results.push({ type: '매출', count: salesData.length });
+                console.log(`   ✅ [매출] ${salesData.length}건 저장 완료`);
+            } catch (e) {
+                console.error("   ⚠️ [매출] 수집 실패:", e);
+                results.push({ type: '매출', error: e.message });
+            }
+
+            // 2. [매입] 세금계산서 수집
+            try {
+                console.log("   🚀 [매입] 세금계산서 수집 시작...");
+                const purchaseData = await scrapTaxInvoices(page, startDt, endDt, '매입');
+                if (purchaseData.length > 0) {
+                    await saveToFirestore(db, data.partnerUid, 'TAX_PURCHASE', purchaseData);
+                }
+                results.push({ type: '매입', count: purchaseData.length });
+                console.log(`   ✅ [매입] ${purchaseData.length}건 저장 완료`);
+            } catch (e) {
+                console.error("   ⚠️ [매입] 수집 실패:", e);
+                results.push({ type: '매입', error: e.message });
+            }
+
+            const finalTitle = await page.title();
+            return { 
+                success: true, 
+                message: "수집 작업이 완료되었습니다.",
+                data: results 
+            };
+
+        } catch (error) {
+            console.error("스크래핑 로직 실패:", error);
+            let screenshotBase64 = null;
+            if (page) {
+                try {
+                    const buffer = await page.screenshot({ fullPage: true });
+                    screenshotBase64 = buffer.toString('base64');
+                } catch(e) {}
+            }
+            
+            let errorMessage = error.message;
+            if (errorMessage.includes('WRONG_PASSWORD')) errorMessage = "인증서 비밀번호가 일치하지 않습니다.";
+
+            throw new functions.https.HttpsError('internal', errorMessage, {
+                screenshot: screenshotBase64,
+                isWrongPassword: error.message.includes('WRONG_PASSWORD')
+            });
+
+        } finally {
+            try {
+                if (fs.existsSync(derPath)) fs.unlinkSync(derPath);
+                if (fs.existsSync(keyPath)) fs.unlinkSync(keyPath);
+            } catch (e) {}
+            if (browser) await browser.close();
+        }
+    });
+
+// =============================================================================
+// [Helper 1] 세금계산서 수집 및 다운로드 (매출/매입 선택 로직 강화)
+// =============================================================================
+async function scrapTaxInvoices(page, startDate, endDate, type) {
+    console.log(`   [${type}] 메뉴 이동 및 데이터 조회 시작...`);
+
+    // 1. 메뉴 이동
+    try {
+        const topMenu = page.locator('text=조회/발급').first();
+        if (await topMenu.isVisible()) { await topMenu.hover(); await page.waitForTimeout(500); }
+        await page.evaluate(() => {
+            const menu = document.getElementById('menuAtag_4609050100');
+            if (menu) menu.click();
+        });
+        await page.waitForTimeout(5000);
+    } catch(e) {
+        await page.goto("https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/pp/index.xml&tmIdx=0&tm2lIdx=0105010000&tm3lIdx=0105010100", { waitUntil: 'networkidle' });
+        await page.waitForTimeout(5000);
+    }
+
+    // 2. iframe 탐색
+    let targetFrame = null;
+    for(let i=0; i<5; i++) {
+        const frames = page.frames();
+        for (const frame of frames) {
+            try {
+                if (await frame.locator('#mf_txppWframe_trigger50').count() > 0) {
+                    targetFrame = frame;
+                    break;
+                }
+            } catch(e) {}
+        }
+        if (targetFrame) break;
+        await page.waitForTimeout(2000);
+    }
+    if (!targetFrame) {
+        if (await page.locator('#mf_txppWframe_trigger50').count() > 0) targetFrame = page;
+        else throw new Error("조회 화면을 찾을 수 없습니다.");
+    }
+
+    // 3. [핵심 수정] 조회 조건 설정 (매출/매입)
+    // input ID 대신, 텍스트("매출", "매입")를 가진 Label을 클릭합니다.
+    console.log(`   구분 변경 시도: ${type}`);
+    
+    await targetFrame.evaluate((targetType) => {
+        // 라디오 버튼의 라벨을 찾아서 클릭 (WebSquare는 라벨 클릭 시 이벤트 트리거됨)
+        const labels = document.querySelectorAll('label.w2radio_label');
+        for (let label of labels) {
+            if (label.innerText.trim() === targetType) {
+                label.click();
+                return;
+            }
+        }
+    }, type);
+    
+    // 상태 반영 대기
+    await page.waitForTimeout(1000);
+
+    // 날짜 입력
+    await targetFrame.fill('input[id*="inqrDtStrt_input"]', startDate);
+    await targetFrame.fill('input[id*="inqrDtEnd_input"]', endDate);
+    
+    // 조회 버튼 클릭
+    await targetFrame.click('#mf_txppWframe_trigger50');
+    console.log("   [조회] 버튼 클릭. 로딩 대기...");
+    
+    try {
+        await targetFrame.waitForSelector('table[id*="resultGrid_body_table"]', { state: 'visible', timeout: 15000 });
+    } catch(e) {}
+
+    // 4. 다운로드 프로세스
+    console.log("   [내려받기] 버튼 클릭...");
+    const downloadBtn = targetFrame.locator('#mf_txppWframe_trigger55');
+    if (await downloadBtn.isVisible()) {
+        await downloadBtn.click();
+    } else {
+        console.log("   내려받기 버튼 없음 -> 데이터 0건");
+        return [];
+    }
+    await page.waitForTimeout(3000);
+
+    // [1차 팝업] 옵션 체크
+    try {
+        await targetFrame.evaluate(() => {
+            // ID 기반 강제 클릭
+            const chk1 = document.getElementById('mf_txppWframe_UTEETBDA17_wframe_checkbox1_input_0');
+            const chk2 = document.getElementById('mf_txppWframe_UTEETBDA17_wframe_checkbox2_input_0');
+            const btn = document.getElementById('mf_txppWframe_UTEETBDA17_wframe_btnProcess');
+            if (chk1 && !chk1.checked) chk1.click();
+            if (chk2 && !chk2.checked) chk2.click();
+            if (btn) btn.click();
+        });
+    } catch(e) {}
+    await page.waitForTimeout(2000);
+
+    // [2차 팝업] 다운로드
+    let allData = [];
+    const dropdownId = 'mf_txppWframe_UTEETBDA17_wframe_crrnPageForExcelDwlld';
+    
+    const hasDropdown = await targetFrame.evaluate((id) => {
+        const el = document.getElementById(id);
+        return el && el.offsetParent !== null;
+    }, dropdownId);
+    
+    if (hasDropdown) {
+        const optionCount = await targetFrame.locator(`#${dropdownId} option`).count();
+        console.log(`   대용량 분할 다운로드 (${optionCount}개)`);
+        
+        for (let i = 0; i < optionCount; i++) {
+            await targetFrame.locator(`#${dropdownId}`).selectOption({ index: i });
+            await page.waitForTimeout(1000);
+            const data = await downloadAndProcessZip(page, targetFrame);
+            allData.push(...data);
+        }
+    } else {
+        console.log("   단일 파일 다운로드");
+        const data = await downloadAndProcessZip(page, targetFrame);
+        allData.push(...data);
+    }
+
+    try {
+        await targetFrame.evaluate(() => {
+            const btn = document.getElementById('mf_txppWframe_UTEETBDA17_wframe_trigger10001');
+            if (btn) btn.click();
+        });
+    } catch(e) {}
+
+    return allData;
+}
+// =============================================================================
+// [Helper 2] ZIP 다운로드 및 파싱 (UTF-8 인코딩 수정)
+// =============================================================================
+async function downloadAndProcessZip(page, frame) {
+    const AdmZip = require('adm-zip');
+    const iconv = require('iconv-lite');
+
+    // 1. 기존 리스너 제거 (충돌 방지)
+    page.removeAllListeners('dialog');
+
+    // 2. 다운로드 전용 다이얼로그 핸들러 등록
+    const dialogHandler = async (dialog) => {
+        console.log(`   🚨 다운로드 확인창: ${dialog.message()} -> 수락`);
+        try { await dialog.accept(); } catch(e) {}
+    };
+    page.on('dialog', dialogHandler);
+
+    // 3. 다운로드 시작
+    const downloadPromise = page.waitForEvent('download');
+    
+    console.log("   [텍스트] 다운로드 버튼 클릭...");
+    await frame.evaluate(() => {
+        const btn = document.getElementById('mf_txppWframe_UTEETBDA17_wframe_trigger5');
+        if (btn) btn.click();
+        else throw new Error("텍스트 다운로드 버튼 못 찾음");
+    });
+    
+    // 4. 스트림 처리
+    const download = await downloadPromise;
+    const stream = await download.createReadStream();
+    
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    const zipBuffer = Buffer.concat(chunks);
+    
+    console.log(`   📦 파일 다운로드 완료 (${zipBuffer.length} bytes)`);
+
+    // 5. 리스너 정리
+    page.off('dialog', dialogHandler);
+    
+    // 6. 압축 해제 및 파싱
+    const zip = new AdmZip(zipBuffer);
+    const zipEntries = zip.getEntries();
+
+    let mainList = [];
+    let itemList = [];
+
+    zipEntries.forEach(entry => {
+        // [핵심 수정] cp949 -> utf-8로 변경
+        // 홈택스 텍스트 파일이 UTF-8 형식임이 확인되었습니다.
+        const text = iconv.decode(entry.getData(), 'utf-8');
+        
+        if (entry.entryName.includes('Etxiv')) {
+            mainList = parseEtxiv(text); 
+        } else if (entry.entryName.includes('Item')) {
+            itemList = parseItem(text); 
+        }
+    });
+    
+    console.log(`   📄 파싱 결과: 메인 ${mainList.length}건, 상세 ${itemList.length}건`);
+
+    return mainList.map(invoice => ({
+        ...invoice,
+        items: itemList.filter(it => it.approvalNo === invoice.approvalNo)
+    }));
+}
+// =============================================================================
+// [Helper 3] 파서: Etxiv.txt (수정됨: undefined 방지)
+// =============================================================================
+function parseEtxiv(text) {
+    const lines = text.split('\n');
+    const data = [];
+    
+    // 6번째 줄(Index 5)부터 데이터
+    for (let i = 5; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue; 
+
+        const row = line.split('\t');
+        // 안전장치
+        if (row.length < 24) {
+             while(row.length < 24) row.push("");
+        }
+        
+        data.push({
+            writeDate: row[0]?.trim() || "",       
+            approvalNo: row[1]?.trim() || "",      
+            issueDate: row[2]?.trim() || "",       
+            sendDate: row[3]?.trim() || "",        
+            vendorRegNo: row[4]?.trim() || "",     
+            vendorName: row[6]?.trim() || "",      
+            vendorCeo: row[7]?.trim() || "",       
+            vendorAddr: row[8]?.trim() || "",      
+            buyerRegNo: row[9]?.trim() || "",      
+            buyerName: row[11]?.trim() || "",      
+            buyerCeo: row[12]?.trim() || "",       
+            buyerAddr: row[13]?.trim() || "",      
+            totalAmount: parseInt(row[14]?.replace(/,/g, '') || '0'),
+            supplyAmount: parseInt(row[15]?.replace(/,/g, '') || '0'),
+            taxAmount: parseInt(row[16]?.replace(/,/g, '') || '0'),
+            type: row[18]?.trim() || "",           
+            issueType: row[19]?.trim() || "",      
+            remark: row[20]?.trim() || "",         
+            receiptType: row[21]?.trim() || "",    
+            email1: row[22]?.trim() || "",         
+            email2: row[23]?.trim() || ""          
+        });
+    }
+    return data;
+}
+
+// =============================================================================
+// [Helper 4] 파서: Item.txt (수정됨: undefined 방지)
+// =============================================================================
+function parseItem(text) {
+    const lines = text.split('\n');
+    const data = [];
+    
+    // 4번째 줄(Index 3)부터 데이터
+    for (let i = 3; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const row = line.split('\t');
+        // 데이터 길이가 부족하면 빈 값으로 채움 (안전장치)
+        if (row.length < 12) {
+             while(row.length < 12) row.push("");
+        }
+
+        // [중요] 모든 필드에 || "" (빈 문자열 처리)를 추가하여 undefined 방지
+        data.push({
+            approvalNo: row[0]?.trim() || "",      // 승인번호
+            seq: row[1]?.trim() || "",             // 품목순번
+            date: row[4]?.trim() || "",            // 일자
+            itemName: row[5]?.trim() || "",        // 품목명
+            spec: row[6]?.trim() || "",            // 규격
+            qty: row[7]?.trim() || "0",            // 수량
+            unitPrice: parseInt(row[8]?.replace(/,/g, '') || '0'),     // 단가
+            supplyAmount: parseInt(row[9]?.replace(/,/g, '') || '0'),  // 공급가액
+            taxAmount: parseInt(row[10]?.replace(/,/g, '') || '0'),    // 세액
+            remark: row[11]?.trim() || ""          // 비고 (여기가 문제였음)
+        });
+    }
+    return data;
+}
+// =============================================================================
+// [Helper 5] Firestore 저장 함수
+// =============================================================================
+async function saveToFirestore(db, uid, collectionName, dataList) {
+    if (dataList.length === 0) return;
+    
+    const batchSize = 400; // Firestore 배치 제한 고려
+    for (let i = 0; i < dataList.length; i += batchSize) {
+        const batch = db.batch();
+        const chunk = dataList.slice(i, i + batchSize);
+        
+        chunk.forEach(item => {
+            // 문서 ID를 '승인번호'로 설정하여 중복 저장 시 덮어쓰기(갱신) 되도록 함
+            const docRef = db.collection('users').doc(uid)
+                             .collection(collectionName).doc(item.approvalNo);
+            batch.set(docRef, item, { merge: true });
+        });
+        
+        await batch.commit();
+    }
+}

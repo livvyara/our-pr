@@ -5,7 +5,7 @@ import { getFunctions } from "firebase/functions";
 import { getAuth } from "firebase/auth";
 
 // ⚠️ YOUR_... 부분을 실제 Firebase 프로젝트 값으로 교체하세요.
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyB-hJa-krvZBJjzPMUbwGZ26xWvw5_Xo2E",
   authDomain: "our-pr.firebaseapp.com",
   projectId: "our-pr",
@@ -15,7 +15,7 @@ const firebaseConfig = {
 };
 
 // 1. Firebase 앱 초기화
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 // 2. Cloud Functions 초기화 (리전은 asia-northeast3로 설정되어 있습니다.)
 // 이 값은 여러분의 Firebase Functions 배포 리전과 일치해야 합니다.

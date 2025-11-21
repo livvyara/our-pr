@@ -39,8 +39,10 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     key: 'accounting', 
     title: '회계관리', 
     subMenus: [
-      { key: 'accounting-sales', title: '매출자료 등록(제공예정)', path: '/program/accounting-sales' },
-      { key: 'accounting-purchase', title: '매입자료 등록(제공예정)', path: '/program/accounting-purchase' },
+      { key: 'accounting-hometax', title: '홈택스 수집', path: '/program/accounting-hometax' },
+      { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' }, // [추가됨]
+      { key: 'accounting-sales', title: '매출자료 등록', path: '/program/accounting-sales' },
+      { key: 'accounting-purchase', title: '매입자료 등록', path: '/program/accounting-purchase' },
     ]
   },
   { 
@@ -49,7 +51,6 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     subMenus: [
       { key: 'emp-add', title: '직원 등록', path: '/program/emp-add' },
       { key: 'emp-list', title: '직원 목록', path: '/program/emp-list' },
-      // [⭐ 추가] 권한관리 탭 (partner 역할만 보게 됨)
       { key: 'emp-permission', title: '권한관리', path: '/program/emp-permission' },
     ]
   },
@@ -68,12 +69,11 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'portfolio-list', title: '포트폴리오 목록', path: '/program/portfolio-list' },
     ]
   },
-{
-    key: 'activity', // (대메뉴 키)
-    title: '활동 내역', // (대메뉴 제목)
+  {
+    key: 'activity',
+    title: '활동 내역',
     subMenus: [
       { key: 'activity-log', title: '활동로그', path: '/program/activity-log' },
     ]
   }
 ];
-

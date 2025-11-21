@@ -1,0 +1,191 @@
+/* src/pages/program/AccountingTaxInvoicePage.css */
+
+/* 전체 컨테이너 */
+.hometax-page-container {
+  padding: 30px;
+  max-width: 1400px; /* 테이블이 넓어서 폭을 좀 더 넓게 잡음 */
+  margin: 0 auto;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 헤더 영역 */
+.hometax-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.hometax-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  color: #333;
+  font-weight: 700;
+}
+
+.hometax-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 새로고침 버튼 */
+.btn-refresh {
+  padding: 10px 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #555;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-refresh:hover {
+  background-color: #f8f9fa;
+  border-color: #bbb;
+  color: #333;
+}
+
+/* 상단 요약 그리드 */
+.hometax-top-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4등분 */
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.hometax-card {
+  background: #fff;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.hometax-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* 테이블 영역 */
+.hometax-result-section {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  overflow: hidden;
+}
+
+.result-table-wrapper {
+  overflow-x: auto;
+}
+
+.hometax-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.hometax-table th {
+  background: #f8f9fa;
+  padding: 12px 10px;
+  border-bottom: 1px solid #ddd;
+  font-weight: bold;
+  color: #444;
+  text-align: center;
+}
+
+.hometax-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+  vertical-align: middle;
+}
+
+.hometax-table tbody tr:hover {
+  background-color: #f1f8ff; /* 마우스 오버 시 연한 파랑 */
+}
+
+/* 구분 뱃지 */
+.type-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* 데이터 없음 */
+.no-data {
+  padding: 80px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 모바일 대응 */
+@media (max-width: 1024px) {
+  .hometax-top-grid {
+    grid-template-columns: 1fr 1fr; /* 2단 */
+  }
+}
+
+@media (max-width: 600px) {
+  .hometax-top-grid {
+    grid-template-columns: 1fr; /* 1단 */
+  }
+  .hometax-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+.hometax-card.summary {
+    padding: 20px;
+    background-color: #fff;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.hometax-card.summary span {
+    font-size: 13px;
+    color: #666;
+}
+
+.hometax-card.summary strong {
+    font-size: 22px;
+    color: #333;
+}
+
+.hometax-card.summary.total {
+    background-color: #fff8e1; /* 연한 노랑 */
+    border-color: #ffe0b2;
+}
+
+.hometax-card.summary.total span {
+    color: #f57c00;
+}
+
+.hometax-card.summary.total strong {
+    color: #e65100;
+}
+
+/* 뱃지 스타일 */
+.type-badge.sales {
+    background-color: #e3f2fd; color: #1976d2;
+}
+.type-badge.purchase {
+    background-color: #ffebee; color: #c62828;
+}

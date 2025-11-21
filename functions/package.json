@@ -1,18 +1,26 @@
 {
   "name": "functions",
   "version": "1.0.0",
+  "description": "Cloud Functions for Firebase",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium"
+  },
+  "engines": {
+    "node": "18"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "axios": "^1.13.2",
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^6.6.0",
+    "iconv-lite": "^0.7.0",
+    "playwright-chromium": "^1.56.1",
     "sharp": "^0.34.5"
-  }
+  },
+  "private": true
 }
