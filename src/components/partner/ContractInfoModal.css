@@ -1,0 +1,200 @@
+/* Scoped Styles for ContractInfoModal */
+
+/* 1. 모달 배경 및 컨테이너 */
+.contract-info-scope .modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 9999; backdrop-filter: blur(4px);
+}
+
+.contract-info-scope .modal-container {
+  background: #fff;
+  width: 580px;
+  max-width: 95%;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  font-family: 'Pretendard', -apple-system, sans-serif;
+}
+
+/* 2. 헤더 */
+.contract-info-scope .modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center;
+  background-color: #fff;
+}
+
+.contract-info-scope .modal-header h2 {
+  margin: 0; font-size: 18px; font-weight: 800; color: #222;
+}
+
+.contract-info-scope .close-btn {
+  background: none; border: none; font-size: 26px; color: #bbb;
+  cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s;
+}
+.contract-info-scope .close-btn:hover { color: #333; }
+
+/* 3. 폼 영역 (스크롤) */
+.contract-info-scope .contract-form {
+  padding: 25px;
+  overflow-y: auto;
+  flex: 1;
+  background-color: #fcfcfc;
+}
+
+/* 4. 컨트롤 박스 */
+.contract-info-scope .control-box {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.contract-info-scope .box-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 15px;
+}
+
+.contract-info-scope .box-title {
+  font-size: 14px; font-weight: 700; color: #444;
+  margin-bottom: 15px;
+  border-left: 3px solid #4a90e2; 
+  padding-left: 8px;
+  line-height: 1;
+}
+
+.contract-info-scope .status-badge {
+  font-size: 11px; background-color: #e3f2fd; color: #1976d2;
+  padding: 3px 8px; border-radius: 12px; font-weight: 600;
+}
+
+/* 5. 폼 요소 스타일 */
+.contract-info-scope .form-row {
+  display: flex; align-items: center; margin-bottom: 15px;
+}
+.contract-info-scope .form-row.vertical {
+  flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.contract-info-scope .form-row.split {
+  gap: 15px;
+}
+.contract-info-scope .form-row:last-child { margin-bottom: 0; }
+
+.contract-info-scope .form-group {
+  flex: 1; display: flex; flex-direction: column; gap: 6px;
+}
+
+.contract-info-scope label {
+  font-size: 13px; font-weight: 600; color: #666; margin-right: 15px; white-space: nowrap;
+}
+.contract-info-scope .req { color: #e74c3c; margin-left: 2px; }
+
+/* 모던 입력창 */
+.contract-info-scope .input-modern {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px; color: #333;
+  background-color: #fff;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.contract-info-scope .input-modern:focus {
+  outline: none; border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+.contract-info-scope .input-modern.right { text-align: right; }
+.contract-info-scope .input-modern.readonly { background-color: #f9f9f9; color: #888; cursor: not-allowed; }
+.contract-info-scope .input-modern.full { width: 100%; }
+
+/* 라디오 버튼 그룹 */
+.contract-info-scope .radio-group {
+  display: flex; gap: 20px;
+}
+.contract-info-scope .radio-label {
+  font-size: 14px; color: #444; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; margin: 0;
+}
+.contract-info-scope .radio-label input {
+  width: 16px; height: 16px; accent-color: #4a90e2; cursor: pointer;
+}
+
+/* 아파트 상세 주소 행 */
+.contract-info-scope .apt-row {
+  display: flex; gap: 10px; width: 100%;
+}
+.contract-info-scope .apt-row input { flex: 1; }
+
+/* ------------------------------------------------------------
+   [6. 푸터 버튼 영역 (수정됨)]
+   - flex 및 align-items: center로 높이 정렬 완벽 대응
+   - cim- 네임스페이스 적용
+   ------------------------------------------------------------
+*/
+.contract-info-scope .cim-footer-actions {
+  padding: 20px 25px;
+  border-top: 1px solid #eee;
+  display: flex; 
+  justify-content: flex-end; /* 우측 정렬 */
+  align-items: center;       /* [중요] 수직 중앙 정렬 (높이 맞춤) */
+  gap: 10px;
+  background-color: #fff;
+  height: auto;
+}
+
+/* 취소 버튼 스타일 */
+.contract-info-scope .cim-btn-cancel {
+  height: 46px;              /* 높이 고정 */
+  padding: 0 24px;
+  min-width: 80px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: #555;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;      /* 내부 텍스트 정렬용 */
+  align-items: center;       /* 내부 텍스트 수직 중앙 */
+  justify-content: center;   /* 내부 텍스트 수평 중앙 */
+  white-space: nowrap;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.contract-info-scope .cim-btn-cancel:hover { 
+  background-color: #f5f5f5; 
+  border-color: #bbb; 
+}
+
+/* 계약 정보 등록 버튼 스타일 */
+.contract-info-scope .cim-btn-register {
+  height: 46px;              /* 높이 고정 (취소 버튼과 동일) */
+  padding: 0 30px;
+  border: none;
+  background-color: #4a90e2; /* 브랜드 컬러 (필요 시 수정) */
+  border-radius: 5px;        /* 요청하신 Radius 5 */
+  color: #ffffff !important;    /* [요청] 폰트 색상 #333 지정 */
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;      /* 내부 텍스트 정렬용 */
+  align-items: center;       /* 내부 텍스트 수직 중앙 */
+  justify-content: center;   /* 내부 텍스트 수평 중앙 */
+  white-space: nowrap;
+  transition: opacity 0.2s;
+  box-sizing: border-box;
+}
+.contract-info-scope .cim-btn-register:hover { 
+  opacity: 0.9; 
+}
+.contract-info-scope .cim-btn-register:disabled { 
+  background-color: #ccc !important; 
+  cursor: not-allowed; 
+}

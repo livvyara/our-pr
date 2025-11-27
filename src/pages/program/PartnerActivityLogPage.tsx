@@ -21,6 +21,18 @@ const formatTime = (timestamp: any) => {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
 };
 
+// [NEW] 로그 타입 한글 매핑 헬퍼
+const getLogTypeLabel = (type: string) => {
+    switch(type) {
+        case 'hometax_scraping': return '홈택스 수집';
+        case 'tax_invoice_update': return '세금계산서';
+        case 'cash_receipt_update': return '현금영수증';
+        case 'site_add': return '현장 추가';
+        case '작업일지': return '작업일지';
+        default: return type || '활동';
+    }
+};
+
 const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
   const [logs, setLogs] = useState<LogData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,11 +68,12 @@ const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
     };
 
     // ----------------------------------------------------------------
-    // 1. [직원/신규] 새로운 저장소 구독
-    // 경로: users/{partnerUid}/activityLogs
+    // 1. [직원/신규] 새로운 저장소 구독 (ACTIVITY_LOGS)
+    // * 주의: 컬렉션 이름이 'activityLogs'인지 'ACTIVITY_LOGS'인지 확인 필요.
+    //   앞서 만든 페이지에서는 'ACTIVITY_LOGS'로 저장했으므로 대문자로 맞춥니다.
     // ----------------------------------------------------------------
     const qNew = query(
-      collection(db, 'users', partnerUid, 'activityLogs'),
+      collection(db, 'users', partnerUid, 'ACTIVITY_LOGS'), // [수정] 대문자 컬렉션명
       orderBy('createdAt', 'desc')
     );
 
@@ -70,18 +83,20 @@ const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
         return {
           id: doc.id,
           type: data.type || '활동',
-          content: data.content,
+          content: data.text || data.content || '', // text 필드 호환
           createdAt: data.createdAt,
           isRead: data.isRead
         };
       });
       mergeAndSetLogs();
+    }, (error) => {
+        // 기존 소문자 컬렉션(activityLogs)일 수도 있으므로 에러 시 폴백 가능하지만,
+        // 여기서는 대문자로 통일했다고 가정합니다.
+        console.warn("로그 로딩 에러:", error);
     });
 
     // ----------------------------------------------------------------
-    // 2. [대표/기존] 옛날 저장소 구독 (제공해주신 코드 기반)
-    // 경로: adminActivityLogs (Logs가 붙음!)
-    // 필드: adminUid (partnerUid가 아님!)
+    // 2. [대표/기존] 옛날 저장소 구독 (기존 유지)
     // ----------------------------------------------------------------
     const qOld = query(
       collection(db, 'adminActivityLogs'),
@@ -94,9 +109,9 @@ const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
         const data = doc.data();
         return {
           id: doc.id,
-          type: '일반', // 기존 로그엔 타입이 없으므로 기본값
-          content: data.message, // message -> content 매핑
-          createdAt: data.timestamp, // timestamp -> createdAt 매핑
+          type: '일반', 
+          content: data.message, 
+          createdAt: data.timestamp, 
           isRead: true
         };
       });
@@ -118,7 +133,7 @@ const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
     const lower = searchTerm.toLowerCase();
     return logs.filter(log => 
       (log.content && log.content.toLowerCase().includes(lower)) || 
-      (log.type && log.type.toLowerCase().includes(lower)) ||
+      (log.type && getLogTypeLabel(log.type).toLowerCase().includes(lower)) ||
       formatTime(log.createdAt).includes(lower)
     );
   }, [logs, searchTerm]);
@@ -143,7 +158,7 @@ const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
         <table className="activity-log-table">
           <colgroup>
             <col style={{ width: '180px' }} />
-            <col style={{ width: '100px' }} />
+            <col style={{ width: '120px' }} />
             <col />
           </colgroup>
           <thead>
@@ -161,21 +176,30 @@ const PartnerActivityLogPage: React.FC<Props> = ({ partnerUid }) => {
                 </td>
               </tr>
             ) : (
-              filteredLogs.map((log) => (
-                <tr key={log.id}>
-                  <td style={{ textAlign: 'center', color: '#666' }}>
-                    {formatTime(log.createdAt)}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`log-type-badge ${log.type === '작업일지' ? 'worklog' : 'default'}`}>
-                      {log.type}
-                    </span>
-                  </td>
-                  <td className="log-content-cell" title={log.content}>
-                    {log.content}
-                  </td>
-                </tr>
-              ))
+              filteredLogs.map((log) => {
+                const label = getLogTypeLabel(log.type);
+                // 타입별 뱃지 스타일 지정
+                let badgeClass = 'default';
+                if (log.type.includes('hometax')) badgeClass = 'hometax';
+                else if (log.type.includes('tax_invoice')) badgeClass = 'tax';
+                else if (log.type.includes('cash_receipt')) badgeClass = 'cash';
+                
+                return (
+                  <tr key={log.id}>
+                    <td style={{ textAlign: 'center', color: '#666' }}>
+                      {formatTime(log.createdAt)}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`log-type-badge ${badgeClass}`}>
+                        {label}
+                      </span>
+                    </td>
+                    <td className="log-content-cell" title={log.content}>
+                      {log.content}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -25,6 +25,10 @@ import AccountingHometaxPage from './AccountingHometaxPage';
 // [⭐ 추가] 세금계산서 통합 조회 페이지 임포트
 import AccountingTaxInvoicePage from './AccountingTaxInvoicePage'; 
 import AccountingCashReceiptPage from './AccountingCashReceiptPage'; 
+import AccountingExpenseCategory from './AccountingExpenseCategoryPage'; 
+import AccountingManualSalesPage from './AccountingManualSalesPage';
+import AccountingManualPurchasePage from './AccountingManualPurchasePage';
+import AccountingBankingExcelPage from './AccountingBankingExcelPage';
 
 import WorkLogPage from './WorkLogPage';
 import SiteDeleteList from '../../components/partner/SiteDeleteList';
@@ -210,13 +214,15 @@ const PartnerProgramPage: React.FC = () => {
                   <Route path="hr-add-worker" element={<ProtectedContent requiredPerm="hr-add-worker"><h2>작업자 등록</h2></ProtectedContent>} />
                   <Route path="hr-add-log" element={<ProtectedContent requiredPerm="hr-add-log"><h2>노무 등록</h2></ProtectedContent>} />
                   <Route path="hr-export-excel" element={<ProtectedContent requiredPerm="hr-export-excel"><h2>엑셀다운로드(신고용)</h2></ProtectedContent>} />
-                  
-                  <Route path="accounting-sales" element={<ProtectedContent requiredPerm="accounting-sales"><h2>매출자료 등록(제공예정)</h2></ProtectedContent>} />
-                  <Route path="accounting-purchase" element={<ProtectedContent requiredPerm="accounting-purchase"><h2>매입자료 등록(제공예정)</h2></ProtectedContent>} />
+                  AccountingBankingExcelPage
+              
                   <Route path="accounting-hometax" element={<ProtectedContent requiredPerm="accounting"><AccountingHometaxPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
                   <Route path="accounting-tax-invoice" element={<ProtectedContent requiredPerm="accounting"><AccountingTaxInvoicePage /></ProtectedContent>} />
                   <Route path="accounting-cash-receipt" element={<ProtectedContent requiredPerm="accounting"><AccountingCashReceiptPage /></ProtectedContent>} />
-
+                  <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
+                  <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
+                  <Route path="accounting-sales-manual" element={<ProtectedContent requiredPerm="accounting-sales"><AccountingManualSalesPage /></ProtectedContent>} />
+                  <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />
                   <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
                   <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
                   <Route path="emp-permission" element={<ProtectedContent requiredPerm="emp-permission"><PartnerPermissionTab partnerUid={currentPartnerUid} partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />

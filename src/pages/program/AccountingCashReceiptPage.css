@@ -1,17 +1,18 @@
 /* ============================================================================
-   컨테이너 및 기본 레이아웃
+   AccountingTaxInvoicePage.css & AccountingCashReceiptPage.css (공용)
    ============================================================================ */
+
+/* 1. 기본 레이아웃 & 컨테이너 */
 .hometax-page-container {
   padding-left: 10px;
   margin-left: 0;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
+  padding-bottom: 50px;
 }
 
-/* ============================================================================
-   헤더 및 컨트롤 패널 (필터 영역)
-   ============================================================================ */
+/* 2. 헤더 영역 */
 .hometax-header-wrapper {
   border-bottom: 2px solid #333;
   padding-bottom: 20px;
@@ -24,6 +25,7 @@
 .hometax-title h2 { margin: 0 0 5px 0; color: #333; font-size: 24px; }
 .hometax-title p { margin: 0; color: #666; font-size: 14px; }
 
+/* 3. 컨트롤 패널 (필터 영역) */
 .hometax-control-panel {
   background-color: #f8f9fa;
   padding: 15px;
@@ -31,7 +33,7 @@
   border: 1px solid #eee;
 }
 
-/* 모드 버튼 (월간/분기 등) */
+/* 상단 모드 버튼 (월간/분기 등) */
 .mode-buttons {
   display: flex;
   gap: 5px;
@@ -72,13 +74,16 @@
   gap: 5px;
 }
 
-.filter-item.date-select {
+.date-select {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-.filter-row input, .filter-row select {
+/* 필터 내부 입력창 공통 */
+.filter-row input[type="text"], 
+.filter-row input[type="date"], 
+.filter-row select {
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -87,11 +92,39 @@
   box-sizing: border-box;
 }
 
+/* 구분선 */
 .divider {
   width: 1px;
   height: 24px;
   background-color: #ddd;
   margin: 0 10px;
+}
+
+/* [NEW] 체크박스 그룹 스타일 (귀속/미귀속) */
+.checkbox-group {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  background-color: #fff;
+  padding: 0 15px;
+  height: 38px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.checkbox-group label {
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  color: #333;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: 6px;
+  transform: scale(1.2);
+  cursor: pointer;
 }
 
 /* 조회 버튼 */
@@ -101,7 +134,7 @@
   background-color: #1976d2;
   color: white;
   border: none;
-  border-radius: 5px; /* 요청하신 래디우스 5 */
+  border-radius: 5px; /* 요청: Radius 5 */
   font-weight: bold;
   font-size: 15px;
   cursor: pointer;
@@ -111,9 +144,8 @@
 }
 .btn-search:hover { background-color: #1565c0; }
 
-/* ============================================================================
-   요약 카드 섹션 (Summary)
-   ============================================================================ */
+
+/* 4. 요약 카드 섹션 (Summary) */
 .summary-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -150,22 +182,21 @@
 .summary-card .row.total strong { font-size: 20px; font-weight: 900; }
 
 
-/* ============================================================================
-   리스트 테이블 스타일
-   ============================================================================ */
+/* 5. 리스트 테이블 스타일 */
 .hometax-result-section {
   width: 100%;
 }
 
 .result-table-wrapper {
   overflow-x: auto;
+  border-top: 2px solid #333;
 }
 
 .hometax-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  table-layout: fixed; /* 컬럼 너비 고정 */
+  table-layout: fixed;
 }
 
 .hometax-table th, .hometax-table td {
@@ -179,11 +210,11 @@
   font-weight: bold;
   text-align: center;
   color: #333;
-  white-space: nowrap;
+  height: 40px;
 }
 
 .hometax-table tr:hover {
-  background-color: #f9fbfd;
+  background-color: #f0f8ff !important; /* 호버 시 약간 진한 파랑 */
 }
 
 .no-data {
@@ -193,7 +224,7 @@
   font-size: 14px;
 }
 
-/* 뱃지 스타일 (매출/매입) */
+/* 뱃지 스타일 */
 .type-badge {
   display: inline-block;
   padding: 3px 6px;
@@ -204,7 +235,7 @@
 .type-badge.sales { background-color: #e3f2fd; color: #1976d2; }
 .type-badge.purchase { background-color: #ffebee; color: #c62828; }
 
-/* 가맹점명(거래처명) 링크 스타일 */
+/* 거래처명 링크 스타일 */
 .vendor-name-cell {
   color: #1976d2;
   cursor: pointer;
@@ -213,34 +244,45 @@
 }
 .vendor-name-cell:hover { color: #0d47a1; }
 
-/* 테이블 내부 입력 요소 (폰트 14px로 확대 적용됨) */
+/* 테이블 내부 셀렉트 박스 */
 .cell-select {
   padding: 6px;
   border: 1px solid #ddd;
   border-radius: 4px;
   width: 100%;
-  font-size: 14px;
+  font-size: 13px;
   height: 34px;
   background-color: #fff;
 }
-.cell-select:focus { border-color: #333; }
+.cell-select:focus { border-color: #333; outline: none; }
+.cell-select:disabled { background-color: #f9f9f9; color: #ccc; }
 
+/* 테이블 내부 메모 입력창 */
 .cell-input.memo {
   width: 100%;
-  min-width: 200px;
   padding: 6px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 13px;
   height: 34px;
   box-sizing: border-box;
 }
-.cell-input.memo:focus { border-color: #333; outline: none; }
+.cell-input.memo:focus { border-color: #333; outline: none; background-color: #fff; }
+
+/* [NEW] 결제 연결 버튼 스타일 */
+.btn-link-pay {
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-link-pay:hover {
+  background-color: #e3f2fd !important;
+  border-color: #1976d2 !important;
+  color: #1976d2;
+  font-weight: bold;
+}
 
 
-/* ============================================================================
-   상세 모달 (Modal) 스타일
-   ============================================================================ */
+/* 6. 팝업 모달 (Modal) 공통 스타일 */
 .invoice-modal-backdrop {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.6);
@@ -261,19 +303,11 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   border: 2px solid #333;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 테마 색상 */
-.invoice-paper.red-theme { border-color: #e74c3c; }
-.invoice-paper.red-theme h2 { color: #e74c3c; }
-.invoice-paper.red-theme .invoice-table th,
-.invoice-paper.red-theme .center-header { background-color: #ffeeee; color: #e74c3c; border-color: #ffcdd2; }
-
-.invoice-paper.blue-theme { border-color: #1976d2; }
-.invoice-paper.blue-theme h2 { color: #1976d2; }
-.invoice-paper.blue-theme .invoice-table th,
-.invoice-paper.blue-theme .center-header { background-color: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
-
+/* 팝업 헤더 */
 .invoice-header {
   display: flex;
   justify-content: space-between;
@@ -285,11 +319,23 @@
 .invoice-header h2 { margin: 0; font-size: 24px; font-weight: 900; }
 .approval-no { font-size: 12px; color: #555; text-align: right; }
 
-/* 모달 내부 테이블 */
+/* 테마 색상 (매출:빨강 / 매입:파랑) */
+.invoice-paper.red-theme { border-color: #e74c3c; }
+.invoice-paper.red-theme h2 { color: #e74c3c; }
+.invoice-paper.red-theme .invoice-table th,
+.invoice-paper.red-theme .center-header { background-color: #ffeeee; color: #e74c3c; border-color: #ffcdd2; }
+
+.invoice-paper.blue-theme { border-color: #1976d2; }
+.invoice-paper.blue-theme h2 { color: #1976d2; }
+.invoice-paper.blue-theme .invoice-table th,
+.invoice-paper.blue-theme .center-header { background-color: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
+
+
+/* 팝업 내부 테이블 */
 .invoice-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   font-size: 13px;
 }
 .invoice-table th, .invoice-table td {
@@ -297,24 +343,38 @@
   padding: 8px;
 }
 .invoice-table th { text-align: center; }
-.invoice-table .label { background-color: #f9f9f9; width: 100px; text-align: center; font-weight: bold; }
+
+.invoice-table .label { 
+    background-color: #f9f9f9; width: 100px; text-align: center; font-weight: bold; 
+}
 .invoice-table .content { padding-left: 10px; }
 .invoice-table .content.highlight { font-weight: bold; }
 
-/* 모달 하단 합계 및 메모 영역 */
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 5px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* 팝업 하단 (합계/메모) */
 .invoice-footer-section {
-  margin-top: 20px;
-  border-top: 1px solid #ddd;
+  margin-top: 15px;
+  border-top: 2px solid #eee;
   padding-top: 15px;
 }
+
+.total-row {
+  text-align: right;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+.total-row strong { font-size: 22px; margin-left: 10px; color: #333; }
 
 .remarks-row {
   display: flex;
   gap: 15px;
-  flex-direction: column; /* 현금영수증은 메모가 중요해서 세로 배치도 괜찮음 */
-}
-@media (min-width: 600px) {
-  .remarks-row { flex-direction: row; }
 }
 
 .remark-box {
@@ -329,7 +389,7 @@
   background-color: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 4px;
-  min-height: 40px;
+  min-height: 50px;
   font-size: 13px;
   color: #333;
 }
@@ -338,10 +398,12 @@
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  min-height: 60px;
+  min-height: 50px;
   font-size: 13px;
   font-family: inherit;
   resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
 }
 .memo-input:focus { border-color: #333; outline: none; }
 
@@ -350,21 +412,25 @@
   margin-top: 20px;
 }
 .modal-close-btn button {
-  padding: 8px 30px;
+  padding: 10px 40px;
   background: #333;
   color: #fff;
   border: none;
   cursor: pointer;
-  border-radius: 5px; /* 요청하신 래디우스 5 */
+  border-radius: 5px; /* Radius 5 */
   font-weight: bold;
+  font-size: 14px;
 }
+.modal-close-btn button:hover { background: #555; }
 
-/* 반응형 처리 */
+
+/* 7. 반응형 처리 */
 @media (max-width: 1024px) {
   .filter-row { flex-direction: column; align-items: stretch; }
   .btn-search { margin-left: 0; width: 100%; }
   .summary-section { grid-template-columns: 1fr; }
+  .remarks-row { flex-direction: column; }
   
-  /* 모바일에서 테이블 스크롤 */
-  .hometax-table { min-width: 800px; } 
+  /* 테이블 가로 스크롤 */
+  .hometax-table { min-width: 1000px; } 
 }

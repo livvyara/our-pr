@@ -1,119 +1,171 @@
-/* src/components/partner/WorkLogModal.css */
+/* WorkLogModal.css - Fix Ver. */
 
-/* 1. 모달 박스 스타일 */
-.worklog-modal {
-  width: 650px;
-  max-width: 95%;
-  max-height: 90vh;
-  overflow-y: auto;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  position: relative;
+/* 0. 기초 초기화: 패딩/테두리 계산 오류 방지 */
+.worklog-modal * {
+  box-sizing: border-box;
 }
 
-/* 2. 헤더 (타이틀 + X 버튼) */
+/* 1. 모달 배경 및 위치 */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* 배경 조금 더 진하게 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(3px);
+}
+
+/* 2. 모달 창 본체 */
+.worklog-modal {
+  background: #fff;
+  width: 650px; /* 너비 고정 (더 안정적임) */
+  max-width: 95%;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 3. 헤더 */
 .modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 25px;
-  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #333;
 }
 
-/* X 버튼 디자인 개선 */
 .close-btn {
-  background: transparent;
   border: none;
+  background: transparent;
   font-size: 24px;
-  color: #bbb;
   cursor: pointer;
-  padding: 5px;
-  line-height: 1;
-  transition: color 0.2s;
+  color: #888;
 }
 
-.close-btn:hover {
-  color: #333;
-}
-
-/* 3. 폼 영역 (입력 필드) */
+/* 4. 폼 영역 (스크롤) */
 .worklog-form {
-  padding: 30px 25px;
+  padding: 20px;
+  overflow-y: auto;
   flex: 1;
 }
 
-.worklog-form .form-group {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+/* 5. [중요] 폼 레이아웃 강제 정렬 (Grid 사용) */
+/* 라벨(왼쪽)과 입력창(오른쪽)을 칼같이 나눕니다 */
+.form-group {
+  display: grid;
+  grid-template-columns: 130px 1fr; /* 왼쪽 130px 고정, 나머지 오른쪽 */
+  gap: 15px; /* 라벨과 입력창 사이 간격 */
   margin-bottom: 20px;
+  align-items: start; /* 텍스트 에어리어 때문에 상단 정렬 */
+}
+
+/* 상단 날짜 영역만 2개 나란히 배치 */
+.form-row-2col {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.form-row-2col .form-group {
+  flex: 1;
+  display: flex; /* 날짜는 위아래 배치가 깔끔하므로 flex-col */
+  flex-direction: column; 
+  gap: 8px;
+  margin-bottom: 0;
 }
 
 /* 라벨 스타일 */
-.worklog-form label {
-  width: 30%;
-  min-width: 140px;
-  font-weight: 600;
-  font-size: 15px;
-  color: #333;
-  margin-top: 12px;
-  line-height: 1.4;
-}
-
-/* 입력창 스타일 */
-.worklog-form textarea,
-.worklog-form input[type="date"] {
-  width: 65%;
-  padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+.form-group label {
   font-size: 14px;
-  background-color: #f9f9f9;
+  font-weight: 600;
+  color: #444;
+  padding-top: 10px; /* 입력창 높이와 시각적 중심 맞춤 */
+}
+
+/* 필수 표시 (*) */
+.form-group label span.required {
+  color: #e53935;
+  margin-left: 4px;
+}
+
+/* 입력창 공통 스타일 */
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px; /* 요청하신 래디우스 5 */
+  font-size: 14px;
+  color: #333;
   transition: all 0.2s;
-  box-sizing: border-box;
-}
-
-.worklog-form textarea:focus,
-.worklog-form input[type="date"]:focus {
   background-color: #fff;
-  /* 포커스 시 브랜드 컬러와 어울리는 짙은 노란색 테두리 */
-  border-color: #dacd55; 
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(248, 239, 153, 0.5);
 }
 
-.worklog-form textarea {
+/* 읽기 전용 인풋 */
+.form-group input:disabled {
+  background-color: #f2f2f2;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* 텍스트 에어리어 높이 확보 */
+.form-group textarea {
   min-height: 80px;
   resize: vertical;
+  line-height: 1.5;
 }
 
-/* 4. 이미지 프리뷰 영역 */
+/* 포커스 효과 */
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* 파일 업로드 박스 */
+.file-upload-box {
+  width: 100%;
+  border: 1px dashed #ccc;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #fafafa;
+}
+
+.file-upload-box input[type="file"] {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* 이미지 미리보기 */
 .image-preview-container {
   display: flex;
-  gap: 12px;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 10px;
   flex-wrap: wrap;
-  padding-left: 35%;
 }
 
 .image-preview {
   position: relative;
-  width: 90px;
-  height: 90px;
-  border: 1px solid #eee;
-  border-radius: 5px;
+  width: 70px;
+  height: 70px;
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
 }
 
 .image-preview img {
@@ -124,14 +176,11 @@
 
 .image-preview button {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(0,0,0,0.6);
-  color: white;
+  top: 0; right: 0;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
   border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 20px; height: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -139,70 +188,55 @@
   font-size: 12px;
 }
 
-.caption {
-  font-size: 13px;
-  color: #888;
-  margin-top: 8px;
-  text-align: right;
-}
-
-.required {
-  color: #e74c3c;
-  margin-left: 4px;
-}
-
-/* 5. 하단 버튼 영역 */
+/* 6. 푸터 (버튼 영역) */
 .modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e0e0e0;
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 25px;
-  background-color: #fafafa;
-  border-top: 1px solid #eee;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
+  justify-content: flex-end; /* 오른쪽 정렬 */
+  gap: 10px;
+  background-color: #fff;
 }
 
-.modal-footer button {
-  height: 50px;
-  padding: 0 30px;
-  font-size: 16px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  
-  /* [필수] 래디우스 5px */
-  border-radius: 5px; 
-}
-
-/* 취소 버튼 */
 .btn-cancel {
-  background-color: #f1f3f5;
-  color: #495057;
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  border-radius: 5px; /* 요청하신 래디우스 5 */
+  cursor: pointer;
+  font-weight: 500;
 }
 
-.btn-cancel:hover {
-  background-color: #e9ecef;
-  color: #212529;
-}
-
-/* 일지 등록 버튼 (수정됨) */
 .btn-submit {
-  /* 요청하신 브랜드 컬러 */
-  background-color: rgb(248, 239, 153); 
-  /* 밝은 배경이므로 가독성을 위해 글자색을 진하게 변경 */
-  color: #333333; 
+  padding: 10px 30px;
+  background-color: #4a90e2; /* 브랜드 컬러 */
+  border: none;
+  color: #fff;
+  border-radius: 5px; /* [요청사항] 브랜드 컬러 버튼 래디우스 5 */
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .btn-submit:hover {
-  /* 호버 시 조금 더 진한 노란색 */
-  background-color: rgb(238, 229, 133); 
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(200, 190, 100, 0.3);
+  background-color: #357abd;
 }
 
-.btn-submit:active {
-  transform: translateY(0);
+/* 모바일 대응 (좁은 화면에서는 위아래로 변경) */
+@media (max-width: 600px) {
+  .worklog-modal {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .form-group {
+    grid-template-columns: 1fr; /* 1단 배열로 변경 */
+    gap: 8px;
+  }
+  
+  .form-group label {
+    padding-top: 0;
+  }
 }
