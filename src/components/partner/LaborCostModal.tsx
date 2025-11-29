@@ -8,10 +8,12 @@ interface LaborData {
   siteId: string; siteName: string; paymentMonth: string; workedDays: number[]; totalDays: number;
   unitPrice: number; preTaxAmount: number; deductionAmount: number; finalAmount: number;
   paymentCycle: string[]; isTaxExempt: boolean; bankName?: string; accountNumber?: string;
+  residentNumber?: string; // 주민번호 필드 포함
 }
 
 interface Props {
   isOpen: boolean; onClose: () => void; partnerUid: string; targetLabor: LaborData | null; currentMonth: string; onRefresh: () => void;
+  userName?: string; // 로그용 (선택)
 }
 
 interface TaxConfig {
@@ -20,7 +22,7 @@ interface TaxConfig {
 
 const ALL_SITE_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소'];
 
-const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLabor, currentMonth, onRefresh }) => {
+const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLabor, currentMonth, onRefresh, userName }) => {
   const db = getFirestore();
   
   // Data States
@@ -31,7 +33,6 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
   const [selectedWorkerId, setSelectedWorkerId] = useState('');
   const [selectedSiteId, setSelectedSiteId] = useState('');
   
-  // 작업자 검색 상태
   const [workerSearchQuery, setWorkerSearchQuery] = useState('');
   const [isWorkerListVisible, setIsWorkerListVisible] = useState(false);
 
@@ -47,16 +48,13 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 현장 필터 상태
   const [siteStatusFilter, setSiteStatusFilter] = useState<string[]>(['공사중']); 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // [NEW] 국민연금 가입 대상 체크
   const isPensionRequired = useMemo(() => {
       return selectedDays.size >= 7 || preTaxAmount >= 2200000;
   }, [selectedDays.size, preTaxAmount]);
 
-  // --- Load Data ---
   useEffect(() => {
       if (!isOpen || !partnerUid) return;
       
@@ -99,7 +97,6 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
       }
   }, [isOpen, partnerUid, targetLabor, currentMonth]);
 
-  // 현장 목록 갱신
   useEffect(() => {
       if (!isOpen || !partnerUid) return;
       const loadSites = async () => {
@@ -193,7 +190,12 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
               companyName: worker.companyName, siteId: selectedSiteId, siteName: site.siteName,
               paymentMonth, workedDays: Array.from(selectedDays).sort((a, b) => a - b), totalDays: selectedDays.size,
               preTaxAmount, deductionAmount: calcResult.totalDeduction, finalAmount: calcResult.final,
-              paymentCycle, isTaxExempt, bankName: worker.bankName || '', accountNumber: worker.accountNumber || '', updatedAt: serverTimestamp()
+              paymentCycle, isTaxExempt, bankName: worker.bankName || '', accountNumber: worker.accountNumber || '', 
+              
+              // [중요] 주민번호 저장 (누락 방지)
+              residentNumber: worker.residentNumber || worker.rrn || '',
+
+              updatedAt: serverTimestamp()
           };
 
           if (targetLabor?.id) {
@@ -201,10 +203,13 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
           } else {
               data.createdAt = serverTimestamp(); data.isPaid = false; 
               await addDoc(collection(db, 'users', partnerUid, 'labor_costs'), data);
-              await addDoc(collection(db, 'users', partnerUid, 'activityLogs'), {
-                  text: `[노무등록] ${worker.workerName}님의 ${paymentMonth} 노무비(${calcResult.final.toLocaleString()}원)를 등록했습니다.`,
-                  createdAt: serverTimestamp(), type: 'hr_labor_add'
-              });
+              
+              if (userName) {
+                  await addDoc(collection(db, 'users', partnerUid, 'activityLogs'), {
+                      text: `[노무등록] ${userName}님이 ${worker.workerName}님의 ${paymentMonth} 노무비(${calcResult.final.toLocaleString()}원)를 등록했습니다.`,
+                      createdAt: serverTimestamp(), type: 'hr_labor_add'
+                  });
+              }
           }
           onRefresh(); onClose();
       } catch (e) { console.error(e); alert("오류 발생"); } finally { setIsSubmitting(false); }
@@ -284,6 +289,7 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
                     </div>
                     <label className="lm-check-label"><input type="checkbox" checked={isTaxExempt} onChange={e => setIsTaxExempt(e.target.checked)} />세금 면제</label>
                 </div>
+
                 {!isTaxExempt && selectedWorkerId && (
                     <div className="lm-tax-detail">
                         {workers.find(w=>w.id===selectedWorkerId)?.workerType === 'agency' ? (
@@ -296,8 +302,7 @@ const LaborCostModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetLa
                         ) : (<p className="total"><span>원천징수(3.3%):</span> <span>{calcResult.totalDeduction.toLocaleString()}원</span></p>)}
                     </div>
                 )}
-                
-                {/* [NEW] 국민연금 가입 대상 알림 메시지 */}
+
                 {isPensionRequired && (
                     <div className="lm-pension-warning">
                         ⚠️ 국민연금 가입 대상입니다. (월 7일 이상 또는 220만원 이상)

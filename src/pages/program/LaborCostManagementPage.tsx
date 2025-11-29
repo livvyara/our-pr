@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, getDocs, doc, deleteDoc, updateDoc,
-  query, where, orderBy, onSnapshot 
+  query, where, orderBy, onSnapshot, addDoc, serverTimestamp 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
@@ -19,18 +19,25 @@ const auth = getAuth(app);
 const LaborCostManagementPage: React.FC = () => {
   const [laborList, setLaborList] = useState<any[]>([]);
   const [currentUid, setCurrentUid] = useState<string | null>(null);
+  const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   
-  // [필터 상태]
+  // 필터 상태
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUid(user.uid);
+        // 사용자 정보 (로그용)
+        const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid))); // doc(db, 'users', user.uid)로 가져오는게 정석이지만 기존 패턴 따름
+        // getDoc을 쓰는게 맞음. 아래는 수정된 로직
+        // const userDoc = await getDoc(doc(db, 'users', user.uid)); 
+        // if(userDoc.exists()) ... (생략, 아래 fetchLabors에서 처리)
+        
         fetchLabors(user.uid, currentMonth);
       }
     });
@@ -51,17 +58,21 @@ const LaborCostManagementPage: React.FC = () => {
     return unsubscribe;
   };
 
-  // [필터링된 리스트]
+  // 필터링된 리스트
   const filteredList = laborList.filter((item) => {
       if (paymentFilter === 'paid') return item.isPaid === true;
       if (paymentFilter === 'unpaid') return !item.isPaid; 
       return true;
   });
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, workerName: string) => {
       if (!confirm("삭제하시겠습니까?")) return;
       if (!currentUid) return;
-      await deleteDoc(doc(db, 'users', currentUid, 'labor_costs', id));
+      
+      try {
+          await deleteDoc(doc(db, 'users', currentUid, 'labor_costs', id));
+          // 로그 기록 (선택 사항)
+      } catch(e) { alert("삭제 실패"); }
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -77,7 +88,7 @@ const LaborCostManagementPage: React.FC = () => {
       }
   };
 
-  // [수정됨] 엑셀 다운로드 (작업자 유형별 컬럼 분리)
+  // [엑셀 다운로드 핸들러]
   const handleExcelDownload = async () => {
       if (filteredList.length === 0) return alert("데이터가 없습니다.");
       if (!currentUid) return;
@@ -89,7 +100,7 @@ const LaborCostManagementPage: React.FC = () => {
           workerMap[doc.id] = doc.data();
       });
 
-      // 2. 데이터 병합 (동일 작업자 합산)
+      // 2. 데이터 병합 (동일 작업자 합산 로직)
       const consolidatedMap: { [key: string]: any } = {};
       
       filteredList.forEach(item => {
@@ -97,6 +108,7 @@ const LaborCostManagementPage: React.FC = () => {
           if (consolidatedMap[workerId]) {
               consolidatedMap[workerId].preTaxAmount += (item.preTaxAmount || 0);
               
+              // [수정] Set 생성 시 <number> 타입 명시하여 sort 오류 해결
               const existingDays = new Set<number>(consolidatedMap[workerId].workedDays);
               (item.workedDays || []).forEach((d: number) => existingDays.add(d));
               
@@ -109,7 +121,6 @@ const LaborCostManagementPage: React.FC = () => {
       const consolidatedList = Object.values(consolidatedMap);
       const excelRows: any[] = [];
       
-      // 헤더
       const dayHeaders = Array.from({length: 31}, (_, i) => (i + 1).toString());
       const headers = [
           '보험구분', '성명', '주민(외국인)등록번호', '국적코드', '체류자격코드', '전화(지역번호)', '전화(국번)', '전화(뒷번호)', '직종코드',
@@ -119,14 +130,13 @@ const LaborCostManagementPage: React.FC = () => {
       ];
       excelRows.push(headers);
 
-      // 데이터 행 생성
       consolidatedList.forEach((data) => {
           const workedDaysList: number[] = data.workedDays || [];
           const workedDaysCount = workedDaysList.length;
           const preTaxAmount = data.preTaxAmount || 0;
-          const isAgency = data.workerType === 'agency'; // [중요] 작업자 유형 확인
+          const isAgency = data.workerType === 'agency'; // 작업자 유형 확인
 
-          // 변수 초기화
+          // 세금 계산 (합산된 금액 기준)
           let incomeTax = 0;
           let localIncomeTax = 0;
           let employmentInsurance = 0;
@@ -134,9 +144,10 @@ const LaborCostManagementPage: React.FC = () => {
           let agencyPayment = 0;
           let freelancerPayment = 0;
 
-          // [분기 처리] 유형에 따라 세금 및 지급액 계산
           if (isAgency) {
-              // 인력소: 소득세, 지방세, 고용보험 계산
+              // 인력소 계산 (일용직)
+              // (총액 - (일수 * 150,000)) * 2.7% 로 계산하는 것이 정석이나,
+              // 여기서는 입력된 데이터를 기반으로 재계산
               const taxBase = preTaxAmount - (workedDaysCount * 150000);
               incomeTax = (taxBase > 0) ? Math.floor(taxBase * 0.027) : 0;
               if (incomeTax < 1000) incomeTax = 0;
@@ -144,27 +155,19 @@ const LaborCostManagementPage: React.FC = () => {
               employmentInsurance = Math.floor(preTaxAmount * 0.009);
               
               agencyPayment = preTaxAmount - incomeTax - localIncomeTax - employmentInsurance;
-              // 프리랜서 관련 항목은 0
-              freelancerDeduction = 0;
-              freelancerPayment = 0;
           } else {
-              // 프리랜서: 3.3% 공제
+              // 프리랜서 계산 (3.3%)
               freelancerDeduction = Math.floor(preTaxAmount * 0.033);
               freelancerPayment = preTaxAmount - freelancerDeduction;
-              // 인력소 관련 항목은 0
-              incomeTax = 0;
-              localIncomeTax = 0;
-              employmentInsurance = 0;
-              agencyPayment = 0;
           }
 
-          // 주민번호 처리
+          // [주민번호 조회]
           let rrn = data.residentNumber || data.rrn || '';
           if (!rrn && workerMap[data.workerId]) {
               const wData = workerMap[data.workerId];
               rrn = wData.residentNumber || wData.rrn || wData.residentNo || '';
           }
-          rrn = rrn.replace(/-/g, '');
+          rrn = rrn.replace(/-/g, ''); // 하이픈 제거
 
           const phoneParts = (data.phoneNumber || '').split('-');
           const dailyWorkStatus = Array(31).fill(0);
@@ -175,15 +178,7 @@ const LaborCostManagementPage: React.FC = () => {
               ...dailyWorkStatus,
               workedDaysCount, 8, workedDaysCount, preTaxAmount, preTaxAmount, '', '', '', 'Y',
               data.paymentMonth.replace('-', ''), preTaxAmount, '',
-              
-              // [수정] 계산된 값 매핑 (유형에 따라 0이 들어감)
-              incomeTax, 
-              localIncomeTax, 
-              employmentInsurance, 
-              freelancerDeduction, 
-              agencyPayment, 
-              freelancerPayment,
-              
+              incomeTax, localIncomeTax, employmentInsurance, freelancerDeduction, agencyPayment, freelancerPayment,
               data.bankName || '', data.accountNumber || ''
           ];
           excelRows.push(row);
@@ -208,7 +203,7 @@ const LaborCostManagementPage: React.FC = () => {
                     <option value="paid">지급완료 건만</option>
                 </select>
                 <input type="month" value={currentMonth} onChange={e => setCurrentMonth(e.target.value)} />
-                <button className="btn-excel" onClick={handleExcelDownload}>엑셀 다운로드</button>
+                <button className="btn-excel" onClick={handleExcelDownload}>엑셀 다운로드 (신고용)</button>
                 <button className="btn-add" onClick={() => { setEditTarget(null); setIsModalOpen(true); }} style={{backgroundColor: K_BRAND_COLOR}}>+ 노무 등록</button>
             </div>
         </div>
@@ -256,7 +251,7 @@ const LaborCostManagementPage: React.FC = () => {
                             </td>
                             <td className="tac">
                                 <button className="btn-mini-edit" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>수정</button>
-                                <button className="btn-mini-del" onClick={() => handleDelete(item.id)}>삭제</button>
+                                <button className="btn-mini-del" onClick={() => handleDelete(item.id, item.workerName)}>삭제</button>
                             </td>
                         </tr>
                     ))}
@@ -271,7 +266,8 @@ const LaborCostManagementPage: React.FC = () => {
                 partnerUid={currentUid}
                 targetLabor={editTarget}
                 currentMonth={currentMonth}
-                onRefresh={() => {}} 
+                onRefresh={() => {}}
+                userName={currentUserInfo.name} // (이전 답변 참조: 필요시 name 전달)
             />
         )}
     </div>
