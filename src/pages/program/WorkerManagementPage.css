@@ -1,0 +1,169 @@
+.worker-page-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.worker-header {
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+.worker-header h2 { margin: 0 0 5px 0; color: #333; font-size: 24px; }
+.worker-header p { margin: 0; color: #666; font-size: 14px; }
+
+/* 컨트롤 패널 */
+.worker-control-panel {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    width: 250px;
+}
+.search-box input {
+    width: 100%;
+    padding: 10px 35px 10px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.search-box .icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.filter-box select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-width: 150px;
+    cursor: pointer;
+}
+
+.btn-add-worker {
+    padding: 10px 20px;
+    border: none;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.btn-manage-trade {
+    padding: 10px 15px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    white-space: nowrap;
+}
+.btn-manage-trade:hover { background: #f1f1f1; }
+
+/* [수정] 테이블 스타일 */
+.worker-table-wrapper {
+    overflow-x: auto;
+    border-top: 2px solid #333;
+}
+
+.worker-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.worker-table th {
+    background-color: #f5f5f5;
+    padding: 12px 10px;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
+    color: #333;
+    text-align: left;
+}
+
+.worker-table th:first-child { padding-left: 20px; }
+.worker-table th:last-child { text-align: center; }
+
+.worker-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee;
+    color: #555;
+    vertical-align: middle;
+}
+
+.worker-table td:first-child { padding-left: 20px; }
+
+.worker-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* 뱃지 스타일 */
+.badge {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* 테이블 내부 버튼 */
+.btn-edit-mini, .btn-del-mini {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 0 2px;
+}
+.btn-edit-mini:hover { border-color: #1976d2; color: #1976d2; background: #e3f2fd; }
+.btn-del-mini:hover { border-color: #d63031; color: #d63031; background: #ffebee; }
+
+.loading, .no-data {
+    text-align: center;
+    padding: 50px;
+    color: #999;
+}
+
+.btn-bulk-edit {
+    padding: 8px 15px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    white-space: nowrap;
+}
+.btn-bulk-edit:hover { background: #f1f1f1; color: #333; }
+
+/* [NEW] 선택된 행 하이라이트 */
+.worker-table tr.selected-row {
+    background-color: #e3f2fd !important;
+}
+
+/* 테이블 체크박스 정렬 */
+.worker-table input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}

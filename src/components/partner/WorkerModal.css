@@ -1,0 +1,184 @@
+/* [NEW] 네임스페이싱 래퍼 - 이 안의 스타일만 적용됨 */
+.worker-modal-wrapper {
+    /* 변수 설정 (선택 사항) */
+    --wm-primary: #1976d2;
+    --wm-bg: #f8f9fa;
+    --wm-border: #ddd;
+}
+
+/* 모달 오버레이 */
+.worker-modal-wrapper .wm-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); z-index: 9999; /* 최상위 Z-index */
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+/* 모달 컨텐츠 박스 */
+.worker-modal-wrapper .wm-content {
+    background: white; border-radius: 12px;
+    width: 500px; max-width: 95%; max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+    outline: none; /* 포커스 아웃라인 제거 */
+}
+
+/* 헤더 */
+.worker-modal-wrapper .wm-header {
+    padding: 15px 20px; background: var(--wm-bg);
+    border-bottom: 1px solid var(--wm-border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.worker-modal-wrapper .wm-header h3 { margin: 0; font-size: 18px; color: #333; font-weight: bold; }
+.worker-modal-wrapper .wm-close-btn { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; }
+
+/* 본문 (스크롤) */
+.worker-modal-wrapper .wm-body {
+    padding: 20px; overflow-y: auto; flex: 1;
+}
+.worker-modal-wrapper .wm-scroll::-webkit-scrollbar { width: 8px; }
+.worker-modal-wrapper .wm-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+/* 섹션 타이틀 및 공통 스타일 */
+.worker-modal-wrapper .wm-section-title {
+    font-size: 14px; font-weight: bold; color: var(--wm-primary);
+    margin: 20px 0 10px 0; border-bottom: 1px dashed var(--wm-border); padding-bottom: 5px;
+    display: flex; justify-content: space-between;
+}
+.worker-modal-wrapper .wm-section-title:first-child { margin-top: 0; }
+.worker-modal-wrapper .wm-req { color: #e74c3c; margin-left: 3px; }
+.worker-modal-wrapper .wm-req-info { font-size: 12px; color: #e74c3c; font-weight: normal; }
+
+/* 폼 그룹 및 입력 필드 */
+.worker-modal-wrapper .wm-form-group { margin-bottom: 15px; }
+.worker-modal-wrapper .wm-form-group label {
+    display: block; margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #555;
+    white-space: nowrap; /* [중요] 줄바꿈 방지 */
+}
+.worker-modal-wrapper input[type="text"],
+.worker-modal-wrapper select,
+.worker-modal-wrapper input[type="number"] {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--wm-border); border-radius: 6px;
+    box-sizing: border-box; font-size: 14px; height: 42px; /* 높이 통일 */
+    transition: border-color 0.2s;
+}
+.worker-modal-wrapper input:focus, .worker-modal-wrapper select:focus {
+    border-color: var(--wm-primary); outline: none;
+}
+
+/* 그리드 레이아웃 (2열 배치) */
+.worker-modal-wrapper .wm-grid-row {
+    display: flex; gap: 15px; margin-bottom: 15px;
+}
+.worker-modal-wrapper .wm-grid-row .wm-form-group { flex: 1; margin-bottom: 0; }
+
+/* 라디오 버튼 그룹 */
+/* [NEW] 이미지 확대 뷰어 (이중 모달) 스타일 */
+.worker-modal-wrapper .wm-image-viewer {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); /* 어두운 배경 */
+    z-index: 11000; /* WorkerModal(9999)보다 높게 설정 */
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.worker-modal-wrapper .wm-image-box {
+    position: relative;
+    background: transparent;
+    padding: 0;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.worker-modal-wrapper .wm-image-box img {
+    max-width: 90vw; /* 화면 너비의 90% */
+    max-height: 80vh; /* 화면 높이의 80% (요청사항 반영) */
+    border: 4px solid #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    object-fit: contain;
+}
+
+.worker-modal-wrapper .wm-close-viewer {
+    position: absolute; top: -40px; right: -10px;
+    background: none; border: none; color: #fff;
+    font-size: 30px; cursor: pointer; font-weight: bold;
+    opacity: 0.8; transition: opacity 0.2s;
+}
+.worker-modal-wrapper .wm-close-viewer:hover { opacity: 1; }
+
+/* 라디오 버튼 스타일 보강 */
+.worker-modal-wrapper .wm-radio-group { display: flex; gap: 10px; }
+.worker-modal-wrapper .wm-radio-label {
+    flex: 1; padding: 12px; border: 1px solid var(--wm-border); border-radius: 6px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 14px; font-weight: bold; background: #fff; transition: all 0.2s;
+}
+.worker-modal-wrapper .wm-radio-label:hover { background: #f0f8ff; }
+.worker-modal-wrapper .wm-radio-label.selected {
+    background-color: #e3f2fd; border-color: var(--wm-primary); color: var(--wm-primary);
+}
+.worker-modal-wrapper .wm-radio-label input { margin: 0; }
+
+/* 계좌 정보 레이아웃 (요청사항 적용) */
+.worker-modal-wrapper .wm-account-layout {
+    background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;
+}
+.worker-modal-wrapper .wm-account-layout .wm-grid-row { margin-bottom: 10px; }
+.worker-modal-wrapper .wm-input-half { flex: 1; }
+.worker-modal-wrapper .wm-input-full { width: 100%; }
+
+/* 파일 업로드 */
+.worker-modal-wrapper .wm-file-group { margin-bottom: 15px; }
+.worker-modal-wrapper .wm-file-box {
+    display: flex; align-items: center; gap: 15px;
+    border: 1px dashed var(--wm-border); padding: 15px; border-radius: 6px; background: #fafafa;
+}
+.worker-modal-wrapper .wm-preview {
+    position: relative; width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #ddd; flex-shrink: 0;
+}
+.worker-modal-wrapper .wm-preview img { width: 100%; height: 100%; object-fit: cover; }
+.worker-modal-wrapper .wm-preview button {
+    position: absolute; top: 0; right: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); color: white; border: none; opacity: 0; cursor: pointer; font-size: 18px;
+}
+.worker-modal-wrapper .wm-preview:hover button { opacity: 1; }
+.worker-modal-wrapper .ocr-loading { color: var(--wm-primary); font-weight: normal; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.5; } }
+
+/* 푸터 */
+.worker-modal-wrapper .wm-footer {
+    padding: 15px 20px; border-top: 1px solid var(--wm-border); background: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.worker-modal-wrapper .wm-right-btns { display: flex; gap: 10px; }
+
+/* 버튼 스타일 */
+.worker-modal-wrapper button { cursor: pointer; font-family: inherit; }
+.worker-modal-wrapper .wm-btn-cancel {
+    padding: 10px 20px; background: #f1f3f5; border: 1px solid #dce4ec; border-radius: 6px; color: #555; font-weight: bold;
+}
+.worker-modal-wrapper .wm-btn-save {
+    padding: 10px 24px; background: var(--wm-primary); color: white; border: none; border-radius: 6px; font-weight: bold;
+    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.3);
+}
+.worker-modal-wrapper .wm-btn-save:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+.worker-modal-wrapper .wm-btn-tax {
+    padding: 8px 15px; background: #fff; border: 1px solid #ccc; border-radius: 20px;
+    font-size: 13px; color: #555; display: flex; align-items: center; gap: 5px;
+}
+.worker-modal-wrapper .wm-btn-tax:hover { background: #f5f5f5; border-color: #999; }
+
+/* 내부 미니 팝업 (세금 설정) */
+.worker-modal-wrapper .wm-inner-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 10000;
+}
+.worker-modal-wrapper .wm-inner-modal {
+    background: white; padding: 25px; border-radius: 12px; 
+    width: 350px; /* 너비 증가 */
+    max-height: 80vh; overflow-y: auto; /* 스크롤 가능하게 */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.worker-modal-wrapper .wm-inner-modal h4 { margin: 0 0 20px 0; color: #333; text-align: center; }
+.worker-modal-wrapper .wm-inner-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
