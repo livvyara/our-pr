@@ -56,11 +56,9 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
-  // 데이터 매핑 상태
+  // 데이터 상태
   const [meetingMap, setMeetingMap] = useState<Record<string, CellContent>>({});
-  // [NEW] 정렬을 위한 날짜 데이터 맵 (key: siteId, value: Date)
   const [meetingDateMap, setMeetingDateMap] = useState<Record<string, Date>>({});
-  
   const [recentMemoMap, setRecentMemoMap] = useState<Record<string, CellContent>>({}); 
 
   const db = getFirestore();
@@ -95,32 +93,31 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     fetchSites();
   }, [fetchSites]);
 
-  // 2. 미팅 일정 및 최근 메모 실시간 구독
+  // [수정] 2. 미팅 일정 구독 (단독 쿼리)
   useEffect(() => {
     if (!partnerUid) return;
-
+    
     const q = query(
         collectionGroup(db, 'memos'), 
-        where('partnerUid', '==', partnerUid)
+        where('partnerUid', '==', partnerUid),
+        where('memoType', '==', 'meeting')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const now = new Date();
-        
         const siteNextMeeting: Record<string, { date: Date, data: CellContent }> = {};
-        const siteLastMemo: Record<string, { createdAt: number, data: CellContent }> = {};
 
         snapshot.forEach(doc => {
             const data = doc.data();
             
+            // siteId 추출 (데이터 없으면 경로에서)
             let siteId = data.siteId;
             if (!siteId && doc.ref.parent.parent) {
                 siteId = doc.ref.parent.parent.id;
             }
             if (!siteId) return;
 
-            // 1) 미팅 약속 (미래 일정 중 가장 빠른 것)
-            if (data.memoType === 'meeting' && data.meetingDate && data.meetingTime) {
+            if (data.meetingDate && data.meetingTime) {
                 const dateTimeStr = `${data.meetingDate}T${data.meetingTime}`;
                 const meetingDate = new Date(dateTimeStr);
 
@@ -140,8 +137,42 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
                     }
                 }
             }
+        });
 
-            // 2) 최근 메모 (가장 최근에 작성된 것)
+        const newMap: Record<string, CellContent> = {};
+        const newDateMap: Record<string, Date> = {};
+        Object.keys(siteNextMeeting).forEach(key => {
+            newMap[key] = siteNextMeeting[key].data;
+            newDateMap[key] = siteNextMeeting[key].date;
+        });
+        setMeetingMap(newMap);
+        setMeetingDateMap(newDateMap);
+    });
+
+    return () => unsubscribe();
+  }, [partnerUid, db]);
+
+  // [수정] 3. 최근 메모 구독 (단독 쿼리 - 일반 메모)
+  useEffect(() => {
+    if (!partnerUid) return;
+
+    const q = query(
+        collectionGroup(db, 'memos'), 
+        where('partnerUid', '==', partnerUid),
+        where('memoType', '==', 'general')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const siteLastMemo: Record<string, { createdAt: number, data: CellContent }> = {};
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            let siteId = data.siteId;
+            if (!siteId && doc.ref.parent.parent) {
+                siteId = doc.ref.parent.parent.id;
+            }
+            if (!siteId) return;
+
             const createdTime = data.createdAt?.seconds || 0;
             if (!siteLastMemo[siteId] || createdTime > siteLastMemo[siteId].createdAt) {
                 const content = data.memoContent || '(내용 없음)';
@@ -157,27 +188,16 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
             }
         });
 
-        // 상태 업데이트
-        const newMeetingMap: Record<string, CellContent> = {};
-        const newMeetingDateMap: Record<string, Date> = {}; // [NEW] 날짜 맵
-        
-        Object.keys(siteNextMeeting).forEach(key => {
-            newMeetingMap[key] = siteNextMeeting[key].data;
-            newMeetingDateMap[key] = siteNextMeeting[key].date; // [NEW]
-        });
-        
-        setMeetingMap(newMeetingMap);
-        setMeetingDateMap(newMeetingDateMap); // [NEW]
-
-        const newMemoMap: Record<string, CellContent> = {};
+        const newMap: Record<string, CellContent> = {};
         Object.keys(siteLastMemo).forEach(key => {
-            newMemoMap[key] = siteLastMemo[key].data;
+            newMap[key] = siteLastMemo[key].data;
         });
-        setRecentMemoMap(newMemoMap);
+        setRecentMemoMap(newMap);
     });
 
     return () => unsubscribe();
   }, [partnerUid, db]);
+
 
   const processedSites = useMemo(() => {
     let result = [...allSites];
@@ -193,36 +213,33 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     
     // [정렬 로직]
     result.sort((a, b) => {
-      // 1. 삭제 대기 상태는 맨 뒤로
+      // 1. 삭제 대기 맨 뒤
       const isDeletedA = a.status === 'deleted';
       const isDeletedB = b.status === 'deleted';
       if (isDeletedA && !isDeletedB) return 1;
       if (!isDeletedA && isDeletedB) return -1;
       if (isDeletedA && isDeletedB) return 0;
 
-      // 2. 사용자 지정 상태 순서 (예: 미팅중 > 계약대기 > ...)
+      // 2. 상태 순서
       const indexA = currentOrder.indexOf(a.status);
       const indexB = currentOrder.indexOf(b.status);
       if (indexA !== indexB) {
           return indexA - indexB;
       }
 
-      // 3. [NEW] '미팅중' 상태일 때: 미팅 날짜가 가까운 순서로 정렬
+      // 3. [중요] '미팅중' 상태 내부 정렬 (약속 가까운 순)
       if (a.status === '미팅중') {
           const dateA = meetingDateMap[a.uid];
           const dateB = meetingDateMap[b.uid];
 
-          // 둘 다 약속이 있으면 날짜 오름차순 (가까운 날짜 먼저)
-          if (dateA && dateB) {
-              return dateA.getTime() - dateB.getTime();
-          }
-          // 약속 있는 현장을 위로
+          // 둘 다 약속 있으면 날짜순
+          if (dateA && dateB) return dateA.getTime() - dateB.getTime();
+          // 약속 있는 쪽을 위로
           if (dateA) return -1;
           if (dateB) return 1;
-          // 둘 다 약속이 없으면 다음 정렬 기준(생성일)으로 넘어감
       }
 
-      // 4. 기본 정렬: 최신 생성일 순
+      // 4. 기본 최신순
       const timeA = a.createdAt?.toMillis() || 0;
       const timeB = b.createdAt?.toMillis() || 0;
       return timeB - timeA;
@@ -231,7 +248,7 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     return result;
   }, [allSites, searchTerm, currentOrder, visibleStatuses, meetingDateMap]);
 
-  // Modal Handlers
+  // Modal Handlers (기존 동일)
   const openSortModal = () => { setTempOrder([...currentOrder]); setIsSortModalOpen(true); };
   const moveSortItem = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...tempOrder];

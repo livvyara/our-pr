@@ -137,35 +137,34 @@
   background-color: #1565c0;
 }
 
-/* [수정] 상태 뱃지 스타일 (가독성 개선) */
 .status-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 15px;
   font-size: 12px;
   font-weight: bold;
-  color: #333; /* 기본 글자색: 어두운 회색 (가독성 확보) */
+  color: #333; /* 글자색 진하게 */
   background-color: #f0f0f0; 
   border: 1px solid rgba(0,0,0,0.1);
   min-width: 60px;
   text-align: center;
 }
 
-/* 상태별 배경색 (파스텔톤) */
-.status-badge.미팅중 { background-color: #e3f2fd; color: #1565c0; border-color: #90caf9; }
-.status-badge.계약대기 { background-color: #fff3e0; color: #ef6c00; border-color: #ffcc80; }
-.status-badge.계약완료 { background-color: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
-.status-badge.공사전 { background-color: #f3e5f5; color: #7b1fa2; border-color: #ce93d8; }
-.status-badge.공사중 { background-color: #fff8e1; color: #f9a825; border-color: #fff59d; } /* 글자색 진한 노랑/주황 */
-.status-badge.공사완료 { background-color: #e0f2f1; color: #00695c; border-color: #80cbc4; }
-.status-badge.보류 { background-color: #eceff1; color: #546e7a; border-color: #cfd8dc; }
-.status-badge.취소 { background-color: #ffebee; color: #c62828; border-color: #ef9a9a; }
-.status-badge.deleted { background-color: #333; color: #fff; border-color: #000; }
+/* 상태별 배경색 */
+.status-badge.미팅중 { background-color: #e3f2fd; color: #1565c0; }
+.status-badge.계약대기 { background-color: #fff3e0; color: #ef6c00; }
+.status-badge.계약완료 { background-color: #e8f5e9; color: #2e7d32; }
+.status-badge.공사전 { background-color: #f3e5f5; color: #7b1fa2; }
+.status-badge.공사중 { background-color: #fff8e1; color: #f57f17; }
+.status-badge.공사완료 { background-color: #e0f2f1; color: #00695c; }
+.status-badge.보류 { background-color: #eceff1; color: #546e7a; }
+.status-badge.취소 { background-color: #ffebee; color: #c62828; }
+.status-badge.deleted { background-color: #333; color: #fff; }
 
 /* 테이블 셀 스타일 */
 .meeting-cell { 
     font-size: 13px; 
-    color: #1976d2; /* 미팅 약속은 파란색 */
+    color: #1976d2; 
     font-weight: bold;
     cursor: help;
 }
