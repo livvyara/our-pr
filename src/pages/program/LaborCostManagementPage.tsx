@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
-  getFirestore, collection, getDocs, doc, deleteDoc, updateDoc,
-  query, where, orderBy, onSnapshot, addDoc, serverTimestamp 
+  getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, getDoc,
+  query, where, orderBy, onSnapshot 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
@@ -19,10 +19,11 @@ const auth = getAuth(app);
 const LaborCostManagementPage: React.FC = () => {
   const [laborList, setLaborList] = useState<any[]>([]);
   const [currentUid, setCurrentUid] = useState<string | null>(null);
-  const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
-  const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   
-  // 필터 상태
+  // [수정] 사용자 정보 상태
+  const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
+  
+  const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,17 +33,24 @@ const LaborCostManagementPage: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUid(user.uid);
-        // 사용자 정보 (로그용)
-        const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid))); // doc(db, 'users', user.uid)로 가져오는게 정석이지만 기존 패턴 따름
-        // getDoc을 쓰는게 맞음. 아래는 수정된 로직
-        // const userDoc = await getDoc(doc(db, 'users', user.uid)); 
-        // if(userDoc.exists()) ... (생략, 아래 fetchLabors에서 처리)
+        
+        // [수정] 사용자 정보 로드 (getDoc 사용)
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if(userDoc.exists()) {
+                const d = userDoc.data();
+                setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
+            }
+        } catch(e) { console.error("사용자 정보 로드 실패", e); }
         
         fetchLabors(user.uid, currentMonth);
       }
     });
     return () => unsubscribe();
   }, [currentMonth]); 
+
+  // ... (fetchLabors, filteredList, handleDelete, handleStatusChange, handleExcelDownload 로직은 기존과 동일)
+  // ... 코드 생략 ...
 
   const fetchLabors = (uid: string, month: string) => {
     const q = query(
@@ -58,60 +66,39 @@ const LaborCostManagementPage: React.FC = () => {
     return unsubscribe;
   };
 
-  // 필터링된 리스트
   const filteredList = laborList.filter((item) => {
       if (paymentFilter === 'paid') return item.isPaid === true;
       if (paymentFilter === 'unpaid') return !item.isPaid; 
       return true;
   });
 
-  const handleDelete = async (id: string, workerName: string) => {
+  const handleDelete = async (id: string) => {
       if (!confirm("삭제하시겠습니까?")) return;
       if (!currentUid) return;
-      
-      try {
-          await deleteDoc(doc(db, 'users', currentUid, 'labor_costs', id));
-          // 로그 기록 (선택 사항)
-      } catch(e) { alert("삭제 실패"); }
+      await deleteDoc(doc(db, 'users', currentUid, 'labor_costs', id));
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
       if (!currentUid) return;
       const isPaid = newStatus === '지급완료';
-      try {
-          await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), {
-              isPaid: isPaid
-          });
-      } catch (e) {
-          console.error("상태 변경 실패", e);
-          alert("오류가 발생했습니다.");
-      }
+      await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), { isPaid });
   };
 
-  // [엑셀 다운로드 핸들러]
   const handleExcelDownload = async () => {
       if (filteredList.length === 0) return alert("데이터가 없습니다.");
       if (!currentUid) return;
 
-      // 1. 전체 작업자 정보 미리 가져오기 (주민번호 조회용)
       const workersSnap = await getDocs(collection(db, 'users', currentUid, 'workers'));
       const workerMap: {[key: string]: any} = {};
-      workersSnap.forEach(doc => {
-          workerMap[doc.id] = doc.data();
-      });
+      workersSnap.forEach(doc => { workerMap[doc.id] = doc.data(); });
 
-      // 2. 데이터 병합 (동일 작업자 합산 로직)
       const consolidatedMap: { [key: string]: any } = {};
-      
       filteredList.forEach(item => {
           const workerId = item.workerId;
           if (consolidatedMap[workerId]) {
               consolidatedMap[workerId].preTaxAmount += (item.preTaxAmount || 0);
-              
-              // [수정] Set 생성 시 <number> 타입 명시하여 sort 오류 해결
               const existingDays = new Set<number>(consolidatedMap[workerId].workedDays);
               (item.workedDays || []).forEach((d: number) => existingDays.add(d));
-              
               consolidatedMap[workerId].workedDays = Array.from(existingDays).sort((a, b) => a - b);
           } else {
               consolidatedMap[workerId] = { ...item };
@@ -134,9 +121,8 @@ const LaborCostManagementPage: React.FC = () => {
           const workedDaysList: number[] = data.workedDays || [];
           const workedDaysCount = workedDaysList.length;
           const preTaxAmount = data.preTaxAmount || 0;
-          const isAgency = data.workerType === 'agency'; // 작업자 유형 확인
+          const isAgency = data.workerType === 'agency';
 
-          // 세금 계산 (합산된 금액 기준)
           let incomeTax = 0;
           let localIncomeTax = 0;
           let employmentInsurance = 0;
@@ -145,29 +131,23 @@ const LaborCostManagementPage: React.FC = () => {
           let freelancerPayment = 0;
 
           if (isAgency) {
-              // 인력소 계산 (일용직)
-              // (총액 - (일수 * 150,000)) * 2.7% 로 계산하는 것이 정석이나,
-              // 여기서는 입력된 데이터를 기반으로 재계산
               const taxBase = preTaxAmount - (workedDaysCount * 150000);
               incomeTax = (taxBase > 0) ? Math.floor(taxBase * 0.027) : 0;
               if (incomeTax < 1000) incomeTax = 0;
               localIncomeTax = Math.floor(incomeTax * 0.1);
               employmentInsurance = Math.floor(preTaxAmount * 0.009);
-              
               agencyPayment = preTaxAmount - incomeTax - localIncomeTax - employmentInsurance;
           } else {
-              // 프리랜서 계산 (3.3%)
               freelancerDeduction = Math.floor(preTaxAmount * 0.033);
               freelancerPayment = preTaxAmount - freelancerDeduction;
           }
 
-          // [주민번호 조회]
           let rrn = data.residentNumber || data.rrn || '';
           if (!rrn && workerMap[data.workerId]) {
               const wData = workerMap[data.workerId];
               rrn = wData.residentNumber || wData.rrn || wData.residentNo || '';
           }
-          rrn = rrn.replace(/-/g, ''); // 하이픈 제거
+          rrn = rrn.replace(/-/g, '');
 
           const phoneParts = (data.phoneNumber || '').split('-');
           const dailyWorkStatus = Array(31).fill(0);
@@ -203,7 +183,7 @@ const LaborCostManagementPage: React.FC = () => {
                     <option value="paid">지급완료 건만</option>
                 </select>
                 <input type="month" value={currentMonth} onChange={e => setCurrentMonth(e.target.value)} />
-                <button className="btn-excel" onClick={handleExcelDownload}>엑셀 다운로드 (신고용)</button>
+                <button className="btn-excel" onClick={handleExcelDownload}>엑셀 다운로드</button>
                 <button className="btn-add" onClick={() => { setEditTarget(null); setIsModalOpen(true); }} style={{backgroundColor: K_BRAND_COLOR}}>+ 노무 등록</button>
             </div>
         </div>
@@ -251,7 +231,7 @@ const LaborCostManagementPage: React.FC = () => {
                             </td>
                             <td className="tac">
                                 <button className="btn-mini-edit" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>수정</button>
-                                <button className="btn-mini-del" onClick={() => handleDelete(item.id, item.workerName)}>삭제</button>
+                                <button className="btn-mini-del" onClick={() => handleDelete(item.id)}>삭제</button>
                             </td>
                         </tr>
                     ))}
@@ -266,8 +246,8 @@ const LaborCostManagementPage: React.FC = () => {
                 partnerUid={currentUid}
                 targetLabor={editTarget}
                 currentMonth={currentMonth}
-                onRefresh={() => {}}
-                userName={currentUserInfo.name} // (이전 답변 참조: 필요시 name 전달)
+                onRefresh={() => {}} 
+                userName={currentUserInfo.name} // [수정] 사용자 이름 전달
             />
         )}
     </div>

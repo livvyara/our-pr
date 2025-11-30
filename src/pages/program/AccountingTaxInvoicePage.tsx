@@ -6,6 +6,7 @@ import {
   getAggregateFromServer, sum, count, DocumentSnapshot 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom'; // [NEW] 페이지 이동용
 import { firebaseConfig } from '../../firebase-config';
 import { K_BRAND_COLOR } from '../../constants';
 import './AccountingTaxInvoicePage.css'; 
@@ -28,10 +29,9 @@ interface Site { id: string; name: string; status: string; }
 
 const LIMIT_PER_PAGE = 20;
 const SITE_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'];
-const PROCESS_CATEGORIES = ['목공', '전기', '설비', '타일', '도장', '도배', '바닥', '창호', '금속', '기타'];
-const SALES_CATEGORIES = ['계약금', '중도금(기성)', '잔금', '설계비', '추가공사비', '기타'];
 
 const AccountingTaxInvoicePage: React.FC = () => {
+  const navigate = useNavigate(); // [NEW]
   const [list, setList] = useState<TaxInvoice[]>([]);
   const [siteList, setSiteList] = useState<Site[]>([]);
   const [siteCategories, setSiteCategories] = useState<CategoryData[]>([]);
@@ -65,22 +65,21 @@ const AccountingTaxInvoicePage: React.FC = () => {
   const [paymentModalTarget, setPaymentModalTarget] = useState<TaxInvoice | null>(null);
   const [summary, setSummary] = useState({ salesCount: 0, salesSupply: 0, salesTax: 0, salesTotal: 0, purchaseCount: 0, purchaseSupply: 0, purchaseTax: 0, purchaseTotal: 0 });
 
+  // [NEW] 수기 등록 선택 모달 상태
+  const [isManualSelectOpen, setIsManualSelectOpen] = useState(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUid(user.uid);
-        
-        // 유저 정보 가져오기
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if(userDoc.exists()) {
             const d = userDoc.data();
-            // [수정] nickname 필드 사용
             setCurrentUserInfo({ 
                 uid: user.uid, 
                 name: d.nickname || d.email || '사용자' 
             });
         }
-
         fetchSites(user.uid);
         fetchExpenseCategories(user.uid); 
       }
@@ -108,20 +107,14 @@ const AccountingTaxInvoicePage: React.FC = () => {
     setSearchStartDate(start); setSearchEndDate(end);
   }, [dateMode, selYear, selMonth, selQuarter]);
 
-  // [NEW] 로그 함수 (정밀 포맷)
   const addDetailLog = async (item: TaxInvoice, actionSuffix: string) => {
       if (!currentUid) return;
       try {
-          // 날짜 포맷: YYYY-MM-DD -> YYYY년 MM월 DD일
           const [y, m, d] = item.writeDate.split('-');
           const dateText = `${y}년 ${m}월 ${d}일`;
-          
           const message = `[세금계산서] ${currentUserInfo.name}님이 ${dateText} 발행된 ${item.vendorName}의 ${item.inOut} 세금계산서${actionSuffix}`;
-          
           await addDoc(collection(db, 'users', currentUid, 'ACTIVITY_LOGS'), {
-              text: message,
-              createdAt: serverTimestamp(),
-              type: 'tax_invoice_update'
+              text: message, createdAt: serverTimestamp(), type: 'tax_invoice_update'
           });
       } catch (e) {}
   };
@@ -225,7 +218,6 @@ const AccountingTaxInvoicePage: React.FC = () => {
   const handleFieldChange = async (invoiceId: string, inOut: '매출'|'매입', field: string, value: string) => {
       if (!currentUid) return;
       
-      // 변경 전 타겟 아이템 찾기 (로그용)
       const targetItem = list.find(item => item.id === invoiceId);
 
       setList(prev => prev.map(item => {
@@ -243,7 +235,6 @@ const AccountingTaxInvoicePage: React.FC = () => {
           if (field === 'siteId') { updateData.category1 = ''; updateData.category2 = ''; }
           await updateDoc(docRef, updateData);
           
-          // [LOG]
           if (targetItem) {
               if (field === 'siteId') await addDetailLog(targetItem, "에 현장 귀속을 지정했습니다.");
               if (field === 'category1') await addDetailLog(targetItem, "의 1차 분류를 지정했습니다.");
@@ -257,14 +248,13 @@ const AccountingTaxInvoicePage: React.FC = () => {
 
   const handleLinkTransaction = async (invoiceId: string, inOut: '매출'|'매입', transactionId: string) => {
     if (!currentUid) return;
-    const targetItem = list.find(item => item.id === invoiceId); // 로그용
+    const targetItem = list.find(item => item.id === invoiceId); 
     setList(prev => prev.map(item => item.id === invoiceId ? { ...item, linkedTransactionId: transactionId } : item));
     try {
         const collectionName = inOut === '매출' ? 'TAX_SALES' : 'TAX_PURCHASE';
         const docRef = doc(db, 'users', currentUid, collectionName, invoiceId);
         await updateDoc(docRef, { linkedTransactionId: transactionId });
         
-        // [LOG]
         if (targetItem) await addDetailLog(targetItem, "를 이체내역과 연결 했습니다.");
 
         alert("결제 내역이 연결되었습니다.");
@@ -277,7 +267,6 @@ const AccountingTaxInvoicePage: React.FC = () => {
 
   return (
     <div className="hometax-page-container">
-      {/* UI는 기존과 100% 동일하므로 그대로 사용 */}
       <div className="hometax-header-wrapper">
           <div className="hometax-title"><h2>세금계산서 통합 조회</h2><p>매입/매출 내역을 조회하고 현장 및 공정을 분류할 수 있습니다. (기본: 최근 30일)</p></div>
           <div className="hometax-control-panel">
@@ -293,6 +282,12 @@ const AccountingTaxInvoicePage: React.FC = () => {
                   <div className="filter-item" style={{marginLeft:'10px'}}><button onClick={() => setIsSiteModalOpen(true)} style={{padding:'0 15px', height:'38px', background:'#fff', border:'1px solid #ccc', borderRadius:'5px', cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center', gap:'5px'}}><span style={{fontSize:'16px'}}>🏗️</span> {searchSiteName}</button></div>
                   <div className="filter-item checkbox-group" style={{marginLeft:'10px', display:'flex', gap:'10px'}}><label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}><input type="checkbox" checked={showUnassigned} onChange={e => setShowUnassigned(e.target.checked)} style={{marginRight:'5px'}} />미귀속</label><label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}><input type="checkbox" checked={showAssigned} onChange={e => setShowAssigned(e.target.checked)} style={{marginRight:'5px'}} />귀속</label></div>
                   <div className="filter-item"><input type="text" placeholder="업체명 검색" value={searchVendor} onChange={e=>setSearchVendor(e.target.value)} style={{width: '150px'}} /></div>
+                  
+                  {/* [NEW] 수기자료 등록 버튼 (우측 끝 조회버튼 바로 앞으로 배치) */}
+                  <button className="btn-manual-reg" onClick={() => setIsManualSelectOpen(true)}>
+                      + 수기자료 등록
+                  </button>
+
                   <button className="btn-search" onClick={() => currentUid && fetchData(true)}>조회</button>
               </div>
           </div>
@@ -354,10 +349,36 @@ const AccountingTaxInvoicePage: React.FC = () => {
       {selectedInvoice && <TaxInvoiceModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onUpdate={(field, value) => handleFieldChange(selectedInvoice.id, selectedInvoice.inOut, field, value)} />}
       {isSiteModalOpen && <SiteSelectionModal sites={siteList} onClose={() => setIsSiteModalOpen(false)} onSelect={(siteId, siteName) => { setSearchSiteId(siteId); setSearchSiteName(siteName); setIsSiteModalOpen(false); }} />}
       {paymentModalTarget && <PaymentConnectionModal invoice={paymentModalTarget} currentUserUid={currentUid || ''} onClose={() => setPaymentModalTarget(null)} onConfirm={(txId) => handleLinkTransaction(paymentModalTarget.id, paymentModalTarget.inOut, txId)} />}
+
+      {/* [NEW] 수기 등록 선택 모달 */}
+      {isManualSelectOpen && (
+        <div className="invoice-modal-backdrop" onClick={() => setIsManualSelectOpen(false)} style={{zIndex: 3000}}>
+            <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width: '400px', height: 'auto', minHeight: '200px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px'}}>
+                <h3 style={{margin:0, fontSize:'20px'}}>수기 자료 등록</h3>
+                <p style={{margin:0, color:'#666', textAlign:'center', fontSize:'14px'}}>등록할 자료의 유형을 선택해주세요.</p>
+                <div style={{display:'flex', gap:'15px', width:'100%', marginTop:'10px'}}>
+                    <button 
+                        onClick={() => navigate('/program/accounting-sales-manual')}
+                        style={{flex:1, padding:'15px', background:'#e3f2fd', border:'1px solid #1976d2', borderRadius:'8px', color:'#1976d2', fontWeight:'bold', cursor:'pointer', fontSize:'16px'}}
+                    >
+                        🔵 매출 자료
+                    </button>
+                    <button 
+                        onClick={() => navigate('/program/accounting-purchase-manual')}
+                        style={{flex:1, padding:'15px', background:'#ffebee', border:'1px solid #c62828', borderRadius:'8px', color:'#c62828', fontWeight:'bold', cursor:'pointer', fontSize:'16px'}}
+                    >
+                        🔴 매입 자료
+                    </button>
+                </div>
+                <button onClick={() => setIsManualSelectOpen(false)} style={{marginTop:'10px', background:'none', border:'none', textDecoration:'underline', cursor:'pointer', color:'#888'}}>취소</button>
+            </div>
+        </div>
+      )}
     </div>
   );
 };
 
+// ... (나머지 하위 컴포넌트 PaymentConnectionModal, SiteSelectionModal, TaxInvoiceModal 등은 기존과 동일하게 유지)
 const PaymentConnectionModal: React.FC<{ invoice: TaxInvoice, currentUserUid: string, onClose: () => void, onConfirm: (transactionId: string) => void }> = ({ invoice, currentUserUid, onClose, onConfirm }) => {
     const [transactions, setTransactions] = useState<BankTransaction[]>([]);
     const [searchDateStart, setSearchDateStart] = useState(invoice.writeDate);

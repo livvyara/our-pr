@@ -19,7 +19,8 @@ interface Props {
   partnerUid: string;
   targetWorker: WorkerData | null;
   tradeOptions: string[];
-  userName: string; // [NEW] 로그용 사용자 이름
+  // [수정] userName 속성 추가 (오류 해결 핵심)
+  userName: string; 
 }
 
 const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorker, tradeOptions, userName }) => {
@@ -44,12 +45,7 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
   const [delegationPreview, setDelegationPreview] = useState<string | null>(null);
 
   const [isTaxSettingOpen, setIsTaxSettingOpen] = useState(false);
-  // [수정] 세금 설정 초기값 (확장된 구조)
-  const [taxRates, setTaxRates] = useState({ 
-      freelance: 3.3, 
-      agency: 10.0 // 기본값 (상세 설정은 별도 로직이나 단순화)
-  });
-  
+  const [taxRates, setTaxRates] = useState({ agency: 10.0, freelance: 3.3 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOcrLoading, setIsOcrLoading] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
@@ -66,7 +62,6 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
         if (targetWorker) {
             setName(targetWorker.workerName); setCompany(targetWorker.companyName); setTrade(targetWorker.trade); setPhone(targetWorker.phoneNumber);
             setWorkerType(targetWorker.workerType || 'freelance'); 
-            // 불러올 때 마스킹 처리
             setResidentNumber(maskRrn(targetWorker.residentNumber || ''));
             setBankName(targetWorker.bankName || ''); setAccountNumber(targetWorker.accountNumber || ''); setAccountOwner(targetWorker.accountOwner || '');
             setIdCardPreview(targetWorker.idCardUrl || null); setDelegationPreview(targetWorker.delegationUrl || null);
@@ -87,7 +82,6 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
           const snap = await getDoc(doc(db, 'users', partnerUid, 'settings', 'taxRates'));
           if (snap.exists()) {
               const data = snap.data();
-              // 호환성 처리 (단순 구조일 경우)
               if (typeof data.agency === 'number') {
                   setTaxRates({ freelance: data.freelance, agency: data.agency });
               }
@@ -103,7 +97,6 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
   };
 
   const handleResidentNumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // 수정 시에는 마스킹 해제되고 숫자 입력
       let val = e.target.value.replace(/[^0-9]/g, '').slice(0, 13);
       if (val.length > 6) val = `${val.slice(0, 6)}-${val.slice(6)}`;
       setResidentNumber(val);
@@ -188,7 +181,6 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
       } catch (e) { alert("이미지 처리 실패"); }
   };
 
-  // 실제 저장될 주민번호 (마스킹 상태면 원본 유지)
   const getRealResidentNumber = () => {
       if (residentNumber.includes('*')) return targetWorker?.residentNumber || '';
       return residentNumber;
@@ -227,7 +219,7 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
       if (!delegationPreview) finalDelegationUrl = '';
 
       const realRrn = getRealResidentNumber();
-
+      
       const workerData = {
           workerName: name, companyName: company, trade, phoneNumber: phone, workerType, 
           residentNumber: realRrn,
@@ -239,12 +231,10 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
       if (targetWorker && targetWorker.id) {
         await updateDoc(doc(colRef, targetWorker.id), workerData);
         
-        // [LOG] 상세 수정 로그
+        // 로그 기록 (수정)
         const changes: string[] = [];
         if (targetWorker.workerName !== name) changes.push(`이름(${targetWorker.workerName}→${name})`);
         if (targetWorker.companyName !== company) changes.push(`소속(${targetWorker.companyName}→${company})`);
-        if (targetWorker.trade !== trade) changes.push(`공종(${targetWorker.trade}→${trade})`);
-        if (targetWorker.workerType !== workerType) changes.push(`유형(${targetWorker.workerType==='agency'?'인력':'프리'}→${workerType==='agency'?'인력':'프리'})`);
         
         const changeLog = changes.length > 0 ? ` [변경: ${changes.join(', ')}]` : '';
         await addDoc(collection(db, 'users', partnerUid, 'activityLogs'), {
@@ -254,7 +244,8 @@ const WorkerModal: React.FC<Props> = ({ isOpen, onClose, partnerUid, targetWorke
 
       } else {
         await addDoc(colRef, { ...workerData, createdAt: serverTimestamp() });
-        // [LOG] 등록 로그
+        
+        // 로그 기록 (등록)
         await addDoc(collection(db, 'users', partnerUid, 'activityLogs'), {
             text: `[작업자등록] ${userName}님이 새로운 작업자 ${name}(${company})를 등록했습니다.`,
             createdAt: serverTimestamp(), type: 'worker_add'

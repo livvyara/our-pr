@@ -1,8 +1,10 @@
-// src/components/partner/SiteList.tsx
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { getFirestore, collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { 
+  getFirestore, collection, getDocs, query, orderBy, Timestamp, 
+  collectionGroup, where, onSnapshot 
+} from 'firebase/firestore';
 import './SiteList.css'; 
+import SiteAddModal from './SiteAddModal';
 
 type SiteStatus = '미팅중' | '계약대기' | '계약완료' | '공사전' | '공사중' | '공사완료' | '보류' | '취소' | 'deleted';
 
@@ -12,7 +14,6 @@ interface SiteData {
   address: string;
   client1Name: string;
   client1Phone: string;
-  budget: number;
   status: SiteStatus;
   createdAt: Timestamp;
 }
@@ -22,20 +23,23 @@ interface SiteListProps {
   partnerUid: string; 
 }
 
-// 기본 정렬 순서 (deleted 제외)
+interface CellContent {
+    display: string; 
+    full: string;    
+}
+
 const DEFAULT_STATUS_ORDER: SiteStatus[] = [
   '미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소'
 ];
-
-// 모든 상태값 (deleted 포함 - 노출 설정용)
 const ALL_STATUSES: SiteStatus[] = [...DEFAULT_STATUS_ORDER, 'deleted'];
 
-const timestampToDateString = (ts: Timestamp | null | undefined): string => {
-  if (!ts) return '';
-  return ts.toDate().toISOString().split('T')[0];
-};
-const formatNumberWithCommas = (num: number): string => {
-  return num ? num.toLocaleString('ko-KR') : '0'; 
+const formatPhoneNumber = (phone: string) => {
+    if (!phone) return '';
+    const clean = phone.replace(/[^0-9]/g, '');
+    if (clean.length === 11) return clean.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (clean.length === 10) return clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'); 
+    if (clean.length === 8) return clean.replace(/(\d{4})(\d{4})/, '$1-$2');
+    return clean;
 };
 
 const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => { 
@@ -43,18 +47,25 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   
-  // --- 정렬 순서 State ---
   const [currentOrder, setCurrentOrder] = useState<SiteStatus[]>(DEFAULT_STATUS_ORDER);
   const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   const [tempOrder, setTempOrder] = useState<SiteStatus[]>(DEFAULT_STATUS_ORDER);
-
-  // --- [추가] 노출 설정 State ---
-  const [visibleStatuses, setVisibleStatuses] = useState<SiteStatus[]>(ALL_STATUSES); // 기본값: 모두 보임
+  const [visibleStatuses, setVisibleStatuses] = useState<SiteStatus[]>(ALL_STATUSES); 
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
   const [tempVisible, setTempVisible] = useState<SiteStatus[]>(ALL_STATUSES);
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // 데이터 매핑 상태
+  const [meetingMap, setMeetingMap] = useState<Record<string, CellContent>>({});
+  // [NEW] 정렬을 위한 날짜 데이터 맵 (key: siteId, value: Date)
+  const [meetingDateMap, setMeetingDateMap] = useState<Record<string, Date>>({});
+  
+  const [recentMemoMap, setRecentMemoMap] = useState<Record<string, CellContent>>({}); 
+
   const db = getFirestore();
 
+  // 1. 현장 목록 로딩
   const fetchSites = useCallback(async () => {
     setIsLoading(true);
     if (!partnerUid) {
@@ -69,12 +80,12 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
       const querySnapshot = await getDocs(q);
       const sites: SiteData[] = [];
       querySnapshot.forEach((doc) => {
-        sites.push({ uid: doc.id, ...doc.data() } as SiteData);
+        const data = doc.data();
+        sites.push({ uid: doc.id, ...data } as SiteData);
       });
       setAllSites(sites);
     } catch (error) {
       console.error("현장 목록 로딩 오류:", error);
-      alert("현장 목록을 불러오는 데 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -84,11 +95,92 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     fetchSites();
   }, [fetchSites]);
 
-  // [핵심] 필터링 및 정렬 로직
+  // 2. 미팅 일정 및 최근 메모 실시간 구독
+  useEffect(() => {
+    if (!partnerUid) return;
+
+    const q = query(
+        collectionGroup(db, 'memos'), 
+        where('partnerUid', '==', partnerUid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const now = new Date();
+        
+        const siteNextMeeting: Record<string, { date: Date, data: CellContent }> = {};
+        const siteLastMemo: Record<string, { createdAt: number, data: CellContent }> = {};
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            
+            let siteId = data.siteId;
+            if (!siteId && doc.ref.parent.parent) {
+                siteId = doc.ref.parent.parent.id;
+            }
+            if (!siteId) return;
+
+            // 1) 미팅 약속 (미래 일정 중 가장 빠른 것)
+            if (data.memoType === 'meeting' && data.meetingDate && data.meetingTime) {
+                const dateTimeStr = `${data.meetingDate}T${data.meetingTime}`;
+                const meetingDate = new Date(dateTimeStr);
+
+                if (meetingDate >= now) {
+                    if (!siteNextMeeting[siteId] || meetingDate < siteNextMeeting[siteId].date) {
+                        const dateStr = data.meetingDate.slice(5); // MM-DD
+                        const contentStr = data.memoContent || '';
+                        const shortContent = contentStr.length > 12 ? contentStr.substring(0, 12) + '..' : contentStr;
+                        
+                        siteNextMeeting[siteId] = {
+                            date: meetingDate,
+                            data: {
+                                display: `${dateStr} ${data.meetingTime} ${shortContent}`,
+                                full: `[일시] ${data.meetingDate} ${data.meetingTime}\n[내용] ${contentStr}`
+                            }
+                        };
+                    }
+                }
+            }
+
+            // 2) 최근 메모 (가장 최근에 작성된 것)
+            const createdTime = data.createdAt?.seconds || 0;
+            if (!siteLastMemo[siteId] || createdTime > siteLastMemo[siteId].createdAt) {
+                const content = data.memoContent || '(내용 없음)';
+                const shortMemo = content.length > 15 ? content.substring(0, 15) + '..' : content;
+                
+                siteLastMemo[siteId] = {
+                    createdAt: createdTime,
+                    data: {
+                        display: shortMemo,
+                        full: content
+                    }
+                };
+            }
+        });
+
+        // 상태 업데이트
+        const newMeetingMap: Record<string, CellContent> = {};
+        const newMeetingDateMap: Record<string, Date> = {}; // [NEW] 날짜 맵
+        
+        Object.keys(siteNextMeeting).forEach(key => {
+            newMeetingMap[key] = siteNextMeeting[key].data;
+            newMeetingDateMap[key] = siteNextMeeting[key].date; // [NEW]
+        });
+        
+        setMeetingMap(newMeetingMap);
+        setMeetingDateMap(newMeetingDateMap); // [NEW]
+
+        const newMemoMap: Record<string, CellContent> = {};
+        Object.keys(siteLastMemo).forEach(key => {
+            newMemoMap[key] = siteLastMemo[key].data;
+        });
+        setRecentMemoMap(newMemoMap);
+    });
+
+    return () => unsubscribe();
+  }, [partnerUid, db]);
+
   const processedSites = useMemo(() => {
     let result = [...allSites];
-
-    // 1. 검색어 필터링
     if (searchTerm) {
       const lowerTerm = searchTerm.toLowerCase();
       result = result.filter(site =>
@@ -97,38 +189,50 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
         site.client1Name.toLowerCase().includes(lowerTerm)
       );
     }
-
-    // 2. [추가] 노출 설정 필터링 (체크 해제된 상태는 숨김)
     result = result.filter(site => visibleStatuses.includes(site.status));
-
-    // 3. 사용자 지정 순서 정렬
+    
+    // [정렬 로직]
     result.sort((a, b) => {
-      // (A) deleted는 무조건 맨 아래 (만약 노출되어 있다면)
+      // 1. 삭제 대기 상태는 맨 뒤로
       const isDeletedA = a.status === 'deleted';
       const isDeletedB = b.status === 'deleted';
-
       if (isDeletedA && !isDeletedB) return 1;
       if (!isDeletedA && isDeletedB) return -1;
       if (isDeletedA && isDeletedB) return 0;
 
-      // (B) 나머지 정렬
+      // 2. 사용자 지정 상태 순서 (예: 미팅중 > 계약대기 > ...)
       const indexA = currentOrder.indexOf(a.status);
       const indexB = currentOrder.indexOf(b.status);
-      const safeIndexA = indexA === -1 ? 999 : indexA;
-      const safeIndexB = indexB === -1 ? 999 : indexB;
+      if (indexA !== indexB) {
+          return indexA - indexB;
+      }
 
-      return safeIndexA - safeIndexB;
+      // 3. [NEW] '미팅중' 상태일 때: 미팅 날짜가 가까운 순서로 정렬
+      if (a.status === '미팅중') {
+          const dateA = meetingDateMap[a.uid];
+          const dateB = meetingDateMap[b.uid];
+
+          // 둘 다 약속이 있으면 날짜 오름차순 (가까운 날짜 먼저)
+          if (dateA && dateB) {
+              return dateA.getTime() - dateB.getTime();
+          }
+          // 약속 있는 현장을 위로
+          if (dateA) return -1;
+          if (dateB) return 1;
+          // 둘 다 약속이 없으면 다음 정렬 기준(생성일)으로 넘어감
+      }
+
+      // 4. 기본 정렬: 최신 생성일 순
+      const timeA = a.createdAt?.toMillis() || 0;
+      const timeB = b.createdAt?.toMillis() || 0;
+      return timeB - timeA;
     });
-
+    
     return result;
-  }, [allSites, searchTerm, currentOrder, visibleStatuses]);
+  }, [allSites, searchTerm, currentOrder, visibleStatuses, meetingDateMap]);
 
-
-  // --- 정렬 모달 핸들러 ---
-  const openSortModal = () => {
-    setTempOrder([...currentOrder]);
-    setIsSortModalOpen(true);
-  };
+  // Modal Handlers
+  const openSortModal = () => { setTempOrder([...currentOrder]); setIsSortModalOpen(true); };
   const moveSortItem = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...tempOrder];
     if (direction === 'up') {
@@ -140,42 +244,25 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     }
     setTempOrder(newOrder);
   };
-  const saveSortOrder = () => {
-    setCurrentOrder(tempOrder);
-    setIsSortModalOpen(false);
-  };
-
-  // --- [추가] 노출 변경 모달 핸들러 ---
-  const openVisibilityModal = () => {
-    setTempVisible([...visibleStatuses]); // 현재 설정 불러오기
-    setIsVisibilityModalOpen(true);
-  };
+  const saveSortOrder = () => { setCurrentOrder(tempOrder); setIsSortModalOpen(false); };
+  const openVisibilityModal = () => { setTempVisible([...visibleStatuses]); setIsVisibilityModalOpen(true); };
   const toggleVisibility = (status: SiteStatus) => {
-    setTempVisible(prev => {
-      if (prev.includes(status)) {
-        return prev.filter(s => s !== status); // 체크 해제 (제거)
-      } else {
-        return [...prev, status]; // 체크 (추가)
-      }
-    });
+    setTempVisible(prev => prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]);
   };
-  const saveVisibility = () => {
-    setVisibleStatuses(tempVisible);
-    setIsVisibilityModalOpen(false);
-  };
+  const saveVisibility = () => { setVisibleStatuses(tempVisible); setIsVisibilityModalOpen(false); };
 
   return (
     <div className="site-list-container">
       
-      {/* 헤더 (제목 + 버튼 그룹) */}
       <div className="list-header">
         <h2>현장 목록</h2>
         <div className="header-actions">
-          {/* 정렬 변경 버튼 */}
-          <button className="header-btn" onClick={openSortModal}>
-            ⚙️ 정렬 순서 변경
+          <button className="header-btn add-btn" onClick={() => setIsAddModalOpen(true)}>
+            + 현장 추가
           </button>
-          {/* [추가] 노출 변경 버튼 */}
+          <button className="header-btn" onClick={openSortModal}>
+            ⚙️ 정렬 순서
+          </button>
           <button className="header-btn" onClick={openVisibilityModal}>
             👁️ 노출 변경
           </button>
@@ -197,52 +284,64 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
           <table className="site-table">
             <thead>
               <tr>
-                <th>상태</th>
                 <th>현장명</th>
-                <th>주소</th>
                 <th>고객명1</th>
                 <th>연락처1</th>
-                <th>공사 예산</th>
-                <th>생성일</th>
+                <th>주소</th>
+                <th>상태</th>
+                <th>미팅약속</th>
+                <th>최근메모</th>
               </tr>
             </thead>
             <tbody>
               {processedSites.map(site => (
-                <tr 
-                  key={site.uid} 
-                  className={site.status === 'deleted' ? 'row-deleted' : ''}
-                >
+                <tr key={site.uid} className={site.status === 'deleted' ? 'row-deleted' : ''}>
                   <td>
-                    {site.status === 'deleted' ? '삭제대기' : site.status}
-                  </td>
-                  <td>
-                    <button 
-                      className="site-link-button" 
-                      onClick={() => onSiteSelect(site.uid)}
-                    >
+                    <button className="site-link-button" onClick={() => onSiteSelect(site.uid)}>
                       {site.siteName}
                     </button>
                   </td>
-                  <td>{site.address}</td>
                   <td>{site.client1Name}</td>
-                  <td>{site.client1Phone}</td>
-                  <td>{formatNumberWithCommas(site.budget)}</td>
-                  <td>{timestampToDateString(site.createdAt)}</td>
+                  <td>{formatPhoneNumber(site.client1Phone)}</td>
+                  <td className="address-cell" title={site.address}>{site.address}</td>
+                  
+                  <td>
+                      <span className={`status-badge ${site.status}`}>
+                          {site.status === 'deleted' ? '삭제대기' : site.status}
+                      </span>
+                  </td>
+                  
+                  <td 
+                    className="meeting-cell"
+                    style={{
+                        color: meetingMap[site.uid] ? '#1976d2' : '#ccc', 
+                        fontWeight: meetingMap[site.uid] ? 'bold' : 'normal',
+                        cursor: meetingMap[site.uid] ? 'help' : 'default'
+                    }}
+                    title={meetingMap[site.uid]?.full || ''}
+                  >
+                      {meetingMap[site.uid]?.display || '-'}
+                  </td>
+
+                  <td 
+                    className="memo-cell"
+                    title={recentMemoMap[site.uid]?.full || ''}
+                    style={{ cursor: recentMemoMap[site.uid] ? 'help' : 'default' }}
+                  >
+                      {recentMemoMap[site.uid]?.display || '-'}
+                  </td>
                 </tr>
               ))}
               {processedSites.length === 0 && (
-                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}> 
-                    조건에 맞는 현장이 없습니다.
-                  </td>
-                </tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>조건에 맞는 현장이 없습니다.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* --- [모달 1] 정렬 순서 변경 --- */}
+      {isAddModalOpen && <SiteAddModal partnerUid={partnerUid} onClose={() => setIsAddModalOpen(false)} onSuccess={() => fetchSites()} />}
+      
       {isSortModalOpen && (
         <div className="modal-backdrop">
           <div className="modal-content">
@@ -266,7 +365,6 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
         </div>
       )}
 
-      {/* --- [모달 2] 노출 변경 (추가됨) --- */}
       {isVisibilityModalOpen && (
         <div className="modal-backdrop">
           <div className="modal-content">
@@ -275,11 +373,7 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
               {ALL_STATUSES.map((status) => (
                 <li key={status} className="modal-item">
                   <label className="visibility-label">
-                    <input 
-                      type="checkbox" 
-                      checked={tempVisible.includes(status)}
-                      onChange={() => toggleVisibility(status)}
-                    />
+                    <input type="checkbox" checked={tempVisible.includes(status)} onChange={() => toggleVisibility(status)} />
                     {status === 'deleted' ? '삭제대기' : status}
                   </label>
                 </li>
@@ -292,7 +386,6 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

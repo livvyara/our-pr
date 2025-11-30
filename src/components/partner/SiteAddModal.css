@@ -1,0 +1,104 @@
+/* SiteAddModal.css */
+
+.sam-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 2000;
+  display: flex; justify-content: center; align-items: center;
+}
+
+.sam-content {
+  background: white;
+  width: 750px; /* 주소 입력란 확장을 위해 너비 조금 더 늘림 */
+  max-width: 95%; 
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+/* 헤더 */
+.sam-header {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sam-header h2 { margin: 0; font-size: 16px; color: #333; font-weight: bold; }
+.sam-close-btn { background: none; border: none; font-size: 20px; color: #999; cursor: pointer; }
+
+/* 본문 */
+.sam-body {
+  padding: 15px 20px;
+  overflow-y: auto;
+}
+
+/* 라디오 탭 */
+.sam-radio-group.compact {
+  display: flex; gap: 10px; margin-bottom: 15px;
+}
+.sam-radio-label {
+  flex: 1; padding: 8px;
+  border: 1px solid #ddd; border-radius: 4px;
+  text-align: center; cursor: pointer;
+  font-size: 13px; color: #666; font-weight: bold;
+  transition: all 0.2s;
+}
+.sam-radio-label.active {
+  background: #e3f2fd; border-color: #1976d2; color: #1976d2;
+}
+.sam-radio-label input { display: none; }
+
+/* 폼 레이아웃 */
+.sam-form { display: flex; flex-direction: column; gap: 10px; }
+.sam-row { display: flex; gap: 10px; }
+
+.sam-row-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.sam-group { display: flex; flex-direction: column; gap: 4px; }
+
+.sam-group label {
+  font-size: 12px; font-weight: bold; color: #555;
+  white-space: nowrap;
+}
+.sam-group input, .sam-group select {
+  width: 100%; height: 34px; 
+  padding: 0 8px;
+  border: 1px solid #ddd; border-radius: 4px;
+  font-size: 13px; box-sizing: border-box;
+}
+.sam-group input:focus, .sam-group select:focus {
+  border-color: #1976d2; outline: none;
+}
+
+/* 주소 한줄 배치 */
+.sam-addr-row.full {
+  display: flex; 
+  gap: 8px;
+  width: 100%;
+}
+/* 주소 내부 아이템들이 줄바꿈 되지 않도록 */
+.sam-addr-row.full select, .sam-addr-row.full input {
+  flex-shrink: 1;
+}
+
+.req { color: #e74c3c; margin-left: 2px; }
+
+/* 푸터 */
+.sam-footer.compact {
+  padding: 15px 20px; border-top: 1px solid #eee;
+  display: flex; justify-content: flex-end; gap: 8px;
+  margin-top: 10px;
+}
+.sam-btn-cancel {
+  padding: 8px 16px; border: 1px solid #ccc; background: #fff;
+  border-radius: 4px; cursor: pointer; font-size: 13px; color: #555;
+}
+.sam-btn-save {
+  padding: 8px 20px; border: none; background: #1976d2; color: white;
+  border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;
+}
+.sam-btn-save:disabled { background: #ccc; cursor: not-allowed; }

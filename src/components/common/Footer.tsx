@@ -6,8 +6,8 @@ const Footer: React.FC = () => {
     <footer className="footer-container">
       <div className="footer-content">
         <div className="footer-info">
-          <span>(주) 아워프로젝트 | 대표: 홍길동 | 사업자등록번호: 123-45-67890</span>
-          <span>주소: 개발중인 플랫폼 입니다.</span>
+          <span>(주) 730디자인그룹 | 사업자등록번호: 250-86-03528</span>
+          <span>주소: 광주광역시 광산구 장덕동 1639번지 센터빌딩 4층</span>
           <span>&copy; 2025 Our Project. All Rights Reserved.</span>
         </div>
         <div className="footer-links">

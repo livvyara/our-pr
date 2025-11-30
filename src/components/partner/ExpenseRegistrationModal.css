@@ -1,0 +1,76 @@
+/* ExpenseRegistrationModal.css */
+
+/* 버튼 스타일 */
+.worker-modal-wrapper .wm-btn-upload {
+    padding: 0 16px;
+    height: 42px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.worker-modal-wrapper .wm-btn-upload:hover { background-color: #f8f9fa; border-color: #bbb; }
+
+.worker-modal-wrapper .wm-btn-camera {
+    padding: 0 16px;
+    height: 42px;
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    color: #1976d2;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.worker-modal-wrapper .wm-btn-camera:hover { background-color: #bbdefb; }
+
+/* 날짜 입력창 스타일 개선 */
+.expense-date-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.pretty-date-input {
+    flex: 1;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #333;
+    background-color: #fff;
+    cursor: pointer;
+}
+.pretty-date-input:focus {
+    border-color: #1976d2;
+    outline: none;
+}
+
+/* 비활성화 입력창 스타일 */
+.input-disabled {
+    background-color: #f5f5f5 !important;
+    color: #777 !important;
+    cursor: not-allowed;
+    font-weight: bold;
+}
+
+/* OCR 로딩 텍스트 */
+.ocr-loading {
+    color: #e67e22;
+    font-weight: bold;
+    font-size: 12px;
+    margin-left: 5px;
+    animation: blink 1s infinite;
+}

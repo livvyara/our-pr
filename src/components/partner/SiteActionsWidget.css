@@ -51,3 +51,10 @@
   color: #aaa;
   cursor: not-allowed;
 }
+.action-btn.labor {
+    background-color: #9b59b6;
+    color: white;
+}
+.action-btn.labor:hover {
+    background-color: #8e44ad;
+}

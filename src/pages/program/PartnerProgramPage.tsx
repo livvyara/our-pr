@@ -29,6 +29,7 @@ import AccountingExpenseCategory from './AccountingExpenseCategoryPage';
 import AccountingManualSalesPage from './AccountingManualSalesPage';
 import AccountingManualPurchasePage from './AccountingManualPurchasePage';
 import AccountingBankingExcelPage from './AccountingBankingExcelPage';
+import SiteSettlementPage from './SiteSettlementPage';
 
 import WorkLogPage from './WorkLogPage';
 import SiteDeleteList from '../../components/partner/SiteDeleteList';
@@ -211,6 +212,7 @@ const PartnerProgramPage: React.FC = () => {
                   <Route path="site-log" element={<ProtectedContent requiredPerm="site-log"><WorkLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
                   <Route path="site-log/:siteId" element={<ProtectedContent requiredPerm="site-log"><WorkLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
                   <Route path="site-schedule" element={<ProtectedContent requiredPerm="site-schedule"><h2>공사 일정</h2></ProtectedContent>} />
+                  <Route path="site-settlement" element={<ProtectedContent requiredPerm="site-list"><SiteSettlementPage /></ProtectedContent>} />
                   <Route path="site-detail/:siteId" element={<ProtectedContent requiredPerm="site-list"><SiteDetailPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
 
                   <Route path="hr-add-worker" element={<ProtectedContent requiredPerm="hr-add-worker"><h2>작업자 등록</h2></ProtectedContent>} />

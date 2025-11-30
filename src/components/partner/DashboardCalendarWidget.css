@@ -125,7 +125,7 @@
 }
 
 .react-calendar__tile {
-  height: 80px; 
+  height: 150px; 
   min-height: 80px;
   padding: 5px !important;
   text-align: left;
@@ -151,8 +151,8 @@
   text-align: left;
 }
 
-.calendar-dot.meeting { background-color: #e3f2fd; color: #1565c0; }
-.calendar-dot.construction { background-color: #e8f5e9; color: #2e7d32; }
+.calendar-dot.meeting { font-size:12px; font-weight: bold; background-color: #e3f2fd; color: #1565c0; }
+.calendar-dot.construction { font-size:12px; font-weight: bold; background-color: #e8f5e9; color: #2e7d32; }
 .calendar-dot.personal { background-color: #fff3e0; color: #ef6c00; }
 
 /* 오늘 날짜 강조 */

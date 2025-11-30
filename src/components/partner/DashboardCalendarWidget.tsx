@@ -1,5 +1,3 @@
-// src/components/partner/DashboardCalendarWidget.tsx
-
 import React, { useState, useEffect, useMemo, type FormEvent } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'; 
@@ -148,7 +146,17 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       meetings = snap.docs.map(d => {
         const data = d.data() as MemoEntry;
         if(data.siteId) fetchSiteNameIfNeeded(data.siteId);
-        return { id: d.id, time: data.meetingTime, title: `미팅: ${data.memoContent}`, siteId: data.siteId, type: 'meeting', dateKey: data.meetingDate, siteName: data.siteName };
+        
+        // [수정됨] 제목에 시간 추가 (예: 14:00 미팅: 내용...)
+        return { 
+            id: d.id, 
+            time: data.meetingTime, 
+            title: `${data.meetingTime} 미팅: ${data.memoContent}`, 
+            siteId: data.siteId, 
+            type: 'meeting', 
+            dateKey: data.meetingDate, 
+            siteName: data.siteName 
+        };
       });
       updateAll();
     });
@@ -168,27 +176,27 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       updateAll();
     });
 
-    // 3. [⭐] 공사 일정 (schedules - 새로 만든 모달 데이터)
+    // 3. 공사 일정 (schedules - 새로 만든 모달 데이터)
     const qSchedules = query(collectionGroup(db, 'schedules'));
     const unsubSchedules = onSnapshot(qSchedules, (snap) => {
         constructionSchedules = [];
         snap.forEach(d => {
-            const pathSegments = d.ref.path.split('/');
-            // 내 파트너 데이터인지 확인 (경로: users/{uid}/sites/{siteId}/schedules/{docId})
-            if (pathSegments.length > 1 && pathSegments[1] === partnerUid) { 
-                const data = d.data() as SiteScheduleEntry;
-                const siteId = pathSegments[3]; 
-                fetchSiteNameIfNeeded(siteId);
+          const pathSegments = d.ref.path.split('/');
+          // 내 파트너 데이터인지 확인 (경로: users/{uid}/sites/{siteId}/schedules/{docId})
+          if (pathSegments.length > 1 && pathSegments[1] === partnerUid) { 
+            const data = d.data() as SiteScheduleEntry;
+            const siteId = pathSegments[3]; 
+            fetchSiteNameIfNeeded(siteId);
 
-                constructionSchedules.push({
-                    id: d.id, time: '10:00', 
-                    title: data.processes.join(', '), 
-                    siteId: siteId, 
-                    type: 'construction', 
-                    dateKey: data.date, 
-                    siteName: siteNamesCache.get(siteId) 
-                });
-            }
+            constructionSchedules.push({
+                id: d.id, time: '10:00', 
+                title: data.processes.join(', '), 
+                siteId: siteId, 
+                type: 'construction', 
+                dateKey: data.date, 
+                siteName: siteNamesCache.get(siteId) 
+            });
+          }
         });
         updateAll();
     });
@@ -229,7 +237,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       map.get(dateKey)!.push(schedule);
     });
 
-    // [⭐ 타일 그룹화 로직]
+    // [타일 그룹화 로직]
     const finalMap = new Map<string, ScheduleItem[]>();
     map.forEach((dailyItems, dateKey) => {
         const constructions = dailyItems.filter(s => s.type === 'construction' && s.siteId);
@@ -238,7 +246,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         const groupedBySite = new Map<string, ScheduleItem[]>();
         constructions.forEach(item => {
             const sId = item.siteId!;
-            const name = item.siteName || siteNamesCache.get(sId) || '현장'; // 이름 확인
+            // const name = item.siteName || siteNamesCache.get(sId) || '현장'; 
             if (!groupedBySite.has(sId)) groupedBySite.set(sId, []);
             groupedBySite.get(sId)!.push(item);
         });
@@ -405,7 +413,7 @@ const scheduleListTitle = useMemo(() => {
               const dayOfWeek = d.toLocaleDateString('ko-KR', { weekday: 'short' });
               const displaySiteName = item.siteName || (item.siteId ? `[${item.siteId.substring(0, 4)}...]` : null);
 
-// 제목에서 [현장명] 부분을 제거
+              // 제목에서 [현장명] 부분을 제거
               const cleanTitle = item.title.startsWith(`[${displaySiteName}]`) 
                   ? item.title.substring(`[${displaySiteName}]`.length).trim() 
                   : item.title;

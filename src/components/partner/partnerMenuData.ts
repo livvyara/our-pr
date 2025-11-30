@@ -24,6 +24,7 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'site-list', title: '현장 목록', path: '/program/site-list' },
       { key: 'site-log', title: '작업 일지', path: '/program/site-log' },
       { key: 'site-schedule', title: '공사 일정', path: '/program/site-schedule' },
+      { key: 'site-settlement', title: '현장 결산', path: '/program/site-settlement' },
     ]
   },
   { 
@@ -44,8 +45,6 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'accounting-banking-excel', title: '계좌/카드 거래내역 등록', path: '/program/accounting-banking-excel' },
       { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' }, // [추가됨]
       { key: 'accounting-tax-invoice', title: '현금영수증', path: '/program/accounting-cash-receipt' }, // [추가됨]
-      { key: 'accounting-sales', title: '매출자료 등록(수기)', path: '/program/accounting-sales-manual' },
-      { key: 'accounting-purchase', title: '매입자료 등록(수기)', path: '/program/accounting-purchase-manual' },
       { key: 'accounting-expense-category', title: '지출품목 설정', path: '/program/accounting-expense-category' },
 
     ]

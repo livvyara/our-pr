@@ -182,3 +182,30 @@
 }
 .worker-modal-wrapper .wm-inner-modal h4 { margin: 0 0 20px 0; color: #333; text-align: center; }
 .worker-modal-wrapper .wm-inner-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.worker-modal-wrapper .wm-btn-upload {
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+}
+.worker-modal-wrapper .wm-btn-upload:hover {
+    background-color: #e0e0e0;
+}
+
+.worker-modal-wrapper .wm-btn-camera {
+    padding: 8px 12px;
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    color: #1976d2;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.worker-modal-wrapper .wm-btn-camera:hover {
+    background-color: #bbdefb;
+}
