@@ -43,7 +43,11 @@ interface SortConfig {
 const WorkerManagementPage: React.FC = () => {
   const [workers, setWorkers] = useState<WorkerData[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // [중요] 데이터 소유자의 UID (파트너 본인 또는 직원의 경우 대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
+  
+  // 로그인한 사용자 정보 (로그 기록용)
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,14 +66,31 @@ const WorkerManagementPage: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setCurrentUid(user.uid);
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if(userDoc.exists()) {
-            const d = userDoc.data();
-            setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if(userDoc.exists()) {
+                const d = userDoc.data();
+                
+                // 1. 로그인한 사용자 정보 저장 (로그용)
+                setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
+
+                // 2. [핵심 수정] 데이터 소유자(Target UID) 결정
+                let targetUid = user.uid; // 기본은 본인
+                
+                // 직원이면 대표(owner)의 UID를 사용
+                if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
+                    targetUid = d.partnerInfo.ownerUid;
+                }
+
+                setCurrentUid(targetUid); // 상태 업데이트
+                
+                // 3. 데이터 로드 (Target UID 기준)
+                fetchTrades(targetUid); 
+                subscribeWorkers(targetUid);
+            }
+        } catch (e) {
+            console.error("사용자 정보 로드 실패", e);
         }
-        fetchTrades(user.uid); 
-        subscribeWorkers(user.uid);
       }
     });
     return () => unsubscribe();
@@ -410,7 +431,7 @@ const WorkerManagementPage: React.FC = () => {
             partnerUid={currentUid}
             targetWorker={editTarget}
             tradeOptions={tradeOptions} 
-            userName={currentUserInfo.name} // [NEW] 로그용 이름 전달
+            userName={currentUserInfo.name} 
           />
       )}
 
