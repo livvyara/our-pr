@@ -10,6 +10,9 @@ import { firebaseConfig } from '../../firebase-config';
 import { K_BRAND_COLOR } from '../../constants';
 import './AccountingTaxInvoicePage.css'; 
 
+// [중요] 수기 등록 모달 임포트 (매입/매출 공용)
+import AccountingManualSalesPage from './AccountingManualSalesPage';
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -67,9 +70,12 @@ const AccountingTaxInvoicePage: React.FC = () => {
   const [paymentModalTarget, setPaymentModalTarget] = useState<TaxInvoice | null>(null);
   const [summary, setSummary] = useState({ salesCount: 0, salesSupply: 0, salesTax: 0, salesTotal: 0, purchaseCount: 0, purchaseSupply: 0, purchaseTax: 0, purchaseTotal: 0 });
 
+  // [NEW] 수기 등록 선택 모달 상태
   const [isManualSelectOpen, setIsManualSelectOpen] = useState(false);
+  // [NEW] 수기 등록 메인 모달 상태 ('sales' | 'purchase' | null)
+  const [manualModalType, setManualModalType] = useState<'sales' | 'purchase' | null>(null);
 
-  // [1] 로그인 및 권한 확인 로직 수정
+  // [1] 로그인 및 권한 확인 로직
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -178,7 +184,7 @@ const AccountingTaxInvoicePage: React.FC = () => {
               if (searchSiteId && itemSiteId !== searchSiteId) return;
               if (!searchSiteId) {
                   if (!showUnassigned && !isCompleted) return; 
-                  if (!showAssigned && isCompleted) return;    
+                  if (!showAssigned && isCompleted) return;    
               }
               const supply = Number(v.supplyAmount) || 0; const tax = Number(v.taxAmount) || 0; const total = Number(v.totalAmount) || 0;
               if (isSales) { sCount++; sSupply+=supply; sTax+=tax; sTotal+=total; } else { pCount++; pSupply+=supply; pTax+=tax; pTotal+=total; }
@@ -242,7 +248,6 @@ const AccountingTaxInvoicePage: React.FC = () => {
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  // ... (나머지 핸들러는 기존과 동일하므로 생략하지 않고 포함) ...
   const handleFieldChange = async (invoiceId: string, inOut: '매출'|'매입', field: string, value: string) => {
       if (!currentUid) return;
       
@@ -311,6 +316,7 @@ const AccountingTaxInvoicePage: React.FC = () => {
                   <div className="filter-item checkbox-group" style={{marginLeft:'10px', display:'flex', gap:'10px'}}><label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}><input type="checkbox" checked={showUnassigned} onChange={e => setShowUnassigned(e.target.checked)} style={{marginRight:'5px'}} />미귀속</label><label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}><input type="checkbox" checked={showAssigned} onChange={e => setShowAssigned(e.target.checked)} style={{marginRight:'5px'}} />귀속</label></div>
                   <div className="filter-item"><input type="text" placeholder="업체명 검색" value={searchVendor} onChange={e=>setSearchVendor(e.target.value)} style={{width: '150px'}} /></div>
                   
+                  {/* [NEW] 수기자료 등록 버튼 */}
                   <button className="btn-manual-reg" onClick={() => setIsManualSelectOpen(true)}>
                       + 수기자료 등록
                   </button>
@@ -377,22 +383,22 @@ const AccountingTaxInvoicePage: React.FC = () => {
       {isSiteModalOpen && <SiteSelectionModal sites={siteList} onClose={() => setIsSiteModalOpen(false)} onSelect={(siteId, siteName) => { setSearchSiteId(siteId); setSearchSiteName(siteName); setIsSiteModalOpen(false); }} />}
       {paymentModalTarget && <PaymentConnectionModal invoice={paymentModalTarget} currentUserUid={currentUid || ''} onClose={() => setPaymentModalTarget(null)} onConfirm={(txId) => handleLinkTransaction(paymentModalTarget.id, paymentModalTarget.inOut, txId)} />}
 
-      {/* 수기 등록 선택 모달 */}
+      {/* [NEW] 수기 등록 선택 모달 */}
       {isManualSelectOpen && (
         <div className="invoice-modal-backdrop" onClick={() => setIsManualSelectOpen(false)} style={{zIndex: 3000}}>
-            <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width: '400px', height: 'auto', minHeight: '200px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px'}}>
+            <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width: '400px', height: 'auto', padding: '30px', textAlign:'center'}}>
                 <h3 style={{margin:0, fontSize:'20px'}}>수기 자료 등록</h3>
                 <p style={{margin:0, color:'#666', textAlign:'center', fontSize:'14px'}}>등록할 자료의 유형을 선택해주세요.</p>
                 <div style={{display:'flex', gap:'15px', width:'100%', marginTop:'10px'}}>
                     <button 
-                        onClick={() => navigate('/program/accounting-sales-manual')}
-                        style={{flex:1, padding:'15px', background:'#e3f2fd', border:'1px solid #1976d2', borderRadius:'8px', color:'#1976d2', fontWeight:'bold', cursor:'pointer', fontSize:'16px'}}
+                        onClick={() => { setIsManualSelectOpen(false); setManualModalType('sales'); }}
+                        style={{flex:1, padding:'15px', background:'#e3f2fd', border:'1px solid #1976d2', borderRadius:'8px', color:'#1976d2', fontWeight:'bold'}}
                     >
                         🔵 매출 자료
                     </button>
                     <button 
-                        onClick={() => navigate('/program/accounting-purchase-manual')}
-                        style={{flex:1, padding:'15px', background:'#ffebee', border:'1px solid #c62828', borderRadius:'8px', color:'#c62828', fontWeight:'bold', cursor:'pointer', fontSize:'16px'}}
+                        onClick={() => { setIsManualSelectOpen(false); setManualModalType('purchase'); }}
+                        style={{flex:1, padding:'15px', background:'#ffebee', border:'1px solid #c62828', borderRadius:'8px', color:'#c62828', fontWeight:'bold'}}
                     >
                         🔴 매입 자료
                     </button>
@@ -401,11 +407,22 @@ const AccountingTaxInvoicePage: React.FC = () => {
             </div>
         </div>
       )}
+
+      {/* [NEW] 수기 등록 메인 모달 */}
+      {manualModalType && currentUid && (
+          <AccountingManualSalesPage 
+            isOpen={true}
+            onClose={() => setManualModalType(null)}
+            currentUserUid={currentUid}
+            userName={currentUserInfo.name}
+            type={manualModalType}
+          />
+      )}
     </div>
   );
 };
 
-// ... (나머지 하위 컴포넌트 PaymentConnectionModal, SiteSelectionModal, TaxInvoiceModal 등은 기존과 동일하게 유지)
+// (하위 컴포넌트들은 기존과 동일하게 유지)
 const PaymentConnectionModal: React.FC<{ invoice: TaxInvoice, currentUserUid: string, onClose: () => void, onConfirm: (transactionId: string) => void }> = ({ invoice, currentUserUid, onClose, onConfirm }) => {
     const [transactions, setTransactions] = useState<BankTransaction[]>([]);
     const [searchDateStart, setSearchDateStart] = useState(invoice.writeDate);

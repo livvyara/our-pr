@@ -226,7 +226,6 @@ const PartnerProgramPage: React.FC = () => {
                   <Route path="accounting-cash-receipt" element={<ProtectedContent requiredPerm="accounting"><AccountingCashReceiptPage /></ProtectedContent>} />
                   <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
                   <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
-                  <Route path="accounting-sales-manual" element={<ProtectedContent requiredPerm="accounting-sales"><AccountingManualSalesPage /></ProtectedContent>} />
                   <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />
                   <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
                   <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />

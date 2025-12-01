@@ -13,38 +13,32 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// [Interface]
 interface InvoiceItem {
   date: string; itemName: string; spec: string; qty: number; unitPrice: number; supplyAmount: number; taxAmount: number; remark: string;
 }
-// DB 저장된 데이터 타입
-interface ManualInvoiceData {
-    id: string; writeDate: string; vendorName: string; vendorRegNo: string; vendorCeo: string; vendorAddr: string;
-    buyerName: string; buyerRegNo: string; buyerCeo: string; buyerAddr: string;
-    supplyAmount: number; taxAmount: number; totalAmount: number; remark: string;
-    items: InvoiceItem[]; imageUrl: string; issueType: string;
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  currentUserUid: string;
+  userName: string;
+  // 매출/매입 구분 (이 컴포넌트를 공용으로 쓸 경우)
+  type: 'sales' | 'purchase'; 
 }
 
-const AccountingManualSalesPage: React.FC = () => {
-  const [currentUid, setCurrentUid] = useState<string | null>(null);
-  const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
+const AccountingManualSalesPage: React.FC<Props> = ({ isOpen, onClose, currentUserUid, userName, type }) => {
   const [loading, setLoading] = useState(false);
 
-  // [NEW] 수기 등록된 리스트 상태
-  const [manualList, setManualList] = useState<ManualInvoiceData[]>([]);
-  // [NEW] 수정 모달 상태
-  const [editTarget, setEditTarget] = useState<ManualInvoiceData | null>(null);
-
-  // --- [입력 폼 상태 (신규 등록용)] ---
+  // --- [입력 폼 상태] ---
   const [writeDate, setWriteDate] = useState(new Date().toISOString().slice(0, 10));
   
-  // 공급자 (나)
+  // 공급자
   const [vendorRegNo, setVendorRegNo] = useState('');
   const [vendorName, setVendorName] = useState('');
   const [vendorCeo, setVendorCeo] = useState('');
   const [vendorAddr, setVendorAddr] = useState('');
 
-  // 공급받는자 (거래처)
+  // 공급받는자
   const [buyerRegNo, setBuyerRegNo] = useState('');
   const [buyerName, setBuyerName] = useState('');
   const [buyerCeo, setBuyerCeo] = useState('');
@@ -61,86 +55,41 @@ const AccountingManualSalesPage: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 자동 합계
   const totalSupply = items.reduce((sum, item) => sum + item.supplyAmount, 0);
   const totalTax = items.reduce((sum, item) => sum + item.taxAmount, 0);
   const grandTotal = totalSupply + totalTax;
 
-  // [Helpers]
-  const formatBizNum = (num: string) => {
-      if (!num) return '';
-      const nums = num.replace(/[^0-9]/g, "").slice(0, 10);
-      if (nums.length <= 3) return nums;
-      if (nums.length <= 5) return `${nums.slice(0, 3)}-${nums.slice(3)}`;
-      return `${nums.slice(0, 3)}-${nums.slice(3, 5)}-${nums.slice(5)}`;
-  };
-
-  const handleBizNumChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      setter(formatBizNum(e.target.value));
-  };
-
-  const parseNumber = (val: string) => Number(val.replace(/[^0-9]/g, "")) || 0;
-
+  // 초기 데이터 로드 (공급자 정보 등)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setCurrentUid(user.uid);
-        
-        // [수정] 사용자 정보 불러오기 및 공급자 정보 자동 입력
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if(userDoc.exists()) {
+    const fetchUserInfo = async () => {
+        if (!currentUserUid) return;
+        const userDoc = await getDoc(doc(db, 'users', currentUserUid));
+        if (userDoc.exists()) {
             const d = userDoc.data();
-            setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
-            
-            // partnerInfo가 있으면 우선 사용
             const info = d.partnerInfo || {};
             
-            // 1. 사업자번호
-            const bizNum = info.businessNumber || d.businessNumber || '';
-            setVendorRegNo(formatBizNum(bizNum));
-
-            // 2. 상호
-            setVendorName(info.companyName || d.companyName || '');
-
-            // 3. 대표자 성명
-            setVendorCeo(info.ceoName || d.name || '');
-
-            // 4. 주소 (시+구+상세주소 조합)
+            // [매출]인 경우 '공급자'에 내 정보, [매입]인 경우 '공급받는자'에 내 정보
+            const myRegNo = info.businessNumber || d.businessNumber || '';
+            const myName = info.companyName || d.companyName || '';
+            const myCeo = info.ceoName || d.name || '';
             const addrParts = [info.city, info.district, info.addressDetail].filter(Boolean);
-            if (addrParts.length > 0) {
-                setVendorAddr(addrParts.join(' '));
+            const myAddr = addrParts.length > 0 ? addrParts.join(' ') : (d.address || '');
+
+            if (type === 'sales') {
+                setVendorRegNo(myRegNo); setVendorName(myName); setVendorCeo(myCeo); setVendorAddr(myAddr);
             } else {
-                setVendorAddr(d.address || '');
+                setBuyerRegNo(myRegNo); setBuyerName(myName); setBuyerCeo(myCeo); setBuyerAddr(myAddr);
             }
         }
-        
-        fetchManualList(user.uid); 
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+    };
+    if (isOpen) fetchUserInfo();
+  }, [isOpen, currentUserUid, type]);
 
-  // 수기 등록 내역 불러오기
-  const fetchManualList = async (uid: string) => {
-      try {
-          const q = query(
-              collection(db, 'users', uid, 'TAX_SALES'),
-              where('issueType', '==', '수기'), 
-              orderBy('writeDate', 'desc')
-          );
-          const snap = await getDocs(q);
-          const list: ManualInvoiceData[] = [];
-          snap.forEach(d => list.push({ id: d.id, ...d.data() } as ManualInvoiceData));
-          setManualList(list);
-      } catch (e) { console.error("리스트 로드 실패:", e); }
-  };
-
-  // Items Handler
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: string) => {
       const newItems = [...items];
       const item = { ...newItems[index] };
       if (['qty', 'unitPrice', 'supplyAmount', 'taxAmount'].includes(field)) {
-          const numVal = parseNumber(value);
+          const numVal = Number(value.replace(/[^0-9]/g, "")) || 0;
           (item as any)[field] = numVal;
           if (field === 'qty' || field === 'unitPrice') {
               const qty = field === 'qty' ? numVal : item.qty;
@@ -158,15 +107,12 @@ const AccountingManualSalesPage: React.FC = () => {
       newItems[index] = item;
       setItems(newItems);
   };
-  const addItemRow = () => setItems([...items, { date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }]);
-  const removeItemRow = (index: number) => { if (items.length > 1) setItems(items.filter((_, i) => i !== index)); };
 
-  // Image Handler
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-          const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
+          const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
           setImageFile(compressed);
           const reader = new FileReader();
           reader.readAsDataURL(compressed);
@@ -174,342 +120,112 @@ const AccountingManualSalesPage: React.FC = () => {
       } catch (error) { alert("이미지 처리 오류"); }
   };
 
-  // Save Handler
   const handleSave = async () => {
-      if (!currentUid) return;
+      if (!currentUserUid) return;
       if (!vendorName || !buyerName) return alert("상호는 필수입니다.");
       if (!imageFile) return alert("사진을 첨부해주세요.");
       if (totalSupply === 0) return alert("공급가액을 입력해주세요.");
-      if (!confirm("등록하시겠습니까?")) return;
-
+      
       setLoading(true);
       try {
-          const storageRef = ref(storage, `users/${currentUid}/paper_invoices/${Date.now()}_${imageFile.name}`);
+          const storageRef = ref(storage, `users/${currentUserUid}/paper_invoices/${Date.now()}_${imageFile.name}`);
           await uploadBytes(storageRef, imageFile);
           const downloadUrl = await getDownloadURL(storageRef);
 
+          const collectionName = type === 'sales' ? 'TAX_SALES' : 'TAX_PURCHASE';
+          const inOutText = type === 'sales' ? '매출' : '매입';
+
           const validItems = items.filter(it => it.itemName || it.supplyAmount > 0);
-          await addDoc(collection(db, 'users', currentUid, 'TAX_SALES'), {
-              writeDate, type: '종이세금계산서', inOut: '매출', issueType: '수기',
+          await addDoc(collection(db, 'users', currentUserUid, collectionName), {
+              writeDate, type: '종이세금계산서', inOut: inOutText, issueType: '수기',
               vendorRegNo, vendorName, vendorCeo, vendorAddr,
               buyerRegNo, buyerName, buyerCeo, buyerAddr,
               supplyAmount: totalSupply, taxAmount: totalTax, totalAmount: grandTotal,
               remark: mainRemark, items: validItems, imageUrl: downloadUrl,
-              createdAt: serverTimestamp(), createdBy: currentUserInfo.name, isPaper: true,
+              createdAt: serverTimestamp(), createdBy: userName, isPaper: true,
               approvalNo: `PAPER-${Date.now()}`
           });
           
-          // 로그
-          await addDoc(collection(db, 'users', currentUid, 'ACTIVITY_LOGS'), {
-            text: `[매출등록] ${currentUserInfo.name}님이 ${buyerName}건 종이 세금계산서를 수기 등록했습니다.`,
+          await addDoc(collection(db, 'users', currentUserUid, 'ACTIVITY_LOGS'), {
+            text: `[수기등록] ${userName}님이 ${type==='sales'?buyerName:vendorName}건 종이 세금계산서(${inOutText})를 등록했습니다.`,
             createdAt: serverTimestamp(), type: 'tax_invoice_manual'
           });
 
           alert("등록되었습니다.");
-          fetchManualList(currentUid); 
-          
-          // 초기화 (공급자는 유지)
-          setItems([{ date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }, { date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }, { date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }, { date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }]);
-          setBuyerName(''); setBuyerRegNo(''); setBuyerCeo(''); setBuyerAddr(''); setMainRemark('');
-          setImageFile(null); setPreviewUrl(null);
-
+          onClose();
       } catch (e) { console.error(e); alert("오류 발생"); } finally { setLoading(false); }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="manual-sales-page-container">
-        <div className="page-header">
-            <h2>매출자료 등록 (수기)</h2>
-            <p>종이 세금계산서 내역을 입력하고 사진을 첨부하여 등록합니다.</p>
-        </div>
-
-        <div className="content-grid">
-            <div className="image-section">
-                <div className="image-preview-box" onClick={() => fileInputRef.current?.click()} style={{ backgroundImage: previewUrl ? `url(${previewUrl})` : 'none' }}>
-                    {!previewUrl && (<div className="placeholder-text"><span>📸</span><p>사진 첨부</p></div>)}
-                </div>
-                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} style={{display:'none'}} />
-                {previewUrl && <button className="btn-remove-img" onClick={() => { setPreviewUrl(null); setImageFile(null); }}>삭제</button>}
+    <div className="invoice-modal-backdrop" onClick={onClose} style={{zIndex: 3100}}>
+        <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width:'95vw', maxWidth:'1200px', height:'90vh', display:'flex', flexDirection:'column'}}>
+            <div className="page-header">
+                <h2>{type === 'sales' ? '매출' : '매입'}자료 등록 (수기)</h2>
+                <button className="modal-close-btn" onClick={onClose} style={{float:'right', fontSize:'24px', border:'none', background:'none', cursor:'pointer'}}>×</button>
             </div>
 
-            <div className="form-section">
-                <div className="form-row date-row"><label>작성일자</label><input type="date" value={writeDate} onChange={e => setWriteDate(e.target.value)} /></div>
-                <div className="tax-bill-box">
-                    {/* 공급자 (자동입력됨) */}
-                    <div className="bill-part vendor">
-                        <div className="part-header red">공급자 (자동입력)</div>
-                        <div className="part-body">
-                            <div className="input-group"><label>등록번호</label><input type="text" value={vendorRegNo} onChange={e => handleBizNumChange(e, setVendorRegNo)} placeholder="000-00-00000" maxLength={12} /></div>
-                            <div className="input-group"><label>상호</label><input type="text" value={vendorName} onChange={e => setVendorName(e.target.value)} /></div>
-                            <div className="input-group"><label>성명</label><input type="text" value={vendorCeo} onChange={e => setVendorCeo(e.target.value)} /></div>
-                            <div className="input-group full"><label>주소</label><input type="text" value={vendorAddr} onChange={e => setVendorAddr(e.target.value)} /></div>
+            <div className="content-grid" style={{flex:1, overflowY:'auto'}}>
+                <div className="image-section">
+                    <div className="image-preview-box" onClick={() => fileInputRef.current?.click()} style={{ backgroundImage: previewUrl ? `url(${previewUrl})` : 'none' }}>
+                        {!previewUrl && (<div className="placeholder-text"><span>📸</span><p>사진 첨부</p></div>)}
+                    </div>
+                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} style={{display:'none'}} />
+                </div>
+
+                <div className="form-section">
+                    <div className="form-row date-row"><label>작성일자</label><input type="date" value={writeDate} onChange={e => setWriteDate(e.target.value)} /></div>
+                    <div className="tax-bill-box">
+                        {/* 공급자 */}
+                        <div className="bill-part vendor">
+                            <div className={`part-header ${type==='sales'?'red':'gray'}`}>공급자 {type==='sales'?'(나)':'(상대방)'}</div>
+                            <div className="part-body">
+                                <div className="input-group"><label>등록번호</label><input type="text" value={vendorRegNo} onChange={e => setVendorRegNo(e.target.value)} disabled={type==='sales'} /></div>
+                                <div className="input-group"><label>상호</label><input type="text" value={vendorName} onChange={e => setVendorName(e.target.value)} disabled={type==='sales'} /></div>
+                                <div className="input-group"><label>대표자</label><input type="text" value={vendorCeo} onChange={e => setVendorCeo(e.target.value)} disabled={type==='sales'} /></div>
+                            </div>
+                        </div>
+                        {/* 공급받는자 */}
+                        <div className="bill-part buyer">
+                            <div className={`part-header ${type==='purchase'?'blue':'gray'}`}>공급받는자 {type==='purchase'?'(나)':'(상대방)'}</div>
+                            <div className="part-body">
+                                <div className="input-group"><label>등록번호</label><input type="text" value={buyerRegNo} onChange={e => setBuyerRegNo(e.target.value)} disabled={type==='purchase'} /></div>
+                                <div className="input-group"><label>상호</label><input type="text" value={buyerName} onChange={e => setBuyerName(e.target.value)} disabled={type==='purchase'} /></div>
+                                <div className="input-group"><label>대표자</label><input type="text" value={buyerCeo} onChange={e => setBuyerCeo(e.target.value)} disabled={type==='purchase'} /></div>
+                            </div>
                         </div>
                     </div>
-                    <div className="bill-part buyer">
-                        <div className="part-header blue">공급받는자 (보관용)</div>
-                        <div className="part-body">
-                            <div className="input-group"><label>등록번호</label><input type="text" value={buyerRegNo} onChange={e => handleBizNumChange(e, setBuyerRegNo)} placeholder="000-00-00000" maxLength={12} /></div>
-                            <div className="input-group"><label>상호</label><input type="text" value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder="상호 입력" /></div>
-                            <div className="input-group"><label>성명</label><input type="text" value={buyerCeo} onChange={e => setBuyerCeo(e.target.value)} /></div>
-                            <div className="input-group full"><label>주소</label><input type="text" value={buyerAddr} onChange={e => setBuyerAddr(e.target.value)} /></div>
-                        </div>
+
+                    <div className="items-section">
+                         <table className="items-table-input">
+                            <thead><tr><th>품목</th><th>수량</th><th>단가</th><th>공급가액</th><th>세액</th></tr></thead>
+                            <tbody>
+                                {items.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td><input type="text" value={item.itemName} onChange={e => handleItemChange(idx, 'itemName', e.target.value)} /></td>
+                                        <td><input type="text" value={item.qty} onChange={e => handleItemChange(idx, 'qty', e.target.value)} className="right" /></td>
+                                        <td><input type="text" value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} className="right" /></td>
+                                        <td><input type="text" value={item.supplyAmount} onChange={e => handleItemChange(idx, 'supplyAmount', e.target.value)} className="right" /></td>
+                                        <td><input type="text" value={item.taxAmount} onChange={e => handleItemChange(idx, 'taxAmount', e.target.value)} className="right" /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-
-                <div className="items-section">
-                    <table className="items-table-input">
-                        <thead><tr><th style={{width:'50px'}}>월/일</th><th>품목</th><th style={{width:'80px'}}>규격</th><th style={{width:'70px'}}>수량</th><th style={{width:'100px'}}>단가</th><th style={{width:'120px'}}>공급가액</th><th style={{width:'100px'}}>세액</th><th style={{width:'80px'}}>비고</th><th style={{width:'40px'}}></th></tr></thead>
-                        <tbody>
-                            {items.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td><input type="text" value={item.date} onChange={e => handleItemChange(idx, 'date', e.target.value)} placeholder="MM-DD" className="center" /></td>
-                                    <td><input type="text" value={item.itemName} onChange={e => handleItemChange(idx, 'itemName', e.target.value)} /></td>
-                                    <td><input type="text" value={item.spec} onChange={e => handleItemChange(idx, 'spec', e.target.value)} className="center" /></td>
-                                    <td><input type="text" value={item.qty>0?item.qty.toLocaleString():''} onChange={e => handleItemChange(idx, 'qty', e.target.value)} className="right" placeholder="0" /></td>
-                                    <td><input type="text" value={item.unitPrice>0?item.unitPrice.toLocaleString():''} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} className="right" placeholder="0" /></td>
-                                    <td><input type="text" value={item.supplyAmount>0?item.supplyAmount.toLocaleString():''} onChange={e => handleItemChange(idx, 'supplyAmount', e.target.value)} className="right bg-read" placeholder="0" /></td>
-                                    <td><input type="text" value={item.taxAmount>0?item.taxAmount.toLocaleString():''} onChange={e => handleItemChange(idx, 'taxAmount', e.target.value)} className="right bg-read" placeholder="0" /></td>
-                                    <td><input type="text" value={item.remark} onChange={e => handleItemChange(idx, 'remark', e.target.value)} /></td>
-                                    <td><button className="btn-del-row" onClick={() => removeItemRow(idx)}>×</button></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                        <tfoot><tr><td colSpan={9}><button className="btn-add-row" onClick={addItemRow}>+ 품목 추가</button></td></tr></tfoot>
-                    </table>
-                </div>
-
-                <div className="total-summary-box">
-                    <div className="summary-row"><span>합계금액</span><span className="amount-text blue">{grandTotal.toLocaleString()} 원</span></div>
-                    <div className="summary-sub">( 공급가액 {totalSupply.toLocaleString()} + 세액 {totalTax.toLocaleString()} )</div>
-                    <div className="main-remark-row"><label>비고</label><input type="text" value={mainRemark} onChange={e => setMainRemark(e.target.value)} placeholder="전체 비고" /></div>
-                </div>
-
-                <div className="action-buttons">
-                    <button className="btn-cancel" onClick={() => window.history.back()}>취소</button>
-                    <button className="btn-save-manual" onClick={handleSave} disabled={loading} style={{background: K_BRAND_COLOR}}>
-                        {loading ? '저장 중...' : '등록하기'}
-                    </button>
+                    <div className="total-summary-box">
+                        <span>합계: {grandTotal.toLocaleString()}원</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {/* 기존 내역 리스트 */}
-        <div className="manual-list-section">
-            <h3>📋 기존 수기 등록 내역</h3>
-            <table className="hometax-table">
-                <thead>
-                    <tr><th>작성일자</th><th>거래처명</th><th>공급가액</th><th>세액</th><th>합계금액</th><th>관리</th></tr>
-                </thead>
-                <tbody>
-                    {manualList.length === 0 ? <tr><td colSpan={6} style={{textAlign:'center', padding:'20px'}}>등록된 내역이 없습니다.</td></tr> :
-                    manualList.map(item => (
-                        <tr key={item.id}>
-                            <td style={{textAlign:'center'}}>{item.writeDate}</td>
-                            <td className="vendor-name-cell" onClick={() => setEditTarget(item)} style={{textAlign:'center'}}>{item.buyerName}</td>
-                            <td style={{textAlign:'right'}}>{item.supplyAmount.toLocaleString()}</td>
-                            <td style={{textAlign:'right'}}>{item.taxAmount.toLocaleString()}</td>
-                            <td style={{textAlign:'right', fontWeight:'bold'}}>{item.totalAmount.toLocaleString()}</td>
-                            <td style={{textAlign:'center'}}>
-                                <button onClick={() => setEditTarget(item)} className="btn-edit-mini">수정/삭제</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="action-buttons" style={{marginTop:'20px'}}>
+                <button className="btn-cancel" onClick={onClose}>취소</button>
+                <button className="btn-save-manual" onClick={handleSave} disabled={loading} style={{background: K_BRAND_COLOR}}>저장하기</button>
+            </div>
         </div>
-
-        {/* 수정 모달 */}
-        {editTarget && (
-            <ManualEditModal 
-                data={editTarget} 
-                currentUserUid={currentUid || ''}
-                userName={currentUserInfo.name}
-                onClose={() => setEditTarget(null)} 
-                onRefresh={() => currentUid && fetchManualList(currentUid)} 
-            />
-        )}
     </div>
   );
-};
-
-// =============================================================================
-// [Sub Component] ManualEditModal
-// =============================================================================
-const ManualEditModal: React.FC<{ 
-    data: ManualInvoiceData, currentUserUid: string, userName: string, onClose: () => void, onRefresh: () => void 
-}> = ({ data, currentUserUid, userName, onClose, onRefresh }) => {
-    
-    const [writeDate, setWriteDate] = useState(data.writeDate);
-    const [buyerRegNo, setBuyerRegNo] = useState(data.buyerRegNo);
-    const [buyerName, setBuyerName] = useState(data.buyerName);
-    const [buyerCeo, setBuyerCeo] = useState(data.buyerCeo);
-    const [buyerAddr, setBuyerAddr] = useState(data.buyerAddr);
-    const [mainRemark, setMainRemark] = useState(data.remark);
-    
-    const [items, setItems] = useState<InvoiceItem[]>(data.items && data.items.length > 0 ? data.items : [{ date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }]);
-    
-    const [previewUrl, setPreviewUrl] = useState(data.imageUrl || null);
-    const [newImageFile, setNewImageFile] = useState<File | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const totalSupply = items.reduce((sum, item) => sum + item.supplyAmount, 0);
-    const totalTax = items.reduce((sum, item) => sum + item.taxAmount, 0);
-    const grandTotal = totalSupply + totalTax;
-
-    const formatBizNum = (num: string) => {
-        const nums = num.replace(/[^0-9]/g, "").slice(0, 10);
-        if (nums.length <= 3) return nums;
-        if (nums.length <= 5) return `${nums.slice(0, 3)}-${nums.slice(3)}`;
-        return `${nums.slice(0, 3)}-${nums.slice(3, 5)}-${nums.slice(5)}`;
-    };
-    const handleBizNumChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-        setter(formatBizNum(e.target.value));
-    };
-
-    const parseNumber = (val: string) => Number(val.replace(/[^0-9]/g, "")) || 0;
-
-    const handleItemChange = (index: number, field: keyof InvoiceItem, value: string) => {
-        const newItems = [...items];
-        const item = { ...newItems[index] };
-        if (['qty', 'unitPrice', 'supplyAmount', 'taxAmount'].includes(field)) {
-            const numVal = parseNumber(value);
-            (item as any)[field] = numVal;
-            if (field === 'qty' || field === 'unitPrice') {
-                const qty = field === 'qty' ? numVal : item.qty;
-                const price = field === 'unitPrice' ? numVal : item.unitPrice;
-                if (qty > 0 && price > 0) { item.supplyAmount = qty * price; item.taxAmount = Math.floor(item.supplyAmount * 0.1); }
-            } else if (field === 'supplyAmount') item.taxAmount = Math.floor(numVal * 0.1);
-        } else (item as any)[field] = value;
-        newItems[index] = item;
-        setItems(newItems);
-    };
-    const addItemRow = () => setItems([...items, { date: '', itemName: '', spec: '', qty: 0, unitPrice: 0, supplyAmount: 0, taxAmount: 0, remark: '' }]);
-    const removeItemRow = (index: number) => { if (items.length > 1) setItems(items.filter((_, i) => i !== index)); };
-
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-            const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true });
-            setNewImageFile(compressed);
-            const reader = new FileReader();
-            reader.readAsDataURL(compressed);
-            reader.onloadend = () => setPreviewUrl(reader.result as string);
-        } catch (error) { alert("이미지 오류"); }
-    };
-
-    const handleUpdate = async () => {
-        if (!confirm("수정하시겠습니까?")) return;
-        setIsLoading(true);
-        try {
-            const changes: string[] = [];
-            if (data.writeDate !== writeDate) changes.push(`작성일자(${data.writeDate}→${writeDate})`);
-            if (data.buyerName !== buyerName) changes.push(`상호(${data.buyerName}→${buyerName})`);
-            if (data.buyerRegNo !== buyerRegNo) changes.push(`등록번호(${data.buyerRegNo}→${buyerRegNo})`);
-            if (data.totalAmount !== grandTotal) changes.push(`합계금액(${data.totalAmount.toLocaleString()}→${grandTotal.toLocaleString()})`);
-            if (newImageFile) changes.push(`이미지 교체`);
-            const itemsChanged = JSON.stringify(data.items) !== JSON.stringify(items);
-            if (itemsChanged) changes.push(`품목내역 변경`);
-            const changeLog = changes.length > 0 ? ` [${changes.join(', ')}]` : '';
-
-            let imageUrl = data.imageUrl;
-            if (newImageFile) {
-                const storageRef = ref(storage, `users/${currentUserUid}/paper_invoices/${Date.now()}_${newImageFile.name}`);
-                await uploadBytes(storageRef, newImageFile);
-                imageUrl = await getDownloadURL(storageRef);
-            }
-
-            await updateDoc(doc(db, 'users', currentUserUid, 'TAX_SALES', data.id), {
-                writeDate, buyerRegNo, buyerName, buyerCeo, buyerAddr,
-                supplyAmount: totalSupply, taxAmount: totalTax, totalAmount: grandTotal,
-                remark: mainRemark, items, imageUrl
-            });
-
-            await addDoc(collection(db, 'users', currentUserUid, 'ACTIVITY_LOGS'), {
-                text: `[매출수정] ${userName}님이 ${data.buyerName}건 내용을 수정했습니다.${changeLog}`,
-                createdAt: serverTimestamp(), type: 'tax_invoice_update'
-            });
-
-            alert("수정되었습니다.");
-            onRefresh();
-            onClose();
-        } catch(e) { console.error(e); alert("오류 발생"); } finally { setIsLoading(false); }
-    };
-
-    const handleDelete = async () => {
-        if (!confirm("정말 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.")) return;
-        setIsLoading(true);
-        try {
-            await deleteDoc(doc(db, 'users', currentUserUid, 'TAX_SALES', data.id));
-            await addDoc(collection(db, 'users', currentUserUid, 'ACTIVITY_LOGS'), {
-                text: `[매출삭제] ${userName}님이 ${data.buyerName}건 수기 세금계산서를 삭제했습니다.`,
-                createdAt: serverTimestamp(), type: 'tax_invoice_update'
-            });
-            alert("삭제되었습니다.");
-            onRefresh();
-            onClose();
-        } catch(e) { console.error(e); alert("삭제 오류"); } finally { setIsLoading(false); }
-    };
-
-    return (
-        <div className="invoice-modal-backdrop" onClick={onClose} style={{zIndex: 3000}}>
-            <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width:'95vw', maxWidth:'1200px', height:'90vh', display:'flex', flexDirection:'column'}}>
-                <div className="page-header"><h2>수기 매출자료 수정/삭제</h2><p>등록된 내용을 수정하거나 삭제할 수 있습니다.</p></div>
-                
-                <div className="content-grid" style={{flex:1, overflowY:'auto'}}>
-                    <div className="image-section">
-                        <div className="image-preview-box" onClick={() => fileInputRef.current?.click()} style={{ backgroundImage: previewUrl ? `url(${previewUrl})` : 'none' }}>
-                            {!previewUrl && (<div className="placeholder-text"><p>사진 없음</p></div>)}
-                        </div>
-                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} style={{display:'none'}} />
-                        {previewUrl && <button className="btn-remove-img" onClick={() => { setPreviewUrl(null); setNewImageFile(null); }}>사진 변경/삭제</button>}
-                    </div>
-                    <div className="form-section">
-                        <div className="form-row date-row"><label>작성일자</label><input type="date" value={writeDate} onChange={e => setWriteDate(e.target.value)} /></div>
-                        <div className="tax-bill-box">
-                            <div className="bill-part vendor"><div className="part-header red">공급자 (수정불가)</div><div className="part-body"><div className="input-group"><label>상호</label><input type="text" value={data.vendorName} disabled /></div></div></div>
-                            <div className="bill-part buyer"><div className="part-header blue">공급받는자</div>
-                            <div className="part-body">
-                                <div className="input-group"><label>등록번호</label><input type="text" value={buyerRegNo} onChange={e => handleBizNumChange(e, setBuyerRegNo)} placeholder="000-00-00000" maxLength={12} /></div>
-                                <div className="input-group"><label>상호</label><input type="text" value={buyerName} onChange={e => setBuyerName(e.target.value)} /></div>
-                                <div className="input-group"><label>대표자</label><input type="text" value={buyerCeo} onChange={e => setBuyerCeo(e.target.value)} /></div>
-                                <div className="input-group full"><label>주소</label><input type="text" value={buyerAddr} onChange={e => setBuyerAddr(e.target.value)} /></div>
-                            </div></div>
-                        </div>
-
-                        <div className="items-section">
-                            <table className="items-table-input">
-                                <thead><tr><th style={{width:'50px'}}>월/일</th><th>품목</th><th style={{width:'80px'}}>규격</th><th style={{width:'60px'}}>수량</th><th style={{width:'100px'}}>단가</th><th style={{width:'100px'}}>공급가액</th><th style={{width:'80px'}}>세액</th><th>비고</th><th></th></tr></thead>
-                                <tbody>
-                                    {items.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td><input type="text" value={item.date} onChange={e => handleItemChange(idx, 'date', e.target.value)} className="center" /></td>
-                                            <td><input type="text" value={item.itemName} onChange={e => handleItemChange(idx, 'itemName', e.target.value)} /></td>
-                                            <td><input type="text" value={item.spec} onChange={e => handleItemChange(idx, 'spec', e.target.value)} className="center" /></td>
-                                            <td><input type="text" value={item.qty>0?item.qty.toLocaleString():''} onChange={e => handleItemChange(idx, 'qty', e.target.value)} className="right" /></td>
-                                            <td><input type="text" value={item.unitPrice>0?item.unitPrice.toLocaleString():''} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} className="right" /></td>
-                                            <td><input type="text" value={item.supplyAmount>0?item.supplyAmount.toLocaleString():''} onChange={e => handleItemChange(idx, 'supplyAmount', e.target.value)} className="right bg-read" /></td>
-                                            <td><input type="text" value={item.taxAmount>0?item.taxAmount.toLocaleString():''} onChange={e => handleItemChange(idx, 'taxAmount', e.target.value)} className="right bg-read" /></td>
-                                            <td><input type="text" value={item.remark} onChange={e => handleItemChange(idx, 'remark', e.target.value)} /></td>
-                                            <td><button className="btn-del-row" onClick={() => removeItemRow(idx)}>×</button></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot><tr><td colSpan={9}><button className="btn-add-row" onClick={addItemRow}>+ 품목 추가</button></td></tr></tfoot>
-                            </table>
-                        </div>
-                        <div className="total-summary-box"><div className="summary-row"><span>합계금액</span><span className="amount-text blue">{grandTotal.toLocaleString()} 원</span></div></div>
-                    </div>
-                </div>
-                <div className="action-buttons" style={{borderTop:'1px solid #eee', paddingTop:'15px'}}>
-                    <button className="btn-cancel" onClick={onClose}>취소</button>
-                    <button className="btn-delete" onClick={handleDelete} disabled={isLoading} style={{background:'#d63031', color:'#fff', border:'none', padding:'10px 20px', borderRadius:'5px', fontWeight:'bold', marginRight:'auto'}}>삭제하기</button>
-                    <button className="btn-save-manual" onClick={handleUpdate} disabled={isLoading} style={{background: K_BRAND_COLOR}}>수정 저장</button>
-                </div>
-            </div>
-        </div>
-    );
 };
 
 export default AccountingManualSalesPage;
