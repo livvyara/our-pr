@@ -18,9 +18,11 @@ const auth = getAuth(app);
 
 const LaborCostManagementPage: React.FC = () => {
   const [laborList, setLaborList] = useState<any[]>([]);
+  
+  // [중요] 데이터 소유자의 UID (대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   
-  // [수정] 사용자 정보 상태
+  // 로그인한 사용자 정보 (로그용)
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
   
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -29,28 +31,46 @@ const LaborCostManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
 
+  // [1] 권한 확인 및 UID 설정
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setCurrentUid(user.uid);
-        
-        // [수정] 사용자 정보 로드 (getDoc 사용)
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if(userDoc.exists()) {
                 const d = userDoc.data();
-                setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
+                
+                // 1. 내 정보 저장 (로그용)
+                setCurrentUserInfo({ 
+                    uid: user.uid, 
+                    name: d.nickname || d.email || '사용자' 
+                });
+
+                // 2. [핵심] 데이터 소유자(Target UID) 결정
+                let targetUid = user.uid; // 기본은 본인
+                
+                // 직원이면 대표(owner)의 UID를 사용
+                if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
+                    targetUid = d.partnerInfo.ownerUid;
+                }
+
+                setCurrentUid(targetUid); // 상태 업데이트 -> 이후 fetchLabors 실행됨
             }
-        } catch(e) { console.error("사용자 정보 로드 실패", e); }
-        
-        fetchLabors(user.uid, currentMonth);
+        } catch (e) {
+            console.error("사용자 정보 로드 실패", e);
+        }
       }
     });
     return () => unsubscribe();
-  }, [currentMonth]); 
+  }, []);
 
-  // ... (fetchLabors, filteredList, handleDelete, handleStatusChange, handleExcelDownload 로직은 기존과 동일)
-  // ... 코드 생략 ...
+  // [2] 데이터 구독 (currentUid가 설정된 후 실행)
+  useEffect(() => {
+      if (currentUid) {
+          const unsubscribe = fetchLabors(currentUid, currentMonth);
+          return () => unsubscribe && unsubscribe();
+      }
+  }, [currentUid, currentMonth]); 
 
   const fetchLabors = (uid: string, month: string) => {
     const q = query(
@@ -81,24 +101,38 @@ const LaborCostManagementPage: React.FC = () => {
   const handleStatusChange = async (id: string, newStatus: string) => {
       if (!currentUid) return;
       const isPaid = newStatus === '지급완료';
-      await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), { isPaid });
+      try {
+          await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), {
+              isPaid: isPaid
+          });
+      } catch (e) {
+          console.error("상태 변경 실패", e);
+          alert("오류가 발생했습니다.");
+      }
   };
 
   const handleExcelDownload = async () => {
       if (filteredList.length === 0) return alert("데이터가 없습니다.");
       if (!currentUid) return;
 
+      // 1. 전체 작업자 정보 미리 가져오기 (주민번호 조회용)
       const workersSnap = await getDocs(collection(db, 'users', currentUid, 'workers'));
       const workerMap: {[key: string]: any} = {};
-      workersSnap.forEach(doc => { workerMap[doc.id] = doc.data(); });
+      workersSnap.forEach(doc => {
+          workerMap[doc.id] = doc.data();
+      });
 
+      // 2. 데이터 병합 (동일 작업자 합산 로직)
       const consolidatedMap: { [key: string]: any } = {};
+      
       filteredList.forEach(item => {
           const workerId = item.workerId;
           if (consolidatedMap[workerId]) {
               consolidatedMap[workerId].preTaxAmount += (item.preTaxAmount || 0);
+              
               const existingDays = new Set<number>(consolidatedMap[workerId].workedDays);
               (item.workedDays || []).forEach((d: number) => existingDays.add(d));
+              
               consolidatedMap[workerId].workedDays = Array.from(existingDays).sort((a, b) => a - b);
           } else {
               consolidatedMap[workerId] = { ...item };
@@ -131,6 +165,7 @@ const LaborCostManagementPage: React.FC = () => {
           let freelancerPayment = 0;
 
           if (isAgency) {
+              // 인력소: 일용직 세금 계산
               const taxBase = preTaxAmount - (workedDaysCount * 150000);
               incomeTax = (taxBase > 0) ? Math.floor(taxBase * 0.027) : 0;
               if (incomeTax < 1000) incomeTax = 0;
@@ -138,6 +173,7 @@ const LaborCostManagementPage: React.FC = () => {
               employmentInsurance = Math.floor(preTaxAmount * 0.009);
               agencyPayment = preTaxAmount - incomeTax - localIncomeTax - employmentInsurance;
           } else {
+              // 프리랜서: 3.3%
               freelancerDeduction = Math.floor(preTaxAmount * 0.033);
               freelancerPayment = preTaxAmount - freelancerDeduction;
           }
@@ -243,11 +279,11 @@ const LaborCostManagementPage: React.FC = () => {
             <LaborCostModal 
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                partnerUid={currentUid}
+                partnerUid={currentUid} // 대표 UID 전달됨
                 targetLabor={editTarget}
                 currentMonth={currentMonth}
                 onRefresh={() => {}} 
-                userName={currentUserInfo.name} // [수정] 사용자 이름 전달
+                userName={currentUserInfo.name} 
             />
         )}
     </div>
