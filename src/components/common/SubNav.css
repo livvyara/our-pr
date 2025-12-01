@@ -1,11 +1,18 @@
 /* src/components/common/SubNav.css */
 
 .sub-nav-container {
-  height: 40px;
+  width: 100%;
+  height: 40px; /* 높이 고정 */
   background-color: white;
   border-bottom: 1px solid #e0e0e0; /* Colors.grey.shade200 */
   display: flex;
   justify-content: center;
+
+  /* [중요] 상단 고정 (Sticky) */
+  position: sticky;
+  top: 64px; /* 데스크톱 헤더 높이만큼 아래에 고정 */
+  z-index: 990; /* 헤더(1000)보다는 낮게 */
+  transition: top 0.3s ease; /* 부드러운 전환 */
 }
 
 .sub-nav-content {
@@ -13,6 +20,7 @@
   display: flex;
   align-items: center;
   padding: 0 20px; /* 좌우 패딩 */
+  max-width: 1200px; /* CONTENT_MAX_WIDTH와 동일하게 맞춤 (선택사항) */
 }
 
 .sub-menu-button {
@@ -27,9 +35,27 @@
   color: rgba(0, 0, 0, 0.87); /* Colors.black87 */
   font-weight: bold;
   transition: color 0.1s;
+  white-space: nowrap; /* 줄바꿈 방지 */
 }
 
 .sub-menu-button:hover {
   color: #000;
   text-decoration: underline;
+}
+
+/* 모바일 대응 (헤더 높이가 56px일 경우) */
+@media (max-width: 768px) {
+  .sub-nav-container {
+    top: 56px; 
+  }
+  
+  .sub-nav-content {
+    overflow-x: auto; /* 모바일에서 가로 스크롤 허용 */
+    -webkit-overflow-scrolling: touch; /* 부드러운 스크롤 */
+  }
+  
+  /* 스크롤바 숨김 (깔끔하게) */
+  .sub-nav-content::-webkit-scrollbar {
+    display: none;
+  }
 }

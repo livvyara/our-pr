@@ -1,0 +1,165 @@
+/* SiteWorkLogListModal.css */
+
+/* 모달 오버레이 (배경) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    backdrop-filter: blur(2px);
+}
+
+/* 모달 콘텐츠 박스 */
+.modal-content {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* 헤더 */
+.modal-content h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* 리스트 아이템 (카드) 스타일 */
+.log-list-item {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.log-list-item:hover {
+    border-color: #1976d2;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.log-date {
+    font-weight: 700;
+    font-size: 16px;
+    color: #333;
+}
+
+.log-summary {
+    font-size: 14px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.log-photo-badge {
+    font-size: 12px;
+    color: #1976d2;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 상세 보기 모드 */
+.log-detail-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.btn-back-list {
+    align-self: flex-start;
+    margin-bottom: 15px;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    transition: background 0.2s;
+}
+.btn-back-list:hover {
+    background: #f0f0f0;
+}
+
+.log-detail-card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.log-detail-title {
+    margin: 0 0 20px 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #333;
+    font-size: 20px;
+    color: #222;
+}
+
+.log-section {
+    margin-bottom: 20px;
+}
+
+.log-label {
+    display: block;
+    font-size: 13px;
+    color: #1976d2;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.log-text {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    background-color: #f9f9f9;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+/* 이미지 그리드 */
+.log-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.log-img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.log-img:hover {
+    opacity: 0.9;
+}

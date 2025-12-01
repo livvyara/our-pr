@@ -52,6 +52,7 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
   const [authorName, setAuthorName] = useState('직원');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 주소 상태
   const [sido, setSido] = useState('');
   const [sigungu, setSigungu] = useState('');
   const [detailAddress, setDetailAddress] = useState('');
@@ -98,17 +99,14 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
     setFormData(prev => ({ ...prev, budget: numericValue.toLocaleString('ko-KR') }));
   };
   
-  // [수정] 연락처 자동 하이픈 및 숫자만 입력 (11자리)
   const handlePhoneChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let val = value.replace(/[^0-9]/g, '').slice(0, 11);
-    
     if (val.length > 7) {
         val = `${val.slice(0, 3)}-${val.slice(3, 7)}-${val.slice(7)}`;
     } else if (val.length > 3) {
         val = `${val.slice(0, 3)}-${val.slice(3)}`;
     }
-    
     setFormData(prev => ({ ...prev, [name]: val }));
   };
 
@@ -116,7 +114,6 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
     e.preventDefault();
     const user = auth.currentUser;
     if (!user || !partnerUid) return alert("오류: 로그인 정보가 없습니다.");
-
     if (!sido || !sigungu || !detailAddress) return alert("주소를 모두 입력해주세요.");
 
     setIsSubmitting(true);
@@ -124,7 +121,7 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
     try {
       const rawBudget = parseInt(formData.budget.replace(/,/g, ''), 10) || 0;
       
-      // 주소 조합
+      // 주소 문자열 조합
       let fullAddress = `${sido} ${sigungu} ${detailAddress}`;
       if (siteType === 'residential') {
           if (aptName) fullAddress += ` ${aptName}`;
@@ -135,6 +132,14 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
       const commonData = {
         siteName: formData.siteName,
         address: fullAddress,
+        // [중요] 개별 주소 필드도 함께 저장
+        sido,
+        sigungu,
+        detailAddress, // 사용자가 입력한 상세 주소 원본
+        aptName: siteType === 'residential' ? aptName : '',
+        aptDong: siteType === 'residential' ? aptDong : '',
+        aptHo: siteType === 'residential' ? aptHo : '',
+
         client1Name: formData.client1Name,
         client1Phone: formData.client1Phone,
         client2Name: formData.client2Name,
@@ -202,10 +207,11 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
 
           <form className="sam-form" onSubmit={handleSubmit}>
             
+            {/* 1행 */}
             <div className="sam-row">
                 <div className="sam-group" style={{flex: 2}}>
                     <label>현장명 (별칭) <span className="req">*</span></label>
-                    <input type="text" name="siteName" value={formData.siteName} onChange={handleChange} required placeholder="예: 봉선동 카페" />
+                    <input type="text" name="siteName" value={formData.siteName} onChange={handleChange} required placeholder="예: 봉선동 카페 현장" />
                 </div>
                 <div className="sam-group" style={{flex: 1}}>
                     <label>공사 예산</label>
@@ -213,6 +219,7 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
                 </div>
             </div>
 
+            {/* 2행: 주소 */}
             <div className="sam-group">
                 <label>주소 <span className="req">*</span></label>
                 <div className="sam-addr-row full">
@@ -242,6 +249,7 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
                 </div>
             </div>
 
+            {/* 3행 */}
             <div className="sam-row-4">
                 <div className="sam-group">
                     <label>고객명 1 <span className="req">*</span></label>
@@ -249,7 +257,7 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
                 </div>
                 <div className="sam-group">
                     <label>연락처 1 <span className="req">*</span></label>
-                    <input type="tel" name="client1Phone" value={formData.client1Phone} onChange={handlePhoneChange} placeholder="010-0000-0000" maxLength={13} required />
+                    <input type="tel" name="client1Phone" value={formData.client1Phone} onChange={handlePhoneChange} placeholder="010-" maxLength={13} required />
                 </div>
                 <div className="sam-group">
                     <label>고객명 2</label>
@@ -257,10 +265,11 @@ const SiteAddModal: React.FC<SiteAddModalProps> = ({ partnerUid, onClose, onSucc
                 </div>
                 <div className="sam-group">
                     <label>연락처 2</label>
-                    <input type="tel" name="client2Phone" value={formData.client2Phone} onChange={handlePhoneChange} placeholder="010-0000-0000" maxLength={13} />
+                    <input type="tel" name="client2Phone" value={formData.client2Phone} onChange={handlePhoneChange} placeholder="010-" maxLength={13} />
                 </div>
             </div>
 
+            {/* 4행 */}
             <div className="sam-row-4">
                 <div className="sam-group">
                     <label>면적</label>

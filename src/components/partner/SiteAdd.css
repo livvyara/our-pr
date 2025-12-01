@@ -1,143 +1,130 @@
-/* src/components/partner/SiteAdd.css */
+/* SiteAdd.css */
 
 .site-add-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%; /* 화면 꽉 차게 변경 */
-  padding-bottom: 40px;
+  background-color: #fff;
+  padding: 20px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* 헤더 (목록 페이지와 동일한 스타일) */
 .add-header {
+  margin-bottom: 20px;
   border-bottom: 2px solid #333;
   padding-bottom: 10px;
-  margin-bottom: 30px;
 }
-
 .add-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   color: #333;
 }
 
-/* --- 상단 라디오 버튼 (탭 스타일) --- */
-.form-radio-group {
+/* 타입 스위처 (라디오) */
+.site-type-switcher {
   display: flex;
   gap: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
-
-.form-radio-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
+.type-label {
+  flex: 1;
+  padding: 10px;
   border: 1px solid #ddd;
-  background-color: #f8f9fa;
-  border-radius: 5px; /* Radius 5px */
+  border-radius: 6px;
+  text-align: center;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
+  font-weight: bold;
   color: #666;
   transition: all 0.2s;
-  min-width: 120px;
 }
-
-.form-radio-label input {
-  display: none; /* 라디오 버튼 숨김 (깔끔하게 탭처럼) */
+.type-label.active {
+  background: #e3f2fd;
+  border-color: #1976d2;
+  color: #1976d2;
 }
+.type-label input { display: none; }
 
-/* 선택된 상태 */
-.form-radio-label.active {
-  background-color: #333; /* 선택 시 진한 배경 */
-  color: #fff;
-  border-color: #333;
-}
-
-/* --- 폼 그리드 --- */
-.site-form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* 1:1 비율 */
-  gap: 24px 30px; /* 세로간격 가로간격 */
-}
-
-/* 폼 그룹 */
-.form-group {
+/* 폼 그리드 */
+.site-add-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
-/* 2열 전체 너비 차지 */
-.form-group.full-width {
-  grid-column: 1 / -1;
+.form-row {
+  display: flex;
+  gap: 10px;
 }
+
+/* 4열 그리드 */
+.form-row-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-group.full-width { width: 100%; }
 
 .form-label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap;
+}
+
+.required {
+  color: #e74c3c;
+  margin-left: 2px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   font-size: 14px;
-  font-weight: 700;
-  color: #333;
-}
-
-.form-label .required {
-  color: #dc3545;
-  margin-left: 3px;
-}
-
-/* 입력창 (목록 검색창과 스타일 통일) */
-.form-input {
-  height: 45px; /* 높이 통일 */
-  padding: 0 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px; /* Radius 5px */
-  font-size: 15px;
+  height: 38px; /* 높이 통일 */
   box-sizing: border-box;
-  background-color: #fff;
-  transition: border-color 0.2s;
 }
-
 .form-input:focus {
+  border-color: #1976d2;
   outline: none;
-  border-color: #333;
 }
 
-.form-input::placeholder {
-  color: #bbb;
-}
-
-/* --- 하단 버튼 영역 --- */
-.submit-button-container {
-  grid-column: 1 / -1;
+/* 주소 입력란 (한 줄) */
+.address-inputs-row {
   display: flex;
-  justify-content: flex-end; /* 우측 정렬 */
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+  gap: 8px;
+  width: 100%;
+}
+.addr-select { width: 120px; flex-shrink: 0; }
+.addr-detail { flex: 1; }
+
+.submit-button-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .submit-button {
-  padding: 12px 40px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #333; /* 가독성 위해 검은 글씨 */
+  padding: 12px 30px;
   border: none;
-  border-radius: 5px; /* Radius 5px */
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: transform 0.1s, opacity 0.2s;
+  transition: opacity 0.2s;
 }
-
-.submit-button:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.submit-button:active {
-  transform: translateY(0);
-}
-
 .submit-button:disabled {
-  opacity: 0.6;
+  background-color: #ccc !important;
   cursor: not-allowed;
 }
+.submit-button:hover { opacity: 0.9; }

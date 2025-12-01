@@ -1,0 +1,131 @@
+/* ThreeDSimulationPage.css */
+
+.td-main {
+    background-color: #fff;
+    min-height: calc(100vh - 200px);
+    padding: 30px 0;
+}
+
+.td-container {
+    max-width: 1400px; /* 넓게 사용 */
+    margin: 0 auto;
+    padding: 0 20px;
+    font-family: 'Pretendard', sans-serif;
+}
+
+.td-header { text-align: center; margin-bottom: 20px; }
+.td-header h2 { font-size: 26px; font-weight: 800; color: #333; margin-bottom: 8px; }
+.td-header p { color: #666; font-size: 14px; }
+
+/* 에디터 레이아웃 */
+.td-editor-wrapper {
+    display: flex;
+    height: 750px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* 사이드바 */
+.td-sidebar {
+    width: 340px;
+    background: #fff;
+    border-right: 1px solid #eee;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+}
+
+.td-panel-section h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #eee;
+}
+
+.td-panel-section.highlight {
+    background-color: #f0f8ff;
+    border: 1px solid #cce5ff;
+    padding: 15px;
+    border-radius: 8px;
+}
+.td-panel-section.highlight h4 { border-bottom-color: #99ccff; }
+
+.td-btn-grid {
+    display: grid; gap: 8px;
+}
+.td-btn-grid.col-2 { grid-template-columns: 1fr 1fr; }
+
+.td-btn-grid button {
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #444;
+    transition: all 0.2s;
+}
+.td-btn-grid button:hover {
+    background: #f5f5f5;
+    border-color: #bbb;
+    transform: translateY(-1px);
+}
+
+/* 조작 도구 */
+.td-tools-row { display: flex; gap: 5px; background: #eee; padding: 4px; border-radius: 6px; }
+.td-tools-row button {
+    flex: 1; border: none; padding: 8px; border-radius: 4px;
+    font-size: 13px; cursor: pointer; background: transparent; color: #666; font-weight: 600;
+}
+.td-tools-row button.active {
+    background: white; color: #1976d2; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 컨트롤 행 */
+.td-control-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;
+}
+.td-control-row label { color: #555; }
+.td-control-row input[type="number"] {
+    width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: right;
+}
+.td-control-row input[type="range"] { flex: 1; margin-left: 10px; }
+.td-control-row input[type="color"] { border: none; width: 40px; height: 30px; cursor: pointer; background: none; padding: 0; }
+
+.td-btn-delete {
+    width: 100%; padding: 10px; background: #ff5252; color: white; border: none; border-radius: 6px;
+    cursor: pointer; font-weight: bold; margin-top: 10px;
+}
+.td-btn-delete:hover { background: #d32f2f; }
+
+.td-empty-msg {
+    text-align: center; padding: 30px 10px; border: 2px dashed #eee; border-radius: 8px; color: #aaa; font-size: 13px;
+}
+
+.td-footer-btn { margin-top: auto; text-align: center; }
+.td-footer-btn button {
+    width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+
+.td-tip { font-size: 12px; color: #888; margin-top: 8px; line-height: 1.4; }
+
+/* 캔버스 */
+.td-canvas-area {
+    flex: 1; background-color: #f5f7fa; position: relative; cursor: grab;
+}
+.td-canvas-area:active { cursor: grabbing; }
+
+/* HTML 라벨 */
+.item-label {
+    background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px;
+    font-size: 11px; font-weight: bold; color: #333; pointer-events: none;
+    border: 1px solid #ddd;
+}
+.item-label.selected { background: #1976d2; color: white; border-color: #1976d2; }

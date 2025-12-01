@@ -1,0 +1,218 @@
+/* MyProjectPage.css */
+
+.my-project-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    min-height: 80vh;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+.mp-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+.mp-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 10px;
+}
+.mp-header p {
+    color: #666;
+    font-size: 15px;
+}
+
+/* 로딩 & 빈 상태 */
+.my-project-loading, .mp-empty {
+    text-align: center;
+    padding: 60px 0;
+    color: #888;
+    font-size: 16px;
+    background: #f9f9f9;
+    border-radius: 12px;
+}
+.mp-empty .sub-text {
+    display: block;
+    font-size: 13px;
+    margin-top: 8px;
+    color: #aaa;
+}
+
+/* 카드 스타일 */
+.mp-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.mp-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+.mp-card.expanded {
+    border-color: #1976d2;
+    box-shadow: 0 8px 30px rgba(25, 118, 210, 0.1);
+}
+
+/* 카드 헤더 */
+.mp-card-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: #fff;
+}
+.mp-site-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.mp-status-badge {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+.mp-site-addr {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 토글 버튼 (화살표) */
+.btn-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    transition: transform 0.3s;
+    display: flex;
+    align-items: center;
+}
+.btn-toggle svg {
+    width: 24px;
+    height: 24px;
+    transform: rotate(-90deg); /* 기본: 아래쪽 */
+}
+.btn-toggle.open svg {
+    transform: rotate(90deg); /* 열림: 위쪽 */
+}
+
+/* 카드 바디 (폴딩 영역) */
+.mp-card-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fcfcfc;
+    border-top: 1px solid #f0f0f0;
+}
+.mp-card.expanded .mp-card-body {
+    max-height: 600px; /* 충분한 높이 */
+}
+
+/* 상세 그리드 */
+.mp-detail-grid {
+    padding: 25px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+@media (max-width: 600px) {
+    .mp-detail-grid { grid-template-columns: 1fr; gap: 20px; }
+}
+
+.mp-section h4 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.mp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #333;
+    border-bottom: 1px dashed #eee;
+    padding-bottom: 4px;
+}
+.mp-row span {
+    color: #777;
+    font-weight: 500;
+}
+
+/* 파트너 박스 */
+.mp-partner-box {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+.mp-p-name {
+    font-weight: 800;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 5px;
+}
+.mp-p-contact {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 15px;
+}
+.btn-chat-partner {
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+.btn-chat-partner:hover {
+    background-color: #1565c0;
+}
+.btn-chat-partner svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* 퀵 링크 버튼들 */
+.mp-quick-links {
+    padding: 15px 25px;
+    display: flex;
+    gap: 10px;
+    background: #f5f5f5;
+    justify-content: flex-end;
+}
+.mp-link-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #555;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.mp-link-btn:hover {
+    border-color: #bbb;
+    background: #f0f0f0;
+    color: #333;
+}

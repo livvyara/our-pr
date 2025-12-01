@@ -8,7 +8,7 @@
 
 .sam-content {
   background: white;
-  width: 750px; /* 주소 입력란 확장을 위해 너비 조금 더 늘림 */
+  width: 750px; /* 4열 배치를 위해 너비 확보 */
   max-width: 95%; 
   border-radius: 10px;
   display: flex; flex-direction: column;
@@ -52,6 +52,7 @@
 .sam-form { display: flex; flex-direction: column; gap: 10px; }
 .sam-row { display: flex; gap: 10px; }
 
+/* 4열 그리드 */
 .sam-row-4 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -80,9 +81,8 @@
   gap: 8px;
   width: 100%;
 }
-/* 주소 내부 아이템들이 줄바꿈 되지 않도록 */
 .sam-addr-row.full select, .sam-addr-row.full input {
-  flex-shrink: 1;
+  flex-shrink: 1; /* 유동적 너비 */
 }
 
 .req { color: #e74c3c; margin-left: 2px; }

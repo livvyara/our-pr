@@ -1,6 +1,6 @@
 import React, { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { 
-  getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, limit, orderBy, serverTimestamp 
+  getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, limit, orderBy, serverTimestamp, addDoc 
 } from 'firebase/firestore';
 import { K_BRAND_COLOR } from '../../constants';
 import './ContractInfoModal.css';
@@ -44,20 +44,20 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
           const data = siteSnap.data();
           setBaseAddress(data.address || '');
           
+          // 1. 계약 정보가 있으면 계약 정보 우선 사용
           if (data.contract) {
              setSiteType(data.contract.siteType || 'residential');
              
              const loadedSupply = data.contract.supplyAmount 
-                ? Number(data.contract.supplyAmount)
-                : (Number(data.contract.totalAmount || 0) - Number(data.contract.vatAmount || 0));
-                
+               ? Number(data.contract.supplyAmount)
+               : (Number(data.contract.totalAmount || 0) - Number(data.contract.vatAmount || 0));
+               
              setSupplyAmount(loadedSupply > 0 ? loadedSupply.toLocaleString() : '');
              setVatAmount(Number(data.contract.vatAmount).toLocaleString() || '');
              
-             if (data.contract.startDate) setStartDate(data.contract.startDate);
-             else setStartDate(data.startDate || '');
-
-             if (data.contract.endDate) setEndDate(data.contract.endDate);
+             // 날짜 로딩 (contract 필드 우선)
+             setStartDate(data.contract.startDate || data.startDate || '');
+             setEndDate(data.contract.endDate || data.endDate || '');
 
              setAptName(data.contract.aptName || '');
              setAptDong(data.contract.aptDong || '');
@@ -67,10 +67,17 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
              if(data.contract.clientPhone) setClientPhone(data.contract.clientPhone);
              if(data.contract.clientAddress) setClientAddress(data.contract.clientAddress);
           } else {
+             // 2. 계약 정보가 없으면 현장 기본 정보 사용
              setStartDate(data.startDate || '');
+             // 예산(budget)을 공급가액으로 추정하여 표시 (선택사항)
+             if (data.budget) {
+                 setSupplyAmount(Number(data.budget).toLocaleString());
+                 setVatAmount(Math.floor(Number(data.budget) * 0.1).toLocaleString());
+             }
           }
         }
         
+        // 도급인 초대 정보 확인
         const inviteQuery = query(
           collection(db, 'siteInvitations'),
           where('siteId', '==', siteId),
@@ -87,8 +94,9 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
             if (userDoc.exists()) {
               const userData = userDoc.data();
               setIsClientInvited(true);
-              setClientName(prev => prev || userData.name || userData.nickname || '');
-              setClientPhone(prev => prev || userData.phone || '');
+              // 이미 입력된 값이 없다면 자동 채움
+              if (!clientName) setClientName(userData.name || userData.nickname || '');
+              if (!clientPhone) setClientPhone(userData.phone || '');
             }
           }
         }
@@ -128,7 +136,22 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
         updatedAt: serverTimestamp()
       };
       
-      await updateDoc(doc(db, 'users', partnerUid, 'sites', siteId), { contract: contractData });
+      // [핵심] contract 필드와 루트 필드 동기화
+      await updateDoc(doc(db, 'users', partnerUid, 'sites', siteId), { 
+          contract: contractData,
+          startDate: startDate, 
+          endDate: endDate,
+          budget: totalVal,
+      });
+
+      // [수정] addDoc 사용 (import 추가됨)
+      await addDoc(collection(db, 'users', partnerUid, 'activityLogs'), {
+        text: `[계약등록] 현장 계약 정보가 업데이트되었습니다.`,
+        createdAt: serverTimestamp(),
+        type: 'contract_update',
+        relatedId: siteId
+      });
+
       alert("계약 정보가 저장되었습니다.");
       onClose();
     } catch (e) { console.error(e); alert("오류가 발생했습니다."); } 
@@ -234,13 +257,13 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
               </div>
             </div>
 
-            {/* 푸터 (수정됨: 이벤트 및 타입 추가) */}
+            {/* 푸터 */}
             <div className="cim-footer-actions">
               <button type="button" className="cim-btn-cancel" onClick={onClose}>
                 취소
               </button>
               <button type="submit" className="cim-btn-register" disabled={isSubmitting}>
-                계약 정보 등록
+                {isSubmitting ? '저장 중...' : '계약 정보 등록'}
               </button>
             </div>
 

@@ -12,6 +12,7 @@ import CommunityBoardPage from '../pages/community/CommunityBoardPage';
 import AuthActionPage from '../pages/AuthActionPage';
 import GuideMainPC from '../pages/guide/GuideMainPC';
 import GuideWritePage from '../pages/admin/GuideWritePage';
+import ThreeDSimulationPage from '../pages/customer/ThreeDSimulationPage';
 
 
 // [⭐ 1. 추가] 파트너 전산 메인 페이지 임포트
@@ -23,6 +24,7 @@ import { MenuProvider } from '../contexts/MenuContext';
 // [⭐ 1. 추가] 초대 수락 페이지 임포트
 import JoinCompanyPage from '../pages/JoinCompanyPage'; 
 import JoinSitePage from '../pages/JoinSitePage';
+import MyProjectPage from './customer/MyProjectPage';
 
 function App() {
   return (
@@ -93,6 +95,8 @@ function App() {
 
         {/* 이용안내 (유저용) */}
         <Route path="/guide/mainpc" element={<GuideMainPC />} />
+        <Route path="/myproject" element={<MyProjectPage />} />
+        <Route path="/3dsimul" element={<ThreeDSimulationPage />} />
 
         {/* 이용안내 글쓰기 (관리자용) */}
         <Route path="/admin/guide/write" element={<GuideWritePage />} />
