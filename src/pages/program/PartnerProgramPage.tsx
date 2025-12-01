@@ -22,7 +22,6 @@ import EmployeeListTab from '../../components/partner/EmployeeListTab';
 import PartnerActivityLogPage from './PartnerActivityLogPage';
 import DashboardSiteListWidget from '../../components/partner/DashboardSiteListWidget';
 import AccountingHometaxPage from './AccountingHometaxPage';
-// [⭐ 추가] 세금계산서 통합 조회 페이지 임포트
 import AccountingTaxInvoicePage from './AccountingTaxInvoicePage'; 
 import AccountingCashReceiptPage from './AccountingCashReceiptPage'; 
 import AccountingExpenseCategory from './AccountingExpenseCategoryPage'; 
@@ -30,6 +29,8 @@ import AccountingManualSalesPage from './AccountingManualSalesPage';
 import AccountingManualPurchasePage from './AccountingManualPurchasePage';
 import AccountingBankingExcelPage from './AccountingBankingExcelPage';
 import SiteSettlementPage from './SiteSettlementPage';
+// [⭐ 추가] 발주 요청 페이지 임포트
+import AccountingOrderRequestPage from './AccountingOrderRequestPage';
 
 import WorkLogPage from './WorkLogPage';
 import SiteDeleteList from '../../components/partner/SiteDeleteList';
@@ -219,11 +220,14 @@ const PartnerProgramPage: React.FC = () => {
                   <Route path="worker-management" element={<ProtectedContent requiredPerm="hr-add-worker"><WorkerManagementPage /></ProtectedContent>} />
                   <Route path="hr-labor-cost" element={<ProtectedContent requiredPerm="hr-add-log"><LaborCostManagementPage /></ProtectedContent>} />
                   <Route path="hr-export-excel" element={<ProtectedContent requiredPerm="hr-export-excel"><h2>엑셀다운로드(신고용)</h2></ProtectedContent>} />
-                  AccountingBankingExcelPage
-              
+                  
                   <Route path="accounting-hometax" element={<ProtectedContent requiredPerm="accounting"><AccountingHometaxPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
                   <Route path="accounting-tax-invoice" element={<ProtectedContent requiredPerm="accounting"><AccountingTaxInvoicePage /></ProtectedContent>} />
                   <Route path="accounting-cash-receipt" element={<ProtectedContent requiredPerm="accounting"><AccountingCashReceiptPage /></ProtectedContent>} />
+                  
+                  {/* [NEW] 발주 요청 페이지 라우트 추가 */}
+                  <Route path="accounting-order-request" element={<ProtectedContent requiredPerm="accounting"><AccountingOrderRequestPage /></ProtectedContent>} />
+
                   <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
                   <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
                   <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />

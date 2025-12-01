@@ -31,7 +31,6 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     key: 'hr', 
     title: '노무관리', 
     subMenus: [
-      // [수정됨] 작업자 등록 -> 작업자 관리 (목록+등록 기능이므로)
       { key: 'hr-add-worker', title: '작업자 관리', path: '/program/worker-management' },
       { key: 'hr-add-log', title: '노무 등록', path: '/program/hr-labor-cost' },
       { key: 'hr-export-excel', title: '엑셀다운로드(신고용)', path: '/program/hr-export-excel' },
@@ -43,10 +42,15 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     subMenus: [
       { key: 'accounting-hometax', title: '홈택스 수집', path: '/program/accounting-hometax' },
       { key: 'accounting-banking-excel', title: '계좌/카드 거래내역 등록', path: '/program/accounting-banking-excel' },
-      { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' }, // [추가됨]
-      { key: 'accounting-tax-invoice', title: '현금영수증', path: '/program/accounting-cash-receipt' }, // [추가됨]
-      { key: 'accounting-expense-category', title: '지출품목 설정', path: '/program/accounting-expense-category' },
+      { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' },
+      
+      // [수정됨] 키 값 중복 수정 (tax-invoice -> cash-receipt)
+      { key: 'accounting-cash-receipt', title: '현금영수증', path: '/program/accounting-cash-receipt' },
+      
+      // [NEW] 발주 요청 메뉴 추가
+      { key: 'accounting-order-request', title: '현장별 발주요청', path: '/program/accounting-order-request' },
 
+      { key: 'accounting-expense-category', title: '지출품목 설정', path: '/program/accounting-expense-category' },
     ]
   },
   { 

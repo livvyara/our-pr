@@ -5,6 +5,7 @@ import ConstructionScheduleModal from './ConstructionScheduleModal';
 import ContractInfoModal from './ContractInfoModal';
 import LaborCostModal from './LaborCostModal'; 
 import ExpenseRegistrationModal from './ExpenseRegistrationModal';
+import OrderRequestModal from './OrderRequestModal'; // 발주 요청 모달
 
 import { auth } from '../../firebase-config'; 
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -15,13 +16,18 @@ interface SiteActionsWidgetProps {
   currentSiteName: string;
 }
 
+// [수정] 버튼 목록에 '발주 요청' 추가
 const actionButtons = [
   { key: 'construction-schedule', title: '공사 일정 등록', disabled: false },
   { key: 'work-log', title: '작업 일지 등록', disabled: false },
+    // [NEW] 발주 요청 버튼 추가
+  { key: 'order-request', title: '발주 요청', disabled: false }, 
   { key: 'expense', title: '카드 지출 등록', disabled: false },
   { key: 'labor', title: '노무 등록', disabled: false },
   { key: 'contract-info', title: '계약 정보 등록', disabled: false }, 
-  { key: 'test2', title: '개발예정 2', disabled: true },
+  
+
+  
   { key: 'test3', title: '개발예정 3', disabled: true },
   { key: 'test4', title: '개발예정 4', disabled: true },
 ];
@@ -32,11 +38,10 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
   const [isLaborModalOpen, setIsLaborModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isOrderRequestModalOpen, setIsOrderRequestModalOpen] = useState(false);
 
-  // 사용자 이름 상태
   const [userName, setUserName] = useState('사용자');
 
-  // 사용자 정보 가져오기
   useEffect(() => {
       const fetchUserName = async () => {
           if (auth.currentUser) {
@@ -44,7 +49,7 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
               const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
               if (userDoc.exists()) {
                   const d = userDoc.data();
-                  // [수정] 닉네임보다 '이름(name)'을 우선적으로 불러오도록 변경
+                  // 이름 우선 표시
                   setUserName(d.name || d.nickname || d.email || '사용자');
               }
           }
@@ -58,6 +63,10 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
     else if (key === 'contract-info') setIsContractModalOpen(true);
     else if (key === 'labor') setIsLaborModalOpen(true);
     else if (key === 'expense') setIsExpenseModalOpen(true);
+    
+    // [수정] 발주 요청 핸들러 연결
+    else if (key === 'order-request') setIsOrderRequestModalOpen(true);
+    
     else alert(`(TODO) '${key}' 기능 실행`);
   };
 
@@ -103,7 +112,19 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
             siteId={siteId}
             siteName={currentSiteName}
             partnerUid={partnerUid}
-            userName={userName} // [확인] 이름(name) 우선의 userName 전달
+            userName={userName}
+          />
+      )}
+
+      {/* [NEW] 발주 요청 모달 */}
+      {isOrderRequestModalOpen && (
+          <OrderRequestModal 
+            isOpen={isOrderRequestModalOpen}
+            onClose={() => setIsOrderRequestModalOpen(false)}
+            siteId={siteId}
+            siteName={currentSiteName}
+            partnerUid={partnerUid}
+            userName={userName}
           />
       )}
     </div>

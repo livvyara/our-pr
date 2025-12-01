@@ -1,0 +1,119 @@
+/* OrderRequestPage.css */
+
+/* --- Modal Styles --- */
+.ord-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 2000;
+    display: flex; justify-content: center; align-items: center;
+}
+.ord-modal-content {
+    background: white; width: 550px; max-height: 90vh;
+    border-radius: 10px; display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.ord-header {
+    padding: 15px 20px; border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f8f9fa;
+}
+.ord-header h3 { margin: 0; font-size: 18px; color: #333; }
+.ord-close-btn { border: none; background: none; font-size: 24px; cursor: pointer; }
+.ord-body { padding: 20px; overflow-y: auto; }
+
+/* 탭 스타일 */
+.ord-type-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+.ord-tab {
+    flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+    background: #fff; cursor: pointer; font-weight: bold; color: #555;
+}
+.ord-tab.active {
+    background: #e3f2fd; border-color: #1976d2; color: #1976d2;
+}
+
+/* 폼 스타일 */
+.ord-section-title {
+    font-size: 14px; font-weight: bold; color: #333;
+    margin-bottom: 10px; border-left: 4px solid #1976d2; padding-left: 8px;
+}
+.ord-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.ord-group { flex: 1; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.ord-group label { font-size: 12px; font-weight: bold; color: #555; }
+.ord-group input, .ord-group select {
+    padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 36px; box-sizing: border-box; font-size: 13px;
+}
+.ord-bg-box { background: #f9f9f9; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #eee; }
+.req { color: #e74c3c; margin-left: 2px; }
+
+.ord-footer {
+    padding: 15px 20px; border-top: 1px solid #eee;
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+.ord-btn-cancel { padding: 8px 16px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
+.ord-btn-save { padding: 8px 20px; border: none; background: #1976d2; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+/* --- Page Styles --- */
+.order-page-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
+.order-header h2 { margin: 0; font-size: 24px; }
+
+.btn-perm-setting {
+    padding: 8px 15px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px;
+}
+.btn-refresh {
+    padding: 8px 15px; background: #fff; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;
+}
+
+/* 테이블 */
+.order-table-wrapper { overflow-x: auto; }
+.order-table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+.order-table th { background: #f5f5f5; padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; }
+.order-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+
+.status-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+.status-badge.pending { background: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
+.status-badge.approved { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.status-badge.rejected { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
+.row-approved { background-color: #fcfcfc; }
+.secret-mask { color: #aaa; font-style: italic; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+
+.link-text { color: #1976d2; text-decoration: none; font-weight: bold; }
+.link-text:hover { text-decoration: underline; }
+
+.vendor { font-weight: bold; color: #333; }
+.item { font-size: 12px; color: #666; margin-top: 2px; }
+
+.tar { text-align: right; } .tac { text-align: center; }
+
+.btn-approve { padding: 6px 12px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.btn-approve:hover { background: #1565c0; }
+.done-text { color: #2e7d32; font-weight: bold; font-size: 12px; }
+
+/* Permission List */
+.perm-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+.perm-item { 
+    display: flex; align-items: center; gap: 10px; padding: 12px; 
+    border: 1px solid #eee; border-radius: 6px; cursor: pointer; transition: background 0.2s; 
+}
+.perm-item:hover { background: #f9f9f9; }
+.perm-item input { width: 18px; height: 18px; cursor: pointer; }
+.perm-item .name { font-weight: bold; font-size: 14px; color: #333; }
+.perm-item .email { font-size: 12px; color: #888; margin-top: 2px; }
+
+/* 내역 리스트 스타일 */
+.ord-history-list { margin-top: 10px; border-top: 1px solid #eee; }
+.ord-history-item { padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+.hist-header { display: flex; justify-content: space-between; margin-bottom: 4px; color: #888; font-size: 12px; }
+.hist-reject-reason { color: #d63031; font-weight: bold; margin-top: 4px; background: #fff5f5; padding: 4px; border-radius: 4px; }
+
+/* 버튼 스타일 */
+.btn-reject { background: #d63031; color: white; border: none; border-radius: 4px; padding: 4px 8px; margin-right: 4px; cursor: pointer; }
+.btn-link { background: #555; color: white; border: none; border-radius: 4px; padding: 4px 8px; margin-right: 4px; cursor: pointer; }
+.btn-link.linked { background: #27ae60; } /* 연결됨 녹색 */
+.action-cell button { font-size: 12px; }
+
+/* 세금계산서 선택 리스트 */
+.invoice-select-list { max-height: 300px; overflow-y: auto; }
+.invoice-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+.invoice-item:hover { background: #f0f8ff; }
+.btn-select { background: #1976d2; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
