@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, getDocs, doc, setDoc, deleteDoc, updateDoc, 
-  query, orderBy, writeBatch 
+  query, orderBy, writeBatch, getDoc 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
@@ -13,9 +13,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// =============================================================================
 // [Data] 기본 초기화 데이터
-// =============================================================================
 const DEFAULT_SITE_L2_COMMON = [
     "자재비", "인건비", "식대", "경비", 
     "장비사용료", "운반비", "폐기물처리비", "소모품비", "외주용역비"
@@ -47,13 +45,15 @@ export interface ExpenseCategory {
   id: string;
   name: string;
   subCategories: string[]; 
-  order: number; // [수정] 정렬 순서 필드 필수화
+  order: number; 
 }
 
 type CategoryType = 'site' | 'general';
 
 const AccountingExpenseCategoryPage: React.FC = () => {
+  // [중요] 데이터 소유자 UID (직원이면 대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
+  
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,13 +64,30 @@ const AccountingExpenseCategoryPage: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [editTargetIndex, setEditTargetIndex] = useState<number>(-1);
 
+  // [1] 권한 확인 및 UID 설정
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) setCurrentUid(user.uid);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if(userDoc.exists()) {
+                const d = userDoc.data();
+                
+                // [핵심] 데이터 소유자 결정
+                let targetUid = user.uid;
+                if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
+                    targetUid = d.partnerInfo.ownerUid;
+                }
+                
+                setCurrentUid(targetUid); // -> 이 값이 설정되면 아래 useEffect 실행
+            }
+        } catch (e) { console.error("사용자 정보 로드 실패", e); }
+      }
     });
     return () => unsubscribe();
   }, []);
 
+  // [2] 데이터 로드 (UID 설정 후)
   useEffect(() => {
     if (currentUid) {
         fetchCategories(currentUid);
@@ -86,7 +103,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
     setLoading(true);
     try {
       const colName = getCollectionName();
-      // order 필드 기준으로 정렬
       const q = query(collection(db, 'users', uid, colName), orderBy('order', 'asc'));
       const snap = await getDocs(q);
       
@@ -97,37 +113,26 @@ const AccountingExpenseCategoryPage: React.FC = () => {
             id: doc.id, 
             name: d.name, 
             subCategories: d.subCategories || [],
-            order: d.order ?? 9999 // 없으면 뒤로 보냄
+            order: d.order ?? 9999 
         });
       });
-
-      // 만약 order가 없는 데이터가 섞여있으면 이름순 정렬 후 order 재부여 로직이 필요할 수 있음
-      // 여기서는 단순 로드
       setCategories(list);
     } catch (e) { console.error(e); } 
     finally { setLoading(false); }
   };
 
-  // ==========================================================================
-  // [NEW] 1차 분류 순서 변경 (위/아래)
-  // ==========================================================================
   const handleMoveLevel1 = async (index: number, direction: 'up' | 'down') => {
       if (!currentUid) return;
       
       const newCategories = [...categories];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
 
-      // 범위 체크
       if (targetIndex < 0 || targetIndex >= newCategories.length) return;
 
-      // 1. 배열 순서 바꾸기 (Swap)
       [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
       
-      // 로컬 상태 즉시 반영 (UI 반응성)
       setCategories(newCategories);
 
-      // 2. Firestore 일괄 업데이트 (모든 항목의 order 값을 인덱스로 재설정)
-      // 이렇게 해야 중간에 빠진 번호 없이 깔끔하게 정리됨
       try {
           const batch = writeBatch(db);
           const colName = getCollectionName();
@@ -141,13 +146,10 @@ const AccountingExpenseCategoryPage: React.FC = () => {
       } catch (e) {
           console.error("순서 저장 실패:", e);
           alert("순서 저장 중 오류가 발생했습니다.");
-          fetchCategories(currentUid); // 실패 시 원복
+          fetchCategories(currentUid); 
       }
   };
 
-  // ==========================================================================
-  // [NEW] 2차 분류 순서 변경 (위/아래)
-  // ==========================================================================
   const handleMoveLevel2 = async (index: number, direction: 'up' | 'down') => {
       if (!currentUid || !selectedCategory) return;
 
@@ -156,28 +158,20 @@ const AccountingExpenseCategoryPage: React.FC = () => {
 
       if (targetIndex < 0 || targetIndex >= newSubs.length) return;
 
-      // 1. 배열 순서 바꾸기
       [newSubs[index], newSubs[targetIndex]] = [newSubs[targetIndex], newSubs[index]];
 
-      // 2. DB 업데이트
       try {
           const colName = getCollectionName();
           const docRef = doc(db, 'users', currentUid, colName, selectedCategory.id);
           await updateDoc(docRef, { subCategories: newSubs });
 
-          // 로컬 상태 업데이트
           const updatedCat = { ...selectedCategory, subCategories: newSubs };
           setSelectedCategory(updatedCat);
           setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
 
-      } catch (e) {
-          console.error("순서 저장 실패:", e);
-      }
+      } catch (e) { console.error("순서 저장 실패:", e); }
   };
 
-  // ==========================================================================
-  // 기본값 초기화
-  // ==========================================================================
   const handleInitializeDefaults = async () => {
       if (!currentUid) return;
       if (categories.length > 0) {
@@ -190,7 +184,7 @@ const AccountingExpenseCategoryPage: React.FC = () => {
       try {
           const colName = getCollectionName();
           const batch = writeBatch(db);
-          let startOrder = categories.length; // 기존 개수 다음부터 순서 부여
+          let startOrder = categories.length; 
 
           if (currentTab === 'site') {
               DEFAULT_SITE_L1.forEach((name, idx) => {
@@ -224,7 +218,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
       }
   };
 
-  // 삭제 및 저장 로직 (기존 유지 + order 처리 추가)
   const handleDeleteLevel1 = async (cat: ExpenseCategory) => {
     if (!currentUid) return;
     if (!confirm(`'${cat.name}' 분류를 삭제하시겠습니까?`)) return;
@@ -262,7 +255,7 @@ const AccountingExpenseCategoryPage: React.FC = () => {
 
       if (modalMode === 'add1') {
         const newDocRef = doc(collection(db, 'users', currentUid, colName));
-        const newOrder = categories.length; // 맨 마지막 순서
+        const newOrder = categories.length; 
         const newCat: ExpenseCategory = { 
             id: newDocRef.id, 
             name: inputValue.trim(), 
@@ -337,7 +330,7 @@ const AccountingExpenseCategoryPage: React.FC = () => {
           
           <div style={{paddingBottom:'10px'}}>
               <button className="btn-reset-defaults" onClick={handleInitializeDefaults}>
-                 🔄 기본값 셋팅하기
+                  🔄 기본값 셋팅하기
               </button>
           </div>
       </div>
@@ -360,7 +353,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
                             <span className="cat-name">{cat.name}</span>
                         </div>
                         
-                        {/* [NEW] 순서 변경 및 관리 버튼 */}
                         <div className="item-actions">
                             <button onClick={(e) => { e.stopPropagation(); handleMoveLevel1(idx, 'up'); }} disabled={idx === 0} title="위로">▲</button>
                             <button onClick={(e) => { e.stopPropagation(); handleMoveLevel1(idx, 'down'); }} disabled={idx === categories.length - 1} title="아래로">▼</button>
@@ -421,7 +413,7 @@ const AccountingExpenseCategoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 입력/수정 모달 (기존 동일) */}
+      {/* 입력/수정 모달 */}
       {isModalOpen && (
         <div className="invoice-modal-backdrop" onClick={() => setIsModalOpen(false)}>
             <div className="invoice-paper small-modal" onClick={e => e.stopPropagation()}>
