@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc,
-  query, where, orderBy, limit, startAfter, 
-  getAggregateFromServer, sum, count, DocumentSnapshot 
+  query, where, orderBy, limit, startAfter, DocumentSnapshot 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom'; // [NEW] 페이지 이동용
+import { useNavigate } from 'react-router-dom'; 
 import { firebaseConfig } from '../../firebase-config';
 import { K_BRAND_COLOR } from '../../constants';
 import './AccountingTaxInvoicePage.css'; 
@@ -31,13 +30,16 @@ const LIMIT_PER_PAGE = 20;
 const SITE_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'];
 
 const AccountingTaxInvoicePage: React.FC = () => {
-  const navigate = useNavigate(); // [NEW]
+  const navigate = useNavigate(); 
   const [list, setList] = useState<TaxInvoice[]>([]);
   const [siteList, setSiteList] = useState<Site[]>([]);
   const [siteCategories, setSiteCategories] = useState<CategoryData[]>([]);
   const [generalCategories, setGeneralCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // [중요] 데이터 소유자 UID (직원이면 대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
+  
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
   const [lastSalesDoc, setLastSalesDoc] = useState<DocumentSnapshot | null>(null);
   const [lastPurchaseDoc, setLastPurchaseDoc] = useState<DocumentSnapshot | null>(null);
@@ -65,30 +67,52 @@ const AccountingTaxInvoicePage: React.FC = () => {
   const [paymentModalTarget, setPaymentModalTarget] = useState<TaxInvoice | null>(null);
   const [summary, setSummary] = useState({ salesCount: 0, salesSupply: 0, salesTax: 0, salesTotal: 0, purchaseCount: 0, purchaseSupply: 0, purchaseTax: 0, purchaseTotal: 0 });
 
-  // [NEW] 수기 등록 선택 모달 상태
   const [isManualSelectOpen, setIsManualSelectOpen] = useState(false);
 
+  // [1] 로그인 및 권한 확인 로직 수정
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setCurrentUid(user.uid);
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if(userDoc.exists()) {
-            const d = userDoc.data();
-            setCurrentUserInfo({ 
-                uid: user.uid, 
-                name: d.nickname || d.email || '사용자' 
-            });
-        }
-        fetchSites(user.uid);
-        fetchExpenseCategories(user.uid); 
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if(userDoc.exists()) {
+                const d = userDoc.data();
+                
+                // 내 정보 저장 (로그용)
+                setCurrentUserInfo({ 
+                    uid: user.uid, 
+                    name: d.nickname || d.email || '사용자' 
+                });
+
+                // [핵심] 데이터 소유자 결정
+                let targetUid = user.uid;
+                if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
+                    targetUid = d.partnerInfo.ownerUid;
+                }
+                setCurrentUid(targetUid); // -> 이 값이 설정되면 아래 useEffect들이 실행됨
+                
+                // 초기 데이터 로드
+                fetchSites(targetUid);
+                fetchExpenseCategories(targetUid);
+            }
+        } catch (e) { console.error("사용자 정보 로드 실패", e); }
       }
     });
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => { if (currentUid) { fetchData(true); fetchSummary(); } }, [currentUid, searchStartDate, searchEndDate, searchType, showUnassigned, showAssigned, searchSiteId]);
+  // [2] 데이터 조회 (currentUid 변경 시 자동 실행)
+  useEffect(() => { 
+      if (currentUid) { 
+          fetchData(true); 
+          fetchSummary(); 
+      } 
+  }, [currentUid, searchStartDate, searchEndDate, searchType, showUnassigned, showAssigned, searchSiteId]);
+
+  // 검색어 변경 시 조회
   useEffect(() => { if(currentUid) fetchData(true); }, [searchVendor]);
+
+  // 날짜 모드 변경 시 조회
   useEffect(() => {
     if (dateMode === 'custom') return;
     let start = '', end = '';
@@ -127,6 +151,7 @@ const AccountingTaxInvoicePage: React.FC = () => {
       setSiteList(list);
     } catch (e) {}
   };
+  
   const fetchExpenseCategories = async (uid: string) => {
       try {
           const sSnap = await getDocs(query(collection(db, 'users', uid, 'EXPENSE_CATEGORIES_SITE'), orderBy('order', 'asc')));
@@ -137,7 +162,9 @@ const AccountingTaxInvoicePage: React.FC = () => {
           setGeneralCategories(gList);
       } catch(e) {}
   };
+  
   const fetchSummary = async () => { if (!currentUid) return; await calculateSummaryManually(); };
+  
   const calculateSummaryManually = async () => {
       if (!currentUid) return;
       const createQuery = (colName: string) => query(collection(db, 'users', currentUid, colName), where('writeDate', '>=', searchStartDate), where('writeDate', '<=', searchEndDate));
@@ -215,6 +242,7 @@ const AccountingTaxInvoicePage: React.FC = () => {
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
+  // ... (나머지 핸들러는 기존과 동일하므로 생략하지 않고 포함) ...
   const handleFieldChange = async (invoiceId: string, inOut: '매출'|'매입', field: string, value: string) => {
       if (!currentUid) return;
       
@@ -283,7 +311,6 @@ const AccountingTaxInvoicePage: React.FC = () => {
                   <div className="filter-item checkbox-group" style={{marginLeft:'10px', display:'flex', gap:'10px'}}><label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}><input type="checkbox" checked={showUnassigned} onChange={e => setShowUnassigned(e.target.checked)} style={{marginRight:'5px'}} />미귀속</label><label style={{cursor:'pointer', fontSize:'14px', display:'flex', alignItems:'center'}}><input type="checkbox" checked={showAssigned} onChange={e => setShowAssigned(e.target.checked)} style={{marginRight:'5px'}} />귀속</label></div>
                   <div className="filter-item"><input type="text" placeholder="업체명 검색" value={searchVendor} onChange={e=>setSearchVendor(e.target.value)} style={{width: '150px'}} /></div>
                   
-                  {/* [NEW] 수기자료 등록 버튼 (우측 끝 조회버튼 바로 앞으로 배치) */}
                   <button className="btn-manual-reg" onClick={() => setIsManualSelectOpen(true)}>
                       + 수기자료 등록
                   </button>
@@ -350,7 +377,7 @@ const AccountingTaxInvoicePage: React.FC = () => {
       {isSiteModalOpen && <SiteSelectionModal sites={siteList} onClose={() => setIsSiteModalOpen(false)} onSelect={(siteId, siteName) => { setSearchSiteId(siteId); setSearchSiteName(siteName); setIsSiteModalOpen(false); }} />}
       {paymentModalTarget && <PaymentConnectionModal invoice={paymentModalTarget} currentUserUid={currentUid || ''} onClose={() => setPaymentModalTarget(null)} onConfirm={(txId) => handleLinkTransaction(paymentModalTarget.id, paymentModalTarget.inOut, txId)} />}
 
-      {/* [NEW] 수기 등록 선택 모달 */}
+      {/* 수기 등록 선택 모달 */}
       {isManualSelectOpen && (
         <div className="invoice-modal-backdrop" onClick={() => setIsManualSelectOpen(false)} style={{zIndex: 3000}}>
             <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width: '400px', height: 'auto', minHeight: '200px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px'}}>

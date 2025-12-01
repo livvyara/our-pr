@@ -16,26 +16,6 @@ const db = getFirestore(app);
 const ICON_CERT = "🔒";
 const ICON_HOMETAX = "🏠";
 
-const CERT_POLICY_OID: { [key: string]: string } = {
-    "1.2.410.200004.5.2.1.2": "법인(범용)",
-    "1.2.410.200004.5.2.1.1": "개인(범용)",
-    "1.2.410.200004.5.2.1.501": "전자세금용",
-    "1.2.410.200004.5.4.1.2": "법인(범용)",
-    "1.2.410.200004.5.4.1.1": "개인(범용)",
-    "1.2.410.200004.5.4.1.101": "전자세금용",
-    "1.2.410.200005.1.1.5": "법인(범용)",
-    "1.2.410.200005.1.1.1": "개인(범용)",
-    "1.2.410.200005.1.1.7": "법인(세금용)",
-    "1.2.410.200004.5.1.1.7": "법인(범용)",
-    "1.2.410.200004.5.1.1.5": "법인(범용)",
-    "1.2.410.200004.5.1.1.9": "전자세금용",
-    "1.2.410.200004.5.3.1.2": "법인(범용)",
-    "1.2.410.200004.5.3.1.1": "개인(범용)",
-    "1.2.410.200004.5.3.1.5": "전자세금용",
-    "1.2.410.200004.5.5.1.2": "법인(범용)",
-    "1.2.410.200004.5.5.1.1": "개인(범용)",
-};
-
 interface CertInfo {
     owner: string;   
     issuer: string;  
@@ -44,7 +24,7 @@ interface CertInfo {
 }
 
 interface Props {
-  partnerUid: string | null;
+  partnerUid: string | null; // 부모에서 전달받는 UID (보통 로그인한 UID)
 }
 
 interface TaxInvoiceData {
@@ -59,6 +39,7 @@ interface TaxInvoiceData {
   status: string; 
 }
 
+// ... (readFileToBase64, parseCertFile 함수 등은 기존과 동일하므로 생략하지 않고 포함) ...
 const readFileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -113,6 +94,9 @@ const parseCertFile = (file: File): Promise<CertInfo> => {
 
 const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
   
+  // [중요] 실제 데이터를 조회/저장할 대상 UID (대표 UID)
+  const [targetUid, setTargetUid] = useState<string | null>(null);
+  
   const [isCertRegistered, setIsCertRegistered] = useState(false);
   const [certInfo, setCertInfo] = useState<CertInfo | null>(null); 
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
@@ -138,37 +122,64 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
 
   const yearOptions = [currentYear, currentYear - 1, currentYear - 2];
 
- useEffect(() => {
+  // [1] 권한 확인 및 Target UID 설정
+  useEffect(() => {
     if (!partnerUid) return;
-    const checkCert = async () => {
+    const checkUserRole = async () => {
       const docRef = doc(db, 'users', partnerUid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
           const d = docSnap.data();
           
-          // [수정] nickname 필드 사용
+          // 내 정보 (로그용)
           setCurrentUserInfo({ 
               uid: partnerUid, 
               name: d.nickname || d.email || '사용자' 
           });
 
-          if (d.hometaxCertRegistered) {
-             setIsCertRegistered(true);
-             const localCert = localStorage.getItem(`hometax_cert_${partnerUid}`);
-             if (localCert) {
-                 try {
-                     const parsed = JSON.parse(localCert);
-                     if (parsed.certInfo) setCertInfo(parsed.certInfo); 
-                 } catch(e) {}
-             }
+          // [핵심] 직원이면 대표 UID 사용, 아니면 본인 UID 사용
+          let ownerUid = partnerUid;
+          if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
+              ownerUid = d.partnerInfo.ownerUid;
           }
+          setTargetUid(ownerUid); // -> 이 값이 설정되면 인증서 확인 로직 실행
       }
     };
-    checkCert();
+    checkUserRole();
   }, [partnerUid]);
 
+  // [2] 인증서 정보 확인 (Target UID 기준)
   useEffect(() => {
-    if (!isScraping || !partnerUid || !currentSessionId) return;
+      if (!targetUid) return;
+
+      const checkCert = async () => {
+          // DB에서 인증서 등록 여부 확인 (대표 계정 기준)
+          const docRef = doc(db, 'users', targetUid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+              const d = docSnap.data();
+              if (d.hometaxCertRegistered) {
+                  setIsCertRegistered(true);
+                  
+                  // 로컬 스토리지에서 인증서 정보 가져오기 (현재 브라우저에 저장된 것)
+                  // 주의: 직원은 대표가 등록한 로컬 인증서 파일이 없으므로 certInfo는 null일 수 있음
+                  const localCert = localStorage.getItem(`hometax_cert_${targetUid}`);
+                  if (localCert) {
+                      try {
+                          const parsed = JSON.parse(localCert);
+                          if (parsed.certInfo) setCertInfo(parsed.certInfo); 
+                      } catch(e) {}
+                  }
+              }
+          }
+      };
+      checkCert();
+  }, [targetUid]);
+
+  // [3] 스크래핑 세션 구독 (Target UID 기준)
+  useEffect(() => {
+    if (!isScraping || !targetUid || !currentSessionId) return;
 
     const docRef = doc(db, 'scraping_requests', currentSessionId);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -187,25 +198,35 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
       }
     });
     return () => unsubscribe();
-  }, [isScraping, partnerUid, currentSessionId]); 
+  }, [isScraping, targetUid, currentSessionId]); 
 
   // [LOG] 로그 저장 함수
   const addLog = async (message: string) => {
-      if (!partnerUid) return;
+      if (!targetUid) return; // 대표 UID 계정에 로그 저장
       try {
-          const logRef = collection(db, 'users', partnerUid, 'ACTIVITY_LOGS');
-          await addDoc(logRef, {
-              text: `${currentUserInfo.name}님이 ${message}`,
-              createdAt: serverTimestamp(),
-              type: 'hometax_scraping'
-          });
+        const logRef = collection(db, 'users', targetUid, 'ACTIVITY_LOGS');
+        await addDoc(logRef, {
+            text: `${currentUserInfo.name}님이 ${message}`,
+            createdAt: serverTimestamp(),
+            type: 'hometax_scraping'
+        });
       } catch (e) { console.error("로그 저장 실패:", e); }
   };
 
   const handleStartScraping = async () => {
-    if (!partnerUid) return;
+    if (!targetUid) return;
     if (!isCertRegistered) return alert("먼저 홈택스 공동인증서를 등록해주세요.");
     if (isScraping) return;
+
+    // [중요] 현재 브라우저에 인증서가 있는지 확인
+    const certData = localStorage.getItem(`hometax_cert_${targetUid}`);
+    if (!certData) {
+        return alert("현재 브라우저에 인증서 정보가 없습니다.\n'인증서 변경/갱신' 버튼을 눌러 인증서를 다시 등록해주세요.\n(보안상 인증서 파일은 서버에 저장되지 않습니다)");
+    }
+    
+    let certInfoObj;
+    try { certInfoObj = JSON.parse(certData); } catch (e) { return alert("인증서 정보 손상"); }
+    const { der, key, password } = certInfoObj;
 
     if (scrapeType === 'tax_invoice') {
         const start = new Date(startDate);
@@ -215,14 +236,7 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
         if (start > end) return alert("종료일이 시작일보다 앞설 수 없습니다.");
     }
 
-    const certData = localStorage.getItem(`hometax_cert_${partnerUid}`);
-    if (!certData) return alert("브라우저에 저장된 인증서 정보가 없습니다. 다시 등록해주세요.");
-    
-    let certInfo;
-    try { certInfo = JSON.parse(certData); } catch (e) { return alert("인증서 정보 손상"); }
-    const { der, key, password } = certInfo;
-
-    const newSessionId = `${partnerUid}_${Date.now()}`;
+    const newSessionId = `${targetUid}_${Date.now()}`;
     setCurrentSessionId(newSessionId);
 
     setIsScraping(true);
@@ -239,7 +253,7 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
           certFileDer: der,
           certFileKey: key,
           certPassword: password,
-          partnerUid: partnerUid,
+          partnerUid: targetUid, // 대표 UID로 요청
           sessionId: newSessionId,
           scrapeType: scrapeType 
       };
@@ -258,11 +272,9 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
       if (result.data.success) {
           if (scrapeType === 'tax_invoice') {
             setCompletionMessage("서버에서 세금계산서 수집요청한 자료를 정리중입니다.\n잠시 후 [회계관리-세금계산서] 페이지에서 확인해 주세요.");
-            // [LOG] 세금계산서 수집
             await addLog("홈택스 수집 기능을 통해 세금계산서 수집을 요청했습니다.");
           } else {
             setCompletionMessage(`서버에서 ${selectedYear}년도(1~4분기) 현금영수증 자료를 정리중입니다.\n잠시 후 [회계관리-현금영수증] 페이지에서 확인해 주세요.`);
-            // [LOG] 현금영수증 수집
             await addLog("홈택스 수집 기능을 통해 현금영수증 수집을 요청했습니다.");
           }
       } else {
@@ -273,7 +285,6 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
       console.error("Scraping Error:", e);
       if (e.code === 'deadline-exceeded' || e.message.includes('timeout')) {
           setCompletionMessage("서버에서 수집요청한 자료를 정리중입니다.\n잠시 후 해당 페이지에서 확인해 주세요.");
-          // 타임아웃이어도 요청은 성공한 것으로 간주하여 로그 남김
           if (scrapeType === 'tax_invoice') await addLog("홈택스 수집 기능을 통해 세금계산서 수집을 요청했습니다.");
           else await addLog("홈택스 수집 기능을 통해 현금영수증 수집을 요청했습니다.");
       } else if (e.details && e.details.isWrongPassword) {
@@ -302,15 +313,26 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
           <div className="cert-status-box">
             상태: <span className={`status-badge ${isCertRegistered ? 'registered' : 'unregistered'}`}>{isCertRegistered ? '등록됨' : '미등록'}</span>
           </div>
-          {isCertRegistered && certInfo ? (
-              <div className="cert-info-display" style={{fontSize:'13px', color:'#555', marginBottom:'15px', lineHeight:'1.6', backgroundColor:'#f8f9fa', padding:'10px', borderRadius:'5px'}}>
-                  <div><strong>소유자:</strong> {certInfo.owner}</div>
-                  <div><strong>용도:</strong> {certInfo.usage}</div>
-                  <div><strong>발급기관:</strong> {certInfo.issuer}</div>
-                  <div style={{color:'#d63031', fontWeight:'bold'}}><strong>만료일:</strong> {certInfo.expireDate}</div>
-              </div>
+          {isCertRegistered ? (
+             <div className="cert-info-display" style={{fontSize:'13px', color:'#555', marginBottom:'15px', lineHeight:'1.6', backgroundColor:'#f8f9fa', padding:'10px', borderRadius:'5px'}}>
+                 {/* 직원이 로그인했고 로컬에 인증서가 없으면 안내 메시지 표시 */}
+                 {!certInfo ? (
+                     <p style={{color:'#d63031'}}>
+                         * 대표 계정에 인증서가 등록되어 있습니다.<br/>
+                         * 수집을 실행하려면 현재 PC에도 인증서 파일이 필요합니다.<br/>
+                         * 아래 버튼을 눌러 인증서를 등록해주세요.
+                     </p>
+                 ) : (
+                     <>
+                        <div><strong>소유자:</strong> {certInfo.owner}</div>
+                        <div><strong>용도:</strong> {certInfo.usage}</div>
+                        <div><strong>발급기관:</strong> {certInfo.issuer}</div>
+                        <div style={{color:'#d63031', fontWeight:'bold'}}><strong>만료일:</strong> {certInfo.expireDate}</div>
+                     </>
+                 )}
+             </div>
           ) : (
-              <p className="cert-desc">홈택스 로그인을 위해 공동인증서가 필요합니다.</p>
+             <p className="cert-desc">홈택스 로그인을 위해 공동인증서가 필요합니다.</p>
           )}
           <button className="btn-manage-cert" onClick={() => setIsCertModalOpen(true)}>
             {isCertRegistered ? '인증서 변경 / 갱신' : '인증서 등록하기'}
@@ -372,21 +394,20 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
       )}
 
       {completionMessage && (
-          <div className="hometax-result-section" style={{textAlign:'center', padding:'60px 20px', backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #eee', marginTop: '30px'}}>
-              <div style={{fontSize:'48px', marginBottom:'20px'}}>✅</div>
-              <h3 style={{color:'#333', fontSize:'22px', marginBottom:'15px', fontWeight:'bold'}}>수집 요청 완료</h3>
-              <p style={{fontSize:'16px', color:'#555', whiteSpace:'pre-wrap', lineHeight:'1.8'}}>{completionMessage}</p>
-          </div>
+        <div className="hometax-result-section" style={{textAlign:'center', padding:'60px 20px', backgroundColor:'#fff', borderRadius:'10px', border:'1px solid #eee', marginTop: '30px'}}>
+            <div style={{fontSize:'48px', marginBottom:'20px'}}>✅</div>
+            <h3 style={{color:'#333', fontSize:'22px', marginBottom:'15px', fontWeight:'bold'}}>수집 요청 완료</h3>
+            <p style={{fontSize:'16px', color:'#555', whiteSpace:'pre-wrap', lineHeight:'1.8'}}>{completionMessage}</p>
+        </div>
       )}
 
-      {isCertModalOpen && (
+      {isCertModalOpen && targetUid && (
         <CertificateModal 
-          partnerUid={partnerUid} 
+          partnerUid={targetUid} // 대표 UID 전달
           onClose={() => setIsCertModalOpen(false)} 
           onSuccess={async (info) => {
               setIsCertRegistered(true);
               setCertInfo(info);
-              // [LOG] 인증서 등록
               await addLog("공동인증서를 등록/갱신 했습니다.");
           }}
         />
@@ -406,7 +427,12 @@ const AccountingHometaxPage: React.FC<Props> = ({ partnerUid }) => {
   );
 };
 
-// KeypadInputModal (유지)
+// ... (KeypadInputModal, CertificateModal 컴포넌트는 기존과 동일하므로 생략하지 않고 포함해야 하지만, 지면 관계상 기존 코드를 그대로 사용하시면 됩니다.)
+// ... [기존 하단 컴포넌트들] ...
+
+// KeypadInputModal과 CertificateModal은 기존 코드를 그대로 복사해서 아래에 붙여넣어 주세요. 
+// 위에서 제공한 코드만으로도 에러는 해결되지만, 전체 파일을 원하신다면 이전 답변의 하단 컴포넌트들을 합쳐서 사용하시면 됩니다.
+
 const KeypadInputModal: React.FC<{ imageUrl: string, docId: string, currentRound: number, serverMode: string, zonesConfig?: any, onClose: () => void }> = ({ imageUrl, docId, currentRound, serverMode, zonesConfig, onClose }) => {
     const imgRef = useRef<HTMLImageElement>(null);
     const [isProcessing, setIsProcessing] = useState(false); 
@@ -442,7 +468,6 @@ const KeypadInputModal: React.FC<{ imageUrl: string, docId: string, currentRound
         const { x, y } = getActualCoords(e);
 
         if (serverMode.startsWith('CALIBR')) {
-            // Calibration logic (omitted for brevity, logic remains same as previous full version)
              const newPoints = [...tempPoints, { x, y }];
              setTempPoints(newPoints);
              if (newPoints.length === 2) {
@@ -492,7 +517,6 @@ const KeypadInputModal: React.FC<{ imageUrl: string, docId: string, currentRound
     );
 };
 
-// CertificateModal (유지)
 const CertificateModal: React.FC<{ partnerUid: string | null, onClose: () => void, onSuccess: (info: CertInfo) => void }> = ({ partnerUid, onClose, onSuccess }) => {
     const [fileDer, setFileDer] = useState<File | null>(null);
     const [fileKey, setFileKey] = useState<File | null>(null);
@@ -515,6 +539,7 @@ const CertificateModal: React.FC<{ partnerUid: string | null, onClose: () => voi
         try {
             const der = await readFileToBase64(fileDer);
             const key = await readFileToBase64(fileKey);
+            // 대표 UID를 키로 저장하여 나중에 대표가 로그인했을 때도 유지되게 함 (직원은 로컬에 저장해도 의미 X)
             localStorage.setItem(`hometax_cert_${partnerUid}`, JSON.stringify({ der, key, password, certInfo: extractedInfo }));
             if(partnerUid) await setDoc(doc(db, 'users', partnerUid), { hometaxCertRegistered: true }, { merge: true });
             alert("인증서가 안전하게 등록되었습니다.");
