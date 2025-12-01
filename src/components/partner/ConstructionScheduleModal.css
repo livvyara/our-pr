@@ -1,106 +1,141 @@
-/* 전체 모달 레이아웃 */
-.schedule-modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.7); z-index: 2000;
-    display: flex; justify-content: center; align-items: center;
+/* ConstructionScheduleModal.css */
+
+/* Reset */
+.schedule-overlay * { box-sizing: border-box; }
+
+.schedule-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 9999;
+  display: flex; justify-content: center; align-items: center;
+  backdrop-filter: blur(4px);
 }
 
-/* [수정] 모달 크기 조정 */
-.schedule-modal-content.full-width {
-    width: 70%; /* 좌우 너비 줄임 (기존 95% -> 85%) */
-    max-width: 1500px; /* 최대 너비 제한 */
-    height: 98vh; /* 상하 높이 늘림 (기존 95vh -> 98vh) */
-    background: #fff;
-    border-radius: 8px; display: flex; flex-direction: column;
-    overflow: hidden;
+.schedule-modal {
+  position: relative; width: 98%; max-width: 1800px; height: 95vh;
+  background: #fff; border-radius: 12px; display: flex; overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
 }
 
-.modal-header-row {
-    padding: 15px 20px; border-bottom: 1px solid #ddd;
-    display: flex; justify-content: space-between; align-items: center;
-    background: #f8f9fa;
+/* Sidebar */
+.sidebar { 
+  width: 360px; background: #fff; border-right: 1px solid #e0e0e0; 
+  padding: 25px; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; 
 }
-.modal-header-row h3 { margin: 0; }
-.btn-close-x { font-size: 24px; background: none; border: none; cursor: pointer; }
+.sidebar-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
+.sidebar-header h3 { margin: 0; font-size: 18px; font-weight: 800; color: #333; }
 
-.schedule-layout {
-    display: flex; flex: 1; overflow: hidden;
+.control-box { background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+.control-label { display: block; font-size: 13px; font-weight: 700; color: #555; margin-bottom: 15px; border-left: 3px solid #4a90e2; padding-left: 8px; }
+
+.form-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%; white-space: nowrap; }
+.form-row label { font-size: 13px; font-weight: 600; color: #444; margin-right: 10px; flex-shrink: 0; }
+.input-compact { width: 140px; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; text-align: right; background: #fff; }
+
+.check-group { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 13px; font-weight: 600; color: #d32f2f; cursor: pointer; }
+.check-group input { cursor: pointer; }
+.check-group label { cursor: pointer; }
+
+.action-area { margin-top: auto; }
+.btn { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; margin-top: 5px; }
+.btn-primary { background: #4a90e2; color: #fff; }
+.btn-secondary { background: #fff; color: #555; border: 1px solid #ddd; }
+.btn-danger { background: #fff; color: #e74c3c; border: 1px solid #e74c3c; }
+.btn-print { background: #333; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+
+.notice-section { margin-top: 30px; border-top: 2px solid #f0f0f0; padding-top: 20px; }
+.section-title { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 15px; }
+.btn-notice-print { background: #e67e22; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+.btn-setting { background: #fff; border: 1px solid #ccc; color: #555; margin-top: 8px; }
+.btn-logo { background: #fff; border: 1px dashed #ccc; color: #777; font-weight: normal; font-size: 13px; margin-top: 5px; }
+
+/* Dashboard */
+.screen-view { flex: 1; background: #fff; padding: 30px; overflow: auto; display: flex; flex-direction: column; }
+.dashboard-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #ddd; }
+.dashboard-header th { position: sticky; top: 0; background: #f1f3f5; border: 1px solid #ddd; padding: 12px; text-align: center; font-weight: 700; color: #444; z-index: 10; }
+.dashboard-header th.sun { color: #e74c3c; background: #fff5f5; }
+.dashboard-header th.sat { color: #1976d2; background: #f0f7ff; }
+
+.dashboard-row td { border: 1px solid #eee; vertical-align: top; padding: 8px; height: 140px; transition: background 0.1s; }
+.dashboard-row td:hover { background-color: #fafafa; }
+
+.print-view-container { display: none; }
+
+/* Elements */
+.td-date { font-weight: 800; font-size: 14px; display: block; margin-bottom: 6px; color: #333; }
+.sun .td-date { color: #d32f2f; }
+.sat .td-date { color: #1976d2; }
+.proc-bar { padding: 3px 6px; margin-bottom: 3px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.noisy-badge { position: absolute; top: 8px; right: 8px; background: #d32f2f; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 12px; }
+.btn-close-modal { position: absolute; top: 20px; right: 25px; background: none; border: none; font-size: 32px; color: #888; cursor: pointer; z-index: 1000; }
+
+/* Footer Styles */
+.ourproject-footer {
+    margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; text-align: center; width: 100%; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
+.footer-logo-img { height: 30px; width: auto; object-fit: contain; }
+.footer-slogan { font-size: 11px; color: #888; font-weight: 500; }
 
-/* 좌측 사이드바 (입력폼) */
-.schedule-sidebar {
-    width: 350px; padding: 20px; border-right: 1px solid #ddd;
-    background: #fcfcfc; display: flex; flex-direction: column; gap: 20px;
-    overflow-y: auto;
+/* Settings Modal */
+.settings-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+.settings-box { background: #fff; border: 1px solid #ccc; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 420px; padding: 30px; border-radius: 8px; }
+.settings-title { font-size: 20px; font-weight: 800; margin-bottom: 25px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+.settings-label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; color: #444; }
+.settings-input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+
+/* Notice Print Styles */
+.notice-sheet {
+    background: white; margin: 0 auto; box-sizing: border-box;
+    display: flex; flex-direction: column; position: relative;
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
 }
+.notice-sheet.a4 { width: 210mm; height: 297mm; padding: 15mm; }
+.notice-sheet.a3 { width: 297mm; height: 420mm; padding: 25mm; }
 
-.schedule-form-mini .form-group { margin-bottom: 15px; }
-.schedule-form-mini label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
-.schedule-form-mini input[type="text"],
-.schedule-form-mini input[type="date"] {
-    width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
-}
-.date-range-inputs { display: flex; align-items: center; gap: 5px; }
-.form-group.check { display: flex; align-items: center; gap: 5px; }
-.noisy-label { color: #d63031; }
+.notice-design-layout { height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+.notice-top-bar { width: 100%; height: 8px; background: #222; margin-bottom: 2%; flex-shrink: 0; }
+.notice-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 30px; flex-shrink: 0; }
+.notice-title { font-size: 40px; font-weight: 800; color: #111; letter-spacing: -1px; margin: 0; }
+.notice-logo { max-height: 50px; max-width: 150px; object-fit: contain; }
 
-.form-btns { display: flex; gap: 5px; }
-.form-btns button { flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-.btn-save { background: #2ecc71; color: white; }
+.notice-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.notice-intro { font-size: 22px; font-weight: 700; color: #222; margin-bottom: 20px; line-height: 1.3; }
+.notice-desc { font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 40px; }
 
-.print-options { border-top: 2px solid #eee; padding-top: 20px; }
-.print-options select { width: 100%; padding: 8px; margin-bottom: 10px; }
-.btn-print { width: 100%; padding: 10px; background: #3498db; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.info-grid { display: grid; grid-template-columns: 110px 1fr; border-top: 2px solid #222; margin-bottom: 30px; }
+.info-row-label { padding: 12px 0; font-weight: 700; color: #222; font-size: 15px; border-bottom: 1px solid #eee; }
+.info-row-value { padding: 12px 0 12px 20px; color: #444; font-size: 15px; border-bottom: 1px solid #eee; }
 
-/* 우측 달력 영역 */
-.schedule-calendar-wrapper {
-    flex: 1; padding: 20px; overflow-y: auto; background: #fff;
-}
+.notice-footer { text-align: center; flex-shrink: 0; margin-top: 20px; }
+.notice-footer p { font-size: 15px; color: #777; margin-bottom: 30px; font-weight: 600; }
 
-.calendar-print-area {
-    background: #fff; padding: 20px; /* 인쇄 시 여백 */
-}
+.qr-wrapper { display: flex; justify-content: center; gap: 40px; padding-top: 25px; border-top: 1px solid #eee; margin-bottom: 30px; }
+.qr-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.qr-icon-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 2px; }
+.qr-label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; }
 
-.calendar-header { text-align: center; margin-bottom: 20px; }
-.calendar-header h2 { margin: 0 0 5px 0; font-size: 24px; }
-
-.calendar-grid {
-    display: flex; flex-direction: column; border: 2px solid #333;
-}
-
-.calendar-row { display: flex; }
-.calendar-row.header { background: #eee; border-bottom: 1px solid #333; }
-
-.calendar-head-cell {
-    flex: 1; text-align: center; padding: 0px; font-weight: bold; border-right: 1px solid #ccc;
-}
-.calendar-head-cell:last-child { border-right: none; }
-
-/* [수정] 달력 셀 높이 조정 */
-.calendar-cell {
-    flex: 1; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc;
-    min-height: 120px; /* 상하 높이 늘림 (기존 100px -> 140px) */
-    padding: 5px; cursor: pointer; position: relative;
-}
-.calendar-cell:last-child { border-right: none; }
-.calendar-cell:hover { background-color: #f9f9f9; }
-
-.sun { color: #e74c3c; }
-.sat { color: #3498db; }
-
-.cell-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
-.day-num { font-weight: bold; font-size: 14px; }
-.noisy-badge { font-size: 11px; color: red; font-weight: bold; border: 1px solid red; padding: 0 2px; border-radius: 3px; }
-
-.cell-content { font-size: 12px; color: #333; line-height: 1.4; }
-.proc-item { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-
-/* 인쇄 전용 스타일 */
 @media print {
-    .schedule-modal-overlay { position: static; background: white; }
-    .schedule-modal-content { width: 100%; height: auto; box-shadow: none; border: none; }
-    .schedule-sidebar, .btn-close-x { display: none !important; } /* 사이드바 숨김 */
-    .schedule-calendar-wrapper { overflow: visible; height: auto; padding: 0; }
-    .calendar-print-area { border: none; }
-    .calendar-cell { min-height: 120px; }
+  body, html { margin: 0; padding: 0; height: 100%; }
+  .schedule-overlay { position: static; display: block; background: none; }
+  .schedule-modal { width: 100%; height: auto; box-shadow: none; border-radius: 0; display: block; overflow: visible; max-width: none; }
+  .sidebar, .btn-close-modal, .screen-view, .settings-overlay { display: none !important; }
+  .print-view-container { display: block !important; }
+  
+  /* Schedule Print */
+  .paper-sheet {
+     width: 100%; height: 100vh; max-width: none; margin: 0; padding: 10mm; 
+     box-shadow: none; break-after: page; display: flex; flex-direction: column;
+  }
+  .flex-table { width: 100%; height: 100%; border: 2px solid #000; display: flex; flex-direction: column; justify-content: space-between; }
+  .flex-thead { flex: 0 0 auto; border-bottom: 2px solid #000; }
+  .flex-tbody { flex: 1; display: flex; flex-direction: column; }
+  .flex-tr { flex: 1; display: flex; border-bottom: 1px solid #ccc; }
+  .flex-td { flex: 1; border-right: 1px solid #ccc; padding: 5px; display: flex; flex-direction: column; overflow: visible; }
+  
+  .flex-tr-header { display: flex; border-bottom: 1px solid #000; background: #eee; }
+  .flex-th-day { flex: 1; padding: 10px; text-align: center; font-weight: bold; border-right: 1px solid #ccc; }
+
+  /* Notice Print */
+  .notice-sheet { width: 100% !important; height: 100vh !important; padding: 0 !important; margin: 0 !important; border: none !important; break-after: page; }
+  .notice-design-layout { height: 100%; padding: 15mm; box-sizing: border-box; }
 }
