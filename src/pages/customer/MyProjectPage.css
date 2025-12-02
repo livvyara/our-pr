@@ -2,7 +2,7 @@
 
 :root {
   --mp-bg: #ffffff;
-  --mp-text-main: #333333; /* [수정] #111 -> #333 (부드러운 다크 그레이) */
+  --mp-text-main: #333333;
   --mp-text-gray: #888888;
   --mp-border: #e0e0e0;
   
@@ -10,7 +10,9 @@
   --k-brand: #F8EF99; 
   --k-brand-dark: #e6dd88;
   
+  /* 고급스러운 모션 (Cubic Bezier) */
   --mp-transition: cubic-bezier(0.19, 1, 0.22, 1);
+  --mp-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .mp-page-container {
@@ -20,6 +22,7 @@
   flex-direction: column;
   font-family: 'Pretendard', sans-serif;
   color: var(--mp-text-main);
+  overflow-x: hidden;
 }
 
 .mp-main-content {
@@ -27,7 +30,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 80px 20px;
+  padding: 160px 20px 80px 20px;
 }
 
 .mp-inner-container {
@@ -35,12 +38,42 @@
   max-width: 1200px;
 }
 
+/* --- [핵심] 동적 요소 애니메이션 --- */
+
+/* 1. Mask Reveal (타이틀용) */
+.mp-reveal-mask {
+  overflow: hidden; 
+  display: block;
+}
+
+.mp-reveal-text {
+  transform: translateY(110%);
+  transition: transform 1.2s var(--mp-ease);
+  display: block;
+}
+
+.mp-reveal-text.mp-active {
+  transform: translateY(0);
+}
+
+/* 2. Fade Up (본문 및 카드용) */
+.mp-fade-up {
+  opacity: 0; 
+  transform: translateY(30px); 
+  transition: opacity 0.8s var(--mp-ease), transform 0.8s var(--mp-ease);
+}
+
+.mp-fade-up.mp-active { 
+  opacity: 1; 
+  transform: translateY(0); 
+}
+
 /* Header */
 .mp-header-section {
   margin-bottom: 60px;
 }
 .mp-title {
-  font-size: 30px; /* [이전 요청 반영] 60px -> 30px */
+  font-size: 30px;
   font-weight: 800;
   margin: 0;
   letter-spacing: -1px;
@@ -70,7 +103,7 @@
 /* Project Card */
 .mp-project-card {
   border-bottom: 1px solid var(--mp-border);
-  transition: all 0.4s var(--mp-transition);
+  transition: box-shadow 0.4s var(--mp-transition), border 0.4s, border-radius 0.4s;
   background-color: #fff;
   position: relative;
   overflow: hidden;
@@ -204,7 +237,6 @@
 .mp-data-row span { color: var(--mp-text-gray); }
 .mp-data-row strong { font-weight: 600; color: var(--mp-text-main); }
 
-/* [유지] 변경/추가 금액 - 텍스트만 붉은색 */
 .mp-data-row.highlight { background-color: transparent; }
 .mp-data-row.highlight strong { color: #d32f2f; }
 
@@ -271,7 +303,7 @@
   border: 1px solid var(--mp-border);
   display: flex; align-items: center; justify-content: center;
   transition: all 0.3s;
-  color: var(--mp-text-main); /* 아이콘 기본 색상 #333 */
+  color: var(--mp-text-main);
 }
 
 .mp-menu-btn .btn-text {
@@ -281,20 +313,19 @@
   transition: color 0.3s;
 }
 
-/* Hover Effect: 배경이 브랜드 컬러로 차오름 */
 .mp-menu-btn:hover {
   background-color: var(--k-brand);
   transform: translateY(-5px);
 }
 
 .mp-menu-btn:hover .icon-box {
-  background-color: #333; /* [수정] #000 -> #333 */
-  border-color: #333;     /* [수정] #000 -> #333 */
+  background-color: #333;
+  border-color: #333;
   color: var(--k-brand);
 }
 
 .mp-menu-btn:hover .btn-text {
-  color: #333; /* [수정] #000 -> #333 */
+  color: #333;
 }
 
 /* Disabled */
@@ -311,6 +342,7 @@
 }
 
 @media (max-width: 768px) {
+  .mp-main-content { padding: 100px 20px 80px 20px; }
   .mp-title { font-size: 30px; }
   .mp-site-name { font-size: 24px; }
   .mp-actions-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }

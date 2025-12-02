@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/common/Header';
 import SubNav from '../components/common/SubNav';
@@ -17,6 +17,11 @@ const PartnerApply: React.FC = () => {
   const [selectedMenu, setSelectedMenu] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  // [수정] 헤더 애니메이션 즉시 실행을 위한 상태
+  const [headerVisible, setHeaderVisible] = useState(false);
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -25,28 +30,65 @@ const PartnerApply: React.FC = () => {
       if (!isCurrentlyMobile) setIsMobileMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // [핵심 수정] 페이지 로드 0.1초 후 무조건 헤더 노출 (옵저버 의존 X)
+    setTimeout(() => {
+      setHeaderVisible(true);
+    }, 100);
+
+    // 스크롤 시 등장할 아래쪽 요소들만 옵저버로 감시
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('pa-active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    // 헤더를 제외한 나머지 요소들(.pa-fade-up)만 관찰
+    const targets = document.querySelectorAll('.pa-grid-wrapper .pa-fade-up, .pa-cta-box');
+    targets.forEach(el => observerRef.current?.observe(el));
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observerRef.current?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    setSelectedMenu('partner'); 
   }, []);
 
   return (
     <div className="pa-page-container">
       {!isMobile && <RoleHeader />}
       <Header onMenuSelected={setSelectedMenu} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
+      {!isMobile && selectedMenu && <SubNav selectedMenuKey={selectedMenu} />}
 
       <div className="pa-main-wrapper">
         <div className="pa-container">
           
           {/* Header Section */}
           <div className="pa-header-section">
-            <h1 className="pa-title">파트너 프로그램</h1>
-            <div className="pa-divider-long"></div> {/* CSS에서 제어 */}
-            <p className="pa-desc">성공적인 비즈니스를 위한 최적의 솔루션</p>
+            <div className="pa-reveal-mask">
+              {/* [수정] headerVisible 상태에 따라 pa-active 클래스 강제 적용 */}
+              <h1 className={`pa-title pa-reveal-text ${headerVisible ? 'pa-active' : ''}`}>
+                파트너 프로그램
+              </h1>
+            </div>
+            
+            {/* 밑줄 애니메이션 */}
+            <div className={`pa-divider-anim ${headerVisible ? 'pa-active' : ''}`}></div>
+            
+            <p className={`pa-desc pa-fade-up ${headerVisible ? 'pa-active' : ''}`}>
+              성공적인 비즈니스를 위한 최적의 솔루션
+            </p>
           </div>
 
           {/* Features Grid */}
           <div className="pa-grid-wrapper">
-            <div className="pa-feature-card">
+            
+            <div className="pa-feature-card pa-fade-up" style={{ transitionDelay: '0.1s' }}>
               <div className="pa-card-img">
                 <img src={IMG_DASHBOARD} alt="Dashboard" />
               </div>
@@ -62,7 +104,7 @@ const PartnerApply: React.FC = () => {
               </div>
             </div>
 
-            <div className="pa-feature-card">
+            <div className="pa-feature-card pa-fade-up" style={{ transitionDelay: '0.2s' }}>
               <div className="pa-card-img">
                 <img src={IMG_SCHEDULE} alt="Schedule" />
               </div>
@@ -78,7 +120,7 @@ const PartnerApply: React.FC = () => {
               </div>
             </div>
 
-            <div className="pa-feature-card">
+            <div className="pa-feature-card pa-fade-up" style={{ transitionDelay: '0.3s' }}>
               <div className="pa-card-img">
                 <img src={IMG_MOBILE} alt="Mobile" />
               </div>
@@ -96,7 +138,7 @@ const PartnerApply: React.FC = () => {
           </div>
 
           {/* CTA Section */}
-          <div className="pa-cta-box">
+          <div className="pa-cta-box pa-fade-up" style={{ transitionDelay: '0.4s' }}>
             <div className="pa-cta-content">
               <h2>지금 바로 합류하세요</h2>
               <p>아워프로젝트의 검증된 파트너가 되어 더 큰 성공을 만들어가세요.</p>

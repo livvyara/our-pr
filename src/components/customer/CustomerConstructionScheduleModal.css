@@ -1,0 +1,233 @@
+/* src/components/customer/CustomerConstructionScheduleModal.css */
+
+:root {
+  --cs-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* --- [핵심] 동적 애니메이션 클래스 --- */
+
+/* 1. Mask Reveal (텍스트) */
+.cs-reveal-mask {
+  overflow: hidden; 
+  display: block;
+}
+
+.cs-reveal-text {
+  transform: translateY(110%);
+  transition: transform 1s var(--cs-ease);
+  display: block;
+}
+
+.cs-reveal-text.cs-active {
+  transform: translateY(0);
+}
+
+/* 2. Fade Up (리스트 아이템) */
+.cs-fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s var(--cs-ease), transform 0.6s var(--cs-ease);
+}
+
+.cs-fade-up.cs-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 모달 오버레이 */
+.cs-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: csFadeIn 0.3s ease;
+}
+
+@keyframes csFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* 모달 컨테이너 */
+.cs-modal-container {
+  background-color: #fff;
+  width: 100%;
+  max-width: 500px;
+  height: 80vh;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: csSlideUp 0.3s ease;
+}
+
+@keyframes csSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* 헤더 */
+.cs-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: #fff;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-site-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cs-modal-title {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  margin-left: 10px;
+}
+
+/* 바디 (스크롤 영역) */
+.cs-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+/* 로딩 & 빈 상태 */
+.cs-loading, .cs-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: #888;
+  font-size: 15px;
+}
+
+/* 타임라인 리스트 */
+.schedule-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.schedule-item {
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 20px;
+  /* opacity 기본값 제거 */
+}
+
+/* 오늘 날짜 강조 */
+.schedule-item.today {
+  border: 2px solid #333;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.date-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  border-right: 1px solid #f0f0f0;
+  padding-right: 16px;
+}
+
+.date-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.today-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background-color: #ff5252;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.content-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.process-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.process-tag {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.noisy-alert {
+  font-size: 12px;
+  color: #d32f2f;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 푸터 */
+.cs-modal-footer {
+  padding: 15px 24px;
+  border-top: 1px solid #eee;
+  background-color: #fff;
+  text-align: center;
+}
+
+.cs-modal-footer p {
+  margin: 0;
+  font-size: 13px;
+  color: #888;
+}
+
+/* 모바일 대응 */
+@media (max-width: 480px) {
+  .cs-modal-container {
+    height: 100%;
+    border-radius: 0;
+  }
+  .schedule-item {
+    gap: 15px;
+    padding: 14px;
+  }
+  .date-col {
+    min-width: 70px;
+    padding-right: 12px;
+  }
+}

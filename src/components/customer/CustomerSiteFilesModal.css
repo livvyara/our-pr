@@ -1,170 +1,154 @@
-/* CustomerSiteFilesModal.css */
+/* src/components/customer/CustomerSiteFilesModal.css */
 
-.customer-files-modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6); z-index: 3000;
-    display: flex; justify-content: center; align-items: center;
-    padding: 5px; /* 모바일에서 측면 여백 확보 */
+:root {
+  --cf-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --cf-text-main: #333;
+  --cf-text-sub: #666;
+  --cf-border: #e0e0e0;
+  --cf-accent: #111;
 }
-.customer-files-modal-content {
-    background: white; 
-    border-radius: 12px; 
-    overflow: hidden;
-    width: 700px; /* PC 너비 기준 */
-    max-width: 98vw; /* 모바일에서 거의 전체 화면 사용 */
-    max-height: 98vh;
-    height: 85vh; /* 명시적 높이 설정 */
-    display: flex; 
-    flex-direction: column; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.customer-files-modal-header {
-    padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;
-    flex-shrink: 0; /* 헤더는 크기 유지 */
-}
-.customer-files-modal-header h3 { margin: 0; font-size: 18px; color: #333; }
-.customer-files-modal-close-btn { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; }
 
-/* 탭 스타일 */
-.customer-files-modal-file-tabs {
-    display: flex; border-bottom: 1px solid #ddd;
-    flex-shrink: 0; /* 탭 영역은 크기 유지 */
+/* --- 애니메이션 --- */
+.cf-reveal-mask { overflow: hidden; display: block; }
+.cf-header-anim {
+  transform: translateY(110%);
+  transition: transform 1.2s var(--cf-ease);
+  display: block;
 }
-.customer-files-modal-file-tab {
-    flex: 1; padding: 15px; border: none; background: #fff;
-    font-size: 15px; font-weight: 600; color: #666; cursor: pointer;
-    transition: all 0.2s; border-bottom: 3px solid transparent;
-    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
-}
-.customer-files-modal-file-tab:hover { background-color: #f9f9f9; color: #333; }
-.customer-files-modal-file-tab.active { color: #1976d2; border-bottom-color: #1976d2; background-color: #fff; }
+.cf-header-anim.cf-active { transform: translateY(0); }
 
-/* 그리드 영역 */
-.customer-files-modal-file-grid-container {
-    flex: 1; 
-    overflow-y: auto; /* 스크롤 작동 보장 */
-    padding: 20px; 
-    background-color: #f4f6f8; 
-    min-height: 0; /* Flexbox 환경에서 스크롤 작동을 위한 핵심 */
+.cf-fade-up {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.6s var(--cf-ease), transform 0.6s var(--cf-ease);
 }
-.customer-files-modal-file-grid {
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
-    gap: 15px; 
+.cf-fade-up.cf-active { opacity: 1; transform: translateY(0); }
+
+/* 모달 레이아웃 */
+.cf-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+  z-index: 3000; display: flex; align-items: center; justify-content: center;
+  animation: cfFadeIn 0.3s ease;
+}
+@keyframes cfFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.cf-modal-container {
+  background-color: #fff; width: 95%; height: 85vh;
+  border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: cfSlideUp 0.4s var(--cf-ease);
+}
+.cf-modal-container.wide { max-width: 1000px; } /* 넓게 설정 */
+
+@keyframes cfSlideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* 헤더 */
+.cf-modal-header {
+  padding: 25px 40px; border-bottom: 1px solid var(--cf-border);
+  display: flex; justify-content: space-between; align-items: flex-start;
+  background-color: #fff;
+}
+.cf-modal-title { margin: 0; font-size: 24px; font-weight: 800; color: #111; letter-spacing: -0.5px; }
+.btn-close {
+  background: none; border: none; font-size: 32px; color: #999;
+  cursor: pointer; line-height: 1; padding: 0; margin-left: 20px;
+  transition: color 0.2s;
+}
+.btn-close:hover { color: #333; }
+
+/* 바디 */
+.cf-modal-body {
+  flex: 1; overflow-y: auto; padding: 40px; background-color: #fcfcfc;
+  display: flex; flex-direction: column;
+}
+
+/* 탭 네비게이션 */
+.cf-tabs {
+  display: flex; gap: 40px; margin-bottom: 40px; border-bottom: 1px solid var(--cf-border);
+}
+.cf-tab {
+  background: none; border: none; font-size: 16px; font-weight: 600; color: #999;
+  padding: 0 0 15px 0; cursor: pointer; transition: all 0.3s;
+  position: relative;
+}
+.cf-tab:hover { color: #333; }
+.cf-tab.active { color: var(--cf-accent); }
+.cf-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px;
+  background-color: var(--cf-accent);
+}
+
+/* 그리드 */
+.cf-grid-container { flex: 1; }
+.cf-loading, .cf-empty { text-align: center; padding: 80px 0; color: #888; font-size: 16px; }
+
+.cf-file-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
 }
 
 /* 파일 카드 */
-.customer-files-modal-file-card {
-    background: white; border-radius: 8px; overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee;
-    display: flex; flex-direction: column;
+.cf-file-card {
+  background: #fff; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--cf-border); transition: all 0.3s;
 }
-.customer-files-modal-file-thumb {
-    height: 140px; position: relative; cursor: pointer; overflow: hidden; background: #eee;
-}
-.customer-files-modal-file-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-.customer-files-modal-file-thumb:hover img { transform: scale(1.05); }
-.customer-files-modal-file-overlay {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3); color: white; display: flex; justify-content: center; align-items: center;
-    opacity: 0; transition: opacity 0.2s; font-weight: bold;
-}
-.customer-files-modal-file-thumb:hover .customer-files-modal-file-overlay { opacity: 1; }
-
-.customer-files-modal-file-info {
-    padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
-}
-.customer-files-modal-file-name {
-    font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
-}
-.customer-files-modal-btn-download {
-    font-size: 11px; padding: 4px 8px; background: #eee; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold;
-}
-.customer-files-modal-btn-download:hover { background: #ddd; }
-
-.customer-files-modal-loading, .customer-files-modal-empty { text-align: center; padding: 50px 0; color: #888; }
-
-/* 뷰어 스타일을 CSS 파일로 옮김 (모바일 뷰에서 초기 이미지 크기 문제 해결) */
-.image-viewer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-.image-viewer-controls { position: absolute; top: 20px; right: 20px; z-index: 4001; display: flex; gap: 15px; align-items: center; color: white; font-size: 14px; }
-.image-viewer-controls button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
-.image-viewer-content { transition: transform 0.1s ease-out; display: flex; justify-content: center; align-items: center; }
-.image-viewer-content img { 
-    /* [수정] 초기 이미지가 화면에 맞도록 설정 */
-    max-width: 90vw; 
-    max-height: 90vh; 
-    width: auto;
-    height: auto;
-    object-fit: contain; 
-    box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+.cf-file-card:hover {
+  transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: #ccc;
 }
 
+.cf-thumb-wrap {
+  width: 100%; aspect-ratio: 4/3; position: relative; cursor: zoom-in; overflow: hidden;
+  border-bottom: 1px solid #f0f0f0;
+}
+.cf-thumb-wrap img {
+  width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;
+}
+.cf-thumb-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s;
+}
+.icon-zoom { font-size: 24px; color: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 
-/* ---------------------------------------------------- */
-/* 📱 모바일 반응형 (max-width: 768px) */
-/* ---------------------------------------------------- */
+.cf-file-card:hover img { transform: scale(1.05); }
+.cf-file-card:hover .cf-thumb-overlay { opacity: 1; }
+
+.cf-file-info { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.cf-file-name {
+  font-size: 16px; font-weight: 600; color: #333;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.btn-download {
+  background: #f5f5f5; border: 1px solid #ddd; color: #555;
+  padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-download:hover { background: #333; color: #fff; border-color: #333; }
+
+/* 이미지 뷰어 (공통) */
+.image-viewer-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 4000;
+  display: flex; justify-content: center; align-items: center;
+}
+.image-viewer-controls {
+  position: absolute; top: 30px; right: 30px; z-index: 4001;
+  display: flex; gap: 15px; color: #fff; font-size: 14px; align-items: center;
+}
+.image-viewer-controls button {
+  background: transparent; border: 1px solid #fff; color: #fff;
+  padding: 8px 16px; border-radius: 30px; cursor: pointer;
+}
+.image-viewer-content img {
+  max-width: 90vw; max-height: 90vh; object-fit: contain;
+  box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+/* 모바일 대응 */
 @media (max-width: 768px) {
-    .customer-files-modal-overlay {
-        padding: 5px;
-        /* 배경 스크롤 (스크롤 체이닝) 방지 */
-        overflow: hidden; 
-    }
-    .customer-files-modal-content {
-        border-radius: 6px;
-        /* 모바일에서 높이를 뷰포트 전체로 확장 */
-        height: 100vh;
-        max-height: 100vh;
-    }
-
-    .customer-files-modal-header {
-        padding: 10px 15px;
-    }
-    .customer-files-modal-header h3 {
-        font-size: 16px;
-    }
-    
-    .customer-files-modal-file-tab {
-        padding: 10px;
-        font-size: 14px;
-    }
-    
-    .customer-files-modal-file-grid-container {
-        padding: 10px;
-    }
-    
-    .customer-files-modal-file-grid {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
-        gap: 10px;
-    }
-    
-    .customer-files-modal-file-thumb {
-        height: 100px; 
-    }
-    
-    .customer-files-modal-file-info {
-        padding: 8px;
-        flex-direction: column; 
-        align-items: flex-start;
-        gap: 5px;
-    }
-    .customer-files-modal-file-name {
-        font-size: 12px;
-    }
-    .customer-files-modal-btn-download {
-        width: 100%;
-        text-align: center;
-        padding: 6px 0;
-        font-size: 12px;
-    }
-    
-    /* 뷰어 컨트롤 모바일 조정 */
-    .image-viewer-controls {
-        top: 10px;
-        right: 10px;
-        flex-direction: column;
-        align-items: flex-end;
-    }
-    .image-viewer-controls span {
-        display: none; /* 모바일에서는 툴팁 제거 */
-    }
+  .cf-modal-container.wide { width: 100%; height: 100%; border-radius: 0; }
+  .cf-modal-body { padding: 20px; }
+  .cf-modal-header { padding: 20px; }
+  
+  .cf-file-grid { grid-template-columns: 1fr; gap: 20px; }
+  .cf-tabs { gap: 20px; justify-content: center; }
+  .cf-tab { font-size: 14px; }
 }

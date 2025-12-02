@@ -59,6 +59,9 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
+  // [추가] 헤더 애니메이션 즉시 실행을 위한 상태
+  const [headerVisible, setHeaderVisible] = useState(false);
+
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -69,6 +72,12 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
     };
     window.addEventListener('resize', handleResize);
 
+    // [핵심] 페이지 로드 0.1초 후 헤더 강제 노출 (타이틀 사라짐 방지)
+    setTimeout(() => {
+      setHeaderVisible(true);
+    }, 100);
+
+    // [애니메이션] 스크롤 감지 옵저버 설정
     observerRef.current = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) entry.target.classList.add('cb-active');
@@ -81,11 +90,12 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
     };
   }, []);
 
+  // [애니메이션] 데이터 로드 후 리스트 아이템에 옵저버 부착
   useEffect(() => {
-    if (!isLoading && posts.length > 0) {
+    if (!isLoading) {
       setTimeout(() => {
-        const fadeElems = document.querySelectorAll('.cb-fade-up');
-        fadeElems.forEach((el) => observerRef.current?.observe(el));
+        const targets = document.querySelectorAll('.cb-post-row, .cb-fade-up');
+        targets.forEach((el) => observerRef.current?.observe(el));
       }, 100);
     }
   }, [isLoading, posts]);
@@ -205,14 +215,21 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
       <div className="cb-main-wrapper">
         <div className="cb-container">
           
-          <div className="cb-header-section cb-fade-up">
-            <h1 className="cb-title">{headerInfo.title}</h1>
-            <div className="cb-divider-long"></div>
-            <p className="cb-desc">{headerInfo.desc}</p>
+          {/* Header Section: 타이틀 마스크 리빌 & 헤더 강제 노출 적용 */}
+          <div className="cb-header-section">
+            <div className="cb-reveal-mask">
+              <h1 className={`cb-title cb-reveal-text ${headerVisible ? 'cb-active' : ''}`}>
+                {headerInfo.title}
+              </h1>
+            </div>
+            <div className={`cb-divider-long cb-fade-up ${headerVisible ? 'cb-active' : ''}`}></div>
+            <p className={`cb-desc cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
+              {headerInfo.desc}
+            </p>
           </div>
 
           {isAdmin && category === 'inquiry' && (
-            <div className="cb-filter-bar cb-fade-up">
+            <div className={`cb-filter-bar cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
               {['all', 'pending', 'additional', 'completed'].map(f => (
                   <button key={f} className={adminFilter === f ? 'cb-active' : ''} onClick={() => setAdminFilter(f as AdminFilterType)}>
                       {f === 'all' ? '전체' : f === 'pending' ? '답변대기' : f === 'additional' ? '추가문의' : '답변완료'}
@@ -221,8 +238,8 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
             </div>
           )}
 
-          <div className="cb-list-wrapper cb-fade-up">
-            <div className="cb-top-bar">
+          <div className="cb-list-wrapper">
+            <div className={`cb-top-bar cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
                 <span className="cb-total-count">총 <strong>{filteredPosts.length}</strong>개의 게시글</span>
                 {canWrite && (
                     <button className="cb-btn-write" onClick={() => setIsWriteModalOpen(true)}>
@@ -244,7 +261,8 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
                   <col style={{width: '130px'}} />
                   <col style={{width: '80px'}} />
                 </colgroup>
-                <thead>
+                {/* 테이블 헤더도 부드럽게 등장 */}
+                <thead className={`cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
                   <tr>
                     <th>번호</th>
                     {isPrivateBoard && <th>상태</th>}
@@ -257,13 +275,19 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
                 <tbody>
                   {posts.length === 0 ? (
                     <tr>
-                      <td colSpan={isPrivateBoard ? 6 : 5} className="cb-no-posts">
+                      <td colSpan={isPrivateBoard ? 6 : 5} className={`cb-no-posts cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
                         {(isPrivateBoard && !currentUser) ? "로그인이 필요한 서비스입니다." : "등록된 게시글이 없습니다."}
                       </td>
                     </tr>
                   ) : (
                     filteredPosts.map((post, index) => (
-                      <tr key={post.id} onClick={() => handlePostClick(post)} className="cb-post-row">
+                      <tr 
+                        key={post.id} 
+                        onClick={() => handlePostClick(post)} 
+                        className="cb-post-row cb-fade-up"
+                        // [핵심] 순차적 등장을 위한 딜레이 적용
+                        style={{ transitionDelay: `${index * 0.05}s` }}
+                      >
                         <td className="cb-num">{filteredPosts.length - index}</td>
                         
                         {isPrivateBoard && (

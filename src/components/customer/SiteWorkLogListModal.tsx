@@ -7,8 +7,8 @@ interface WorkLog {
   workDate: string;
   todayWork: string;
   nextWork: string;
-  issues: string; // 특이사항
-  meetingLog: string; // 미팅내용
+  issues: string;
+  meetingLog: string;
   images: string[];
   author: string;
 }
@@ -32,6 +32,11 @@ const SiteWorkLogListModal: React.FC<Props> = ({ siteId, partnerUid, onClose }) 
   const isDragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
 
+  // 애니메이션 & DOM Refs
+  const listRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // 1. 데이터 로드
   useEffect(() => {
     const fetchLogs = async () => {
       try {
@@ -48,103 +53,111 @@ const SiteWorkLogListModal: React.FC<Props> = ({ siteId, partnerUid, onClose }) 
     fetchLogs();
   }, [siteId, partnerUid]);
 
+  // 2. 애니메이션 실행 (데이터 로드 후)
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        // 타이틀 등 상단 요소 즉시 노출
+        const headers = document.querySelectorAll('.wl-header-anim');
+        headers.forEach(el => el.classList.add('wl-active'));
+
+        // 리스트 아이템 스크롤 감지
+        observerRef.current = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('wl-active');
+            }
+          });
+        }, { threshold: 0.1 });
+
+        const targets = document.querySelectorAll('.wl-fade-up');
+        targets.forEach(el => observerRef.current?.observe(el));
+      }, 100);
+    }
+    return () => observerRef.current?.disconnect();
+  }, [loading, selectedLog]); // 화면 전환(리스트<->상세) 시에도 재실행
+
+  // 상세 보기 클릭 시 스크롤 상단 이동
+  const handleLogClick = (log: WorkLog) => {
+    setSelectedLog(log);
+    if (listRef.current) listRef.current.scrollTop = 0;
+  };
+
+  const handleBackToList = () => {
+    setSelectedLog(null);
+    if (listRef.current) listRef.current.scrollTop = 0;
+  };
+
   // --- 이미지 뷰어 핸들러 ---
-  const openImageViewer = (url: string) => {
-      setViewingImage(url);
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-  };
-
-  const closeImageViewer = () => {
-      setViewingImage(null);
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-      e.stopPropagation();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setScale(prev => Math.min(Math.max(0.5, prev + delta), 4)); // 0.5 ~ 4배 줌
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-      isDragging.current = true;
-      startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-      if (!isDragging.current) return;
-      setPosition({
-          x: e.clientX - startPos.current.x,
-          y: e.clientY - startPos.current.y
-      });
-  };
-
-  const handleMouseUp = () => {
-      isDragging.current = false;
-  };
+  const openImageViewer = (url: string) => { setViewingImage(url); setScale(1); setPosition({ x: 0, y: 0 }); };
+  const closeImageViewer = () => { setViewingImage(null); };
+  const handleWheel = (e: React.WheelEvent) => { e.stopPropagation(); const delta = e.deltaY > 0 ? -0.1 : 0.1; setScale(prev => Math.min(Math.max(0.5, prev + delta), 4)); };
+  const handleMouseDown = (e: React.MouseEvent) => { isDragging.current = true; startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y }; };
+  const handleMouseMove = (e: React.MouseEvent) => { if (!isDragging.current) return; setPosition({ x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y }); };
+  const handleMouseUp = () => { isDragging.current = false; };
 
   return (
-    <div className="modal-overlay" style={{zIndex: 3000}}>
-      <div className="modal-content" style={{width:'600px', maxHeight:'85vh', display:'flex', flexDirection:'column'}}>
+    <div className="wl-modal-overlay" onClick={onClose}>
+      <div className="wl-modal-container wide" onClick={e => e.stopPropagation()}>
         
         {/* 헤더 */}
-        <div style={{padding:'15px', borderBottom:'1px solid #eee', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <h3 style={{margin:0}}>📋 작업 일지</h3>
-            <button onClick={onClose} style={{background:'none', border:'none', fontSize:'24px', cursor:'pointer'}}>×</button>
+        <div className="wl-modal-header">
+            <div className="wl-reveal-mask">
+                <h2 className="wl-modal-title wl-header-anim">공사 작업 일지</h2>
+            </div>
+            <button className="btn-close" onClick={onClose}>&times;</button>
         </div>
 
-        {/* 바디 */}
-        <div style={{flex:1, overflowY:'auto', padding:'20px', backgroundColor:'#f8f9fa'}}>
-            {loading ? <p style={{textAlign:'center'}}>로딩 중...</p> : 
-             logs.length === 0 ? <p style={{textAlign:'center', color:'#999'}}>등록된 작업 일지가 없습니다.</p> :
+        {/* 바디 (스크롤 영역) */}
+        <div className="wl-modal-body" ref={listRef}>
+            {loading ? <div className="wl-loading">데이터를 불러오는 중입니다...</div> : 
+             logs.length === 0 ? <div className="wl-empty wl-fade-up">등록된 작업 일지가 없습니다.</div> :
              
-             // 상세 보기 모드
+             // --- 상세 보기 모드 ---
              selectedLog ? (
-                 <div className="log-detail-view">
-                     <button onClick={() => setSelectedLog(null)} style={{marginBottom:'15px', padding:'5px 10px', border:'1px solid #ddd', background:'white', borderRadius:'4px', cursor:'pointer'}}>← 목록으로</button>
-                     <div style={{background:'white', padding:'25px', borderRadius:'8px', border:'1px solid #eee'}}>
-                         <h4 style={{margin:'0 0 20px 0', borderBottom:'2px solid #333', paddingBottom:'10px', fontSize:'18px'}}>{selectedLog.workDate} 작업일지</h4>
+                 <div className="log-detail-wrapper">
+                     <button onClick={handleBackToList} className="btn-back wl-fade-up">← 목록으로 돌아가기</button>
+                     
+                     <div className="detail-content wl-fade-up" style={{transitionDelay: '0.1s'}}>
+                         <div className="detail-top-row">
+                             <h3 className="detail-date">{selectedLog.workDate}</h3>
+                             <span className="detail-author">작성자: {selectedLog.author}</span>
+                         </div>
                          
-                         <div style={{marginBottom:'20px'}}>
-                             <strong style={{display:'block', marginBottom:'8px', color:'#1976d2', fontSize:'14px'}}>■ 금일 작업 공정</strong>
-                             <div style={{whiteSpace:'pre-wrap', fontSize:'15px', lineHeight:'1.6'}}>{selectedLog.todayWork}</div>
+                         <div className="detail-block">
+                             <strong className="block-label">작업 내용</strong>
+                             <div className="block-text">{selectedLog.todayWork}</div>
                          </div>
                          
                          {selectedLog.nextWork && (
-                             <div style={{marginBottom:'20px'}}>
-                                 <strong style={{display:'block', marginBottom:'8px', color:'#1976d2', fontSize:'14px'}}>■ 익일 작업 예정</strong>
-                                 <div style={{whiteSpace:'pre-wrap', fontSize:'15px', lineHeight:'1.6'}}>{selectedLog.nextWork}</div>
+                             <div className="detail-block">
+                                 <strong className="block-label">다음 일정</strong>
+                                 <div className="block-text">{selectedLog.nextWork}</div>
                              </div>
                          )}
 
-                         {/* [추가] 특이사항 */}
                          {selectedLog.issues && (
-                             <div style={{marginBottom:'20px'}}>
-                                 <strong style={{display:'block', marginBottom:'8px', color:'#d32f2f', fontSize:'14px'}}>■ 금일 현장 특이사항</strong>
-                                 <div style={{whiteSpace:'pre-wrap', fontSize:'15px', lineHeight:'1.6', background:'#fff5f5', padding:'10px', borderRadius:'4px'}}>{selectedLog.issues}</div>
+                             <div className="detail-block alert">
+                                 <strong className="block-label alert">⚠️ 특이사항</strong>
+                                 <div className="block-text">{selectedLog.issues}</div>
                              </div>
                          )}
 
-                         {/* [추가] 고객 미팅 내용 */}
                          {selectedLog.meetingLog && (
-                             <div style={{marginBottom:'20px'}}>
-                                 <strong style={{display:'block', marginBottom:'8px', color:'#388e3c', fontSize:'14px'}}>■ 고객 미팅 내용</strong>
-                                 <div style={{whiteSpace:'pre-wrap', fontSize:'15px', lineHeight:'1.6', background:'#f1f8e9', padding:'10px', borderRadius:'4px'}}>{selectedLog.meetingLog}</div>
+                             <div className="detail-block note">
+                                 <strong className="block-label note">💬 미팅 기록</strong>
+                                 <div className="block-text">{selectedLog.meetingLog}</div>
                              </div>
                          )}
 
-                         {/* 사진 갤러리 */}
                          {selectedLog.images && selectedLog.images.length > 0 && (
-                             <div style={{marginTop:'30px', borderTop:'1px dashed #ddd', paddingTop:'20px'}}>
-                                 <strong style={{display:'block', marginBottom:'10px', color:'#555'}}>첨부 사진 ({selectedLog.images.length})</strong>
-                                 <div style={{display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:'10px'}}>
+                             <div className="detail-gallery-section">
+                                 <strong className="gallery-label">현장 사진</strong>
+                                 <div className="gallery-grid">
                                      {selectedLog.images.map((url, idx) => (
-                                         <img 
-                                            key={idx} 
-                                            src={url} 
-                                            alt="현장사진" 
-                                            style={{width:'100%', aspectRatio:'4/3', objectFit:'cover', borderRadius:'6px', border:'1px solid #eee', cursor:'zoom-in'}} 
-                                            onClick={() => openImageViewer(url)} 
-                                         />
+                                         <div key={idx} className="gallery-item" onClick={() => openImageViewer(url)}>
+                                             <img src={url} alt="현장사진" />
+                                         </div>
                                      ))}
                                  </div>
                              </div>
@@ -153,30 +166,30 @@ const SiteWorkLogListModal: React.FC<Props> = ({ siteId, partnerUid, onClose }) 
                  </div>
              ) : 
              
-             // 리스트 모드 (카드형)
+             // --- 리스트 모드 (넓은 행 형태) ---
              (
-                 <div style={{display:'flex', flexDirection:'column', gap:'15px'}}>
-                     {logs.map(log => (
-                         <div key={log.id} onClick={() => setSelectedLog(log)} style={{
-                             background:'white', padding:'15px', borderRadius:'8px', border:'1px solid #eee', cursor:'pointer', transition:'all 0.2s'
-                         }}
-                         onMouseOver={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                         onMouseOut={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+                 <div className="log-list-container">
+                     {logs.map((log, index) => (
+                         <div 
+                            key={log.id} 
+                            onClick={() => handleLogClick(log)} 
+                            className="log-row-item wl-fade-up"
+                            style={{ transitionDelay: `${index * 0.05}s` }}
                          >
-                             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px'}}>
-                                <div style={{fontWeight:'bold', fontSize:'16px', color:'#333'}}>{log.workDate}</div>
-                                <div style={{fontSize:'12px', color:'#999'}}>작성자: {log.author}</div>
+                             <div className="log-row-left">
+                                <span className="log-row-date">{log.workDate}</span>
                              </div>
-                             <div style={{color:'#555', fontSize:'14px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginBottom:'8px'}}>
-                                 {log.todayWork}
+                             
+                             <div className="log-row-center">
+                                <p className="log-row-summary">{log.todayWork}</p>
+                                {log.issues && <span className="badge-issue">특이사항 있음</span>}
                              </div>
-                             <div style={{display:'flex', gap:'10px'}}>
+
+                             <div className="log-row-right">
                                 {log.images && log.images.length > 0 && (
-                                     <span style={{fontSize:'12px', color:'#1976d2', background:'#e3f2fd', padding:'2px 6px', borderRadius:'4px'}}>📷 사진 {log.images.length}</span>
+                                     <span className="badge-photo">사진 {log.images.length}장</span>
                                 )}
-                                {log.issues && (
-                                     <span style={{fontSize:'12px', color:'#d32f2f', background:'#ffebee', padding:'2px 6px', borderRadius:'4px'}}>⚠️ 특이사항</span>
-                                )}
+                                <span className="row-arrow">→</span>
                              </div>
                          </div>
                      ))}
@@ -186,56 +199,21 @@ const SiteWorkLogListModal: React.FC<Props> = ({ siteId, partnerUid, onClose }) 
         </div>
       </div>
 
-      {/* [이미지 뷰어 오버레이] */}
+      {/* 이미지 뷰어 (동일) */}
       {viewingImage && (
           <div className="image-viewer-overlay" onClick={closeImageViewer}>
               <div className="image-viewer-controls">
-                  <button onClick={closeImageViewer}>닫기 (Esc)</button>
-                  <span>휠: 확대/축소 | 드래그: 이동</span>
+                  <button onClick={closeImageViewer}>닫기</button>
               </div>
               <div 
                 className="image-viewer-content" 
-                onWheel={handleWheel}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onClick={e => e.stopPropagation()}
-                style={{
-                    transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-                    cursor: isDragging.current ? 'grabbing' : 'grab'
-                }}
+                onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onClick={e => e.stopPropagation()}
+                style={{ transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`, cursor: isDragging.current ? 'grabbing' : 'grab' }}
               >
                   <img src={viewingImage} alt="상세보기" draggable={false} />
               </div>
           </div>
       )}
-      
-      <style>{`
-          .image-viewer-overlay {
-              position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-              background: rgba(0,0,0,0.9); z-index: 4000;
-              display: flex; justify-content: center; align-items: center;
-              overflow: hidden;
-          }
-          .image-viewer-controls {
-              position: absolute; top: 20px; right: 20px; z-index: 4001;
-              display: flex; gap: 15px; align-items: center;
-              color: white; font-size: 14px;
-          }
-          .image-viewer-controls button {
-              background: rgba(255,255,255,0.2); border: 1px solid white; color: white;
-              padding: 8px 16px; border-radius: 20px; cursor: pointer;
-          }
-          .image-viewer-content {
-              transition: transform 0.1s ease-out;
-              display: flex; justify-content: center; align-items: center;
-          }
-          .image-viewer-content img {
-              max-width: 90vw; max-height: 90vh;
-              object-fit: contain;
-              box-shadow: 0 0 20px rgba(0,0,0,0.5);
-          }
-      `}</style>
     </div>
   );
 };

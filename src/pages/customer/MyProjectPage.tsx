@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy 
@@ -15,10 +15,11 @@ import Footer from '../../components/common/Footer';
 import RoleHeader from '../../components/common/RoleHeader';
 import { useMenu } from '../../contexts/MenuContext';
 
-import ConstructionScheduleModal from '../../components/partner/ConstructionScheduleModal';
+/* [수정] 4개의 버튼 모두 고객 전용 모달로 연결 */
+import CustomerConstructionScheduleModal from '../../components/customer/CustomerConstructionScheduleModal';
 import SiteWorkLogListModal from '../../components/customer/SiteWorkLogListModal';
 import CustomerSiteFilesModal from '../../components/customer/CustomerSiteFilesModal';
-import ChangeOrderModal from '../../components/partner/ChangeOrderModal'; 
+import CustomerChangeOrderModal from '../../components/customer/CustomerChangeOrderModal'; 
 
 import './MyProjectPage.css'; 
 
@@ -90,6 +91,9 @@ const MyProjectPage: React.FC = () => {
       partnerUid: string;
   } | null>(null);
 
+  // 애니메이션 강제 실행을 위한 상태
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
+
   useEffect(() => {
     const handleResize = () => {
       const isCurrentlyMobile = window.innerWidth < 768;
@@ -97,7 +101,16 @@ const MyProjectPage: React.FC = () => {
       if (!isCurrentlyMobile) setIsMobileMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // 페이지 마운트 후 즉시 애니메이션 활성화 (옵저버 제거하고 강제 실행)
+    const timer = setTimeout(() => {
+        setIsPageLoaded(true);
+    }, 100);
+
+    return () => {
+        window.removeEventListener('resize', handleResize);
+        clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -177,7 +190,7 @@ const MyProjectPage: React.FC = () => {
   const handleMenuSelect = (key: string) => { setSelectedMenu(key); };
   const toggleExpand = (id: string) => { setExpandedSiteId(prev => (prev === id ? null : id)); };
   
-  const getStatusLabel = (status: string) => status; // 스타일은 CSS로 제어
+  const getStatusLabel = (status: string) => status; 
 
   const handleButtonClick = (type: any, site: MySiteData) => {
       if (type === 'estimate' || type === 'contract' || type === 'insurance') {
@@ -197,9 +210,11 @@ const MyProjectPage: React.FC = () => {
         <div className="mp-inner-container">
             
             <div className="mp-header-section">
-                <h2 className="mp-title">MY LOUNGE</h2>
-                <div className="mp-divider-long"></div>
-                <p className="mp-subtitle">진행 중인 프로젝트를 확인하세요</p>
+                <div className="mp-reveal-mask">
+                    <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>MY LOUNGE</h2>
+                </div>
+                <div className={`mp-divider-long mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}></div>
+                <p className={`mp-subtitle mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}>진행 중인 프로젝트를 확인하세요</p>
             </div>
 
             {loadingData ? (
@@ -207,18 +222,22 @@ const MyProjectPage: React.FC = () => {
             ) : (
                 <div className="mp-project-list">
                     {mySites.length === 0 ? (
-                    <div className="mp-empty-state">
+                    <div className={`mp-empty-state mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}>
                         <p>진행 중인 프로젝트가 없습니다.</p>
                         <span>초대장을 통해 프로젝트를 시작하세요.</span>
                     </div>
                     ) : (
-                    mySites.map(site => {
+                    mySites.map((site, index) => {
                         const statusText = getStatusLabel(site.status);
                         const isExpanded = expandedSiteId === site.siteId;
                         const changeAmt = site.changeOrderTotal || 0;
 
                         return (
-                        <div key={site.siteId} className={`mp-project-card ${isExpanded ? 'active' : ''}`}>
+                        <div 
+                            key={site.siteId} 
+                            className={`mp-project-card ${isExpanded ? 'active' : ''} mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}
+                            style={{ transitionDelay: isPageLoaded ? '0s' : `${index * 0.1}s` }}
+                        >
                             
                             {/* Card Header */}
                             <div className="mp-card-header" onClick={() => toggleExpand(site.siteId)}>
@@ -263,7 +282,6 @@ const MyProjectPage: React.FC = () => {
                                                 <span>최초계약</span>
                                                 <strong>{(site.budget || 0).toLocaleString()} 원</strong>
                                             </div>
-                                            {/* [수정] 배경색 없이 텍스트만 붉은색으로 */}
                                             {changeAmt !== 0 && (
                                                 <div className="mp-data-row highlight">
                                                     <span>변경/추가</span>
@@ -285,7 +303,7 @@ const MyProjectPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* 액션 버튼 그리드 (호버 시 브랜드 컬러) */}
+                                    {/* 액션 버튼 그리드 */}
                                     <div className="mp-actions-section">
                                         <span className="mp-label">ACTIONS</span>
                                         <div className="mp-actions-grid">
@@ -335,9 +353,9 @@ const MyProjectPage: React.FC = () => {
       {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
       {isChatOpen && <ChatWidget onClose={() => setIsChatOpen(false)} />}
       
-      {/* Modals */}
-      {modalState?.type === 'schedule' && <ConstructionScheduleModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} viewOnly={true} />}
-      {modalState?.type === 'changeOrder' && <ChangeOrderModal siteId={modalState.siteId} siteName="" partnerUid={modalState.partnerUid} userRole="customer" onClose={() => setModalState(null)} />}
+      {/* Modals: 모두 고객 전용 컴포넌트로 연결 */}
+      {modalState?.type === 'schedule' && <CustomerConstructionScheduleModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
+      {modalState?.type === 'changeOrder' && <CustomerChangeOrderModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'worklog' && <SiteWorkLogListModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'files' && <CustomerSiteFilesModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
     </div>

@@ -15,6 +15,9 @@
   /* 사용자 설정 준수 */
   --cb-radius: 5px;           /* Radius 5px 고정 */
   --cb-transition: cubic-bezier(0.19, 1, 0.22, 1); /* 고급스러운 모션감 */
+  
+  /* [추가] 고급스러운 애니메이션 이징 */
+  --cb-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   --header-height-pc: 70px;
   --header-height-mo: 60px;
@@ -48,15 +51,33 @@
   margin: 0 auto;
 }
 
-/* --- 애니메이션 (레퍼런스 스타일) --- */
+/* --- [핵심] 동적 요소 애니메이션 --- */
+
+/* 1. Mask Reveal (타이틀용: 보이지 않는 상자에서 올라옴) */
+.cb-reveal-mask {
+  overflow: hidden; display: block;
+}
+.cb-reveal-text {
+  transform: translateY(110%); /* 기본적으로 숨겨져 있음 */
+  transition: transform 1.2s var(--cb-ease);
+  display: block;
+}
+.cb-reveal-text.cb-active {
+  transform: translateY(0); /* 활성화 시 등장 */
+}
+
+/* 2. Fade Up (본문 및 리스트용) */
 .cb-fade-up {
   opacity: 0; 
-  transform: translateY(20px); 
-  transition: opacity 0.6s var(--cb-transition), transform 0.6s var(--cb-transition);
+  transform: translateY(30px); 
+  transition: opacity 0.8s var(--cb-ease), transform 0.8s var(--cb-ease);
 }
-.cb-fade-up.cb-active { opacity: 1; transform: translateY(0); }
+.cb-fade-up.cb-active { 
+  opacity: 1; 
+  transform: translateY(0); 
+}
 
-/* --- 헤더 섹션 (레퍼런스 디자인 통일) --- */
+/* --- 헤더 섹션 --- */
 .cb-header-section {
   margin-bottom: 60px;
   text-align: left;
@@ -380,4 +401,9 @@
   /* 아이콘 위치 미세 조정 */
   .cb-lock-icon { margin-right: 4px; vertical-align: middle; }
   .cb-new-dot { display: inline-block; margin-left: 4px; vertical-align: top; margin-top: 6px; }
+  
+  /* 모바일 작성자 표시 */
+  .cb-author::before {
+    content: '작성자: '; font-weight: 400; color: #999; margin-right: 4px;
+  }
 }

@@ -24,7 +24,7 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // [이미지 뷰어 상태]
+  // 이미지 뷰어 상태
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
@@ -34,6 +34,11 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
   const startPos = useRef<Point | null>(null);
   const touchDistance = useRef<number | null>(null);
 
+  // 애니메이션 Ref
+  const listRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // 1. 데이터 로드
   useEffect(() => {
     const fetchFiles = async () => {
       setLoading(true);
@@ -54,38 +59,60 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
 
   const currentFiles = files.filter(f => f.category === activeTab);
 
-  // --- 뷰어 핸들러 ---
-  const openViewer = (url: string) => {
-      setViewingImage(url);
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-  };
-  const closeViewer = () => setViewingImage(null);
+  // 2. 애니메이션 실행
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const headers = document.querySelectorAll('.cf-header-anim');
+        headers.forEach(el => el.classList.add('cf-active'));
 
-  // 마우스 휠 (PC)
+        observerRef.current = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('cf-active');
+            }
+          });
+        }, { threshold: 0.1 });
+
+        const targets = document.querySelectorAll('.cf-fade-up');
+        targets.forEach(el => observerRef.current?.observe(el));
+      }, 100);
+    }
+    return () => observerRef.current?.disconnect();
+  }, [loading, activeTab]);
+
+  // --- 뷰어 핸들러 ---
+  const openViewer = (url: string) => { setViewingImage(url); setScale(1); setPosition({ x: 0, y: 0 }); };
+  
+  const closeViewer = () => {
+      setViewingImage(null);
+  };
+
   const handleWheel = useCallback((e: React.WheelEvent) => {
       e.stopPropagation();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
       setScale(prev => Math.min(Math.max(0.5, prev + delta), 5));
   }, []);
   
-  // 마우스 드래그 시작 (PC)
   const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = useCallback((e) => {
       e.preventDefault();
+      e.stopPropagation(); // 드래그 시작 시 전파 방지
       isDragging.current = true;
       startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
   }, [position.x, position.y]);
   
-  // 마우스 드래그 이동 (PC)
   const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = useCallback((e) => {
       if (!isDragging.current || startPos.current === null) return;
+      e.stopPropagation(); // 드래그 중 전파 방지
       setPosition({ x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y });
   }, []);
   
-  // 마우스 드래그 종료 (PC)
-  const handleMouseUp = useCallback(() => { isDragging.current = false; }, []);
+  const handleMouseUp = useCallback((e: React.MouseEvent) => { 
+      e.stopPropagation();
+      isDragging.current = false; 
+  }, []);
   
-  // --- 터치 핸들러 (모바일) ---
+  // 터치 핸들러
   const getDistance = (touches: React.TouchList) => {
       return Math.hypot(
           touches[0].pageX - touches[1].pageX, 
@@ -96,12 +123,10 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
       e.stopPropagation();
       if (e.touches.length === 2) {
-          // 핀치 줌 시작
           touchDistance.current = getDistance(e.touches);
           isDragging.current = false; 
           startPos.current = null;
       } else if (e.touches.length === 1) {
-          // 단일 터치 드래그 시작
           isDragging.current = true;
           startPos.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
           touchDistance.current = null;
@@ -110,93 +135,98 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
       e.stopPropagation();
-      
       if (e.touches.length === 2 && touchDistance.current !== null) {
-          // 핀치 줌 이동
           const newDistance = getDistance(e.touches);
           const scaleFactor = newDistance / touchDistance.current;
           setScale(prev => Math.min(Math.max(0.5, prev * scaleFactor), 5));
           touchDistance.current = newDistance;
       } else if (isDragging.current && e.touches.length === 1 && startPos.current !== null) {
-          // 드래그 이동
           setPosition({ x: e.touches[0].clientX - startPos.current.x, y: e.touches[0].clientY - startPos.current.y });
       }
   }, []);
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+      e.stopPropagation();
       isDragging.current = false;
       touchDistance.current = null;
       startPos.current = null;
   }, []);
   
-  // --- [수정] 다운로드 강제 함수 (Blob 사용) ---
   const handleDownload = async (fileUrl: string, fileName: string) => {
       try {
-        // 이미지 데이터를 fetch로 가져옵니다.
-        const response = await fetch(fileUrl, {
-            method: 'GET',
-            // mode: 'cors', // Firebase 설정에 따라 필요할 수 있음
-        });
-
+        const response = await fetch(fileUrl, { method: 'GET' });
         if (!response.ok) throw new Error('Network response was not ok');
-
-        // 데이터를 Blob으로 변환
         const blob = await response.blob();
-        
-        // Blob에 대한 임시 URL 생성
         const blobUrl = window.URL.createObjectURL(blob);
-        
-        // 임시 링크 생성 및 클릭
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = fileName; // Blob URL에서는 이 속성이 정확히 동작합니다.
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
-        
-        // 정리 (메모리 누수 방지)
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
-
       } catch (error) {
           console.error("다운로드 실패:", error);
-          // CORS 문제 등으로 fetch 실패 시, 최후의 수단으로 새 탭 열기 시도
           window.open(fileUrl, '_blank');
       }
   };
 
   return (
-    <div className="customer-files-modal-overlay">
-      <div className="customer-files-modal-content" style={{display:'flex', flexDirection:'column'}}>
+    <div className="cf-modal-overlay" onClick={onClose}>
+      <div className="cf-modal-container wide" onClick={e => e.stopPropagation()}>
         
-        <div className="customer-files-modal-header">
-          <h3>📂 공사 자료실</h3>
-          <button className="customer-files-modal-close-btn" onClick={onClose}>×</button>
+        {/* 헤더 */}
+        <div className="cf-modal-header">
+          <div className="cf-reveal-mask">
+             <h2 className="cf-modal-title cf-header-anim">공사 자료실</h2>
+          </div>
+          <button className="btn-close" onClick={onClose}>&times;</button>
         </div>
 
-        <div className="customer-files-modal-body" style={{display:'flex', flexDirection:'column', height:'100%'}}>
-            <div className="customer-files-modal-file-tabs">
-                <button className={`customer-files-modal-file-tab ${activeTab === 'floor-plan' ? 'active' : ''}`} onClick={() => setActiveTab('floor-plan')}>📐 평면도</button>
-                <button className={`customer-files-modal-file-tab ${activeTab === '3d-render' ? 'active' : ''}`} onClick={() => setActiveTab('3d-render')}>🏠 3D 렌더링</button>
+        {/* 바디 */}
+        <div className="cf-modal-body" ref={listRef}>
+            
+            {/* 탭 */}
+            <div className="cf-tabs cf-fade-up">
+                <button 
+                    className={`cf-tab ${activeTab === 'floor-plan' ? 'active' : ''}`} 
+                    onClick={() => setActiveTab('floor-plan')}
+                >
+                    평면도 (Floor Plan)
+                </button>
+                <button 
+                    className={`cf-tab ${activeTab === '3d-render' ? 'active' : ''}`} 
+                    onClick={() => setActiveTab('3d-render')}
+                >
+                    3D 렌더링 (Perspective)
+                </button>
             </div>
 
-            <div className="customer-files-modal-file-grid-container">
-                {loading ? <div className="customer-files-modal-loading">자료를 불러오는 중...</div> : 
-                 currentFiles.length === 0 ? <div className="customer-files-modal-empty"><p>등록된 {activeTab === 'floor-plan' ? '평면도' : '3D 렌더링'} 자료가 없습니다.</p></div> : 
-                 <div className="customer-files-modal-file-grid">
-                     {currentFiles.map(file => (
-                         <div key={file.id} className="customer-files-modal-file-card">
-                             <div className="customer-files-modal-file-thumb" onClick={() => openViewer(file.url)}>
+            {/* 그리드 */}
+            <div className="cf-grid-container">
+                {loading ? <div className="cf-loading">자료를 불러오는 중...</div> : 
+                 currentFiles.length === 0 ? <div className="cf-empty cf-fade-up">등록된 {activeTab === 'floor-plan' ? '평면도' : '3D 렌더링'} 자료가 없습니다.</div> : 
+                 <div className="cf-file-grid">
+                     {currentFiles.map((file, index) => (
+                         <div 
+                            key={file.id} 
+                            className="cf-file-card cf-fade-up"
+                            style={{ transitionDelay: `${index * 0.05}s` }}
+                         >
+                             <div className="cf-thumb-wrap" onClick={(e) => { e.stopPropagation(); openViewer(file.url); }}>
                                  <img src={file.url} alt={file.name} />
-                                 <div className="customer-files-modal-file-overlay">🔍 크게 보기</div>
+                                 <div className="cf-thumb-overlay">
+                                     <span className="icon-zoom">🔍</span>
+                                 </div>
                              </div>
-                             <div className="customer-files-modal-file-info">
-                                 <span className="customer-files-modal-file-name" title={file.name}>{file.name}</span>
+                             <div className="cf-file-info">
+                                 <span className="cf-file-name" title={file.name}>{file.name}</span>
                                  <button 
-                                      onClick={() => handleDownload(file.url, file.name)} 
-                                      className="customer-files-modal-btn-download"
-                                  >
-                                      ⬇ 저장
-                                  </button>
+                                     onClick={(e) => { e.stopPropagation(); handleDownload(file.url, file.name); }} 
+                                     className="btn-download"
+                                 >
+                                     Download
+                                 </button>
                              </div>
                          </div>
                      ))}
@@ -206,25 +236,32 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
         </div>
       </div>
 
+      {/* [수정] 이미지 뷰어 오버레이 클릭 시 부모(팝업)로 이벤트 전파 방지 */}
       {viewingImage && (
           <div 
                 className="image-viewer-overlay" 
-                onClick={closeViewer}
+                onClick={(e) => {
+                    e.stopPropagation(); // [핵심] 여기서 전파를 막아야 팝업이 안 닫힙니다.
+                    closeViewer();
+                }}
                 onTouchStart={handleTouchStart} 
                 onTouchMove={handleTouchMove} 
                 onTouchEnd={handleTouchEnd}
             >
-              <div className="image-viewer-controls">
-                  <button onClick={closeViewer}>닫기 (Esc)</button>
-                  <span>휠/핀치: 확대/축소 | 드래그: 이동</span>
+              <div className="image-viewer-controls" onClick={e => e.stopPropagation()}>
+                  <button onClick={(e) => {
+                      e.stopPropagation(); // 버튼 클릭 시에도 전파 방지
+                      closeViewer();
+                  }}>닫기</button>
               </div>
+              
               <div 
                 className="image-viewer-content" 
                 onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onClick={e => e.stopPropagation()}
+                onClick={e => e.stopPropagation()} // 이미지 클릭 시 닫히지 않도록
                 style={{
                     transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
                     cursor: isDragging.current ? 'grabbing' : 'grab'

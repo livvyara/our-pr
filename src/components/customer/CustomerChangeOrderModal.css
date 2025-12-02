@@ -1,0 +1,211 @@
+/* src/components/customer/CustomerChangeOrderModal.css */
+
+:root {
+  --co-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --co-text-main: #333;
+  --co-text-sub: #666;
+  --co-border: #e0e0e0;
+  --co-accent: #111;
+}
+
+/* 애니메이션 */
+.co-reveal-mask { overflow: hidden; display: block; }
+.co-header-anim {
+  transform: translateY(110%);
+  transition: transform 1.2s var(--co-ease);
+  display: block;
+}
+.co-header-anim.co-active { transform: translateY(0); }
+
+.co-fade-up {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.6s var(--co-ease), transform 0.6s var(--co-ease);
+}
+.co-fade-up.co-active { opacity: 1; transform: translateY(0); }
+
+/* 모달 레이아웃 */
+.co-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  z-index: 3000; display: flex; align-items: center; justify-content: center;
+  animation: coFadeIn 0.3s ease;
+}
+@keyframes coFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.co-modal-container {
+  background: #f7f7f7; /* 배경색을 약간 회색으로 변경하여 카드 강조 */
+  width: 95%; height: 85vh; border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+  overflow: hidden; animation: coSlideUp 0.4s var(--co-ease);
+}
+.co-modal-container.wide { max-width: 1000px; }
+
+@keyframes coSlideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.co-modal-header {
+  padding: 25px 40px; border-bottom: 1px solid #ddd;
+  display: flex; justify-content: space-between; align-items: flex-start; background: #fff;
+  flex-shrink: 0;
+}
+.co-modal-title { margin: 0; font-size: 22px; font-weight: 800; color: #111; letter-spacing: -0.5px; }
+.btn-close {
+  background: none; border: none; font-size: 30px; color: #999; cursor: pointer;
+  line-height: 1; padding: 0; margin-left: 20px; transition: color 0.2s;
+}
+.btn-close:hover { color: #333; }
+
+.co-modal-body {
+  flex: 1; overflow-y: auto; padding: 40px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.co-loading, .co-empty { text-align: center; padding: 80px 0; color: #888; font-size: 16px; width: 100%; }
+
+/* --- [수정] 리스트 스타일 (명확한 카드 형태) --- */
+.co-list-container { 
+  display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 800px;
+}
+
+.co-list-card {
+  background: #fff; 
+  border: 1px solid #e0e0e0;
+  border-radius: 10px; 
+  cursor: pointer; 
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  display: flex; flex-direction: column;
+  padding: 20px;
+}
+.co-list-card:hover {
+  border-color: #333; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+}
+
+.co-card-header-row {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+.co-card-date { font-size: 13px; color: #888; font-weight: 500; }
+.co-card-title { margin: 0; font-size: 18px; font-weight: 700; color: #333; word-break: keep-all; }
+
+.co-card-divider { height: 1px; background: #f0f0f0; margin: 15px 0; }
+
+.co-card-footer { display: flex; justify-content: space-between; align-items: center; }
+.co-card-footer span:first-child { font-size: 13px; color: #666; }
+.co-card-amount { font-size: 18px; font-weight: 800; color: #111; }
+
+/* 뱃지 */
+.co-status {
+  font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
+.co-status.pending { background: #f5f5f5; color: #888; border: 1px solid #ddd; }
+.co-status.waiting { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+.co-status.approved { background: #333; color: #fff; border: 1px solid #333; }
+
+/* --- 상세 보기 (Invoice Paper) --- */
+.co-detail-wrapper { width: 100%; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; }
+.btn-back {
+  align-self: flex-start; background: none; border: none; color: #666; font-size: 15px;
+  cursor: pointer; padding: 0; margin-bottom: 20px; font-weight: 600; transition: color 0.2s;
+}
+.btn-back:hover { color: #111; }
+
+.invoice-paper {
+  background: #fff; border: 1px solid #ddd; border-radius: 0; /* 종이 느낌 */
+  padding: 50px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box;
+}
+.invoice-header { border-bottom: 2px solid #333; padding-bottom: 25px; margin-bottom: 30px; }
+.invoice-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.invoice-title-row h3 { font-size: 26px; font-weight: 800; margin: 0; word-break: keep-all; }
+.invoice-meta { font-size: 13px; color: #888; display: flex; gap: 20px; }
+
+/* 테이블 (PC) */
+.invoice-table-wrapper { overflow-x: auto; margin-bottom: 30px; }
+.invoice-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.invoice-table th {
+  text-align: left; padding: 12px; border-bottom: 1px solid #999;
+  font-size: 13px; color: #555; font-weight: 600; background: #f9f9f9;
+}
+.invoice-table td {
+  padding: 16px 12px; border-bottom: 1px solid #eee; font-size: 15px; color: #333;
+}
+.th-center, .td-center { text-align: center; }
+.th-right, .td-right { text-align: right; }
+.font-bold { font-weight: 700; }
+.item-name { font-weight: 600; }
+.item-note { font-size: 12px; color: #999; margin-top: 4px; }
+
+/* [수정] 합계 영역 분리 스타일 */
+.invoice-footer {
+  display: flex; flex-direction: column; align-items: flex-end; 
+  padding-top: 20px; border-top: 1px solid #333; gap: 10px;
+}
+.invoice-summary-row { display: flex; gap: 40px; font-size: 14px; color: #666; width: 300px; justify-content: space-between; }
+.invoice-summary-row strong { color: #333; }
+.invoice-total-row { 
+  display: flex; gap: 40px; font-size: 18px; color: #111; 
+  width: 300px; justify-content: space-between; margin-top: 10px; padding-top: 15px; border-top: 1px dashed #ddd;
+}
+.total-amount { font-size: 24px; font-weight: 800; color: #1a237e; }
+
+.invoice-actions {
+  margin-top: 50px; text-align: center; background: #f5f7fa; padding: 30px; border-radius: 8px; width: 100%; box-sizing: border-box;
+}
+.btn-approve {
+  background: #1a237e; color: #fff; border: none; padding: 15px 50px;
+  font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: background 0.2s;
+}
+.btn-approve:hover { background: #0d1560; }
+
+/* ------------------------------------------------------------------ */
+/* 📱 모바일 완벽 호환 (768px 이하) */
+/* ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .co-modal-container.wide { width: 100%; height: 100%; border-radius: 0; }
+  .co-modal-header { padding: 20px; }
+  .co-modal-body { padding: 20px 16px; background: #f0f0f0; } /* 배경 구분 */
+
+  /* 상세 내역 종이 스타일 */
+  .invoice-paper { padding: 20px; box-shadow: none; border: none; }
+
+  .invoice-header { padding-bottom: 20px; margin-bottom: 20px; }
+  .invoice-title-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .invoice-meta { flex-direction: column; gap: 5px; font-size: 12px; }
+
+  /* [핵심] 모바일 테이블 -> 카드 변환 */
+  .invoice-table-wrapper { overflow: visible; }
+  .invoice-table { display: block; width: 100%; min-width: auto; }
+  .invoice-table thead { display: none; } /* 헤더 숨김 */
+  .invoice-table tbody { display: block; }
+  
+  .invoice-table tr {
+    display: block; background: #fff; 
+    border: 1px solid #eee; border-radius: 8px;
+    margin-bottom: 15px; padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  }
+
+  .invoice-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border: none; font-size: 14px; text-align: right;
+  }
+  
+  /* 라벨 표시 */
+  .invoice-table td::before {
+    content: attr(data-label);
+    font-weight: 600; color: #999; font-size: 12px; margin-right: 10px;
+  }
+
+  /* 품명(첫번째 셀) 강조 */
+  .invoice-table td:first-child {
+    display: block; text-align: left; border-bottom: 1px dashed #eee;
+    padding-bottom: 10px; margin-bottom: 10px;
+  }
+  .invoice-table td:first-child::before { display: none; }
+  .item-name { font-size: 16px; color: #111; }
+
+  /* 합계 영역 모바일 */
+  .invoice-footer { width: 100%; align-items: stretch; }
+  .invoice-summary-row, .invoice-total-row { width: 100%; gap: 0; }
+  .total-amount { font-size: 22px; }
+
+  .invoice-actions { padding: 20px; margin-top: 30px; }
+  .btn-approve { width: 100%; }
+}
