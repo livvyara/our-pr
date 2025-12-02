@@ -1,0 +1,175 @@
+/* JoinSitePage.css */
+
+/* 전체 배경: 은은한 그라디언트 혹은 단색 */
+.join-site-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f7fa; /* 아주 연한 쿨그레이 */
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", Roboto, sans-serif;
+}
+
+/* 카드 디자인 */
+.join-site-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 30px;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); /* 부드럽고 깊은 그림자 */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 로고 */
+.join-site-header {
+    margin-bottom: 30px;
+}
+.join-site-logo {
+    height: 40px;
+    object-fit: contain;
+}
+
+/* 아이콘 영역 (상태 표시) */
+.join-site-icon-area {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.join-icon {
+    font-size: 48px;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* 로딩 스피너 */
+.join-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 텍스트 영역 */
+.join-site-content {
+    margin-bottom: 35px;
+    width: 100%;
+}
+
+.join-site-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.5px;
+}
+
+.join-site-message {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.6;
+    white-space: pre-line; /* 줄바꿈 적용 */
+    margin: 0;
+    word-break: keep-all;
+}
+
+/* 버튼 영역 */
+.join-site-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.join-auth-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.join-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.join-btn.primary {
+    background-color: #1a1a1a; /* 검정색 (브랜드 컬러로 변경 가능) */
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.join-btn.primary:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.join-btn.secondary {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    border: 1px solid #e0e0e0;
+}
+.join-btn.secondary:hover {
+    background-color: #f9f9f9;
+    border-color: #ccc;
+}
+
+.join-link-home {
+    margin-top: 15px;
+    font-size: 13px;
+    color: #999;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+.join-link-home:hover {
+    color: #666;
+}
+
+/* 하단 푸터 */
+.join-site-footer {
+    margin-top: 40px;
+    font-size: 11px;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+    .join-site-card {
+        padding: 30px 20px;
+        box-shadow: none; /* 모바일에서는 플랫하게 */
+        background: transparent;
+    }
+    .join-site-container {
+        background: #fff; /* 모바일 전체 배경 흰색 */
+    }
+}

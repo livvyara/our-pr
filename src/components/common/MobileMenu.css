@@ -1,116 +1,239 @@
 /* src/components/common/MobileMenu.css */
 
-/* 오버레이 (Drawer 바깥 배경) */
+/* --- 애니메이션 정의 --- */
+@keyframes slideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 1. 오버레이 (배경) */
 .mobile-menu-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* 어둡게 */
-  z-index: 2000; /* Header보다 높게 */
+  background-color: rgba(0, 0, 0, 0.4); /* 조금 더 투명하고 세련된 블랙 */
+  backdrop-filter: blur(3px); /* 배경 흐림 효과 (Glassmorphism) */
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
 }
 
-/* 실제 메뉴 영역 (Drawer) */
+/* 2. 메뉴 Drawer (본체) */
 .mobile-menu-drawer {
-  width: 80%; /* 모바일 화면의 80% 정도 사용 */
-  max-width: 300px; /* 최대 너비 제한 */
+  width: 85%;
+  max-width: 320px;
   height: 100%;
-  background-color: white;
+  background-color: #ffffff;
   position: absolute;
   left: 0;
   top: 0;
   overflow-y: auto;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  /* 우측 상/하단 둥근 모서리 적용 */
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12); /* 부드럽고 넓은 그림자 */
+  animation: slideIn 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* 쫀득한 슬라이딩 */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Header 영역 */
+/* 3. 헤더 영역 */
 .drawer-header {
-  padding: 16px;
+  padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  background-color: #fff;
+  /* sticky 적용으로 스크롤 시에도 상단 고정 (선택 사항) */
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.logo-text {
-  font-weight: bold;
-  font-size: 24px;
-  color: black;
+.mobile-menu-logo-container {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.mobile-menu-logo {
+  height: auto;
+  max-height: 50px; /* 적절한 크기로 조정 */
+  max-width: 160px;
+  object-fit: contain;
 }
 
 .close-button {
-  background: none;
+  background: #f5f5f5; /* 닫기 버튼 배경 추가 */
   border: none;
-  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%; /* 원형 버튼 */
+  font-size: 16px;
+  color: #555;
   cursor: pointer;
-}
-
-/* 로그인/회원가입 영역 */
-.auth-area {
-  padding: 16px;
   display: flex;
-  gap: 10px; /* SizedBox(width: 10) 역할 */
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
 }
 
-.auth-button {
-  flex: 1; /* Expanded 역할 */
-  height: 40px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  font-weight: bold;
+.close-button:hover {
+  background-color: #e0e0e0;
 }
 
-.login-btn {
-  background-color: white;
-  color: black;
-  border: none;
-}
-/* signup-btn의 style은 인라인으로 처리됨 (K_BRAND_COLOR) */
-
-/* 메뉴 리스트 */
-.menu-list {
-  padding: 8px 0;
-}
-
-.menu-item {
+/* 4. 인증(로그인/회원가입) 영역 */
+.auth-area {
+  padding: 24px;
+  display: flex;
+  gap: 12px;
+  background-color: #fff;
   border-bottom: 1px solid #f0f0f0;
 }
 
+.auth-button {
+  flex: 1;
+  height: 44px; /* 버튼 높이 확대 */
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  /* 쉐도우로 입체감 살짝 추가 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.login-btn {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #e9ecef;
+  border-radius: 5px; /* 기본 래디우스 */
+}
+
+.login-btn:active {
+  background-color: #e2e6ea;
+  transform: translateY(1px);
+}
+
+.signup-btn {
+  /* 인라인 스타일에서 색상은 가져오지만, 기본 효과 정의 */
+  color: #000; /* 텍스트 가독성 */
+}
+
+.signup-btn:active {
+  filter: brightness(0.95);
+  transform: translateY(1px);
+}
+
+/* 5. 메뉴 리스트 영역 */
+.menu-list {
+  padding: 16px 0;
+  flex: 1; /* 남은 공간 채우기 */
+}
+
+.menu-item {
+  /* border-bottom 제거하여 깔끔하게 */
+  margin-bottom: 4px;
+}
+
+/* 메인 메뉴 버튼 */
 .menu-title-button {
   width: 100%;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 12px 16px; /* tilePadding */
+  padding: 16px 24px; /* 터치 영역 확대 */
   text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: bold;
+  font-weight: 600; /* 폰트 강조 */
   font-size: 16px;
+  color: #222;
+  transition: background-color 0.2s;
 }
 
-/* 서브 메뉴 리스트 */
+.menu-title-button:active,
+.menu-title-button:hover {
+  background-color: #f9fafb;
+}
+
+/* 화살표 아이콘 (CSS로 만듦) */
+.menu-arrow {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #aaa;
+  border-bottom: 2px solid #aaa;
+  transform: rotate(45deg);
+  transition: transform 0.3s ease; /* 회전 애니메이션 */
+  margin-right: 4px;
+}
+
+/* 메뉴가 열렸을 때 화살표 회전 */
+.menu-arrow.open {
+  transform: rotate(225deg); /* 180도 회전 + 45도 */
+  border-color: #555;
+}
+
+/* 6. 서브 메뉴 리스트 */
 .sub-menu-list {
-  background-color: #ffffff;
+  background-color: #f8f9fa; /* 아주 연한 회색 배경으로 구분 */
+  overflow: hidden;
+  /* 부드러운 펼침 효과를 위해 transition 추가 가능 (JS 높이 계산 필요하지만 여기선 심플하게 처리) */
 }
 
 .sub-menu-item {
-  padding: 10px 30px; /* contentPadding: EdgeInsets.only(left: 30.0) */
+  padding: 14px 24px 14px 40px; /* 들여쓰기 */
   font-size: 14px;
+  color: #555; /* 메인보다 조금 연하게 */
   cursor: pointer;
-  color: #2b2b2b;
+  transition: color 0.2s, background-color 0.2s;
+  position: relative;
 }
 
+.sub-menu-item:before {
+  /* 서브메뉴 앞 점(Bullet) 포인트 */
+  content: '';
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #ddd;
+  border-radius: 50%;
+}
+
+.sub-menu-item:active {
+  background-color: #eceff1;
+  color: #000;
+}
+
+.sub-menu-item:active:before {
+  background-color: #000; /* 클릭 시 점 색상 변경 */
+}
+
+/* 단일 메뉴 (마이페이지 등) */
 .single-item {
-  padding: 12px 16px;
+  padding: 16px 24px;
   cursor: pointer;
-  font-weight: normal;
+  font-weight: 500;
+  color: #333;
+}
+
+.single-item:hover {
+  background-color: #f9fafb;
 }
 
 .divider {
-    margin: 8px 0;
-    border: none;
-    border-top: 1px solid #ffffff00;
+  margin: 16px 24px;
+  border: none;
+  border-top: 1px solid #eee;
 }

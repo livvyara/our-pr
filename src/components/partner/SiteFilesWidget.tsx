@@ -95,8 +95,8 @@ const SiteFilesWidget: React.FC<SiteFilesWidgetProps> = ({ siteId, partnerUid })
     const currentFiles = filesByCategory.get(selectedCategoryKey) || [];
     const totalCount = currentFiles.length + files.length;
     
-    if (totalCount > 20) {
-      alert(`최대 20개까지 업로드할 수 있습니다.`);
+    if (totalCount > 30) {
+      alert(`최대 30개까지 업로드할 수 있습니다.`);
       e.target.value = ""; return;
     }
 
