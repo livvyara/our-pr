@@ -7,7 +7,7 @@
 }
 
 .td-container {
-    max-width: 1400px; /* 넓게 사용 */
+    max-width: 1600px; /* 좌우 패널 위해 넓게 */
     margin: 0 auto;
     padding: 0 20px;
     font-family: 'Pretendard', sans-serif;
@@ -17,7 +17,7 @@
 .td-header h2 { font-size: 26px; font-weight: 800; color: #333; margin-bottom: 8px; }
 .td-header p { color: #666; font-size: 14px; }
 
-/* 에디터 레이아웃 */
+/* 에디터 레이아웃 (좌 - 중 - 우) */
 .td-editor-wrapper {
     display: flex;
     height: 750px;
@@ -27,11 +27,10 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* 사이드바 */
+/* 사이드바 공통 */
 .td-sidebar {
-    width: 340px;
+    width: 280px;
     background: #fff;
-    border-right: 1px solid #eee;
     padding: 20px;
     overflow-y: auto;
     display: flex;
@@ -39,6 +38,8 @@
     gap: 20px;
     z-index: 10;
 }
+.td-sidebar.left { border-right: 1px solid #eee; }
+.td-sidebar.right { border-left: 1px solid #eee; }
 
 .td-panel-section h4 {
     font-size: 14px;
@@ -49,33 +50,23 @@
     border-bottom: 2px solid #eee;
 }
 
+/* 하이라이트 박스 (선택된 아이템 정보) */
 .td-panel-section.highlight {
     background-color: #f0f8ff;
     border: 1px solid #cce5ff;
     padding: 15px;
     border-radius: 8px;
 }
-.td-panel-section.highlight h4 { border-bottom-color: #99ccff; }
 
-.td-btn-grid {
-    display: grid; gap: 8px;
-}
+.td-btn-grid { display: grid; gap: 8px; }
 .td-btn-grid.col-2 { grid-template-columns: 1fr 1fr; }
 
 .td-btn-grid button {
-    padding: 10px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #444;
-    transition: all 0.2s;
+    padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px;
+    cursor: pointer; font-size: 13px; color: #444; transition: all 0.2s;
 }
 .td-btn-grid button:hover {
-    background: #f5f5f5;
-    border-color: #bbb;
-    transform: translateY(-1px);
+    background: #f5f5f5; border-color: #bbb; transform: translateY(-1px);
 }
 
 /* 조작 도구 */
@@ -98,6 +89,20 @@
 }
 .td-control-row input[type="range"] { flex: 1; margin-left: 10px; }
 .td-control-row input[type="color"] { border: none; width: 40px; height: 30px; cursor: pointer; background: none; padding: 0; }
+.td-control-row input[type="text"] { width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+
+/* 텍스트 추가 영역 */
+.td-text-input-row { display: flex; gap: 5px; margin-bottom: 8px; }
+.td-text-input-row input[type="text"] { flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+.td-btn-add { width: 100%; padding: 8px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+/* 체크박스 행 */
+.td-chk-row { margin-bottom: 8px; font-size: 13px; }
+.td-chk-row label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
+.td-item-name-tag {
+    background: #1976d2; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 10px; text-align: center;
+}
 
 .td-btn-delete {
     width: 100%; padding: 10px; background: #ff5252; color: white; border: none; border-radius: 6px;
