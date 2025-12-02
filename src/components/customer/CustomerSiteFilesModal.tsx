@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import './CustomerSiteFilesModal.css'; 
 
@@ -15,6 +15,8 @@ interface Props {
   onClose: () => void;
 }
 
+interface Point { x: number; y: number; }
+
 const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }) => {
   const db = getFirestore();
   
@@ -25,9 +27,12 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
   // [이미지 뷰어 상태]
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
+  
+  // 터치 및 드래그 상태 관리
   const isDragging = useRef(false);
-  const startPos = useRef({ x: 0, y: 0 });
+  const startPos = useRef<Point | null>(null); // [수정] Point 타입 또는 null
+  const touchDistance = useRef<number | null>(null); 
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -57,21 +62,73 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
   };
   const closeViewer = () => setViewingImage(null);
 
-  const handleWheel = (e: React.WheelEvent) => {
+  // 마우스 휠 (PC)
+  const handleWheel = useCallback((e: React.WheelEvent) => {
       e.stopPropagation();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
       setScale(prev => Math.min(Math.max(0.5, prev + delta), 5));
-  };
-  const handleMouseDown = (e: React.MouseEvent) => {
+  }, []);
+  
+  // 마우스 드래그 시작 (PC)
+  const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = useCallback((e) => {
+      e.preventDefault();
       isDragging.current = true;
       startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
-  };
-  const handleMouseMove = (e: React.MouseEvent) => {
-      if (!isDragging.current) return;
+  }, [position.x, position.y]);
+  
+  // 마우스 드래그 이동 (PC)
+  const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = useCallback((e) => {
+      if (!isDragging.current || startPos.current === null) return;
       setPosition({ x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y });
+  }, []);
+  
+  // 마우스 드래그 종료 (PC)
+  const handleMouseUp = useCallback(() => { isDragging.current = false; }, []);
+  
+  // --- 터치 핸들러 (모바일) ---
+  const getDistance = (touches: React.TouchList) => {
+      return Math.hypot(
+          touches[0].pageX - touches[1].pageX, 
+          touches[0].pageY - touches[1].pageY
+      );
   };
-  const handleMouseUp = () => { isDragging.current = false; };
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+      e.stopPropagation();
+      if (e.touches.length === 2) {
+          // 핀치 줌 시작
+          touchDistance.current = getDistance(e.touches);
+          isDragging.current = false; 
+          startPos.current = null;
+      } else if (e.touches.length === 1) {
+          // 단일 터치 드래그 시작
+          isDragging.current = true;
+          startPos.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
+          touchDistance.current = null;
+      }
+  }, [position.x, position.y]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+      e.stopPropagation();
+      
+      if (e.touches.length === 2 && touchDistance.current !== null) {
+          // 핀치 줌 이동
+          const newDistance = getDistance(e.touches);
+          const scaleFactor = newDistance / touchDistance.current;
+          setScale(prev => Math.min(Math.max(0.5, prev * scaleFactor), 5));
+          touchDistance.current = newDistance;
+      } else if (isDragging.current && e.touches.length === 1 && startPos.current !== null) {
+          // 드래그 이동
+          setPosition({ x: e.touches[0].clientX - startPos.current.x, y: e.touches[0].clientY - startPos.current.y });
+      }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+      isDragging.current = false;
+      touchDistance.current = null;
+      startPos.current = null;
+  }, []);
+  
   return (
     <div className="customer-files-modal-overlay">
       <div className="customer-files-modal-content" style={{display:'flex', flexDirection:'column'}}>
@@ -110,10 +167,16 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
       </div>
 
       {viewingImage && (
-          <div className="image-viewer-overlay" onClick={closeViewer}>
+          <div 
+                className="image-viewer-overlay" 
+                onClick={closeViewer}
+                onTouchStart={handleTouchStart} 
+                onTouchMove={handleTouchMove} 
+                onTouchEnd={handleTouchEnd}
+            >
               <div className="image-viewer-controls">
                   <button onClick={closeViewer}>닫기 (Esc)</button>
-                  <span>휠: 확대/축소 | 드래그: 이동</span>
+                  <span>휠/핀치: 확대/축소 | 드래그: 이동</span>
               </div>
               <div 
                 className="image-viewer-content" 
