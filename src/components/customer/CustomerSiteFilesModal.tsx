@@ -74,7 +74,7 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
 
   return (
     <div className="customer-files-modal-overlay">
-      <div className="customer-files-modal-content" style={{width:'700px', maxHeight:'85vh'}}>
+      <div className="customer-files-modal-content" style={{display:'flex', flexDirection:'column'}}>
         
         <div className="customer-files-modal-header">
           <h3>📂 공사 자료실</h3>
@@ -131,14 +131,6 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
               </div>
           </div>
       )}
-      
-      <style>{`
-          .image-viewer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 4000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-          .image-viewer-controls { position: absolute; top: 20px; right: 20px; z-index: 4001; display: flex; gap: 15px; align-items: center; color: white; font-size: 14px; }
-          .image-viewer-controls button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
-          .image-viewer-content { transition: transform 0.1s ease-out; display: flex; justify-content: center; align-items: center; }
-          .image-viewer-content img { max-width: 90vw; max-height: 90vh; object-fit: contain; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-      `}</style>
     </div>
   );
 };
