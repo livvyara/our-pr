@@ -1,179 +1,243 @@
-/* src/pages/partnerApply.css */
+/* src/pages/PartnerApply.css */
 
-.partner-apply-wrapper {
-  background-color: #f9f9f9; /* 전체 배경색 */
-  padding-bottom: 60px;
-}
-
-.partner-apply-container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-/* 헤더 */
-.apply-header {
-  text-align: center;
-  margin-bottom: 40px;
-}
-.apply-header h2 {
-  font-size: 32px;
-  margin-bottom: 10px;
-  color: #333;
-}
-.apply-header p {
-  font-size: 16px;
-  color: #666;
+:root {
+  --pa-bg: #ffffff;
+  --pa-text-main: #333333;
+  --pa-text-sub: #666666;
+  --pa-border: #e0e0e0;
+  --pa-brand: #F8EF99; 
+  --pa-brand-hover: #e6dd88;
+  --pa-radius: 12px;
 }
 
-/* 탭 네비게이션 */
-.apply-tabs {
+.pa-page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--pa-bg);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  color: var(--pa-text-main);
+}
+
+.pa-main-wrapper {
+  width: 100%;
+  flex-grow: 1;
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 40px;
+  padding: 80px 20px;
 }
 
-.apply-tab-btn {
-  padding: 12px 30px;
-  border: 1px solid #ddd;
-  background-color: #fff;
-  border-radius: 30px;
+.pa-container {
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+
+/* 1. Header Section [수정] */
+.pa-header-section {
+  margin-bottom: 60px;
+  /* Flex 제거 -> Block 구조로 변경하여 위에서 아래로 쌓이게 함 */
+  text-align: left; 
+}
+
+.pa-title {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--pa-text-main);
+  text-transform: uppercase;
+}
+
+/* 구분선 스타일 복구 */
+.pa-divider-long {
+  width: 100%;
+  height: 2px;
+  background-color: var(--pa-text-main);
+  margin: 20px 0; /* 위아래 여백 */
+}
+
+/* 설명글 우측 정렬 */
+.pa-desc {
   font-size: 16px;
-  font-weight: 600;
-  color: #555;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: var(--pa-text-sub);
+  font-weight: 400;
+  margin: 0;
+  text-align: right; /* [중요] 우측 정렬 */
 }
 
-.apply-tab-btn.active {
-  background-color: #333;
-  color: #fff;
-  border-color: #333;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* 콘텐츠 영역 */
-.apply-content {
-  background-color: #fff;
-  padding: 60px 40px;
-  border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-}
-
-.content-intro {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.content-intro h3 {
-  font-size: 28px;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.intro-desc {
-  font-size: 18px;
-  line-height: 1.6;
-  color: #555;
-}
-
-/* 기능 소개 그리드 */
-.features-grid {
+/* 2. Grid Layout */
+.pa-grid-wrapper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3열 */
+  grid-template-columns: repeat(3, 1fr); 
   gap: 30px;
-  margin-bottom: 60px;
+  margin-bottom: 80px;
 }
 
-.feature-item {
-  text-align: center;
-}
-
-.feature-img {
-  width: 100%; /* 너비 100% */
-  height: 220px; /* 고정 높이 */
-  border-radius: 12px;
+/* Feature Card */
+.pa-feature-card {
+  background-color: #fff;
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
   overflow: hidden;
-  margin-bottom: 20px;
-  background-color: #f0f0f0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  display: flex; /* 이미지가 중앙에 오도록 flex 추가 */
-  justify-content: center;
-  align-items: center;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-.feature-img img {
-  width: 100%; /* 부모에 맞춰 너비 100% */
-  height: 100%; /* 부모에 맞춰 높이 100% */
-  object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 */
-  object-position: center; 
-  transition: transform 0.4s ease;
+.pa-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border-color: var(--pa-text-main);
 }
 
-.feature-item:hover .feature-img img {
+.pa-card-img {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.pa-feature-card:hover .pa-card-img img {
   transform: scale(1.05);
 }
 
-.feature-item h4 {
-  font-size: 20px;
+.pa-card-body {
+  padding: 30px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pa-card-header {
+  margin-bottom: 15px;
+}
+
+.pa-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--pa-text-sub);
+  background-color: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: inline-block;
   margin-bottom: 10px;
-  color: #333;
 }
 
-.feature-item p {
-  font-size: 15px;
-  color: #666;
-  line-height: 1.5;
-}
-
-/* 하단 CTA */
-.apply-cta {
-  text-align: center;
-  margin-top: 40px;
-  border-top: 1px solid #eee;
-  padding-top: 40px;
-}
-
-.btn-apply-large {
-  padding: 18px 60px;
+.pa-card-body h3 {
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 700;
+  margin: 0;
+  color: var(--pa-text-main);
+}
+
+.pa-card-desc {
+  font-size: 15px;
+  color: var(--pa-text-sub);
+  line-height: 1.6;
+  margin: 0;
+  word-break: keep-all;
+}
+
+/* 3. CTA Box */
+.pa-cta-box {
+  background-color: #f9f9f9;
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-radius);
+  padding: 60px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+}
+
+.pa-cta-content h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--pa-text-main);
+}
+
+.pa-cta-content p {
+  font-size: 16px;
+  color: var(--pa-text-sub);
+  margin: 0;
+}
+
+.pa-btn-apply {
+  padding: 16px 40px;
+  background-color: var(--pa-brand);
   color: #333;
+  font-size: 16px;
+  font-weight: 700;
   border: none;
-  border-radius: 50px;
+  border-radius: 4px;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.btn-apply-large:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+.pa-btn-apply:hover {
+  background-color: var(--pa-brand-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.cta-help {
-  margin-top: 15px;
-  font-size: 14px;
-  color: #888;
+/* Mobile Responsive */
+@media (max-width: 900px) {
+  .pa-grid-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-/* 모바일 반응형 */
 @media (max-width: 768px) {
-  .features-grid {
-    grid-template-columns: 1fr; /* 1열 */
+  .pa-main-wrapper {
+    padding: 40px 16px; /* 모바일 중앙 정렬감 확보를 위한 패딩 */
   }
-  .apply-content {
-    padding: 40px 20px;
+
+  /* 헤더 모바일 */
+  .pa-header-section {
+    margin-bottom: 40px;
   }
-  .content-intro h3 {
+  
+  .pa-title {
     font-size: 24px;
   }
-  .intro-desc {
-    font-size: 16px;
+  
+  /* 모바일에서도 Divider 유지 */
+  .pa-divider-long {
+    margin: 15px 0;
   }
-  .btn-apply-large {
+
+  .pa-desc {
+    text-align: left; /* 모바일에서는 가독성을 위해 좌측 정렬이 일반적이나, 우측 유지를 원하시면 right로 두셔도 됩니다. */
+    font-size: 14px;
+  }
+  
+  /* 그리드 1열 */
+  .pa-grid-wrapper {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  /* CTA 모바일 */
+  .pa-cta-box {
+    flex-direction: column;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  
+  .pa-btn-apply {
     width: 100%;
-    padding: 15px 0;
   }
 }

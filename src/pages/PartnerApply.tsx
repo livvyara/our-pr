@@ -1,51 +1,22 @@
-// src/pages/PartnerApply.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/common/Header';
 import SubNav from '../components/common/SubNav';
-import MobileMenu from '../components/common/MobileMenu'; 
+import MobileMenu from '../components/common/MobileMenu';
 import Footer from '../components/common/Footer';
 import RoleHeader from '../components/common/RoleHeader';
-import { K_BRAND_COLOR, CONTENT_MAX_WIDTH } from '../constants'; 
-import './HomePage.css'; 
-import './partnerApply.css'; 
+import './PartnerApply.css'; 
 
-// [⭐ 추가] 이미지 에셋 (실제 경로에 맞게 수정 필요, 없으면 placeholder 사용)
-const IMG_DASHBOARD = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop"; 
-const IMG_SCHEDULE = "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=800&auto=format&fit=crop"; 
-// [⭐ 여기를 수정하세요] 더 안정적이고 모바일 현장 관리 느낌이 나는 다른 이미지로 교체
-const IMG_APP = "https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=800&auto=format&fit=crop";
-// 다른 대안: "https://images.unsplash.com/photo-1579532501657-3f338d35ed56?q=80&w=800&auto=format&fit=crop"
-// 다른 대안: "https://images.unsplash.com/photo-1522204523234-8729aa67e2e6?q=80&w=800&auto=format&fit=crop"
-const tabsData = [
-  {
-    key: 'partner',
-    title: '인테리어 파트너',
-    contentTitle: '성공적인 비즈니스를 위한 최고의 파트너',
-    description: (
-      <>
-        아워프로젝트는 인테리어 사업에 필요한 모든 도구를 제공합니다.<br/>
-        고객 관리부터 현장 관리, 정산까지 한 곳에서 해결하세요.
-      </>
-    ),
-    features: [
-      { title: '통합 대시보드', desc: '모든 현황을 한눈에 파악하고 관리하세요.', img: IMG_DASHBOARD },
-      { title: '스마트 일정관리', desc: '공정표 자동 생성 및 알림으로 일정을 놓치지 마세요.', img: IMG_SCHEDULE },
-      { title: '모바일 현장관리', desc: '언제 어디서나 현장 상황을 체크하고 소통하세요.', img: IMG_APP },
-    ],
-    buttonText: '파트너 입점 신청하기'
-  },
-  // (추후 판매자, 시공팀 등 탭 추가 가능)
-];
-
+// 이미지 에셋
+const IMG_DASHBOARD = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop";
+const IMG_SCHEDULE = "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=800&auto=format&fit=crop";
+const IMG_MOBILE = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop";
 
 const PartnerApply: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedMenu, setSelectedMenu] = useState(''); 
+  const [selectedMenu, setSelectedMenu] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
-  const [activeTab, setActiveTab] = useState('partner');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const handleResize = () => {
@@ -57,81 +28,91 @@ const PartnerApply: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleMenuSelect = (key: string) => setSelectedMenu(key);
-  
-  const currentTabData = tabsData.find(tab => tab.key === activeTab) || tabsData[0];
-
   return (
-    <div className="page-container">
+    <div className="pa-page-container">
       {!isMobile && <RoleHeader />}
-      <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
+      <Header onMenuSelected={setSelectedMenu} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
       {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
 
-      <main className="main-content partner-apply-wrapper">
-        <div className="partner-apply-container">
+      <div className="pa-main-wrapper">
+        <div className="pa-container">
           
-          {/* 1. 헤더 섹션 */}
-          <div className="apply-header">
-            <h2>파트너 신청</h2>
-            <p>아워프로젝트와 함께 성장할 전문가님을 모십니다.</p>
+          {/* 1. Header Section [수정됨] */}
+          <div className="pa-header-section">
+            <h1 className="pa-title">파트너 프로그램</h1>
+            <div className="pa-divider-long"></div>
+            <p className="pa-desc">성공적인 비즈니스를 위한 최적의 솔루션</p>
           </div>
 
-          {/* 2. 탭 네비게이션 */}
-          <div className="apply-tabs">
-            {tabsData.map(tab => (
-              <button
-                key={tab.key}
-                className={`apply-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.title}
-              </button>
-            ))}
-          </div>
-
-          {/* 3. 탭 콘텐츠 */}
-          <div className="apply-content">
-            <div className="content-intro">
-              <h3>{currentTabData.contentTitle}</h3>
-              <p className="intro-desc">{currentTabData.description}</p>
-            </div>
-
-            {/* 기능 소개 그리드 (이미지 + 텍스트) */}
-            <div className="features-grid">
-              {currentTabData.features?.map((feature, idx) => (
-                <div key={idx} className="feature-item">
-                  <div className="feature-img">
-                    <img src={feature.img} alt={feature.title} />
-                  </div>
-                  <h4>{feature.title}</h4>
-                  <p>{feature.desc}</p>
+          {/* 2. Features Grid */}
+          <div className="pa-grid-wrapper">
+            {/* Card 1 */}
+            <div className="pa-feature-card">
+              <div className="pa-card-img">
+                <img src={IMG_DASHBOARD} alt="Dashboard" />
+              </div>
+              <div className="pa-card-body">
+                <div className="pa-card-header">
+                  <span className="pa-badge">MANAGEMENT</span>
+                  <h3>통합 대시보드</h3>
                 </div>
-              ))}
+                <p className="pa-card-desc">
+                  흩어져 있던 현장 데이터를 한곳에 모았습니다.<br/>
+                  매출, 일정, 고객 요청사항을 한눈에 파악하고 데이터 기반의 의사결정을 내리세요.
+                </p>
+              </div>
             </div>
 
-            {/* 하단 CTA 버튼 */}
-            <div className="apply-cta">
-              <button
-                className="btn-apply-large"
-                style={{ backgroundColor: K_BRAND_COLOR }}
-                onClick={() => { 
-                  if (activeTab === 'partner') navigate('/apply/partner');
-                  // else navigate(...)
-                }}
-              >
-                {currentTabData.buttonText}
-              </button>
-              <p className="cta-help">
-                * 승인까지 영업일 기준 1~3일이 소요될 수 있습니다.
-              </p>
+            {/* Card 2 */}
+            <div className="pa-feature-card">
+              <div className="pa-card-img">
+                <img src={IMG_SCHEDULE} alt="Schedule" />
+              </div>
+              <div className="pa-card-body">
+                <div className="pa-card-header">
+                  <span className="pa-badge">FINANCE</span>
+                  <h3>정산 & 계약 관리</h3>
+                </div>
+                <p className="pa-card-desc">
+                  복잡한 세금계산서 발행과 정산 업무를 자동화했습니다.<br/>
+                  불필요한 행정 업무를 줄이고, 오직 시공과 디자인 본질에만 집중하세요.
+                </p>
+              </div>
             </div>
 
+            {/* Card 3 */}
+            <div className="pa-feature-card">
+              <div className="pa-card-img">
+                <img src={IMG_MOBILE} alt="Mobile" />
+              </div>
+              <div className="pa-card-body">
+                <div className="pa-card-header">
+                  <span className="pa-badge">NETWORK</span>
+                  <h3>성장하는 네트워크</h3>
+                </div>
+                <p className="pa-card-desc">
+                  검증된 시공팀, 자재 업체와의 네트워킹을 지원합니다.<br/>
+                  신뢰할 수 있는 파트너들과 연결되어 비즈니스의 영역을 무한히 확장하세요.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. CTA Section */}
+          <div className="pa-cta-box">
+            <div className="pa-cta-content">
+              <h2>지금 바로 합류하세요</h2>
+              <p>아워프로젝트의 검증된 파트너가 되어 더 큰 성공을 만들어가세요.</p>
+            </div>
+            <button className="pa-btn-apply" onClick={() => navigate('/apply/partner')}>
+              파트너 신청하기
+            </button>
           </div>
 
         </div>
-      </main>
+      </div>
 
-      <Footer /> 
+      <Footer />
       {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
     </div>
   );

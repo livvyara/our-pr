@@ -8,7 +8,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { useMenu } from '../../contexts/MenuContext'; 
 import ChatWidget from './ChatWidget';
-import { ChatIcons } from './ChatIcons'; // [NEW] 아이콘
+import { ChatIcons } from './ChatIcons'; 
 import { getFirestore, collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface HeaderProps {
@@ -22,8 +22,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { isLoading: isLoadingMenus, mainMenus } = useMenu();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
-  // [NEW] 전체 안 읽은 메시지 상태
   const [totalUnread, setTotalUnread] = useState(0);
   const db = getFirestore();
 
@@ -34,28 +32,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
     return () => unsubscribe();
   }, []);
 
-  // [NEW] 안 읽은 메시지 리스너 (헤더 배지용)
   useEffect(() => {
       if (!currentUser) return;
-      
-      const q = query(
-          collection(db, 'chats'), 
-          where('participants', 'array-contains', currentUser.uid)
-      );
-
+      const q = query(collection(db, 'chats'), where('participants', 'array-contains', currentUser.uid));
       const unsubscribe = onSnapshot(q, (snapshot) => {
           let count = 0;
           snapshot.forEach(doc => {
               const data = doc.data();
               const myReadTime = data.lastRead?.[currentUser.uid]?.toMillis() || 0;
               const updateTime = data.updatedAt?.toMillis() || 0;
-              if (updateTime > myReadTime) {
-                  count++; // 안 읽은 방 개수
-              }
+              if (updateTime > myReadTime) count++;
           });
           setTotalUnread(count);
       });
-
       return () => unsubscribe();
   }, [currentUser]);
 
@@ -65,56 +54,91 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
       setIsChatOpen(false);
       navigate('/');
     } catch (error) {
-      console.error("로그아웃 중 오류 발생:", error);
+      console.error("로그아웃 오류:", error);
     }
   };
 
+  // --- 모바일 헤더 ---
   if (isMobile) {
     return (
       <header className="mobile-header">
-        <button className="menu-icon" onClick={onHamburgerPressed}><ChatIcons.Menu /></button>
-        <Link to="/" className="logo"><img src={logoSrc} alt="Logo" className="logo-image" /></Link>
-        
-        {currentUser ? (
-             <button className="mobile-chat-icon" onClick={() => setIsChatOpen(!isChatOpen)} style={{position:'relative'}}>
-                 <ChatIcons.Chat />
-                 {totalUnread > 0 && <span className="header-badge-mobile">{totalUnread}</span>}
-             </button>
-        ) : <div style={{ width: '56px' }}></div>}
-        
+        <div className="mobile-header-inner">
+            <button className="menu-icon-btn" onClick={onHamburgerPressed}>
+                <ChatIcons.Menu />
+            </button>
+            
+            <Link to="/" className="mobile-logo-link">
+                <img src={logoSrc} alt="로고" className="mobile-logo-img" />
+            </Link>
+            
+            <div className="mobile-actions">
+                {currentUser ? (
+                    <button className="mobile-chat-btn" onClick={() => setIsChatOpen(!isChatOpen)}>
+                        <ChatIcons.Chat />
+                        {totalUnread > 0 && <span className="mobile-badge">{totalUnread}</span>}
+                    </button>
+                ) : <div className="spacer-56"></div>}
+            </div>
+        </div>
         {isChatOpen && currentUser && <ChatWidget onClose={() => setIsChatOpen(false)} />}
       </header>
     );
   }
 
+  // --- 데스크톱 헤더 ---
   return (
     <header className="desktop-header">
-      <div className="desktop-header-content" style={{ maxWidth: CONTENT_MAX_WIDTH }}>
-        <Link to="/" className="logo"><img src={logoSrc} alt="Logo" className="logo-image" /></Link>
-        <nav className="main-nav">
-          {!isLoadingMenus && mainMenus.map((menu) => (
-            <button key={menu.key} className="menu-button" onClick={() => onMenuSelected(menu.key)}>{menu.title}</button>
-          ))}
-          {isLoadingMenus && <div className="menu-button" style={{color: '#999'}}>로딩중...</div>}
+      <div className="desktop-header-inner" style={{ maxWidth: CONTENT_MAX_WIDTH }}>
+        
+        {/* 로고 */}
+        <Link to="/" className="desktop-logo-link">
+            <img src={logoSrc} alt="로고" className="desktop-logo-img" />
+        </Link>
+        
+        {/* 메뉴 네비게이션 */}
+        <nav className="desktop-nav">
+          {!isLoadingMenus ? mainMenus.map((menu) => (
+            <button key={menu.key} className="nav-item-btn" onClick={() => onMenuSelected(menu.key)}>
+                {menu.title}
+            </button>
+          )) : (
+            <div className="nav-loading">로딩 중...</div>
+          )}
         </nav>
 
-        <div className="actions">
-          <div className="search-container"><input type="text" placeholder="검색..." /></div>
+        {/* 우측 액션 버튼 */}
+        <div className="desktop-actions">
+          
+          {/* 검색창 */}
+          <div className="search-bar-wrapper">
+             <div className="search-icon-placeholder">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+             </div>
+             <input type="text" placeholder="검색" />
+          </div>
 
+          {/* 채팅 아이콘 */}
           {currentUser && (
-              <button className="chat-icon-button" onClick={() => setIsChatOpen(!isChatOpen)} title="채팅 상담">
-                 <ChatIcons.Chat />
-                 {totalUnread > 0 && <span className="header-badge">{totalUnread}</span>}
+              <button className="icon-action-btn" onClick={() => setIsChatOpen(!isChatOpen)} title="채팅 상담">
+                  <ChatIcons.Chat />
+                  {totalUnread > 0 && <span className="desktop-badge">{totalUnread}</span>}
               </button>
           )}
 
-          <button className="login-button" onClick={currentUser ? handleLogout : () => navigate('/login')}>
-            {currentUser ? '로그아웃' : '로그인'}
-          </button>
+          {/* 로그인/회원가입 버튼 */}
+          <div className="auth-btn-group">
+              <button className="btn-text" onClick={currentUser ? handleLogout : () => navigate('/login')}>
+                {currentUser ? '로그아웃' : '로그인'}
+              </button>
 
-          <button className="signup-button" style={{ backgroundColor: K_BRAND_COLOR, borderRadius: '5px' }} onClick={currentUser ? () => navigate('/mypage') : () => navigate('/signup')}>
-            {currentUser ? '마이페이지' : '회원가입'}
-          </button>
+              <button 
+                className="btn-primary" 
+                style={{ backgroundColor: K_BRAND_COLOR }} 
+                onClick={currentUser ? () => navigate('/mypage') : () => navigate('/signup')}
+              >
+                {currentUser ? '마이페이지' : '회원가입'}
+              </button>
+          </div>
 
           {isChatOpen && currentUser && <ChatWidget onClose={() => setIsChatOpen(false)} />}
         </div>

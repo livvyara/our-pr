@@ -1,239 +1,158 @@
 /* src/components/common/MobileMenu.css */
 
-/* --- 애니메이션 정의 --- */
-@keyframes slideIn {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+:root {
+  --mm-bg: #ffffff;
+  --mm-text: #333333;
+  --mm-text-sub: #454545; /* [수정] 폰트 색상 진하게 (#888 -> #454545) */
+  --mm-border: #f0f0f0;
+  --mm-width: 320px; /* 로고가 커졌으므로 너비 살짝 확보 */
+  --mm-transition: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Animations (기존 동일) */
+@keyframes mmSlideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes mmFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* 1. 오버레이 (배경) */
-.mobile-menu-overlay {
+/* 1. Overlay */
+.mm-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.4); /* 조금 더 투명하고 세련된 블랙 */
-  backdrop-filter: blur(3px); /* 배경 흐림 효과 (Glassmorphism) */
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
   z-index: 2000;
-  animation: fadeIn 0.3s ease-out;
+  animation: mmFadeIn 0.3s ease-out;
 }
 
-/* 2. 메뉴 Drawer (본체) */
-.mobile-menu-drawer {
-  width: 85%;
-  max-width: 320px;
+/* 2. Drawer */
+.mm-drawer {
+  width: var(--mm-width);
   height: 100%;
-  background-color: #ffffff;
-  position: absolute;
-  left: 0;
-  top: 0;
+  background-color: var(--mm-bg);
+  position: absolute; top: 0; left: 0;
   overflow-y: auto;
-  /* 우측 상/하단 둥근 모서리 적용 */
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12); /* 부드럽고 넓은 그림자 */
-  animation: slideIn 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* 쫀득한 슬라이딩 */
-  display: flex;
-  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  animation: mmSlideIn 0.4s var(--mm-transition);
+  display: flex; flex-direction: column;
 }
 
-/* 3. 헤더 영역 */
-.drawer-header {
-  padding: 20px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  /* sticky 적용으로 스크롤 시에도 상단 고정 (선택 사항) */
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* 3. Header */
+.mm-header {
+  padding: 30px 24px; /* 로고 크기에 맞춰 여백 조정 */
+  display: flex; justify-content: space-between; align-items: center;
+  background-color: var(--mm-bg);
+  position: sticky; top: 0; z-index: 10;
+  border-bottom: 1px solid var(--mm-border);
 }
 
-.mobile-menu-logo-container {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+.mm-logo-container {
+  cursor: pointer; display: flex; align-items: center;
 }
 
-.mobile-menu-logo {
-  height: auto;
-  max-height: 50px; /* 적절한 크기로 조정 */
-  max-width: 160px;
+.mm-logo {
+  height: 80px; /* [수정] 로고 크기 2배 확대 (40px -> 80px) */
+  width: auto;
   object-fit: contain;
 }
 
-.close-button {
-  background: #f5f5f5; /* 닫기 버튼 배경 추가 */
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%; /* 원형 버튼 */
-  font-size: 16px;
-  color: #555;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.mm-close-btn {
+  background: transparent; border: none;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  color: var(--mm-text);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background-color 0.2s;
+  background-color: #f5f5f5; /* 닫기 버튼 잘 보이게 배경 추가 */
+}
+.mm-close-btn:hover { background-color: #e0e0e0; }
+.mm-close-btn svg { width: 24px; height: 24px; stroke-width: 2; }
+
+/* 4. Auth Area */
+.mm-auth-area {
+  padding: 24px;
+  display: flex; gap: 12px;
+  background-color: var(--mm-bg);
+  border-bottom: 1px solid var(--mm-border);
+}
+
+.mm-auth-btn {
+  flex: 1; height: 48px;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s ease;
+  border: none; border-radius: 8px;
+}
+
+.mm-auth-btn.login {
+  background-color: #f5f5f5; color: var(--mm-text); border: 1px solid #e0e0e0;
+}
+.mm-auth-btn.login:active { background-color: #eeeeee; }
+
+.mm-auth-btn.signup {
+  /* background-color는 인라인 스타일 사용 */
+  color: #333;
+}
+.mm-auth-btn.signup:active { filter: brightness(0.95); }
+
+/* 5. Menu List */
+.mm-list {
+  padding: 10px 0; flex: 1;
+}
+
+.mm-item {
+  margin-bottom: 0;
+}
+
+/* Main Menu Button */
+.mm-title-btn {
+  width: 100%; background: transparent; border: none;
+  cursor: pointer; padding: 18px 24px;
+  text-align: left; display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; font-size: 17px; color: var(--mm-text);
   transition: background-color 0.2s;
 }
+.mm-title-btn:active, .mm-title-btn.open { background-color: #f9f9f9; }
 
-.close-button:hover {
-  background-color: #e0e0e0;
+/* Arrow */
+.mm-arrow {
+  display: inline-block; width: 8px; height: 8px;
+  border-right: 2px solid #aaa; border-bottom: 2px solid #aaa;
+  transform: rotate(45deg); transition: transform 0.3s var(--mm-transition);
+  margin-right: 4px;
 }
+.mm-arrow.open { transform: rotate(225deg); border-color: var(--mm-text); }
 
-/* 4. 인증(로그인/회원가입) 영역 */
-.auth-area {
-  padding: 24px;
-  display: flex;
-  gap: 12px;
-  background-color: #fff;
+/* 6. Sub Menu List */
+.mm-sub-list {
+  background-color: #fcfcfc; overflow: hidden;
+  border-top: 1px solid #f0f0f0;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.auth-button {
-  flex: 1;
-  height: 44px; /* 버튼 높이 확대 */
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  /* 쉐도우로 입체감 살짝 추가 */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.login-btn {
-  background-color: #f8f9fa;
-  color: #333;
-  border: 1px solid #e9ecef;
-  border-radius: 5px; /* 기본 래디우스 */
-}
-
-.login-btn:active {
-  background-color: #e2e6ea;
-  transform: translateY(1px);
-}
-
-.signup-btn {
-  /* 인라인 스타일에서 색상은 가져오지만, 기본 효과 정의 */
-  color: #000; /* 텍스트 가독성 */
-}
-
-.signup-btn:active {
-  filter: brightness(0.95);
-  transform: translateY(1px);
-}
-
-/* 5. 메뉴 리스트 영역 */
-.menu-list {
-  padding: 16px 0;
-  flex: 1; /* 남은 공간 채우기 */
-}
-
-.menu-item {
-  /* border-bottom 제거하여 깔끔하게 */
-  margin-bottom: 4px;
-}
-
-/* 메인 메뉴 버튼 */
-.menu-title-button {
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 16px 24px; /* 터치 영역 확대 */
-  text-align: left;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600; /* 폰트 강조 */
-  font-size: 16px;
-  color: #222;
-  transition: background-color 0.2s;
-}
-
-.menu-title-button:active,
-.menu-title-button:hover {
-  background-color: #f9fafb;
-}
-
-/* 화살표 아이콘 (CSS로 만듦) */
-.menu-arrow {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid #aaa;
-  border-bottom: 2px solid #aaa;
-  transform: rotate(45deg);
-  transition: transform 0.3s ease; /* 회전 애니메이션 */
-  margin-right: 4px;
-}
-
-/* 메뉴가 열렸을 때 화살표 회전 */
-.menu-arrow.open {
-  transform: rotate(225deg); /* 180도 회전 + 45도 */
-  border-color: #555;
-}
-
-/* 6. 서브 메뉴 리스트 */
-.sub-menu-list {
-  background-color: #f8f9fa; /* 아주 연한 회색 배경으로 구분 */
-  overflow: hidden;
-  /* 부드러운 펼침 효과를 위해 transition 추가 가능 (JS 높이 계산 필요하지만 여기선 심플하게 처리) */
-}
-
-.sub-menu-item {
-  padding: 14px 24px 14px 40px; /* 들여쓰기 */
-  font-size: 14px;
-  color: #555; /* 메인보다 조금 연하게 */
-  cursor: pointer;
-  transition: color 0.2s, background-color 0.2s;
+.mm-sub-item {
+  padding: 16px 24px 16px 48px; /* 들여쓰기 */
+  font-size: 15px; 
+  color: var(--mm-text-sub); /* [수정] 진한 회색 적용 */
+  font-weight: 500;
+  cursor: pointer; transition: color 0.2s, background-color 0.2s;
   position: relative;
 }
 
-.sub-menu-item:before {
-  /* 서브메뉴 앞 점(Bullet) 포인트 */
-  content: '';
-  position: absolute;
-  left: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 4px;
-  background-color: #ddd;
-  border-radius: 50%;
+.mm-sub-item::before {
+  content: ''; position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background-color: #ccc;
+  transition: background-color 0.2s;
 }
 
-.sub-menu-item:active {
-  background-color: #eceff1;
-  color: #000;
-}
+.mm-sub-item:active { background-color: #f0f0f0; color: #000; }
+.mm-sub-item:active::before { background-color: #000; }
 
-.sub-menu-item:active:before {
-  background-color: #000; /* 클릭 시 점 색상 변경 */
+/* Single Item */
+.mm-item.single {
+  padding: 18px 24px; cursor: pointer;
+  font-weight: 700; font-size: 17px; color: var(--mm-text);
+  transition: background-color 0.2s;
 }
+.mm-item.single:active { background-color: #f9f9f9; }
 
-/* 단일 메뉴 (마이페이지 등) */
-.single-item {
-  padding: 16px 24px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #333;
-}
-
-.single-item:hover {
-  background-color: #f9fafb;
-}
-
-.divider {
-  margin: 16px 24px;
-  border: none;
-  border-top: 1px solid #eee;
+.mm-divider {
+  margin: 10px 24px; border: none; border-top: 1px solid var(--mm-border);
 }

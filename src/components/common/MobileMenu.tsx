@@ -32,7 +32,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
       onClose();
       navigate('/');
     } catch (error) {
-      console.error("로그아웃 중 오류 발생:", error);
+      console.error("Logout Error:", error);
     }
   };
 
@@ -46,29 +46,29 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="mobile-menu-overlay" onClick={onClose}>
-      <div className="mobile-menu-drawer" onClick={(e) => e.stopPropagation()}>
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-drawer" onClick={(e) => e.stopPropagation()}>
         
-        {/* 헤더 */}
-        <div className="drawer-header">
-          <div className="mobile-menu-logo-container" onClick={() => handleNavigation('/')}>
-              <img src={logoSrc} alt="Logo" className="mobile-menu-logo" />
+        {/* Header */}
+        <div className="mm-header">
+          <div className="mm-logo-container" onClick={() => handleNavigation('/')}>
+              <img src={logoSrc} alt="Logo" className="mm-logo" />
           </div>
-          <button className="close-button" onClick={onClose}>✕</button>
+          <button className="mm-close-btn" onClick={onClose}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
         
-        {/* 메뉴 리스트 (위치를 Auth 위로 올릴 수도 있지만, 요청하신 디자인 흐름상 Auth가 상단에 있는 경우가 많아 유지하거나 조정 가능합니다. 여기서는 기존 흐름 유지하되 디자인만 개선) */}
-        
-        {/* 인증 영역 */}
-        <div className="auth-area">
+        {/* Auth Area */}
+        <div className="mm-auth-area">
           {currentUser ? (
             <>
-              <button className="auth-button login-btn" onClick={handleLogout}>
+              <button className="mm-auth-btn login" onClick={handleLogout}>
                 로그아웃
               </button>
               <button 
-                className="auth-button signup-btn"
-                style={{ backgroundColor: K_BRAND_COLOR, borderRadius: '5px' }} // User Info: Radius 5
+                className="mm-auth-btn signup"
+                style={{ backgroundColor: K_BRAND_COLOR }}
                 onClick={() => handleNavigation('/mypage')}
               >
                 마이페이지
@@ -76,12 +76,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
             </>
           ) : (
             <>
-              <button className="auth-button login-btn" onClick={() => handleNavigation('/login')}>
+              <button className="mm-auth-btn login" onClick={() => handleNavigation('/login')}>
                 로그인
               </button>
               <button 
-                className="auth-button signup-btn"
-                style={{ backgroundColor: K_BRAND_COLOR, borderRadius: '5px' }} // User Info: Radius 5
+                className="mm-auth-btn signup"
+                style={{ backgroundColor: K_BRAND_COLOR }}
                 onClick={() => handleNavigation('/signup')} 
               >
                 회원가입
@@ -90,30 +90,30 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
           )}
         </div>
 
-        <div className="menu-list">
+        {/* Menu List */}
+        <div className="mm-list">
           {mainMenus.map((menu) => {
             const subMenus = subMenusMap.get(menu.key) || [];
             const isOpen = openMenuKey === menu.key;
             
             return (
-              <div key={menu.key} className="menu-item">
+              <div key={menu.key} className="mm-item">
                 <button 
-                  className="menu-title-button" 
+                  className={`mm-title-btn ${isOpen ? 'open' : ''}`}
                   onClick={() => handleMenuClick(menu.key)}
                 >
                   <span>{menu.title}</span>
-                  {/* [변경] 텍스트 화살표 대신 CSS 화살표 적용 */}
                   {subMenus.length > 0 && (
-                    <span className={`menu-arrow ${isOpen ? 'open' : ''}`}></span>
+                    <span className={`mm-arrow ${isOpen ? 'open' : ''}`}></span>
                   )}
                 </button>
 
                 {isOpen && subMenus.length > 0 && (
-                  <div className="sub-menu-list">
+                  <div className="mm-sub-list">
                     {subMenus.map((subMenu, index) => (
                       <div 
                         key={index} 
-                        className="sub-menu-item"
+                        className="mm-sub-item"
                         onClick={() => handleNavigation(subMenu.path)}
                       >
                         {subMenu.title}
@@ -125,9 +125,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
             );
           })}
           
-          <hr className="divider" />
+          <hr className="mm-divider" />
           
-          <div className="menu-item single-item" onClick={() => handleNavigation('/mypage')}>
+          <div className="mm-item single" onClick={() => handleNavigation('/mypage')}>
             마이페이지
           </div>
         </div>

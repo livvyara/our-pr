@@ -1,217 +1,320 @@
 /* src/pages/MyProjectPage.css */
 
-.my-project-page-main {
-    background-color: #f8f9fa;
-    min-height: calc(100vh - 200px);
-    padding: 40px 0;
+:root {
+  --mp-bg: #ffffff;
+  --mp-text-main: #333333; /* [수정] #111 -> #333 (부드러운 다크 그레이) */
+  --mp-text-gray: #888888;
+  --mp-border: #e0e0e0;
+  
+  /* Brand Color */
+  --k-brand: #F8EF99; 
+  --k-brand-dark: #e6dd88;
+  
+  --mp-transition: cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-.my-project-page-inner-container {
-    max-width: 1200px; 
-    margin: 0 auto;
-    padding: 0 20px;
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+.mp-page-container {
+  background-color: var(--mp-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Pretendard', sans-serif;
+  color: var(--mp-text-main);
 }
 
-.my-project-page-header { margin-bottom: 40px; text-align: center; }
-.my-project-page-header h2 { font-size: 32px; font-weight: 800; color: #333; margin-bottom: 12px; }
-.my-project-page-header p { color: #666; font-size: 16px; }
-
-.my-project-page-loading, .my-project-page-empty {
-    text-align: center; padding: 80px 0; color: #888; font-size: 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-}
-.my-project-page-empty p { margin: 0; }
-.my-project-page-empty .my-project-page-sub-text { display: block; font-size: 14px; margin-top: 10px; color: #aaa; }
-
-/* 카드 스타일 */
-.my-project-page-card {
-    background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #eee; margin-bottom: 24px; overflow: hidden; transition: all 0.3s ease;
-}
-.my-project-page-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.1); transform: translateY(-2px); }
-.my-project-page-card.expanded { border-color: #1976d2; box-shadow: 0 8px 30px rgba(25, 118, 210, 0.15); }
-
-.my-project-page-card-header { padding: 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; }
-.my-project-page-site-name { font-size: 20px; font-weight: 800; color: #333; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-.my-project-page-status-badge { font-size: 12px; padding: 5px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
-.my-project-page-site-addr { font-size: 15px; color: #666; }
-
-.my-project-page-btn-toggle { background: none; border: none; cursor: pointer; color: #999; transition: transform 0.3s; display: flex; align-items: center; padding: 5px; }
-.my-project-page-btn-toggle svg { width: 28px; height: 28px; transform: rotate(-90deg); }
-.my-project-page-btn-toggle.open svg { transform: rotate(90deg); }
-
-.my-project-page-card-body { 
-    max-height: 0; 
-    overflow: hidden; 
-    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
-    background-color: #fcfcfc; 
-    border-top: 1px solid #f0f0f0; 
-}
-.my-project-page-card.expanded .my-project-page-card-body { max-height: 1200px; } 
-
-.my-project-page-detail-grid { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-
-.my-project-page-section h4 { 
-    font-size: 15px; 
-    color: #1976d2; 
-    margin-bottom: 16px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    letter-spacing: 0.5px; 
-    border-bottom: 2px solid #e3f2fd; 
-    padding-bottom: 8px; 
-    display: inline-block; 
-}
-.my-project-page-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 12px; color: #333; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-.my-project-page-row span { color: #777; font-weight: 500; }
-.my-project-page-divider-line { height: 1px; background-color: #e0e0e0; margin: 15px 0; }
-.my-project-page-row.total { font-size: 16px; font-weight: 800; color: #333; border-bottom: none; }
-
-.my-project-page-partner-box { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-.my-project-page-p-name { font-weight: 800; font-size: 18px; color: #333; margin-bottom: 15px; } 
-
-.my-project-page-btn-chat-partner { 
-    background-color: #1976d2; 
-    color: white; 
-    border: none; 
-    padding: 10px 20px; 
-    border-radius: 25px; 
-    font-size: 14px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    display: inline-flex; 
-    align-items: center; 
-    gap: 8px; 
-    transition: background 0.2s, transform 0.1s; 
-    width: 100%; 
-    max-width: 200px;
-    margin: 0 auto;
-}
-.my-project-page-btn-chat-partner:hover { background-color: #1565c0; transform: translateY(-1px); }
-.my-project-page-btn-chat-partner svg { width: 18px; height: 18px; }
-
-/* 퀵 링크 버튼들 스타일 */
-.my-project-page-quick-links {
-    padding: 25px 30px;
-    display: flex;
-    flex-wrap: wrap; 
-    gap: 12px;
-    background: #f5f5f5;
-    justify-content: center; 
-    border-top: 1px solid #eee;
+.mp-main-content {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 80px 20px;
 }
 
-.my-project-page-link-btn {
-    padding: 12px 20px; 
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 10px;
-    font-size: 14px;
-    cursor: pointer;
-    color: #444;
-    font-weight: 600;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 140px; 
-    justify-content: center;
-    white-space: nowrap; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+.mp-inner-container {
+  width: 100%;
+  max-width: 1200px;
 }
 
-.my-project-page-link-btn:hover {
-    border-color: #bbb;
-    background: #fff;
-    color: #1976d2;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
+/* Header */
+.mp-header-section {
+  margin-bottom: 60px;
+}
+.mp-title {
+  font-size: 30px; /* [이전 요청 반영] 60px -> 30px */
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--mp-text-main);
+}
+.mp-divider-long {
+  width: 100%;
+  height: 2px;
+  background-color: var(--mp-text-main);
+  margin: 20px 0;
+}
+.mp-subtitle {
+  font-size: 16px;
+  color: var(--mp-text-gray);
+  font-weight: 400;
+  text-align: right;
 }
 
-/* ---------------------------------------------------- */
-/* 📱 모바일 반응형 (max-width: 768px) */
-/* ---------------------------------------------------- */
+/* Empty State */
+.mp-empty-state {
+  padding: 100px 0; text-align: center; border: 1px dashed var(--mp-border);
+}
+.mp-empty-icon { font-size: 40px; margin-bottom: 20px; opacity: 0.3; }
+
+/* Project Card */
+.mp-project-card {
+  border-bottom: 1px solid var(--mp-border);
+  transition: all 0.4s var(--mp-transition);
+  background-color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-project-card:hover {
+  background-color: #fafafa;
+}
+
+.mp-project-card.active {
+  background-color: #fff;
+  box-shadow: 0 20px 60px -10px rgba(0,0,0,0.1); 
+  border-bottom: none;
+  border-radius: 4px;
+  z-index: 10;
+  margin: 20px 0;
+}
+
+/* Brand Color Stripe */
+.mp-project-card.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+  background-color: var(--k-brand);
+}
+
+/* Header */
+.mp-card-header {
+  padding: 40px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mp-status-indicator {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mp-text-main);
+  border: 1px solid var(--mp-text-main);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.mp-site-name {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -1px;
+  color: var(--mp-text-main);
+}
+
+.mp-site-addr {
+  font-size: 15px;
+  color: var(--mp-text-gray);
+  margin-top: 8px;
+}
+
+.mp-header-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mp-expand-text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mp-text-main);
+}
+
+.mp-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--mp-border);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+  color: var(--mp-text-main);
+}
+.mp-toggle-btn svg { width: 20px; height: 20px; transition: transform 0.3s; }
+.mp-project-card.active .mp-toggle-btn {
+  background-color: var(--mp-text-main);
+  color: var(--k-brand);
+  border-color: var(--mp-text-main);
+  transform: rotate(180deg);
+}
+
+/* Card Body */
+.mp-card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.6s var(--mp-transition);
+}
+.mp-project-card.active .mp-card-body {
+  max-height: 1200px;
+}
+
+.mp-body-inner {
+  padding: 0 40px 60px 40px;
+}
+
+/* Info Grid */
+.mp-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 60px;
+  margin-bottom: 60px;
+  border-top: 1px solid var(--mp-border);
+  padding-top: 40px;
+}
+
+.mp-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--mp-text-gray);
+  margin-bottom: 20px;
+  display: block;
+}
+
+.mp-data-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+.mp-data-row span { color: var(--mp-text-gray); }
+.mp-data-row strong { font-weight: 600; color: var(--mp-text-main); }
+
+/* [유지] 변경/추가 금액 - 텍스트만 붉은색 */
+.mp-data-row.highlight { background-color: transparent; }
+.mp-data-row.highlight strong { color: #d32f2f; }
+
+.mp-total-row {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid var(--mp-text-main);
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--mp-text-main);
+}
+
+/* Partner */
+.mp-partner-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mp-p-name { font-size: 18px; font-weight: 700; display: block; margin-bottom: 10px; color: var(--mp-text-main); }
+.mp-chat-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--mp-border);
+  background-color: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--mp-text-main);
+}
+.mp-chat-btn:hover {
+  background-color: var(--k-brand);
+  border-color: var(--k-brand);
+  color: #333;
+}
+
+/* Actions Grid */
+.mp-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+.mp-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 30px 10px;
+  background-color: #fcfcfc;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s var(--mp-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.mp-menu-btn .icon-box {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 1px solid var(--mp-border);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+  color: var(--mp-text-main); /* 아이콘 기본 색상 #333 */
+}
+
+.mp-menu-btn .btn-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mp-text-gray);
+  transition: color 0.3s;
+}
+
+/* Hover Effect: 배경이 브랜드 컬러로 차오름 */
+.mp-menu-btn:hover {
+  background-color: var(--k-brand);
+  transform: translateY(-5px);
+}
+
+.mp-menu-btn:hover .icon-box {
+  background-color: #333; /* [수정] #000 -> #333 */
+  border-color: #333;     /* [수정] #000 -> #333 */
+  color: var(--k-brand);
+}
+
+.mp-menu-btn:hover .btn-text {
+  color: #333; /* [수정] #000 -> #333 */
+}
+
+/* Disabled */
+.mp-menu-btn.disabled { opacity: 0.3; cursor: not-allowed; }
+.mp-menu-btn.disabled:hover { background-color: #fcfcfc; transform: none; }
+.mp-menu-btn.disabled:hover .icon-box { background-color: #fff; border-color: var(--mp-border); color: var(--mp-text-gray); }
+
+/* Mobile */
+@media (max-width: 900px) {
+  .mp-info-grid { grid-template-columns: 1fr; gap: 40px; }
+  .mp-actions-grid { grid-template-columns: repeat(4, 1fr); }
+  .mp-card-header { padding: 30px 20px; }
+  .mp-body-inner { padding: 0 20px 40px; }
+}
+
 @media (max-width: 768px) {
-    .my-project-page-main {
-        padding: 20px 0; 
-    }
-    .my-project-page-inner-container {
-        padding: 0 10px; 
-    }
-    .my-project-page-header {
-        margin-bottom: 20px;
-    }
-    .my-project-page-header h2 {
-        font-size: 24px;
-    }
-    .my-project-page-header p {
-        font-size: 14px;
-    }
-
-    /* 카드 헤더 */
-    .my-project-page-card-header {
-        padding: 15px; 
-    }
-    .my-project-page-site-name {
-        font-size: 17px;
-        flex-direction: column; 
-        align-items: flex-start;
-        gap: 5px;
-        margin-bottom: 0;
-    }
-    .my-project-page-status-badge {
-    }
-    .my-project-page-site-addr {
-        font-size: 14px;
-    }
-
-    /* 카드 바디 (상세 정보) */
-    .my-project-page-detail-grid { 
-        grid-template-columns: 1fr; 
-        gap: 20px; 
-        padding: 20px 15px;
-    }
-    .my-project-page-section {
-        border-bottom: 1px solid #eee;
-        padding-bottom: 15px;
-    }
-    .my-project-page-section:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-    .my-project-page-row {
-        font-size: 14px;
-        margin-bottom: 8px;
-        padding-bottom: 5px;
-    }
-    .my-project-page-row span {
-        white-space: nowrap;
-        min-width: 80px;
-    }
-
-    /* 파트너 박스 */
-    .my-project-page-partner-box {
-        padding: 15px;
-    }
-    .my-project-page-p-name {
-        font-size: 16px;
-        margin-bottom: 10px;
-    }
-    .my-project-page-btn-chat-partner {
-        font-size: 13px;
-        padding: 8px 15px;
-        max-width: none;
-    }
-
-    /* 퀵 링크 버튼들 */
-    .my-project-page-quick-links {
-        padding: 15px 10px;
-        gap: 8px; 
-    }
-    .my-project-page-link-btn {
-        flex: 1 1 calc(50% - 12px); 
-        min-width: unset;
-        font-size: 13px;
-        padding: 10px 10px;
-        gap: 5px;
-    }
+  .mp-title { font-size: 30px; }
+  .mp-site-name { font-size: 24px; }
+  .mp-actions-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mp-menu-btn { padding: 20px 5px; }
+  .mp-menu-btn .icon-box { width: 40px; height: 40px; }
+  .mp-menu-btn .btn-text { font-size: 12px; }
 }

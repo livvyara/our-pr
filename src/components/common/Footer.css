@@ -1,44 +1,167 @@
-.footer-container {
+/* src/components/common/Footer.css */
+
+:root {
+  --ft-bg: #fcfcfc; /* 아주 연한 회색 배경 */
+  --ft-text-main: #333333;
+  --ft-text-sub: #777777;
+  --ft-border: #e0e0e0;
+  --ft-accent: #333333;
+}
+
+.ft-container {
   width: 100%;
-  background-color: #ffffff00; /* 밝은 회색 배경 */
-  border-top: 1px solid rgba(0, 0, 0, 0.05); /* 헤더와 유사한 상단 경계선 */
-  padding: 30px 20px; /* 상하/좌우 여백 */
-  margin-top: auto; /* (중요) 스티키 푸터를 위해 추가 */
+  background-color: var(--ft-bg);
+  border-top: 1px solid var(--ft-border);
+  padding: 60px 20px 40px;
+  margin-top: auto;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
-.footer-content {
-  /* 헤더의 CONTENT_MAX_WIDTH와 맞추는 것이 좋습니다. 
-    임시로 1200px을 최대로 설정합니다. 
-  */
+.ft-inner {
   max-width: 1200px;
-  margin: 0 auto; /* 중앙 정렬 */
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between; /* 정보와 링크를 양 끝으로 */
+  flex-direction: column;
+}
+
+/* --- Top Row: Links --- */
+.ft-top-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.ft-links {
+  display: flex;
   align-items: center;
-  flex-wrap: wrap; /* 화면이 작아지면 줄바꿈 */
-  gap: 20px; /* 요소 사이 간격 */
+  gap: 15px;
 }
 
-.footer-info {
-  display: flex;
-  flex-direction: column; /* 세로 정렬 */
-  gap: 5px; /* 줄 간격 */
-  font-size: 14px;
-  color: #555;
-}
-
-.footer-links {
-  display: flex;
-  gap: 20px; /* 링크 사이 간격 */
-}
-
-.footer-links a {
-  font-size: 14px;
-  color: #333;
+.ft-links a {
+  font-size: 13px;
+  color: var(--ft-text-sub);
   text-decoration: none;
-  font-weight: bold;
+  transition: color 0.2s;
+  letter-spacing: -0.3px;
 }
 
-.footer-links a:hover {
-  text-decoration: underline;
+.ft-links a:hover {
+  color: var(--ft-text-main);
+}
+
+.ft-links .ft-highlight {
+  font-weight: 700;
+  color: var(--ft-text-main);
+}
+
+.ft-divider-vertical {
+  font-size: 10px;
+  color: #ddd;
+  margin: 0 5px;
+}
+
+/* Divider Line */
+.ft-divider-horizontal {
+  width: 100%;
+  height: 1px;
+  background-color: #eee;
+  margin-bottom: 30px;
+}
+
+/* --- Bottom Row: Info & Copyright --- */
+.ft-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.ft-company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* 간격 조정 */
+}
+
+.ft-slogan {
+  font-size: 12px;
+  color: var(--ft-text-sub);
+  margin: 0 0 4px 0;
+  font-weight: 500;
+}
+
+.ft-company-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ft-text-main);
+  margin-bottom: 8px;
+}
+
+/* 정보 그리드 */
+.ft-info-grid {
+  display: grid;
+  /* [중요] PC: 라벨 | 값 */
+  grid-template-columns: max-content auto; 
+  column-gap: 12px;
+  row-gap: 6px;
+  font-size: 13px;
+  color: var(--ft-text-sub);
+}
+
+.ft-info-grid .ft-label {
+  font-weight: 400;
+  color: #999;
+}
+.ft-info-grid .ft-value {
+  color: var(--ft-text-main);
+}
+
+/* Copyright */
+.ft-copyright {
+  font-size: 12px;
+  color: #bbb;
+  font-family: sans-serif;
+  letter-spacing: 0.5px;
+  text-align: right;
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+  .ft-container {
+    padding: 40px 20px;
+  }
+
+  .ft-top-row {
+    justify-content: flex-start;
+  }
+
+  .ft-bottom-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 30px;
+  }
+
+  /* [핵심 수정] 모바일에서도 한 줄(가로) 배치 유지 */
+  .ft-info-grid {
+    /* 라벨 너비만큼만 차지하고, 나머지는 내용이 차지 */
+    grid-template-columns: max-content 1fr; 
+    column-gap: 10px;
+    row-gap: 6px;
+    width: 100%;
+  }
+  
+  .ft-info-grid .ft-label::after {
+    content: " :"; /* 모바일에서는 구분자 추가 */
+  }
+
+  /* 주소 등 긴 내용이 있을 때 정렬 */
+  .ft-info-grid .ft-value {
+    word-break: keep-all; /* 단어 단위 줄바꿈 */
+    line-height: 1.4;
+  }
+
+  .ft-copyright {
+    text-align: left;
+    margin-top: 10px;
+  }
 }

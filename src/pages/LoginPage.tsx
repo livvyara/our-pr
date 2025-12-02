@@ -1,5 +1,3 @@
-// src/pages/LoginPage.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { K_BRAND_COLOR } from '../constants'; 
@@ -16,22 +14,23 @@ import { auth } from '../firebase-config';
 import logoImage from '../assets/logo.png';
 import RoleHeader from '../components/common/RoleHeader';
 
-// SnsIcon 컴포넌트
+// SNS 아이콘 컴포넌트 (미니멀 스타일로 변경)
 interface SnsIconProps {
   color: string;
   text: string;
   onClick: () => void;
   textColor?: string;
-  iconSrc?: string; // 이미지 아이콘 지원을 위해 추가 가능
+  label: string; // 접근성 및 툴팁용
 }
 
-const SnsIcon: React.FC<SnsIconProps> = ({ color, text, onClick, textColor = 'white' }) => {
+const SnsIcon: React.FC<SnsIconProps> = ({ color, text, onClick, textColor = 'white', label }) => {
   return (
     <button 
-      className="sns-icon-btn"
+      className="lp-sns-btn"
       onClick={onClick}
       style={{ backgroundColor: color, color: textColor }}
       type="button"
+      aria-label={label}
     >
       {text}
     </button>
@@ -93,14 +92,12 @@ const LoginPage: React.FC = () => {
                 localStorage.removeItem('savedEmail');
               }
 
-              // [⭐ 핵심 로직] 로그인 후 이동 경로 처리
+              // 로그인 후 이동 경로 처리
               const returnUrl = localStorage.getItem('returnTo');
               if (returnUrl) {
-                  // 초대 페이지 등으로 이동 (삭제는 이동한 페이지에서 처리하거나 여기서 처리)
-                  // JoinSitePage에서 로그인 상태 체크 후 삭제하므로 바로 이동만 하면 됨
                   navigate(returnUrl);
               } else {
-                  navigate('/'); // 기본 메인 페이지
+                  navigate('/');
               }
           }
       } else {
@@ -126,106 +123,97 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="login-page-bg">
-      <div className="login-page-container">
-        {/* {!isMobile && <RoleHeader />}  디자인상 깔끔함을 위해 헤더 제거 또는 조건부 렌더링 */}
-
-        <div className="login-box-card">
-          <form onSubmit={handleLogin} className="login-form">
-            
-            <div className="login-logo-area">
-                <Link to="/"> 
-                <img 
-                    src={logoImage} 
-                    alt="Logo" 
-                    className="login-page-logo"
-                />
-                </Link>
-                <p className="login-greeting">다시 만나서 반가워요!</p>
-            </div>
-
-            <div className="login-input-group">
-                <input 
-                    type="email" 
-                    placeholder="이메일" 
-                    className="login-input"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required 
-                />
-                <input 
-                    type="password" 
-                    placeholder="비밀번호" 
-                    className="login-input"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required 
-                />
-            </div>
-            
-            <div className="login-options-row">
-              <div className="checkbox-group">
-                <label className="custom-checkbox">
-                  <input 
-                    type="checkbox" 
-                    checked={saveId} 
-                    onChange={(e) => setSaveId(e.target.checked)} 
-                  />
-                  <span className="checkmark"></span>
-                  아이디 저장
-                </label>
-                <label className="custom-checkbox">
-                  <input 
-                    type="checkbox" 
-                    checked={autoLogin} 
-                    onChange={(e) => setAutoLogin(e.target.checked)} 
-                  />
-                   <span className="checkmark"></span>
-                  자동로그인
-                </label>
-              </div>
-            </div>
-
-            <button 
-              type="submit"
-              className="login-submit-btn"
-              style={{ backgroundColor: K_BRAND_COLOR }}
-              disabled={isLoading}
-            >
-              {isLoading ? '로그인 중...' : '로그인'}
-            </button>
-
-            <div className="login-links-row">
-              <button type="button" onClick={() => handleNavigation('/find-id')}>아이디 찾기</button>
-              <span className="divider">|</span>
-              <button type="button" onClick={() => handleNavigation('/reset-password')}>비밀번호 재설정</button>
-              <span className="divider">|</span>
-              <button type="button" onClick={() => handleNavigation('/signup')} className="highlight-link">회원가입</button>
-            </div>
-
-            <div className="login-divider-with-text">
-                <span>SNS 계정으로 시작하기</span>
-            </div>
-
-            <div className="login-sns-row">
-              <SnsIcon color="#EA4335" text="G" onClick={() => console.log('Google')} />
-              <SnsIcon color="#03C75A" text="N" onClick={() => console.log('Naver')} />
-              <SnsIcon color="#FFE812" text="K" onClick={() => console.log('Kakao')} textColor="#3b1e1e" /> 
-            </div>
-
-            <button 
-              type="button"
-              className="login-problem-link"
-              onClick={() => console.log('Help')}
-            >
-              로그인에 문제가 있으신가요?
-            </button>
-
-          </form>
+    <div className="lp-container">
+      <div className="lp-wrapper">
+        
+        {/* Header Section */}
+        <div className="lp-header">
+          <Link to="/" className="lp-logo-link">
+            <img src={logoImage} alt="Logo" className="lp-logo" />
+          </Link>
+          <h1 className="lp-title">로그인</h1>
+          <p className="lp-subtitle">아워프로젝트에 오신 것을 환영합니다.</p>
         </div>
-        <div className="login-footer">
-            © 2025 OurProject. All rights reserved.
-        </div>
+
+        {/* Form Section */}
+        <form onSubmit={handleLogin} className="lp-form">
+          <div className="lp-input-group">
+            <label htmlFor="email">이메일</label>
+            <input 
+                id="email"
+                type="email" 
+                placeholder="example@email.com" 
+                className="lp-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+            />
+          </div>
+          <div className="lp-input-group">
+            <label htmlFor="password">비밀번호</label>
+            <input 
+                id="password"
+                type="password" 
+                placeholder="비밀번호 입력" 
+                className="lp-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+            />
+          </div>
+          
+          <div className="lp-options">
+            <div className="lp-checkbox-group">
+              <label className="lp-checkbox">
+                <input 
+                  type="checkbox" 
+                  checked={saveId} 
+                  onChange={(e) => setSaveId(e.target.checked)} 
+                />
+                <span className="checkmark"></span>
+                아이디 저장
+              </label>
+              <label className="lp-checkbox">
+                <input 
+                  type="checkbox" 
+                  checked={autoLogin} 
+                  onChange={(e) => setAutoLogin(e.target.checked)} 
+                />
+                 <span className="checkmark"></span>
+                자동 로그인
+              </label>
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            className="lp-submit-btn"
+            disabled={isLoading}
+          >
+            {isLoading ? '처리 중...' : '로그인'}
+          </button>
+
+          <div className="lp-links">
+            <button type="button" onClick={() => handleNavigation('/find-id')}>아이디 찾기</button>
+            <span className="divider">/</span>
+            <button type="button" onClick={() => handleNavigation('/reset-password')}>비밀번호 재설정</button>
+            <span className="divider">/</span>
+            <button type="button" onClick={() => handleNavigation('/signup')} className="highlight">회원가입</button>
+          </div>
+
+          <div className="lp-sns-section">
+            <p className="lp-sns-label">SNS 계정으로 시작하기</p>
+            <div className="lp-sns-buttons">
+              <SnsIcon color="#000000" text="G" label="Google" onClick={() => console.log('Google')} />
+              <SnsIcon color="#03C75A" text="N" label="Naver" onClick={() => console.log('Naver')} />
+              <SnsIcon color="#FEE500" text="K" label="Kakao" textColor="#000000" onClick={() => console.log('Kakao')} /> 
+            </div>
+          </div>
+
+        </form>
+      </div>
+      <div className="lp-footer">
+          © OurProject. All rights reserved.
       </div>
     </div>
   );

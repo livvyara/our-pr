@@ -1,265 +1,245 @@
 /* src/pages/LoginPage.css */
 
-/* 전체 배경 */
-.login-page-bg {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f8f9fa; /* 아주 연한 회색 배경 */
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", Roboto, sans-serif;
+:root {
+  --lp-black: #111111;
+  --lp-white: #ffffff;
+  --lp-gray: #888888;
+  --lp-border: #e0e0e0;
+  --lp-accent: #d4a373;
 }
 
-.login-page-container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+.lp-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #fafafa;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  padding: 20px;
 }
 
-/* 카드 디자인 */
-.login-box-card {
-    background: #ffffff;
-    width: 100%;
-    max-width: 440px;
-    padding: 50px 40px;
-    border-radius: 24px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08); /* 부드러운 그림자 */
-    box-sizing: border-box;
+.lp-wrapper {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--lp-white);
+  padding: 60px 40px;
+  border: 1px solid var(--lp-border);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03); /* 아주 은은한 그림자 */
 }
 
-/* 로고 영역 */
-.login-logo-area {
-    text-align: center;
-    margin-bottom: 40px;
+/* Header */
+.lp-header {
+  text-align: center;
+  margin-bottom: 50px;
 }
 
-.login-page-logo {
-    width: 180px;
-    height: auto;
-    display: block;
-    margin: 0 auto 15px auto;
-    cursor: pointer;
+.lp-logo {
+  height: 120px;
+  margin-bottom: 30px;
+  opacity: 0.8;
 }
 
-.login-greeting {
-    font-size: 16px;
-    color: #888;
-    margin: 0;
-    font-weight: 500;
+.lp-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+  color: var(--lp-black);
 }
 
-/* 입력 필드 그룹 */
-.login-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+.lp-subtitle {
+  font-size: 15px;
+  color: var(--lp-gray);
 }
 
-.login-input {
-    width: 100%;
-    height: 52px;
-    padding: 0 16px;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px; /* 둥근 모서리 */
-    font-size: 15px;
-    transition: all 0.2s ease;
-    background-color: #fcfcfc;
-    box-sizing: border-box;
+/* Form Inputs */
+.lp-input-group {
+  margin-bottom: 24px;
 }
 
-.login-input:focus {
-    outline: none;
-    border-color: #333; /* 포커스 시 진한 색 */
-    background-color: #fff;
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+.lp-input-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--lp-black);
 }
 
-/* 옵션 (체크박스) */
-.login-options-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 30px;
+.lp-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 16px;
+  border: 1px solid var(--lp-border);
+  border-radius: 0; /* 각진 모서리 (Magazine Style) */
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background-color 0.2s;
+  background-color: transparent;
 }
 
-.checkbox-group {
-    display: flex;
-    gap: 20px;
+.lp-input:focus {
+  outline: none;
+  border-color: var(--lp-black);
+  background-color: #fcfcfc;
 }
 
-.custom-checkbox {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 14px;
-    color: #666;
-    user-select: none;
+/* Checkbox */
+.lp-options {
+  margin-bottom: 30px;
 }
 
-.custom-checkbox input {
-    display: none;
+.lp-checkbox-group {
+  display: flex;
+  justify-content: space-between;
+}
+
+.lp-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lp-checkbox input {
+  display: none;
 }
 
 .checkmark {
-    width: 18px;
-    height: 18px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-right: 8px;
-    position: relative;
-    transition: all 0.2s;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #ccc;
+  margin-right: 8px;
+  position: relative;
+  transition: all 0.2s;
 }
 
-.custom-checkbox input:checked + .checkmark {
-    background-color: #333;
-    border-color: #333;
+.lp-checkbox input:checked + .checkmark {
+  background-color: var(--lp-black);
+  border-color: var(--lp-black);
 }
 
-.custom-checkbox input:checked + .checkmark::after {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 2px;
-    width: 4px;
-    height: 9px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+.lp-checkbox input:checked + .checkmark::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
-/* 로그인 버튼 */
-.login-submit-btn {
-    width: 100%;
-    height: 54px;
-    border: none;
-    border-radius: 12px;
-    color: #000; /* 브랜드 컬러 배경 시 텍스트 색상 고려 (여기선 검정/흰색 조정 필요) */
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s ease, filter 0.2s;
-    margin-bottom: 24px;
-}
-.login-submit-btn:hover {
-    filter: brightness(0.95);
-}
-.login-submit-btn:active {
-    transform: scale(0.98);
-}
-.login-submit-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+/* Button */
+.lp-submit-btn {
+  width: 100%;
+  height: 54px;
+  background-color: var(--lp-black);
+  color: var(--lp-white);
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  border-radius: 0; /* 각진 버튼 */
 }
 
-/* 링크 영역 */
-.login-links-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 40px;
-    font-size: 14px;
+.lp-submit-btn:hover {
+  opacity: 0.9;
 }
 
-.login-links-row button {
-    background: none;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    padding: 0 10px;
-    font-size: 13px;
-    transition: color 0.2s;
-}
-.login-links-row button:hover {
-    color: #333;
-}
-.login-links-row .divider {
-    color: #e0e0e0;
-    font-size: 12px;
-}
-.login-links-row .highlight-link {
-    color: #333;
-    font-weight: 600;
+.lp-submit-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-/* SNS 구분선 */
-.login-divider-with-text {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    color: #999;
-    font-size: 13px;
-    margin-bottom: 20px;
-}
-.login-divider-with-text::before,
-.login-divider-with-text::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid #eee;
-}
-.login-divider-with-text span {
-    padding: 0 10px;
+/* Links */
+.lp-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+  margin-bottom: 40px;
 }
 
-/* SNS 버튼 */
-.login-sns-row {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    margin-bottom: 40px;
+.lp-links button {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  padding: 0 10px;
 }
 
-.sns-icon-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    font-weight: 700;
-    font-size: 20px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-.sns-icon-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+.lp-links .divider {
+  font-size: 10px;
+  color: #ddd;
 }
 
-/* 문제 해결 링크 */
-.login-problem-link {
-    display: block;
-    width: 100%;
-    text-align: center;
-    background: none;
-    border: none;
-    color: #bbb;
-    font-size: 13px;
-    text-decoration: underline;
-    cursor: pointer;
-}
-.login-problem-link:hover { color: #888; }
-
-.login-footer {
-    margin-top: 30px;
-    color: #ccc;
-    font-size: 12px;
+.lp-links .highlight {
+  color: var(--lp-black);
+  font-weight: 600;
+  text-decoration: underline;
 }
 
-/* 모바일 반응형 */
+/* SNS */
+.lp-sns-section {
+  text-align: center;
+  border-top: 1px solid var(--lp-border);
+  padding-top: 30px;
+}
+
+.lp-sns-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+.lp-sns-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.lp-sns-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%; /* SNS 아이콘은 원형 유지하거나 사각형으로 변경 가능. 여기선 원형 유지 */
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-sns-btn:hover {
+  transform: translateY(-2px);
+}
+
+.lp-footer {
+  margin-top: 40px;
+  font-size: 11px;
+  color: #ccc;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Mobile */
 @media (max-width: 480px) {
-    .login-box-card {
-        padding: 30px 20px;
-        box-shadow: none; /* 모바일에서는 플랫하게 */
-        background-color: transparent;
-    }
-    .login-page-bg {
-        background-color: #fff;
-    }
-    .login-input {
-        background-color: #f5f5f5;
-    }
+  .lp-wrapper {
+    border: none;
+    background-color: transparent;
+    padding: 20px 0;
+    box-shadow: none;
+  }
+  .lp-container {
+    background-color: #fff;
+  }
 }
