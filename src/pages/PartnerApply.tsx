@@ -37,16 +37,15 @@ const PartnerApply: React.FC = () => {
       <div className="pa-main-wrapper">
         <div className="pa-container">
           
-          {/* 1. Header Section [수정됨] */}
+          {/* Header Section */}
           <div className="pa-header-section">
             <h1 className="pa-title">파트너 프로그램</h1>
-            <div className="pa-divider-long"></div>
+            <div className="pa-divider-long"></div> {/* CSS에서 제어 */}
             <p className="pa-desc">성공적인 비즈니스를 위한 최적의 솔루션</p>
           </div>
 
-          {/* 2. Features Grid */}
+          {/* Features Grid */}
           <div className="pa-grid-wrapper">
-            {/* Card 1 */}
             <div className="pa-feature-card">
               <div className="pa-card-img">
                 <img src={IMG_DASHBOARD} alt="Dashboard" />
@@ -63,7 +62,6 @@ const PartnerApply: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 2 */}
             <div className="pa-feature-card">
               <div className="pa-card-img">
                 <img src={IMG_SCHEDULE} alt="Schedule" />
@@ -80,7 +78,6 @@ const PartnerApply: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 3 */}
             <div className="pa-feature-card">
               <div className="pa-card-img">
                 <img src={IMG_MOBILE} alt="Mobile" />
@@ -98,7 +95,7 @@ const PartnerApply: React.FC = () => {
             </div>
           </div>
 
-          {/* 3. CTA Section */}
+          {/* CTA Section */}
           <div className="pa-cta-box">
             <div className="pa-cta-content">
               <h2>지금 바로 합류하세요</h2>
