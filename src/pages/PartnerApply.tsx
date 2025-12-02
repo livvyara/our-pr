@@ -5,7 +5,7 @@ import SubNav from '../components/common/SubNav';
 import MobileMenu from '../components/common/MobileMenu';
 import Footer from '../components/common/Footer';
 import RoleHeader from '../components/common/RoleHeader';
-import './PartnerApply.css'; 
+import './partnerApply.css'; 
 
 // 이미지 에셋
 const IMG_DASHBOARD = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop";
