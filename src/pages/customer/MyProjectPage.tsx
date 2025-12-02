@@ -8,7 +8,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { ChatIcons } from '../../components/common/ChatIcons';
 import ChatWidget from '../../components/common/ChatWidget';
 
-// 공통 컴포넌트
 import Header from '../../components/common/Header';
 import SubNav from '../../components/common/SubNav'; 
 import MobileMenu from '../../components/common/MobileMenu'; 
@@ -16,10 +15,10 @@ import Footer from '../../components/common/Footer';
 import RoleHeader from '../../components/common/RoleHeader';
 import { useMenu } from '../../contexts/MenuContext';
 
-// 모달
 import ConstructionScheduleModal from '../../components/partner/ConstructionScheduleModal';
 import SiteWorkLogListModal from '../../components/customer/SiteWorkLogListModal';
-import CustomerSiteFilesModal from '../../components/customer/CustomerSiteFilesModal'; // [NEW] 자료 모달
+import CustomerSiteFilesModal from '../../components/customer/CustomerSiteFilesModal';
+import ChangeOrderModal from '../../components/partner/ChangeOrderModal'; 
 
 import './MyProjectPage.css'; 
 
@@ -40,16 +39,16 @@ interface MySiteData {
   budget?: number;
   area?: string;
   siteType?: string;
-  // 계약 금액 관련 필드
   contractSupply?: number;
   contractVat?: number;
+  // [NEW] 추가/변경 공사비 합계
+  changeOrderTotal?: number;
 }
 
 const MyProjectPage: React.FC = () => {
   const navigate = useNavigate();
   
   const { mainMenus, isLoading: isMenuLoading } = useMenu();
-  // [메뉴 상태] 초기값을 'lounge'로 설정 (DB에 lounge 메뉴가 있어야 함)
   const [selectedMenu, setSelectedMenu] = useState('lounge'); 
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -60,9 +59,8 @@ const MyProjectPage: React.FC = () => {
   const [expandedSiteId, setExpandedSiteId] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // 모달 상태 관리
   const [modalState, setModalState] = useState<{
-      type: 'schedule' | 'worklog' | 'files' | 'estimate' | 'contract' | 'insurance' | null;
+      type: 'schedule' | 'worklog' | 'files' | 'estimate' | 'contract' | 'insurance' | 'changeOrder' | null;
       siteId: string;
       partnerUid: string;
   } | null>(null);
@@ -80,9 +78,7 @@ const MyProjectPage: React.FC = () => {
   useEffect(() => {
       if (!isMenuLoading && mainMenus.length > 0) {
           const hasLounge = mainMenus.find(m => m.key === 'lounge');
-          if (hasLounge) {
-              setSelectedMenu('lounge');
-          }
+          if (hasLounge) setSelectedMenu('lounge');
       }
   }, [isMenuLoading, mainMenus]);
 
@@ -92,7 +88,6 @@ const MyProjectPage: React.FC = () => {
         await fetchMyProjects(user.uid);
       } else {
         setLoadingData(false);
-        // navigate('/login'); 
       }
     });
     return () => unsubscribe();
@@ -121,8 +116,21 @@ const MyProjectPage: React.FC = () => {
           const sData = siteSnap.data();
           const pData = partnerSnap.exists() ? partnerSnap.data() : {};
           const pInfo = pData.partnerInfo || {};
-          
           const contract = sData.contract || {};
+
+          // [NEW] 추가/변경 견적 합계 계산 (최종 승인된 것만)
+          let changeTotal = 0;
+          try {
+              const coQuery = query(
+                  collection(db, 'users', partnerUid, 'sites', siteId, 'changeOrders'),
+                  where('status', '==', 'approved')
+              );
+              const coSnap = await getDocs(coQuery);
+              coSnap.forEach(coDoc => {
+                  const coData = coDoc.data();
+                  changeTotal += Number(coData.totalAmount || 0);
+              });
+          } catch (e) { console.error("변경견적 조회 실패", e); }
 
           sites.push({
             inviteId: d.id, siteId, partnerUid,
@@ -133,7 +141,8 @@ const MyProjectPage: React.FC = () => {
             partnerPhone: pInfo.contact || pData.phone || '-',
             partnerEmail: pData.email || '-',
             contractSupply: contract.supplyAmount,
-            contractVat: contract.vatAmount
+            contractVat: contract.vatAmount,
+            changeOrderTotal: changeTotal // 추가된 필드
           });
         }
       }
@@ -154,7 +163,7 @@ const MyProjectPage: React.FC = () => {
     }
   };
 
-  const handleButtonClick = (type: 'schedule' | 'worklog' | 'files' | 'estimate' | 'contract' | 'insurance', site: MySiteData) => {
+  const handleButtonClick = (type: any, site: MySiteData) => {
       if (type === 'estimate' || type === 'contract' || type === 'insurance') {
           alert("준비 중인 기능입니다.");
           return;
@@ -165,16 +174,8 @@ const MyProjectPage: React.FC = () => {
   return (
     <div className="page-container">
       {!isMobile && <RoleHeader />}
-      
-      <Header 
-        onMenuSelected={handleMenuSelect} 
-        isMobile={isMobile} 
-        onHamburgerPressed={() => setIsMobileMenuOpen(true)} 
-      />
-      
-      {!isMobile && selectedMenu && (
-        <SubNav selectedMenuKey={selectedMenu} />
-      )}
+      <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
+      {!isMobile && selectedMenu && <SubNav selectedMenuKey={selectedMenu} />}
 
       <main className="my-project-main">
         <div className="my-project-container">
@@ -194,6 +195,7 @@ const MyProjectPage: React.FC = () => {
                     mySites.map(site => {
                         const statusStyle = getStatusLabel(site.status);
                         const isExpanded = expandedSiteId === site.siteId;
+                        const changeAmt = site.changeOrderTotal || 0;
 
                         return (
                         <div key={site.siteId} className={`mp-card ${isExpanded ? 'expanded' : ''}`}>
@@ -224,6 +226,19 @@ const MyProjectPage: React.FC = () => {
                                                 <div className="mp-row"><span>공급가액</span> {site.contractSupply.toLocaleString()} 원</div>
                                                 <div className="mp-row"><span>부가세</span> {(site.contractVat || 0).toLocaleString()} 원</div>
                                                 <div className="mp-row total"><span>총 공사비</span> {(site.budget || 0).toLocaleString()} 원</div>
+                                                
+                                                {/* [NEW] 추가/변경 공사비 표시 */}
+                                                {changeAmt !== 0 && (
+                                                    <div className="mp-row" style={{marginTop:'5px'}}>
+                                                        <span>추가/변경 공사비</span>
+                                                        <span style={{
+                                                            color: changeAmt > 0 ? '#1976d2' : '#d32f2f', 
+                                                            fontWeight: 'bold'
+                                                        }}>
+                                                            {changeAmt > 0 ? '+' : ''}{changeAmt.toLocaleString()} 원
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </>
                                         ) : (
                                             <div className="mp-row total"><span>총 공사비</span> {(site.budget || 0).toLocaleString()} 원</div>
@@ -245,10 +260,8 @@ const MyProjectPage: React.FC = () => {
                                 <div className="mp-quick-links">
                                     <button className="mp-link-btn" onClick={() => handleButtonClick('schedule', site)}>📅 공사 일정</button>
                                     <button className="mp-link-btn" onClick={() => handleButtonClick('worklog', site)}>📝 작업 일지</button>
-                                    
-                                    {/* [NEW] 공사자료 열람 버튼 */}
                                     <button className="mp-link-btn" onClick={() => handleButtonClick('files', site)}>📂 공사자료 열람</button>
-                                    
+                                    <button className="mp-link-btn" onClick={() => handleButtonClick('changeOrder', site)}>💰 추가/변경 견적</button>
                                     <button className="mp-link-btn" onClick={() => handleButtonClick('estimate', site)}>📑 견적서 확인</button>
                                     <button className="mp-link-btn" onClick={() => handleButtonClick('contract', site)}>📜 전자계약서</button>
                                     <button className="mp-link-btn" onClick={() => handleButtonClick('insurance', site)}>🛡️ 보험가입 요청</button>
@@ -262,36 +275,13 @@ const MyProjectPage: React.FC = () => {
             )}
         </div>
       </main>
-
       <Footer /> 
       {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
       {isChatOpen && <ChatWidget onClose={() => setIsChatOpen(false)} />}
-
-      {/* 모달 렌더링 */}
-      {modalState?.type === 'schedule' && (
-          <ConstructionScheduleModal 
-            siteId={modalState.siteId} 
-            partnerUid={modalState.partnerUid} 
-            onClose={() => setModalState(null)} 
-            viewOnly={true} 
-          />
-      )}
-      {modalState?.type === 'worklog' && (
-          <SiteWorkLogListModal 
-            siteId={modalState.siteId} 
-            partnerUid={modalState.partnerUid} 
-            onClose={() => setModalState(null)} 
-          />
-      )}
-      {/* [NEW] 자료 모달 */}
-      {modalState?.type === 'files' && (
-          <CustomerSiteFilesModal 
-            siteId={modalState.siteId} 
-            partnerUid={modalState.partnerUid} 
-            onClose={() => setModalState(null)} 
-          />
-      )}
-
+      {modalState?.type === 'schedule' && <ConstructionScheduleModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} viewOnly={true} />}
+      {modalState?.type === 'changeOrder' && <ChangeOrderModal siteId={modalState.siteId} siteName="" partnerUid={modalState.partnerUid} userRole="customer" onClose={() => setModalState(null)} />}
+      {modalState?.type === 'worklog' && <SiteWorkLogListModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
+      {modalState?.type === 'files' && <CustomerSiteFilesModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
     </div>
   );
 };

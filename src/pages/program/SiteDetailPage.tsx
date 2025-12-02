@@ -20,8 +20,7 @@ interface SiteDetailPageProps {
   partnerUid?: string | null; 
 }
 
-// [⭐ 수정 1] SiteData 인터페이스 수정
-// 불필요한 'siteID' 필드를 제거하여 SiteInfoWidget과의 타입 불일치 해결
+// SiteData 인터페이스
 interface SiteData {
   siteName: string;
   address: string;
@@ -38,13 +37,15 @@ interface SiteData {
   openDate?: string;
   businessType?: string;
   moveInDate?: string;
-  // siteID: string; // [삭제됨] 문서는 ID를 별도로 관리하므로 데이터 타입에서 제외
+  // 필요시 추가 필드 정의 (contractSupply, contractVat 등)
+  contractSupply?: number;
+  contractVat?: number;
 }
 
 const SiteDetailPage: React.FC<SiteDetailPageProps> = ({ partnerUid: propPartnerUid }) => {
   const { siteId } = useParams<{ siteId: string }>(); 
   const location = useLocation(); 
-  const navigate = useNavigate(); // (뒤로가기 등에 필요하다면 사용)
+  const navigate = useNavigate(); 
   
   const [siteData, setSiteData] = useState<SiteData | null>(null);
   const [currentOwnerUid, setCurrentOwnerUid] = useState<string | null>(null);
@@ -161,8 +162,9 @@ const SiteDetailPage: React.FC<SiteDetailPageProps> = ({ partnerUid: propPartner
         <SiteActionsWidget 
           siteId={siteId!} 
           partnerUid={currentOwnerUid} 
-          // [⭐ 수정 2] currentSiteName Prop 추가 (오류 해결)
           currentSiteName={siteData.siteName}
+          // [⭐ 수정] status 속성 추가 (필수)
+          status={siteData.status}
         />
       </div>
 

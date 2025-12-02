@@ -7,7 +7,6 @@ import {
 } from '@react-three/drei';
 import * as THREE from 'three';
 
-// 공통 컴포넌트
 import Header from '../../components/common/Header';
 import SubNav from '../../components/common/SubNav';
 import MobileMenu from '../../components/common/MobileMenu'; 
@@ -17,7 +16,6 @@ import { useMenu } from '../../contexts/MenuContext';
 
 import './ThreeDSimulationPage.css'; 
 
-// --- [타입 정의] ---
 type ItemType = 'floor' | 'wall' | 'window' | 'furniture' | 'text';
 
 interface SceneItem {
@@ -33,30 +31,30 @@ interface SceneItem {
   textData?: string;
 }
 
-// --- [치수 표시 컴포넌트 (왜곡 방지 적용)] ---
 const ObjectDimensions = ({ scale, type }: { scale: [number, number, number], type: ItemType }) => {
     const [w, h, d] = scale; 
     const safeW = w || 0.001;
     const safeH = h || 0.001;
     const safeD = d || 0.001;
 
-    const fontSize = 0.3; 
+    // 스케일 역보정 (물체 크기가 변해도 텍스트 크기 유지)
+    const invScale: [number, number, number] = [1/safeW, 1/safeH, 1/safeD];
+    
+    const fontSize = 0.25; 
     const color = "black";
     const outlineColor = "white";
-    const outlineWidth = 0.04;
-    const offset = 0.2; // 물체 가장자리와의 거리
+    const outlineWidth = 0.03;
+    const offset = 0.3; // 텍스트와 물체 간격
 
-    // 1. 바닥 (Floor) - X축 -90도 회전 상태
-    // 텍스트의 로컬 좌표계: X(가로), Y(세로-원래 Z), Z(높이-원래 -Y)
+    // 1. 바닥 (Floor) - 눕혀진 상태
+    // 로컬 좌표계: X=가로, Y=세로(깊이), Z=두께
     if (type === 'floor') {
-        // 바닥 텍스트가 부모의 스케일을 따라가지 않도록 역수 적용 (회전된 축 고려)
         const floorInvScale: [number, number, number] = [1/safeW, 1/safeD, 1/safeH];
-
         return (
             <group>
-                 {/* 가로 길이 (위쪽 변) */}
+                 {/* 가로 길이 (위쪽 변 바깥) */}
                  <Text 
-                    position={[0, (safeD/2 + offset)/safeD, 0.2/safeH]} // Z축(화면상 Y)으로 약간 띄움
+                    position={[0, (safeD/2)/safeD + offset*floorInvScale[1], 0.2*floorInvScale[2]]} 
                     rotation={[-Math.PI/2, 0, 0]}
                     scale={floorInvScale}
                     fontSize={fontSize} color={color} 
@@ -65,9 +63,9 @@ const ObjectDimensions = ({ scale, type }: { scale: [number, number, number], ty
                 >
                     {w.toFixed(1)}m
                 </Text>
-                {/* 세로 길이 (오른쪽 변) */}
+                {/* 세로 길이 (오른쪽 변 바깥) */}
                 <Text 
-                    position={[(safeW/2 + offset)/safeW, 0, 0.2/safeH]} 
+                    position={[(safeW/2)/safeW + offset*floorInvScale[0], 0, 0.2*floorInvScale[2]]} 
                     rotation={[-Math.PI/2, 0, -Math.PI/2]} 
                     scale={floorInvScale}
                     fontSize={fontSize} color={color} 
@@ -80,38 +78,36 @@ const ObjectDimensions = ({ scale, type }: { scale: [number, number, number], ty
         );
     }
 
-    // 2. 벽/가구 (Wall/Furniture) - 기본 회전 없음
-    // 텍스트 로컬 좌표계: X(가로), Y(세로), Z(깊이)
-    const stdInvScale: [number, number, number] = [1/safeW, 1/safeH, 1/safeD];
-
+    // 2. 벽/가구 (Wall/Furniture)
+    // 로컬 좌표계: X=가로, Y=높이, Z=깊이
     return (
         <group>
-            {/* 가로 (상단) */}
+            {/* 가로 (Width) - [수정] 물체의 뒤쪽 가장자리 위로 이동 */}
             <Text 
-                position={[0, (safeH/2 + offset)/safeH, 0]} 
-                scale={stdInvScale}
+                position={[0, (safeH/2)/safeH + offset*invScale[1], -(safeD/2)/safeD]} 
+                scale={invScale}
                 fontSize={fontSize} color={color} outlineColor={outlineColor} outlineWidth={outlineWidth}
                 anchorY="bottom"
             >
                 W: {w.toFixed(1)}m
             </Text>
             
-            {/* 높이 (우측) */}
+            {/* 높이 (Height) - 물체의 오른쪽 가장자리 옆 */}
             <Text 
-                position={[(safeW/2 + offset)/safeW, 0, 0]} 
-                scale={stdInvScale}
+                position={[(safeW/2)/safeW + offset*invScale[0], 0, 0]} 
+                scale={invScale}
                 fontSize={fontSize} color={color} outlineColor={outlineColor} outlineWidth={outlineWidth}
                 anchorX="left"
             >
                 H: {h.toFixed(1)}m
             </Text>
             
-            {/* 깊이 (하단 - 바닥에 눕혀서 표시) */}
+            {/* 깊이 (Depth) - 물체의 앞쪽 바닥 (기존 유지) */}
             {type !== 'window' && (
                 <Text 
-                    position={[0, -(safeH/2)/safeH, (safeD/2 + 0.2)/safeD]} 
+                    position={[0, -(safeH/2)/safeH, (safeD/2)/safeD + offset*invScale[2]]} 
                     rotation={[-Math.PI/2, 0, 0]}
-                    scale={stdInvScale}
+                    scale={invScale}
                     fontSize={fontSize * 0.8} color={color} outlineColor={outlineColor} outlineWidth={outlineWidth}
                     anchorY="top"
                 >
@@ -122,40 +118,17 @@ const ObjectDimensions = ({ scale, type }: { scale: [number, number, number], ty
     );
 };
 
-// --- [3D 객체 컴포넌트] ---
 const DraggableItem = ({ 
     item, isSelected, onSelect, onTransform, controlMode, showWallDims, showFloorDims 
 }: { 
-    item: SceneItem, 
-    isSelected: boolean, 
-    onSelect: () => void, 
-    onTransform: (newProps: any) => void,
-    controlMode: 'translate' | 'rotate' | 'scale',
-    showWallDims: boolean,
-    showFloorDims: boolean
+    item: SceneItem, isSelected: boolean, onSelect: () => void, onTransform: (newProps: any) => void,
+    controlMode: 'translate' | 'rotate' | 'scale', showWallDims: boolean, showFloorDims: boolean
 }) => {
     const [sceneObject, setSceneObject] = useState<THREE.Group | null>(null);
     const [hovered, setHover] = useState(false);
     useCursor(hovered);
 
     const shouldShowDim = isSelected || (item.type === 'wall' && showWallDims) || (item.type === 'floor' && showFloorDims);
-
-    // 타입별 형상 및 재질
-    let geometry;
-    let materialProps: any = { color: item.color };
-
-    if (item.type === 'floor') {
-        geometry = <boxGeometry args={[1, 0.05, 1]} />; 
-        materialProps = { color: item.color, roughness: 0.8 };
-    } else if (item.type === 'window') {
-        geometry = <boxGeometry args={[1, 1, 0.2]} />;
-        materialProps = { 
-            color: '#aaddff', transparent: true, opacity: 0.5, roughness: 0, metalness: 0.2 
-        };
-    } else {
-        geometry = <boxGeometry args={[1, 1, 1]} />;
-        materialProps = { color: item.color };
-    }
 
     const handleTransformEnd = () => {
         if (sceneObject) {
@@ -168,7 +141,6 @@ const DraggableItem = ({
         }
     };
 
-    // 텍스트 객체 처리
     if (item.type === 'text') {
         return (
             <>
@@ -190,9 +162,22 @@ const DraggableItem = ({
         );
     }
 
+    let geometry;
+    let materialProps: any = { color: item.color };
+
+    if (item.type === 'floor') {
+        geometry = <boxGeometry args={[1, 0.05, 1]} />; 
+        materialProps = { color: item.color, roughness: 0.8 };
+    } else if (item.type === 'window') {
+        geometry = <boxGeometry args={[1, 1, 0.2]} />;
+        materialProps = { color: '#aaddff', transparent: true, opacity: 0.5, roughness: 0, metalness: 0.2 };
+    } else {
+        geometry = <boxGeometry args={[1, 1, 1]} />;
+        materialProps = { color: item.color };
+    }
+
     return (
         <>
-            {/* 컨트롤러 */}
             {isSelected && sceneObject && (
                 <TransformControls 
                     object={sceneObject}
@@ -208,10 +193,7 @@ const DraggableItem = ({
                 position={item.position} 
                 rotation={new THREE.Euler(...item.rotation)} 
                 scale={item.scale}
-                onClick={(e) => { 
-                    e.stopPropagation(); 
-                    onSelect(); 
-                }}
+                onClick={(e) => { e.stopPropagation(); onSelect(); }}
                 onPointerOver={() => setHover(true)}
                 onPointerOut={() => setHover(false)}
             >
@@ -220,14 +202,12 @@ const DraggableItem = ({
                     <meshStandardMaterial {...materialProps} />
                 </mesh>
 
-                {/* 라벨 */}
                 {['furniture'].includes(item.type) && (isSelected || hovered) && (
                     <Html position={[0, 0.8, 0]} center distanceFactor={10} style={{pointerEvents:'none'}}>
                         <div className={`item-label ${isSelected ? 'selected' : ''}`}>{item.name}</div>
                     </Html>
                 )}
 
-                {/* 치수 표시 */}
                 {shouldShowDim && (
                     <ObjectDimensions scale={item.scale} type={item.type} />
                 )}
@@ -244,7 +224,6 @@ const ThreeDSimulationPage: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
 
-  // --- [Editor State] ---
   const [items, setItems] = useState<SceneItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [controlMode, setControlMode] = useState<'translate' | 'rotate' | 'scale'>('translate');

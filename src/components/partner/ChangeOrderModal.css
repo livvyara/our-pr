@@ -1,0 +1,103 @@
+/* ChangeOrderModal.css */
+
+.co-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+}
+.co-modal-content {
+    background: white; width: 1000px; /* 너비 확장 */
+    max-width: 95vw; max-height: 90vh;
+    border-radius: 12px; display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden;
+}
+
+.co-header {
+    padding: 15px 20px; border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+    background: #f8f9fa;
+}
+.co-header h3 { margin: 0; font-size: 18px; color: #333; }
+.co-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+
+.co-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* 스피너 제거 (Chrome, Safari, Edge, Opera) */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* 테이블 스타일 */
+.co-table-wrapper { overflow-x: auto; margin-bottom: 10px; border: 1px solid #eee; border-radius: 4px; }
+.co-input-table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 13px; }
+
+.co-input-table th { 
+    background: #f8f9fa; padding: 10px 5px; text-align: center; 
+    border-bottom: 1px solid #ddd; border-right: 1px solid #eee; font-weight: 600; color: #555;
+}
+.co-input-table td { 
+    padding: 6px 4px; border-bottom: 1px solid #eee; border-right: 1px solid #f5f5f5;
+}
+.co-input-table input { 
+    width: 100%; padding: 6px; border: 1px solid #ddd; 
+    box-sizing: border-box; border-radius: 4px; font-size: 13px;
+}
+.co-input-table input:focus { border-color: #1976d2; outline: none; }
+
+/* 열 너비 조정 */
+.col-name { width: 20%; } /* 품명 */
+.col-unit { width: 60px; } /* 단위 (좁게) */
+.col-qty { width: 60px; }  /* 수량 (좁게) */
+.col-price { width: 100px; } /* 단가 */
+.col-supply, .col-tax, .col-total { width: 110px; } /* 금액 관련 (넓게) */
+.col-note { width: 15%; } /* 비고 */
+.col-del { width: 40px; }
+
+/* 유틸리티 클래스 */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+.font-bold { font-weight: bold; }
+.bg-light { background-color: #fdfdfd; }
+
+/* 나머지 버튼 및 레이아웃 (기존 유지) */
+.co-item {
+    border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px;
+    cursor: pointer; transition: all 0.2s;
+}
+.co-item:hover { background-color: #f9f9f9; border-color: #1976d2; }
+.co-item-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; color: #666; }
+.co-item-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 5px; }
+.co-item-amount { font-size: 14px; font-weight: bold; color: #1976d2; }
+.co-item-author { font-size: 12px; color: #888; margin-top: 5px; }
+
+.badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; }
+.badge.pending { background-color: #ff9800; }
+.badge.customer { background-color: #2196f3; }
+.badge.approved { background-color: #4caf50; }
+
+.co-form .form-group { margin-bottom: 15px; }
+.co-form label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+.co-form input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+
+.btn-del-row { background: #ff5252; color: white; border: none; border-radius: 4px; cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+.btn-add-row { padding: 8px 15px; background: #fff; border: 1px solid #ddd; cursor: pointer; font-size: 13px; border-radius: 4px; color: #555; font-weight: bold; }
+.btn-add-row:hover { background: #f5f5f5; border-color: #bbb; }
+
+.co-total-box { text-align: right; font-size: 18px; margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; }
+
+.co-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.btn-cancel, .btn-back { padding: 10px 20px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer; font-weight: bold; color: #555; }
+.btn-save, .btn-approve { padding: 10px 20px; border: none; background: #1976d2; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.btn-new { padding: 8px 16px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+
+/* 뷰 테이블 (상세보기) */
+.co-view-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; border: 1px solid #eee; }
+.co-view-table th { background: #f8f9fa; padding: 12px; border-bottom: 2px solid #ddd; text-align: center; color: #555; font-weight: 600; }
+.co-view-table td { padding: 12px; border-bottom: 1px solid #eee; }
