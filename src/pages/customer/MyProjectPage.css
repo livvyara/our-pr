@@ -1,76 +1,107 @@
-/* MyProjectPage.css */
+/* src/pages/MyProjectPage.css */
 
-.my-project-main {
+.my-project-page-main {
     background-color: #f8f9fa;
     min-height: calc(100vh - 200px);
     padding: 40px 0;
 }
 
-.my-project-container {
-    max-width: 1200px; /* [수정] 컨테이너 너비 약간 확장 */
+.my-project-page-inner-container {
+    max-width: 1200px; 
     margin: 0 auto;
     padding: 0 20px;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
 
-.mp-header { margin-bottom: 40px; text-align: center; }
-.mp-header h2 { font-size: 32px; font-weight: 800; color: #333; margin-bottom: 12px; }
-.mp-header p { color: #666; font-size: 16px; }
+.my-project-page-header { margin-bottom: 40px; text-align: center; }
+.my-project-page-header h2 { font-size: 32px; font-weight: 800; color: #333; margin-bottom: 12px; }
+.my-project-page-header p { color: #666; font-size: 16px; }
 
-.my-project-loading, .mp-empty {
+.my-project-page-loading, .my-project-page-empty {
     text-align: center; padding: 80px 0; color: #888; font-size: 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
-.mp-empty .sub-text { display: block; font-size: 14px; margin-top: 10px; color: #aaa; }
+.my-project-page-empty p { margin: 0; }
+.my-project-page-empty .my-project-page-sub-text { display: block; font-size: 14px; margin-top: 10px; color: #aaa; }
 
 /* 카드 스타일 */
-.mp-card {
+.my-project-page-card {
     background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #eee; margin-bottom: 24px; overflow: hidden; transition: all 0.3s ease;
 }
-.mp-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.1); transform: translateY(-2px); }
-.mp-card.expanded { border-color: #1976d2; box-shadow: 0 8px 30px rgba(25, 118, 210, 0.15); }
+.my-project-page-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.my-project-page-card.expanded { border-color: #1976d2; box-shadow: 0 8px 30px rgba(25, 118, 210, 0.15); }
 
-.mp-card-header { padding: 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; }
-.mp-site-name { font-size: 20px; font-weight: 800; color: #333; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-.mp-status-badge { font-size: 12px; padding: 5px 10px; border-radius: 20px; font-weight: 700; }
-.mp-site-addr { font-size: 15px; color: #666; }
+.my-project-page-card-header { padding: 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; }
+.my-project-page-site-name { font-size: 20px; font-weight: 800; color: #333; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.my-project-page-status-badge { font-size: 12px; padding: 5px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap; }
+.my-project-page-site-addr { font-size: 15px; color: #666; }
 
-.btn-toggle { background: none; border: none; cursor: pointer; color: #999; transition: transform 0.3s; display: flex; align-items: center; padding: 5px; }
-.btn-toggle svg { width: 28px; height: 28px; transform: rotate(-90deg); }
-.btn-toggle.open svg { transform: rotate(90deg); }
+.my-project-page-btn-toggle { background: none; border: none; cursor: pointer; color: #999; transition: transform 0.3s; display: flex; align-items: center; padding: 5px; }
+.my-project-page-btn-toggle svg { width: 28px; height: 28px; transform: rotate(-90deg); }
+.my-project-page-btn-toggle.open svg { transform: rotate(90deg); }
 
-.mp-card-body { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1); background-color: #fcfcfc; border-top: 1px solid #f0f0f0; }
-.mp-card.expanded .mp-card-body { max-height: 1200px; } /* 높이 여유있게 */
+.my-project-page-card-body { 
+    max-height: 0; 
+    overflow: hidden; 
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+    background-color: #fcfcfc; 
+    border-top: 1px solid #f0f0f0; 
+}
+.my-project-page-card.expanded .my-project-page-card-body { max-height: 1200px; } 
 
-.mp-detail-grid { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-@media (max-width: 768px) { .mp-detail-grid { grid-template-columns: 1fr; gap: 24px; } }
+.my-project-page-detail-grid { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
 
-.mp-section h4 { font-size: 15px; color: #1976d2; margin-bottom: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e3f2fd; padding-bottom: 8px; display: inline-block; }
-.mp-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 12px; color: #333; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-.mp-row span { color: #777; font-weight: 500; }
-.mp-divider-line { height: 1px; background-color: #e0e0e0; margin: 15px 0; }
-.mp-row.total { font-size: 16px; font-weight: 800; color: #333; border-bottom: none; }
+.my-project-page-section h4 { 
+    font-size: 15px; 
+    color: #1976d2; 
+    margin-bottom: 16px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    border-bottom: 2px solid #e3f2fd; 
+    padding-bottom: 8px; 
+    display: inline-block; 
+}
+.my-project-page-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 12px; color: #333; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+.my-project-page-row span { color: #777; font-weight: 500; }
+.my-project-page-divider-line { height: 1px; background-color: #e0e0e0; margin: 15px 0; }
+.my-project-page-row.total { font-size: 16px; font-weight: 800; color: #333; border-bottom: none; }
 
-.mp-partner-box { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-.mp-p-name { font-weight: 800; font-size: 18px; color: #333; margin-bottom: 15px; } /* 마진 조정 */
+.my-project-page-partner-box { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+.my-project-page-p-name { font-weight: 800; font-size: 18px; color: #333; margin-bottom: 15px; } 
 
-/* [수정] 1:1 문의 버튼 스타일 */
-.btn-chat-partner { background-color: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s; }
-.btn-chat-partner:hover { background-color: #1565c0; transform: translateY(-1px); }
-.btn-chat-partner svg { width: 18px; height: 18px; }
+.my-project-page-btn-chat-partner { 
+    background-color: #1976d2; 
+    color: white; 
+    border: none; 
+    padding: 10px 20px; 
+    border-radius: 25px; 
+    font-size: 14px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    transition: background 0.2s, transform 0.1s; 
+    width: 100%; 
+    max-width: 200px;
+    margin: 0 auto;
+}
+.my-project-page-btn-chat-partner:hover { background-color: #1565c0; transform: translateY(-1px); }
+.my-project-page-btn-chat-partner svg { width: 18px; height: 18px; }
 
-/* [수정] 퀵 링크 버튼들 스타일 */
-.mp-quick-links {
+/* 퀵 링크 버튼들 스타일 */
+.my-project-page-quick-links {
     padding: 25px 30px;
     display: flex;
-    flex-wrap: wrap; /* 줄바꿈 허용 */
+    flex-wrap: wrap; 
     gap: 12px;
     background: #f5f5f5;
-    justify-content: center; /* 중앙 정렬 */
+    justify-content: center; 
     border-top: 1px solid #eee;
 }
 
-.mp-link-btn {
-    padding: 12px 20px; /* 패딩 넉넉하게 */
+.my-project-page-link-btn {
+    padding: 12px 20px; 
     border: 1px solid #ddd;
     background: white;
     border-radius: 10px;
@@ -82,16 +113,105 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 140px; /* 최소 너비 설정 */
+    min-width: 140px; 
     justify-content: center;
-    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    white-space: nowrap; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.mp-link-btn:hover {
+.my-project-page-link-btn:hover {
     border-color: #bbb;
     background: #fff;
     color: #1976d2;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------- */
+/* 📱 모바일 반응형 (max-width: 768px) */
+/* ---------------------------------------------------- */
+@media (max-width: 768px) {
+    .my-project-page-main {
+        padding: 20px 0; 
+    }
+    .my-project-page-inner-container {
+        padding: 0 10px; 
+    }
+    .my-project-page-header {
+        margin-bottom: 20px;
+    }
+    .my-project-page-header h2 {
+        font-size: 24px;
+    }
+    .my-project-page-header p {
+        font-size: 14px;
+    }
+
+    /* 카드 헤더 */
+    .my-project-page-card-header {
+        padding: 15px; 
+    }
+    .my-project-page-site-name {
+        font-size: 17px;
+        flex-direction: column; 
+        align-items: flex-start;
+        gap: 5px;
+        margin-bottom: 0;
+    }
+    .my-project-page-status-badge {
+    }
+    .my-project-page-site-addr {
+        font-size: 14px;
+    }
+
+    /* 카드 바디 (상세 정보) */
+    .my-project-page-detail-grid { 
+        grid-template-columns: 1fr; 
+        gap: 20px; 
+        padding: 20px 15px;
+    }
+    .my-project-page-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+    .my-project-page-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .my-project-page-row {
+        font-size: 14px;
+        margin-bottom: 8px;
+        padding-bottom: 5px;
+    }
+    .my-project-page-row span {
+        white-space: nowrap;
+        min-width: 80px;
+    }
+
+    /* 파트너 박스 */
+    .my-project-page-partner-box {
+        padding: 15px;
+    }
+    .my-project-page-p-name {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    .my-project-page-btn-chat-partner {
+        font-size: 13px;
+        padding: 8px 15px;
+        max-width: none;
+    }
+
+    /* 퀵 링크 버튼들 */
+    .my-project-page-quick-links {
+        padding: 15px 10px;
+        gap: 8px; 
+    }
+    .my-project-page-link-btn {
+        flex: 1 1 calc(50% - 12px); 
+        min-width: unset;
+        font-size: 13px;
+        padding: 10px 10px;
+        gap: 5px;
+    }
 }
