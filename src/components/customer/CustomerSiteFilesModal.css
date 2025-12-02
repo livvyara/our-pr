@@ -1,78 +1,133 @@
 /* CustomerSiteFilesModal.css */
 
-/* (기본 모달 스타일은 기존과 공유하거나 복사) */
-.cs-modal-overlay {
+.customer-files-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.6); z-index: 3000;
     display: flex; justify-content: center; align-items: center;
+    padding: 5px; /* 모바일에서 측면 여백 확보 */
 }
-.cs-modal-content {
-    background: white; border-radius: 12px; overflow: hidden;
-    display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+.customer-files-modal-content {
+    background: white; 
+    border-radius: 12px; 
+    overflow: hidden;
+    width: 700px; /* PC 너비 기준 */
+    max-width: 98vw; /* 모바일에서 거의 전체 화면 사용 */
+    max-height: 98vh;
+    display: flex; 
+    flex-direction: column; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
-.cs-header {
+.customer-files-modal-header {
     padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;
 }
-.cs-header h3 { margin: 0; font-size: 18px; color: #333; }
-.cs-close-btn { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; }
+.customer-files-modal-header h3 { margin: 0; font-size: 18px; color: #333; }
+.customer-files-modal-close-btn { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; }
 
 /* 탭 스타일 */
-.file-tabs {
+.customer-files-modal-file-tabs {
     display: flex; border-bottom: 1px solid #ddd;
 }
-.file-tab {
+.customer-files-modal-file-tab {
     flex: 1; padding: 15px; border: none; background: #fff;
     font-size: 15px; font-weight: 600; color: #666; cursor: pointer;
     transition: all 0.2s; border-bottom: 3px solid transparent;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
 }
-.file-tab:hover { background-color: #f9f9f9; color: #333; }
-.file-tab.active { color: #1976d2; border-bottom-color: #1976d2; background-color: #fff; }
+.customer-files-modal-file-tab:hover { background-color: #f9f9f9; color: #333; }
+.customer-files-modal-file-tab.active { color: #1976d2; border-bottom-color: #1976d2; background-color: #fff; }
 
 /* 그리드 영역 */
-.file-grid-container {
+.customer-files-modal-file-grid-container {
     flex: 1; overflow-y: auto; padding: 20px; background-color: #f4f6f8; min-height: 300px;
 }
-.file-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;
+.customer-files-modal-file-grid {
+    /* 모바일에서 카드 크기를 유동적으로 조정 */
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+    gap: 15px; /* 모바일에서 간격 축소 */
 }
 
 /* 파일 카드 */
-.file-card {
+.customer-files-modal-file-card {
     background: white; border-radius: 8px; overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee;
     display: flex; flex-direction: column;
 }
-.file-thumb {
+.customer-files-modal-file-thumb {
     height: 140px; position: relative; cursor: pointer; overflow: hidden; background: #eee;
 }
-.file-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-.file-thumb:hover img { transform: scale(1.05); }
-.file-overlay {
+.customer-files-modal-file-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.customer-files-modal-file-thumb:hover img { transform: scale(1.05); }
+.customer-files-modal-file-overlay {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.3); color: white; display: flex; justify-content: center; align-items: center;
     opacity: 0; transition: opacity 0.2s; font-weight: bold;
 }
-.file-thumb:hover .file-overlay { opacity: 1; }
+.customer-files-modal-file-thumb:hover .customer-files-modal-file-overlay { opacity: 1; }
 
-.file-info {
+.customer-files-modal-file-info {
     padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
 }
-.file-name {
+.customer-files-modal-file-name {
     font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
 }
-.btn-download {
+.customer-files-modal-btn-download {
     font-size: 11px; padding: 4px 8px; background: #eee; color: #333; text-decoration: none; border-radius: 4px; font-weight: bold;
 }
-.btn-download:hover { background: #ddd; }
+.customer-files-modal-btn-download:hover { background: #ddd; }
 
-.cs-loading, .cs-empty { text-align: center; padding: 50px 0; color: #888; }
+.customer-files-modal-loading, .customer-files-modal-empty { text-align: center; padding: 50px 0; color: #888; }
 
-/* 뷰어 */
-.image-viewer-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 4000;
-    display: flex; justify-content: center; align-items: center;
-}
-.image-viewer-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; }
-.btn-viewer-close {
-    position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 30px; cursor: pointer;
+
+/* ---------------------------------------------------- */
+/* 📱 모바일 반응형 (max-width: 768px) */
+/* ---------------------------------------------------- */
+@media (max-width: 768px) {
+    .customer-files-modal-overlay {
+        padding: 5px;
+    }
+    .customer-files-modal-content {
+        border-radius: 6px;
+    }
+
+    .customer-files-modal-header {
+        padding: 10px 15px;
+    }
+    .customer-files-modal-header h3 {
+        font-size: 16px;
+    }
+    
+    .customer-files-modal-file-tab {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .customer-files-modal-file-grid-container {
+        padding: 10px;
+    }
+    
+    .customer-files-modal-file-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* 모바일에서 최소 크기 더 줄임 */
+        gap: 10px;
+    }
+    
+    .customer-files-modal-file-thumb {
+        height: 100px; /* 모바일에서 썸네일 높이 줄임 */
+    }
+    
+    .customer-files-modal-file-info {
+        padding: 8px;
+        flex-direction: column; /* 세로 정렬 */
+        align-items: flex-start;
+        gap: 5px;
+    }
+    .customer-files-modal-file-name {
+        font-size: 12px;
+    }
+    .customer-files-modal-btn-download {
+        width: 100%;
+        text-align: center;
+        padding: 6px 0;
+        font-size: 12px;
+    }
 }
