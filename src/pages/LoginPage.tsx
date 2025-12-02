@@ -10,13 +10,13 @@ import {
   setPersistence, 
   browserLocalPersistence, 
   browserSessionPersistence,
-  signOut // [⭐ 1. 추가] signOut (강제 로그아웃용)
+  signOut 
 } from 'firebase/auth'; 
 import { auth } from '../firebase-config';
 import logoImage from '../assets/logo.png';
 import RoleHeader from '../components/common/RoleHeader';
 
-// ... (SnsIcon 컴포넌트) ...
+// SnsIcon 컴포넌트
 interface SnsIconProps {
   color: string;
   text: string;
@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
   }, []); 
 
   
-  // [⭐ 2. 수정] handleLogin 함수 (Custom Claim 확인 로직 추가)
+  // handleLogin 함수 (Custom Claim 확인 로직 포함)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -87,15 +87,15 @@ const LoginPage: React.FC = () => {
 
       await setPersistence(auth, persistence);
       
-      // 1. Firebase Auth 로그인 (백엔드는 이제 오류를 던지지 않음)
+      // 1. Firebase Auth 로그인
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
       if (userCredential.user) {
-          // [⭐ 3. 추가] 토큰을 강제 새로고침하여 Cloud Function이 설정한 custom claim을 가져옴
+          // 토큰을 강제 새로고침하여 Cloud Function이 설정한 custom claim을 가져옴
           await userCredential.user.getIdToken(true); 
           const idTokenResult = await userCredential.user.getIdTokenResult();
 
-          // [⭐ 4. 추가] custom claim에 'bannedUntil' (낙인)이 있는지 확인
+          // custom claim에 'bannedUntil' (낙인)이 있는지 확인
           if (idTokenResult.claims.bannedUntil) {
               
               // 금지 메시지 (Cloud Function에서 설정한 값)
@@ -104,11 +104,11 @@ const LoginPage: React.FC = () => {
               // 팝업으로 금지 메시지 표시
               alert(banMessage);
               
-              // [⭐ 5. 추가] 사용자를 즉시 강제 로그아웃시킴
+              // 사용자를 즉시 강제 로그아웃시킴
               await signOut(auth);
               
           } else {
-              // [⭐ 6. 수정] 정상 로그인 (금지되지 않음)
+              // 정상 로그인 (금지되지 않음)
               if (saveId) {
                 localStorage.setItem('savedEmail', email);
               } else {
@@ -121,7 +121,7 @@ const LoginPage: React.FC = () => {
       }
         
     } catch (error: any) {
-        // [⭐ 7. 수정] 로그인 실패 (아이디/비번 틀림, 함수 오류 등)
+        // 로그인 실패 처리
         console.error("로그인 오류:", error.code, error.message);
         let message = '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
         
@@ -130,7 +130,6 @@ const LoginPage: React.FC = () => {
         } else if (error.code === 'auth/invalid-email') {
             message = '유효하지 않은 이메일 형식입니다.';
         } else if (error.code === 'auth/internal-error') {
-            // (Cloud Function이 실행에 실패한 경우)
             message = '로그인 처리 중 서버 오류가 발생했습니다.';
         }
         
@@ -153,14 +152,18 @@ const LoginPage: React.FC = () => {
         <form onSubmit={handleLogin} className="login-form">
           
           <Link to="/"> 
-            <img src={logoImage} alt="My WebApp Logo" className="logo-image" />
+            <img 
+              src={logoImage} 
+              alt="My WebApp Logo" 
+              className="login-page-logo-image"
+            />
           </Link>
           <div style={{ height: '48px' }}></div>
 
           <input 
             type="email" 
             placeholder="이메일" 
-            className="login-input" 
+            className="login-page-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required 
@@ -169,14 +172,14 @@ const LoginPage: React.FC = () => {
           <input 
             type="password" 
             placeholder="비밀번호" 
-            className="login-input" 
+            className="login-page-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required 
           />
           
           <div style={{ height: '12px' }}></div>
-          <div className="login-options">
+          <div className="login-page-options">
             <label>
               <input 
                 type="checkbox" 
@@ -198,7 +201,7 @@ const LoginPage: React.FC = () => {
 
           <button 
             type="submit"
-            className="login-submit-btn"
+            className="login-page-submit-btn"
             style={{ backgroundColor: K_BRAND_COLOR, borderRadius: '5px' }}
             disabled={isLoading}
           >
@@ -206,26 +209,26 @@ const LoginPage: React.FC = () => {
           </button>
           <div style={{ height: '16px' }}></div>
 
-          <div className="link-row">
+          <div className="login-page-link-row">
             <button 
               type="button"
-              className="link-button" 
+              className="login-page-link-button"
               onClick={() => handleNavigation('/find-id')}
             >
               아이디 찾기
             </button>
-            <span className="divider-text">|</span>
+            <span className="login-page-divider-text">|</span>
             <button 
               type="button"
-              className="link-button" 
+              className="login-page-link-button"
               onClick={() => handleNavigation('/reset-password')}
             >
               비밀번호 재설정
             </button>
-            <span className="divider-text">|</span>
+            <span className="login-page-divider-text">|</span>
             <button 
               type="button"
-              className="link-button" 
+              className="login-page-link-button"
               onClick={() => handleNavigation('/signup')} 
             >
               회원가입
@@ -233,9 +236,9 @@ const LoginPage: React.FC = () => {
           </div>
           <div style={{ height: '32px' }}></div>
 
-          <p className="sns-text">SNS계정으로 로그인/회원가입</p>
+          <p className="login-page-sns-text">SNS계정으로 로그인/회원가입</p>
           <div style={{ height: '16px' }}></div>
-          <div className="sns-icons-row">
+          <div className="login-page-sns-icons-row">
             <SnsIcon color="#EA4335" text="G" onClick={() => console.log('Google Login')} />
             <div style={{ width: '24px' }}></div>
             <SnsIcon color="#03C75A" text="N" onClick={() => console.log('Naver Login')} />
@@ -246,7 +249,7 @@ const LoginPage: React.FC = () => {
           
           <button 
             type="button"
-            className="link-button problem-link" 
+            className="login-page-link-button login-page-problem-link"
             onClick={() => console.log('로그인 문제 해결 페이지')}
           >
             로그인에 문제가 있으세요?

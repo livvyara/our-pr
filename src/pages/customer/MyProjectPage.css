@@ -1,218 +1,97 @@
 /* MyProjectPage.css */
 
+.my-project-main {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 200px);
+    padding: 40px 0;
+}
+
 .my-project-container {
-    max-width: 800px;
+    max-width: 1200px; /* [수정] 컨테이너 너비 약간 확장 */
     margin: 0 auto;
-    padding: 40px 20px;
-    min-height: 80vh;
+    padding: 0 20px;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
 
-.mp-header {
-    margin-bottom: 30px;
-    text-align: center;
-}
-.mp-header h2 {
-    font-size: 28px;
-    font-weight: 800;
-    color: #333;
-    margin-bottom: 10px;
-}
-.mp-header p {
-    color: #666;
-    font-size: 15px;
-}
+.mp-header { margin-bottom: 40px; text-align: center; }
+.mp-header h2 { font-size: 32px; font-weight: 800; color: #333; margin-bottom: 12px; }
+.mp-header p { color: #666; font-size: 16px; }
 
-/* 로딩 & 빈 상태 */
 .my-project-loading, .mp-empty {
-    text-align: center;
-    padding: 60px 0;
-    color: #888;
-    font-size: 16px;
-    background: #f9f9f9;
-    border-radius: 12px;
+    text-align: center; padding: 80px 0; color: #888; font-size: 16px; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
-.mp-empty .sub-text {
-    display: block;
-    font-size: 13px;
-    margin-top: 8px;
-    color: #aaa;
-}
+.mp-empty .sub-text { display: block; font-size: 14px; margin-top: 10px; color: #aaa; }
 
 /* 카드 스타일 */
 .mp-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    border: 1px solid #eee;
-    margin-bottom: 20px;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #eee; margin-bottom: 24px; overflow: hidden; transition: all 0.3s ease;
 }
-.mp-card:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
-}
-.mp-card.expanded {
-    border-color: #1976d2;
-    box-shadow: 0 8px 30px rgba(25, 118, 210, 0.1);
-}
+.mp-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.mp-card.expanded { border-color: #1976d2; box-shadow: 0 8px 30px rgba(25, 118, 210, 0.15); }
 
-/* 카드 헤더 */
-.mp-card-header {
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    background: #fff;
-}
-.mp-site-name {
-    font-size: 18px;
-    font-weight: 800;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
-}
-.mp-status-badge {
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: 600;
-}
-.mp-site-addr {
-    font-size: 14px;
-    color: #666;
-}
+.mp-card-header { padding: 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; }
+.mp-site-name { font-size: 20px; font-weight: 800; color: #333; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.mp-status-badge { font-size: 12px; padding: 5px 10px; border-radius: 20px; font-weight: 700; }
+.mp-site-addr { font-size: 15px; color: #666; }
 
-/* 토글 버튼 (화살표) */
-.btn-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #999;
-    transition: transform 0.3s;
-    display: flex;
-    align-items: center;
-}
-.btn-toggle svg {
-    width: 24px;
-    height: 24px;
-    transform: rotate(-90deg); /* 기본: 아래쪽 */
-}
-.btn-toggle.open svg {
-    transform: rotate(90deg); /* 열림: 위쪽 */
-}
+.btn-toggle { background: none; border: none; cursor: pointer; color: #999; transition: transform 0.3s; display: flex; align-items: center; padding: 5px; }
+.btn-toggle svg { width: 28px; height: 28px; transform: rotate(-90deg); }
+.btn-toggle.open svg { transform: rotate(90deg); }
 
-/* 카드 바디 (폴딩 영역) */
-.mp-card-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    background-color: #fcfcfc;
-    border-top: 1px solid #f0f0f0;
-}
-.mp-card.expanded .mp-card-body {
-    max-height: 600px; /* 충분한 높이 */
-}
+.mp-card-body { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1); background-color: #fcfcfc; border-top: 1px solid #f0f0f0; }
+.mp-card.expanded .mp-card-body { max-height: 1200px; } /* 높이 여유있게 */
 
-/* 상세 그리드 */
-.mp-detail-grid {
-    padding: 25px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-}
-@media (max-width: 600px) {
-    .mp-detail-grid { grid-template-columns: 1fr; gap: 20px; }
-}
+.mp-detail-grid { padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+@media (max-width: 768px) { .mp-detail-grid { grid-template-columns: 1fr; gap: 24px; } }
 
-.mp-section h4 {
-    font-size: 14px;
-    color: #888;
-    margin-bottom: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.mp-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    margin-bottom: 8px;
-    color: #333;
-    border-bottom: 1px dashed #eee;
-    padding-bottom: 4px;
-}
-.mp-row span {
-    color: #777;
-    font-weight: 500;
-}
+.mp-section h4 { font-size: 15px; color: #1976d2; margin-bottom: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e3f2fd; padding-bottom: 8px; display: inline-block; }
+.mp-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 12px; color: #333; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+.mp-row span { color: #777; font-weight: 500; }
+.mp-divider-line { height: 1px; background-color: #e0e0e0; margin: 15px 0; }
+.mp-row.total { font-size: 16px; font-weight: 800; color: #333; border-bottom: none; }
 
-/* 파트너 박스 */
-.mp-partner-box {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-}
-.mp-p-name {
-    font-weight: 800;
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 5px;
-}
-.mp-p-contact {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 15px;
-}
-.btn-chat-partner {
-    background-color: #1976d2;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.2s;
-}
-.btn-chat-partner:hover {
-    background-color: #1565c0;
-}
-.btn-chat-partner svg {
-    width: 16px;
-    height: 16px;
-}
+.mp-partner-box { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+.mp-p-name { font-weight: 800; font-size: 18px; color: #333; margin-bottom: 15px; } /* 마진 조정 */
 
-/* 퀵 링크 버튼들 */
+/* [수정] 1:1 문의 버튼 스타일 */
+.btn-chat-partner { background-color: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s; }
+.btn-chat-partner:hover { background-color: #1565c0; transform: translateY(-1px); }
+.btn-chat-partner svg { width: 18px; height: 18px; }
+
+/* [수정] 퀵 링크 버튼들 스타일 */
 .mp-quick-links {
-    padding: 15px 25px;
+    padding: 25px 30px;
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap; /* 줄바꿈 허용 */
+    gap: 12px;
     background: #f5f5f5;
-    justify-content: flex-end;
+    justify-content: center; /* 중앙 정렬 */
+    border-top: 1px solid #eee;
 }
+
 .mp-link-btn {
-    padding: 8px 12px;
+    padding: 12px 20px; /* 패딩 넉넉하게 */
     border: 1px solid #ddd;
     background: white;
-    border-radius: 6px;
-    font-size: 13px;
+    border-radius: 10px;
+    font-size: 14px;
     cursor: pointer;
-    color: #555;
+    color: #444;
     font-weight: 600;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 140px; /* 최소 너비 설정 */
+    justify-content: center;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
+
 .mp-link-btn:hover {
     border-color: #bbb;
-    background: #f0f0f0;
-    color: #333;
+    background: #fff;
+    color: #1976d2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
 }

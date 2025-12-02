@@ -7,6 +7,8 @@ import LaborCostModal from './LaborCostModal';
 import ExpenseRegistrationModal from './ExpenseRegistrationModal';
 import OrderRequestModal from './OrderRequestModal'; 
 import ChangeOrderModal from './ChangeOrderModal';
+// [NEW] 견적서 모달 임포트
+import EstimateModal from './EstimateModal';
 
 import { auth } from '../../firebase-config'; 
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -19,7 +21,6 @@ interface SiteActionsWidgetProps {
 }
 
 const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUid, currentSiteName, status }) => {
-  // [모달 상태]
   const [isWorkLogModalOpen, setIsWorkLogModalOpen] = useState(false);
   const [isConstructionModalOpen, setIsConstructionModalOpen] = useState(false);
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
@@ -27,25 +28,27 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isOrderRequestModalOpen, setIsOrderRequestModalOpen] = useState(false);
   const [isChangeOrderModalOpen, setIsChangeOrderModalOpen] = useState(false);
+  
+  // [NEW] 견적서 모달 상태
+  const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
 
   const [userName, setUserName] = useState('사용자');
 
-  // 버튼 리스트 (status prop 사용)
   const actionButtons = [
     { key: 'construction-schedule', title: '공사 일정 등록', disabled: false },
     { key: 'work-log', title: '작업 일지 등록', disabled: false },
     { key: 'contract-info', title: '계약 정보 등록', disabled: false },
-    // [수정] 추가/변경 견적 (발주요청 자리 차지)
     { 
         key: 'change-order', 
         title: '추가/변경 견적', 
         disabled: !['공사전', '공사중', '공사완료'].includes(status) 
     },
-    // [수정] 발주 요청 (우측으로 이동)
     { key: 'order-request', title: '발주 요청', disabled: false }, 
     { key: 'expense', title: '카드 지출 등록', disabled: false },
     { key: 'labor', title: '노무 등록', disabled: false },
-    { key: 'test4', title: '개발예정 4', disabled: true },
+    
+    // [NEW] 견적서 작성 버튼 연결
+    { key: 'estimate', title: '견적서 작성', disabled: false },
   ];
 
   useEffect(() => {
@@ -70,6 +73,10 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
     else if (key === 'contract-info') setIsContractModalOpen(true);
     else if (key === 'labor') setIsLaborModalOpen(true);
     else if (key === 'expense') setIsExpenseModalOpen(true);
+    
+    // [NEW] 견적서 모달 열기
+    else if (key === 'estimate') setIsEstimateModalOpen(true);
+    
     else alert(`(TODO) '${key}' 기능은 준비 중입니다.`);
   };
 
@@ -90,7 +97,6 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
         ))}
       </div>
 
-      {/* 모달 렌더링 */}
       {isWorkLogModalOpen && <WorkLogModal siteId={siteId} partnerUid={partnerUid} onClose={() => setIsWorkLogModalOpen(false)} />}
       {isConstructionModalOpen && <ConstructionScheduleModal siteId={siteId} partnerUid={partnerUid} onClose={() => setIsConstructionModalOpen(false)} />}
       {isContractModalOpen && <ContractInfoModal siteId={siteId} partnerUid={partnerUid} onClose={() => setIsContractModalOpen(false)} />}
@@ -138,6 +144,16 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
             partnerUid={partnerUid}
             userRole="partner"
             onClose={() => setIsChangeOrderModalOpen(false)}
+          />
+      )}
+
+      {/* [NEW] 견적서 모달 렌더링 */}
+      {isEstimateModalOpen && (
+          <EstimateModal 
+            siteId={siteId}
+            siteName={currentSiteName}
+            partnerUid={partnerUid}
+            onClose={() => setIsEstimateModalOpen(false)}
           />
       )}
     </div>

@@ -2,98 +2,118 @@
 
 .login-page-container {
     height: 100vh;
+    overflow-y: auto; 
     display: flex;
-    justify-content: center; /* Center 위젯 역할 */
-    align-items: center; /* mainAxisAlignment: center 역할 */
+    justify-content: center; 
+    align-items: center; 
     background-color: white;
+    padding: 20px; 
+    box-sizing: border-box;
 }
 
 .login-box-wrapper {
-    max-width: 450px; /* ConstrainedBox(maxWidth: 450.0) */
+    max-width: 450px; 
     width: 100%;
-    padding: 32px; /* EdgeInsets.symmetric(horizontal: 32.0) */
-    /* Scaffold, Center 역할은 .login-page-container에서 수행 */
+    padding: 32px 20px; 
+    box-sizing: border-box;
 }
 
 .login-form {
     display: flex;
-    flex-direction: column; /* Column 역할 */
+    flex-direction: column;
 }
 
-/* 1. 로고 */
-.logo-image {
-display: block;
-width: 200px;
-height: auto;
-    /* --- ⬇️ 중앙 정렬을 위해 이 두 줄을 추가하세요 ⬇️ --- */
-margin-left: auto;
-margin-right: auto;
+.login-page-logo-image {
+    display: block;
+    width: 200px;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* 2. 입력 필드 (TextField 역할) */
-.login-input {
-    /* Flutter의 InputDecoration 스타일 반영 */
-    border: 1px solid #ccc; /* Colors.grey.shade300 */
-    padding: 12px 16px; /* contentPadding */
-    border-radius: 0; /* Flutter의 기본 TextField는 둥글지 않음. (회원가입 페이지와 통일하려면 5px 추천) */
+.login-page-input {
+    border: 1px solid #ccc; 
+    padding: 12px 16px; 
+    border-radius: 0; 
     box-sizing: border-box;
     width: 100%;
     font-size: 16px;
-    height: 48px; /* 입력 영역 높이 지정 */
+    height: 48px; 
 }
-.login-input:focus {
+.login-page-input:focus {
     outline: none;
     border-color: #aaa; 
 }
 
-/* 4. 로그인 버튼 (ElevatedButton 역할) */
-.login-submit-btn {
-    height: 48px; /* SizedBox(height: 48.0) */
+.login-page-options {
+    display: flex;
+    justify-content: flex-start;
+    gap: 16px; 
+    font-size: 14px;
+    color: #333;
+    flex-wrap: wrap; 
+}
+
+.login-page-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px; 
+    cursor: pointer;
+}
+
+.login-page-options input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.login-page-submit-btn {
+    height: 48px; 
     border: none;
     cursor: pointer;
-    color: black;
+    color: white; 
     font-size: 16px;
     font-weight: bold;
     transition: background-color 0.1s;
     padding: 0;
+    border-radius: 5px !important; 
 }
-.login-submit-btn:disabled {
+.login-page-submit-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* 5. 링크 Row */
-.link-row {
+.login-page-link-row {
     display: flex;
-    justify-content: center; /* mainAxisAlignment: center */
+    flex-wrap: wrap; 
+    justify-content: center; 
     align-items: center;
+    gap: 0; 
 }
 
-.link-button {
+.login-page-link-button {
     background: none;
     border: none;
     cursor: pointer;
     color: black;
     font-size: 14px;
     padding: 0 8px;
+    min-width: 70px; 
+    height: 30px;
 }
-.divider-text {
-    color: #bdbdbd; /* Colors.grey[400] */
+.login-page-divider-text {
+    color: #bdbdbd; 
     padding: 0 4px; 
 }
 
-/* 6. SNS Text */
-.sns-text {
+.login-page-sns-text {
     text-align: center;
-    color: #666; /* Colors.grey[700] */
+    color: #666; 
     font-size: 14px;
     margin: 0;
 }
 
-/* 7. SNS 아이콘 Row */
-.sns-icons-row {
+.login-page-sns-icons-row {
     display: flex;
-    justify-content: center; /* mainAxisAlignment: center */
+    justify-content: center; 
     align-items: center;
 }
 .sns-icon-wrapper {
@@ -107,32 +127,7 @@ margin-right: auto;
     font-size: 18px;
 }
 
-/* 8. 문제 해결 링크 */
-.problem-link {
+.login-page-problem-link {
     text-decoration: underline;
     padding: 0;
-}
-
-.login-options {
- display: flex;
- justify-content: flex-start; /* 왼쪽 정렬 */
- gap: 16px; /* 두 체크박스 사이 간격 */
- font-size: 14px;
- color: #333;
-}
-
-.login-options label {
- display: flex;
- align-items: center;
- gap: 5px; /* 체크박스와 텍스트 사이 간격 */
- cursor: pointer;
-}
-
-.login-options input[type="checkbox"] {
-  cursor: pointer;
-}
-
-/* 기존 .link-row 스타일이 중앙 정렬이라면 */
-.link-row {
-  justify-content: center;
 }

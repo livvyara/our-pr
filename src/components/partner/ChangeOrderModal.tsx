@@ -126,7 +126,7 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
           await addDoc(collection(db, 'users', partnerUid, 'sites', siteId, 'changeOrders'), newDoc);
           
           // [NEW] 등록 알림
-          await sendSystemMessage(siteId, "추가/변경 견적 협의가 등록되었습니다.");
+          await sendSystemMessage(siteId, "추가/변경 견적 협의가 등록되었습니다. \n 파트너(대표)가 승인하면 고객님께 전달 됩니다. \n승인된 협의건은 마이프로젝트 페이지에서 확인 가능합니다.");
 
           alert("등록되었습니다.");
           setActiveTab('list');

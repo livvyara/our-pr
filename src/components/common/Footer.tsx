@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
     <footer className="footer-container">
       <div className="footer-content">
         <div className="footer-info">
-          <span>(주) 730디자인그룹 | 사업자등록번호: 250-86-03528</span>
+          <span>(주) 730디자인그룹 | 사업자등록번호: 250-86-03528 (개발중인 플랫폼 입니다. 개발담당자 : 백진교 이사 010-8173-0730)</span>
           <span>주소: 광주광역시 광산구 장덕동 1639번지 센터빌딩 4층</span>
           <span>&copy; 2025 Our Project. All Rights Reserved.</span>
         </div>

@@ -41,7 +41,6 @@ interface MySiteData {
   siteType?: string;
   contractSupply?: number;
   contractVat?: number;
-  // [NEW] 추가/변경 공사비 합계
   changeOrderTotal?: number;
 }
 
@@ -118,7 +117,6 @@ const MyProjectPage: React.FC = () => {
           const pInfo = pData.partnerInfo || {};
           const contract = sData.contract || {};
 
-          // [NEW] 추가/변경 견적 합계 계산 (최종 승인된 것만)
           let changeTotal = 0;
           try {
               const coQuery = query(
@@ -142,7 +140,7 @@ const MyProjectPage: React.FC = () => {
             partnerEmail: pData.email || '-',
             contractSupply: contract.supplyAmount,
             contractVat: contract.vatAmount,
-            changeOrderTotal: changeTotal // 추가된 필드
+            changeOrderTotal: changeTotal 
           });
         }
       }
@@ -227,7 +225,6 @@ const MyProjectPage: React.FC = () => {
                                                 <div className="mp-row"><span>부가세</span> {(site.contractVat || 0).toLocaleString()} 원</div>
                                                 <div className="mp-row total"><span>총 공사비</span> {(site.budget || 0).toLocaleString()} 원</div>
                                                 
-                                                {/* [NEW] 추가/변경 공사비 표시 */}
                                                 {changeAmt !== 0 && (
                                                     <div className="mp-row" style={{marginTop:'5px'}}>
                                                         <span>추가/변경 공사비</span>
@@ -249,7 +246,7 @@ const MyProjectPage: React.FC = () => {
                                         <h4>🏢 담당 파트너</h4>
                                         <div className="mp-partner-box">
                                             <div className="mp-p-name">{site.partnerName}</div>
-                                            <div className="mp-p-contact">📞 {site.partnerPhone}</div>
+                                            {/* [수정] 연락처 제거됨 */}
                                             <button className="btn-chat-partner" onClick={() => setIsChatOpen(true)}>
                                                 <ChatIcons.Chat /> 1:1 문의하기
                                             </button>
