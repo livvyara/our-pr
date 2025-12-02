@@ -41,6 +41,14 @@ const CustomerChangeOrderModal: React.FC<Props> = ({ siteId, partnerUid, onClose
   const listRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  // [추가] 모달이 열려있는 동안 백그라운드 스크롤 막기
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -98,7 +106,6 @@ const CustomerChangeOrderModal: React.FC<Props> = ({ siteId, partnerUid, onClose
     }
   };
 
-  // [추가] 합계 계산 함수
   const calculateTotals = (items: ChangeOrderItem[]) => {
       const supply = items.reduce((acc, item) => acc + item.supplyPrice, 0);
       const tax = items.reduce((acc, item) => acc + item.tax, 0);
@@ -108,6 +115,7 @@ const CustomerChangeOrderModal: React.FC<Props> = ({ siteId, partnerUid, onClose
 
   return (
     <div className="co-modal-overlay" onClick={onClose}>
+      {/* [수정] stopPropagation 위치 확인 */}
       <div className="co-modal-container wide" onClick={e => e.stopPropagation()}>
         
         <div className="co-modal-header">
@@ -120,7 +128,6 @@ const CustomerChangeOrderModal: React.FC<Props> = ({ siteId, partnerUid, onClose
         <div className="co-modal-body" ref={listRef}>
             {loading ? <div className="co-loading">불러오는 중...</div> : 
              
-             // --- 상세 보기 (인보이스 스타일) ---
              selectedOrder ? (
                  <div className="co-detail-wrapper">
                      <button onClick={() => setSelectedOrder(null)} className="btn-back co-fade-up">← 목록으로</button>
@@ -167,7 +174,6 @@ const CustomerChangeOrderModal: React.FC<Props> = ({ siteId, partnerUid, onClose
                              </table>
                          </div>
 
-                         {/* [수정] 합계 영역 분리 */}
                          <div className="invoice-footer">
                              <div className="invoice-summary-row">
                                  <span>공급가액 합계</span>
@@ -193,7 +199,6 @@ const CustomerChangeOrderModal: React.FC<Props> = ({ siteId, partnerUid, onClose
                  </div>
              ) : 
              
-             // --- 리스트 모드 (카드 디자인 강화) ---
              orders.length === 0 ? <div className="co-empty co-fade-up">등록된 견적서가 없습니다.</div> :
              (
                  <div className="co-list-container">
