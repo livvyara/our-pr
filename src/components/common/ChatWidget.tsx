@@ -69,6 +69,7 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [userCache, setUserCache] = useState<Record<string, string>>({}); 
     
+    // PC 드래그 위치 상태
     const [position, setPosition] = useState({ x: window.innerWidth - 400 - 20, y: 80 });
     const [isDragging, setIsDragging] = useState(false);
     const dragStartPos = useRef({ x: 0, y: 0 });
@@ -115,6 +116,8 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     // --- [Effects] ---
     const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) return; // 모바일에서는 드래그 비활성화
         if ((e.target as HTMLElement).closest('button')) return;
         setIsDragging(true);
         dragStartPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
@@ -123,7 +126,10 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isDragging) return;
-            setPosition({ x: e.clientX - dragStartPos.current.x, y: e.clientY - dragStartPos.current.y });
+            // PC에서만 위치 업데이트
+            if (window.innerWidth > 768) {
+                setPosition({ x: e.clientX - dragStartPos.current.x, y: e.clientY - dragStartPos.current.y });
+            }
         };
         const handleMouseUp = () => setIsDragging(false);
         if (isDragging) {
@@ -297,9 +303,9 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     return (
         <div className="chat-widget-popup" style={{ left: position.x, top: position.y }}>
-            <div className="chat-header" onMouseDown={handleMouseDown}>
+            <div className="chat-widget-header" onMouseDown={handleMouseDown}>
                 {viewMode === 'room' && (
-                    <button className="btn-icon" onClick={() => { setViewMode('list'); setCurrentRoomId(null); }}>
+                    <button className="chat-widget-btn-icon" onClick={() => { setViewMode('list'); setCurrentRoomId(null); }}>
                         <ChatIcons.Back />
                     </button>
                 )}
@@ -309,44 +315,44 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <div className="header-actions">
                     {viewMode === 'room' && (
                         <>
-                            <button className="btn-icon" title="검색" onClick={() => setIsSearchMode(!isSearchMode)}><ChatIcons.Search /></button>
-                            <button className="btn-icon" title="메뉴" onClick={() => { setIsDrawerOpen(true); setDrawerContent('menu'); }}><ChatIcons.Menu /></button>
+                            <button className="chat-widget-btn-icon" title="검색" onClick={() => setIsSearchMode(!isSearchMode)}><ChatIcons.Search /></button>
+                            <button className="chat-widget-btn-icon" title="메뉴" onClick={() => { setIsDrawerOpen(true); setDrawerContent('menu'); }}><ChatIcons.Menu /></button>
                         </>
                     )}
-                    <button className="btn-icon" onClick={onClose}><ChatIcons.Close /></button>
+                    <button className="chat-widget-btn-icon" onClick={onClose}><ChatIcons.Close /></button>
                 </div>
             </div>
 
-            <div className="chat-body">
+            <div className="chat-widget-body">
                 {viewMode === 'list' && (
-                    <div className="chat-room-list">
-                        {chatRooms.length === 0 ? <div className="no-chat">참여 중인 채팅방이 없습니다.</div> : 
+                    <div className="chat-widget-room-list">
+                        {chatRooms.length === 0 ? <div className="chat-widget-no-chat">참여 중인 채팅방이 없습니다.</div> : 
                             chatRooms.map(room => {
                                 const myReadTime = room.lastRead?.[currentUser?.uid || '']?.toMillis() || 0;
                                 const updateTime = room.updatedAt?.toMillis() || 0;
                                 const hasUnread = updateTime > myReadTime;
                                 const isClosed = room.status === 'closed';
                                 return (
-                                    <div key={room.id} className={`chat-room-item ${isClosed ? 'closed' : ''}`} onClick={() => { 
+                                    <div key={room.id} className={`chat-widget-room-item ${isClosed ? 'closed' : ''}`} onClick={() => { 
                                         setCurrentRoomId(room.id); 
                                         setCurrentRoomName(room.siteName || '현장'); 
                                         // [수정] 상태는 activeRoom에서 가져오므로 여기선 setter 제거
                                         setViewMode('room'); 
                                     }}>
-                                        <div className="room-avatar">
+                                        <div className="chat-widget-room-avatar">
                                             <ChatIcons.Site />
-                                            {hasUnread && <div className="room-badge" />}
+                                            {hasUnread && <div className="chat-widget-room-badge" />}
                                         </div>
-                                        <div className="room-info">
-                                            <div className="room-name">
+                                        <div className="chat-widget-room-info">
+                                            <div className="chat-widget-room-name">
                                                 {room.siteName}
-                                                {hasUnread && <span className="new-badge">N</span>}
-                                                {isClosed && <span className="closed-badge">종료</span>}
+                                                {hasUnread && <span className="chat-widget-new-badge">N</span>}
+                                                {isClosed && <span className="chat-widget-closed-badge">종료</span>}
                                             </div>
-                                            <div className="room-participants">{room.participantNames.join(', ')}</div>
-                                            <div className={`room-last-msg ${hasUnread ? 'bold' : ''}`}>{room.lastMessage}</div>
+                                            <div className="chat-widget-room-participants">{room.participantNames.join(', ')}</div>
+                                            <div className={`chat-widget-room-last-msg ${hasUnread ? 'bold' : ''}`}>{room.lastMessage}</div>
                                         </div>
-                                        <div className="room-date">{room.updatedAt?.toDate ? room.updatedAt.toDate().toLocaleDateString() : '-'}</div>
+                                        <div className="chat-widget-room-date">{room.updatedAt?.toDate ? room.updatedAt.toDate().toLocaleDateString() : '-'}</div>
                                     </div>
                                 );
                             })
@@ -355,31 +361,31 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 )}
 
                 {viewMode === 'room' && (
-                    <div className="chat-room-view">
+                    <div className="chat-widget-room-view">
                         {isSearchMode && (
-                            <div className="search-bar-box">
+                            <div className="chat-widget-search-bar-box">
                                 <input autoFocus placeholder="대화 내용 검색..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                                <button className="btn-icon" onClick={() => { setIsSearchMode(false); setSearchQuery(''); }}>취소</button>
+                                <button className="chat-widget-btn-icon" onClick={() => { setIsSearchMode(false); setSearchQuery(''); }}>취소</button>
                             </div>
                         )}
-                        <div className="messages-area" ref={messagesContainerRef}>
+                        <div className="chat-widget-messages-area" ref={messagesContainerRef}>
                             {(isSearchMode ? filteredMessages : messages).map(msg => {
                                 const isMe = msg.senderId === currentUser?.uid;
                                 const isSystem = msg.type === 'system';
-                                if (isSystem) return (<div key={msg.id} className="message-container system"><div className="message-bubble system" style={{whiteSpace:'pre-wrap'}}>{msg.text}</div></div>);
+                                if (isSystem) return (<div key={msg.id} className="chat-widget-message-container system"><div className="chat-widget-message-bubble system" style={{whiteSpace:'pre-wrap'}}>{msg.text}</div></div>);
                                 return (
-                                    <div key={msg.id} className={`message-container ${isMe ? 'me' : 'other'}`}>
-                                        {!isMe && <div className="sender-name">{msg.senderName}</div>}
-                                        <div className={`message-bubble ${isMe ? 'me' : 'other'}`}>
-                                            {msg.type === 'text' && <span className={isSearchMode && searchQuery && msg.text.includes(searchQuery) ? 'highlight' : ''}>{msg.text}</span>}
-                                            {msg.type === 'image' && msg.imageUrl && <img src={msg.imageUrl} alt="첨부" className="message-image" onClick={() => window.open(msg.imageUrl, '_blank')} />}
+                                    <div key={msg.id} className={`chat-widget-message-container ${isMe ? 'me' : 'other'}`}>
+                                        {!isMe && <div className="chat-widget-sender-name">{msg.senderName}</div>}
+                                        <div className={`chat-widget-message-bubble ${isMe ? 'me' : 'other'}`}>
+                                            {msg.type === 'text' && <span className={isSearchMode && searchQuery && msg.text && msg.text.includes(searchQuery) ? 'chat-widget-highlight' : ''}>{msg.text}</span>}
+                                            {msg.type === 'image' && msg.imageUrl && <img src={msg.imageUrl} alt="첨부" className="chat-widget-message-image" onClick={() => window.open(msg.imageUrl, '_blank')} />}
                                             {msg.type === 'meeting' && (
-                                                <div className="meeting-card">
-                                                    <div className="meeting-header">📅 일정 등록</div>
-                                                    <div className="meeting-info"><strong>일시:</strong> {msg.meetingDate} {msg.meetingTime}<br/><strong>내용:</strong> {msg.text}</div>
+                                                <div className="chat-widget-meeting-card">
+                                                    <div className="chat-widget-meeting-header">📅 일정 등록</div>
+                                                    <div className="chat-widget-meeting-info"><strong>일시:</strong> {msg.meetingDate} {msg.meetingTime}<br/><strong>내용:</strong> {msg.text}</div>
                                                 </div>
                                             )}
-                                            <div className="bubble-time">{msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : ''}</div>
+                                            <div className="chat-widget-bubble-time">{msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : ''}</div>
                                         </div>
                                     </div>
                                 );
@@ -387,7 +393,7 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         </div>
 
                         {showMeetingForm && (
-                            <div className="meeting-form">
+                            <div className="chat-widget-meeting-form">
                                 <div style={{fontWeight:'bold', marginBottom:'5px'}}>📅 일정(약속) 등록</div>
                                 <input type="date" value={meetingDate} onChange={e=>setMeetingDate(e.target.value)} />
                                 <input type="time" value={meetingTime} onChange={e=>setMeetingTime(e.target.value)} />
@@ -399,23 +405,23 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             </div>
                         )}
                         {showEmojiPicker && (
-                            <div className="emoji-picker-box">
+                            <div className="chat-widget-emoji-picker-box">
                                 {EMOJI_LIST.map(em => <span key={em} onClick={() => handleEmojiClick(em)}>{em}</span>)}
-                                <button className="close-emoji" onClick={() => setShowEmojiPicker(false)}>×</button>
+                                <button className="chat-widget-close-emoji" onClick={() => setShowEmojiPicker(false)}>×</button>
                             </div>
                         )}
 
                         {/* [수정] 실시간 activeRoom 상태로 체크 */}
                         {activeRoom?.status === 'closed' ? (
-                            <div className="chat-closed-notice">🚫 공사가 완료되어 채팅이 종료되었습니다.</div>
+                            <div className="chat-widget-closed-notice">🚫 공사가 완료되어 채팅이 종료되었습니다.</div>
                         ) : (
-                            <form className="input-area" onSubmit={handleTextSubmit}>
-                                <div className="input-row">
-                                    <button type="button" className="btn-attach" title="사진" onClick={() => fileInputRef.current?.click()}><ChatIcons.Image /></button>
-                                    <button type="button" className="btn-attach" title="일정" onClick={() => setShowMeetingForm(!showMeetingForm)}><ChatIcons.Calendar /></button>
-                                    <button type="button" className="btn-attach" title="이모티콘" onClick={() => setShowEmojiPicker(!showEmojiPicker)}><ChatIcons.Emoji /></button>
+                            <form className="chat-widget-input-area" onSubmit={handleTextSubmit}>
+                                <div className="chat-widget-input-row">
+                                    <button type="button" className="chat-widget-btn-attach" title="사진" onClick={() => fileInputRef.current?.click()}><ChatIcons.Image /></button>
+                                    <button type="button" className="chat-widget-btn-attach" title="일정" onClick={() => setShowMeetingForm(!showMeetingForm)}><ChatIcons.Calendar /></button>
+                                    <button type="button" className="chat-widget-btn-attach" title="이모티콘" onClick={() => setShowEmojiPicker(!showEmojiPicker)}><ChatIcons.Emoji /></button>
                                 </div>
-                                <div className="input-row">
+                                <div className="chat-widget-input-row">
                                     <textarea 
                                         value={inputText} 
                                         onChange={e => setInputText(e.target.value)} 
@@ -425,39 +431,39 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                         rows={1}
                                         style={{resize:'none', minHeight:'38px', maxHeight:'100px'}}
                                     />
-                                    <button type="submit" className="btn-send" disabled={isUploading}>{isUploading ? '...' : <ChatIcons.Send />}</button>
+                                    <button type="submit" className="chat-widget-btn-send" disabled={isUploading}>{isUploading ? '...' : <ChatIcons.Send />}</button>
                                 </div>
                                 <input type="file" accept="image/*" ref={fileInputRef} style={{display:'none'}} onChange={handleFileChange} />
                             </form>
                         )}
-                        {isUploading && <div className="uploading-overlay">전송 중...</div>}
+                        {isUploading && <div className="chat-widget-uploading-overlay">전송 중...</div>}
                     </div>
                 )}
             </div>
 
-            <div className={`chat-drawer ${isDrawerOpen ? 'open' : ''}`}>
-                <div className="drawer-header">
+            <div className={`chat-widget-drawer ${isDrawerOpen ? 'open' : ''}`}>
+                <div className="chat-widget-drawer-header">
                     <span>{drawerContent === 'menu' ? '메뉴' : drawerContent === 'participants' ? '참여자 목록' : '사진 앨범'}</span>
-                    <button className="btn-icon" onClick={() => { if(drawerContent === 'menu') setIsDrawerOpen(false); else setDrawerContent('menu'); }}><ChatIcons.Close /></button>
+                    <button className="chat-widget-btn-icon" onClick={() => { if(drawerContent === 'menu') setIsDrawerOpen(false); else setDrawerContent('menu'); }}><ChatIcons.Close /></button>
                 </div>
-                <div className="drawer-body">
+                <div className="chat-widget-drawer-body">
                     {drawerContent === 'menu' && (
                         <>
-                            <div className="drawer-menu-item" onClick={loadParticipants}><ChatIcons.User /> 대화 참여자</div>
-                            <div className="drawer-menu-item" onClick={() => setDrawerContent('gallery')}><ChatIcons.Image /> 사진 앨범 ({galleryImages.length})</div>
-                            <div className="drawer-menu-item" onClick={() => { setIsSearchMode(true); setIsDrawerOpen(false); }}><ChatIcons.Search /> 대화 내용 검색</div>
+                            <div className="chat-widget-drawer-menu-item" onClick={loadParticipants}><ChatIcons.User /> 대화 참여자</div>
+                            <div className="chat-widget-drawer-menu-item" onClick={() => setDrawerContent('gallery')}><ChatIcons.Image /> 사진 앨범 ({galleryImages.length})</div>
+                            <div className="chat-widget-drawer-menu-item" onClick={() => { setIsSearchMode(true); setIsDrawerOpen(false); }}><ChatIcons.Search /> 대화 내용 검색</div>
                         </>
                     )}
                     {drawerContent === 'participants' && (
-                        <div className="participant-list">
+                        <div className="chat-widget-participant-list">
                             {participantsList.map(p => (
-                                <div key={p.uid} className="participant-item"><div className="p-avatar"><ChatIcons.User /></div><div>{p.name}</div></div>
+                                <div key={p.uid} className="chat-widget-participant-item"><div className="chat-widget-p-avatar"><ChatIcons.User /></div><div>{p.name}</div></div>
                             ))}
                         </div>
                     )}
                     {drawerContent === 'gallery' && (
-                        <div className="gallery-grid">
-                            {galleryImages.map(img => (<img key={img.id} src={img.imageUrl} alt="gallery" className="gallery-img" onClick={() => window.open(img.imageUrl, '_blank')} />))}
+                        <div className="chat-widget-gallery-grid">
+                            {galleryImages.map(img => (<img key={img.id} src={img.imageUrl} alt="gallery" className="chat-widget-gallery-img" onClick={() => window.open(img.imageUrl, '_blank')} />))}
                             {galleryImages.length === 0 && <p style={{fontSize:'12px', color:'#999', textAlign:'center'}}>공유된 사진이 없습니다.</p>}
                         </div>
                     )}
