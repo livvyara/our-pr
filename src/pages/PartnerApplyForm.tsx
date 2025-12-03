@@ -210,7 +210,12 @@ const PartnerApplyForm: React.FC = () => {
       <div className="paf-page-container">
         {!isMobile && <RoleHeader />}
         <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={handleHamburgerPressed} />
-        {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
+        {!isMobile && selectedMenu && (
+        <SubNav 
+          selectedMenuKey={selectedMenu} 
+          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
+        />
+      )}
         
         <main className="paf-main-content">
           <div className="paf-rejection-box paf-fade-up active">
@@ -230,7 +235,12 @@ const PartnerApplyForm: React.FC = () => {
     <div className="paf-page-container">
       {!isMobile && <RoleHeader />}
       <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={handleHamburgerPressed} />
-      {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
+      {!isMobile && selectedMenu && (
+        <SubNav 
+          selectedMenuKey={selectedMenu} 
+          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
+        />
+      )}
 
       <main className="paf-main-content">
         

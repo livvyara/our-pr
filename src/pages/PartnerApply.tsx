@@ -63,7 +63,12 @@ const PartnerApply: React.FC = () => {
     <div className="pa-page-container">
       {!isMobile && <RoleHeader />}
       <Header onMenuSelected={setSelectedMenu} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && selectedMenu && <SubNav selectedMenuKey={selectedMenu} />}
+      {!isMobile && selectedMenu && (
+        <SubNav 
+          selectedMenuKey={selectedMenu} 
+          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
+        />
+      )}
 
       <div className="pa-main-wrapper">
         <div className="pa-container">

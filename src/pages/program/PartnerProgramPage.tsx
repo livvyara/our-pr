@@ -176,7 +176,12 @@ const PartnerProgramPage: React.FC = () => {
         isMobile={isMobile}
         onHamburgerPressed={handleHamburgerPressed}
       />
-      {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
+      {!isMobile && selectedMenu && (
+        <SubNav 
+          selectedMenuKey={selectedMenu} 
+          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
+        />
+      )}
 
       <main className="main-content program-main-layout" style={{ padding: 0 }}>
         {!isMobile ? ( 

@@ -204,7 +204,12 @@ const MyProjectPage: React.FC = () => {
     <div className="mp-page-container">
       {!isMobile && <RoleHeader />}
       <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && selectedMenu && <SubNav selectedMenuKey={selectedMenu} />}
+      {!isMobile && selectedMenu && (
+        <SubNav 
+          selectedMenuKey={selectedMenu} 
+          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
+        />
+      )}
 
       <main className="mp-main-content">
         <div className="mp-inner-container">

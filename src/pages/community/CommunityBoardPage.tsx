@@ -10,7 +10,7 @@ import './CommunityBoardPage.css';
 // 레이아웃 컴포넌트
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
-import RoleHeader from '../../components/common/RoleHeader';
+
 import MobileMenu from '../../components/common/MobileMenu';
 import SubNav from '../../components/common/SubNav';
 
@@ -72,7 +72,7 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
     };
     window.addEventListener('resize', handleResize);
 
-    // [핵심] 페이지 로드 0.1초 후 헤더 강제 노출 (타이틀 사라짐 방지)
+    // [핵심] 페이지 로드 0.1초 후 무조건 헤더 노출 (타이틀 사라짐 방지)
     setTimeout(() => {
       setHeaderVisible(true);
     }, 100);
@@ -195,6 +195,8 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
 
   const handleCloseWrite = (refresh: boolean) => { setIsWriteModalOpen(false); if (refresh) fetchPosts(); };
   const handleCloseDetail = (refresh?: boolean) => { setSelectedPost(null); if (refresh) fetchPosts(); };
+  
+  // [수정] 메뉴 선택 핸들러 (Header에 전달)
   const handleMenuSelect = (key: string) => { setSelectedMenuKey(key); };
 
   const filteredPosts = posts.filter(post => {
@@ -208,9 +210,16 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
 
   return (
     <div className="cb-page-container"> 
-      {!isMobile && <RoleHeader />}
+
       <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && selectedMenuKey && <SubNav selectedMenuKey={selectedMenuKey} />}
+      
+      {/* [수정] SubNav에 onClose 콜백 전달하여 외부 클릭 시 닫기 구현 */}
+      {!isMobile && selectedMenuKey && (
+        <SubNav 
+          selectedMenuKey={selectedMenuKey} 
+          onClose={() => setSelectedMenuKey('')} 
+        />
+      )}
 
       <div className="cb-main-wrapper">
         <div className="cb-container">

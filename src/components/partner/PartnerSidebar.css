@@ -1,18 +1,21 @@
 /* src/components/partner/PartnerSidebar.css */
 
 .partner-sidebar {
-  width: 220px; /* 사이드바 너비 고정 */
-  flex-shrink: 0; /* (flex 레이아웃에서 찌그러들지 않게 함) */
-  background-color: #f8f9fa; /* 사이드바 배경색 */
+  width: 220px;
+  flex-shrink: 0;
+  background-color: #f8f9fa;
   border-right: 1px solid rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-  overflow-y: auto; /* 메뉴가 많아지면 스크롤 */
+  
+  /* [수정 1] 가로 스크롤 강제 숨김 */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .partner-menu-list {
   list-style: none;
   padding: 0;
-  margin: 10px 0; /* (여백 조정) */
+  margin: 10px 0;
 }
 
 /* 1차 메뉴 (부모) */
@@ -30,40 +33,41 @@
   color: #333;
   cursor: pointer;
   transition: background-color 0.1s;
+
+  /* [수정 2] 패딩이 너비에 포함되도록 설정 (필수) */
+  box-sizing: border-box;
 }
 
 .partner-menu-parent:hover {
   background-color: rgba(0, 0, 0, 0.05); 
 }
 
-/* 1차 메뉴가 '활성' 상태 (하위 메뉴 중 하나가 선택됨) */
 .partner-menu-parent.active {
   background-color: #e9ecef; 
   color: black;
 }
 
-/* 하위 메뉴 리스트 (<ul>) */
+/* 하위 메뉴 리스트 */
 .partner-submenu-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  background-color: #f1f1f1; /* (하위 메뉴 배경색) */
-  max-height: 0; /* (기본 닫힘) */
+  background-color: #f1f1f1;
+  max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease-out; /* (애니메이션) */
+  transition: max-height 0.3s ease-out;
 }
 
-/* 하위 메뉴 리스트가 '열림' 상태 */
 .partner-submenu-list.open {
-  max-height: 500px; /* (열릴 때 최대 높이 - 메뉴 개수에 맞게 조절) */
+  max-height: 500px;
   transition: max-height 0.3s ease-in;
 }
 
-/* 하위 메뉴 아이템 (<a> 또는 <button>) */
+/* 하위 메뉴 아이템 */
 .partner-submenu-item {
   display: block;
   width: 100%;
-  padding: 12px 20px 12px 35px; /* (들여쓰기) */
+  padding: 12px 20px 12px 35px;
   background: none;
   border: none;
   text-align: left;
@@ -71,36 +75,37 @@
   font-weight: normal;
   color: #444;
   cursor: pointer;
-  text-decoration: none; /* (Link 태그 대비) */
+  text-decoration: none;
+
+  /* [수정 3] 패딩이 너비에 포함되도록 설정 (필수) */
+  box-sizing: border-box;
+  
+  /* (선택) 글자가 길어질 경우 줄바꿈 방지 및 말줄임표 처리 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .partner-submenu-item:hover {
   background-color: #e5e5e5;
 }
 
-/* 하위 메뉴가 '활성' 상태 (현재 이 페이지) */
 .partner-submenu-item.active {
   background-color: #ffffff;
   font-weight: bold;
-  color: #007bff; /* (활성 색상 - 임시) */
+  color: #007bff;
 }
 
-
-/* [⭐ 1. 추가] CSS 화살표 아이콘 */
+/* 화살표 아이콘 */
 .accordion-icon {
   width: 0; 
   height: 0; 
   border-style: solid;
-  /* (6px) 크기의 (>) 모양 아이콘 */
   border-width: 5px 0 5px 6px;
-  /* (어두운 회색) */
   border-color: transparent transparent transparent #666;
-  
-  /* (애니메이션) */
   transition: transform 0.3s ease;
 }
 
-/* [⭐ 2. 추가] 'open' 클래스가 붙었을 때 90도 회전 */
 .accordion-icon.open {
   transform: rotate(90deg);
 }
