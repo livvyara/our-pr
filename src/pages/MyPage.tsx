@@ -352,18 +352,6 @@ const MyPage: React.FC = () => {
   return (
     <div className="page-container">
 
-      {!isMobile && <RoleHeader />}
-      <Header
-        onMenuSelected={handleMenuSelect}
-        isMobile={isMobile}
-        onHamburgerPressed={handleHamburgerPressed}
-      />
-      {!isMobile && selectedMenu && (
-        <SubNav 
-          selectedMenuKey={selectedMenu} 
-          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
-        />
-      )}
 
       <main className="main-content" style={{ padding: isMobile ? '16px' : '32px 0' }}>
 

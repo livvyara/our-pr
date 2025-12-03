@@ -19,7 +19,7 @@
 
   /* 헤더 바로 아래 고정 (Fixed) */
   position: fixed;
-  top: 70px; /* 헤더 높이 */
+  top: 50px; /* 헤더 높이 */
   left: 0;
   z-index: 990;
   

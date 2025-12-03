@@ -114,12 +114,6 @@ const GuideMainPC: React.FC = () => {
 
   return (
     <div className="page-container">
-      {!isMobile && <RoleHeader />}
-      <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      <SubNav 
-  selectedMenuKey={selectedMenu} 
-  onClose={() => setSelectedMenu('')} 
-/>
 
       <div className="guide-page-wrapper">
         {/* 상단 탭 */}

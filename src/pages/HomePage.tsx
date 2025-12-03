@@ -8,7 +8,7 @@ import RoleHeader from '../components/common/RoleHeader';
 import { useMenu } from '../contexts/MenuContext';
 import './HomePage.css'; 
 
-// [슬라이드 데이터]
+// [슬라이드 데이터 - 요청하신 문구 반영]
 const SLIDES = [
   { 
     id: 1, 
@@ -98,14 +98,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="home-page-container atelier-theme">
-      {!isMobile && <RoleHeader />}
-      <Header onMenuSelected={setSelectedMenu} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && selectedMenu && (
-        <SubNav 
-          selectedMenuKey={selectedMenu} 
-          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
-        />
-      )}
+
 
       <main className="a-main">
         
@@ -213,7 +206,7 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* 5. CTA Section (가독성 개선) */}
+        {/* 5. CTA Section */}
         <section className="a-cta">
           <div className="a-cta-bg"></div>
           <div className="a-cta-content fade-up">

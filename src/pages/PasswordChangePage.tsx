@@ -153,11 +153,7 @@ const PasswordChangePage: React.FC = () => {
         onHamburgerPressed={handleHamburgerPressed}
       />
 
-      {/* 2. 서브메뉴 (데스크톱 전용) */}
-      <SubNav 
-  selectedMenuKey={selectedMenu} 
-  onClose={() => setSelectedMenu('')} 
-/>
+
 
       {/* 3. 메인 콘텐츠 */}
       {/* 'main-content' (HomePage.css) : 스티키 푸터 레이아웃 */}

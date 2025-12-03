@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getFirestore, collection, query, where, orderBy, getDocs, Timestamp, doc, getDoc, updateDoc, increment 
@@ -7,12 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebase-config';
 import './CommunityBoardPage.css';
 
-// 레이아웃 컴포넌트
-import Header from '../../components/common/Header';
-import Footer from '../../components/common/Footer';
-
-import MobileMenu from '../../components/common/MobileMenu';
-import SubNav from '../../components/common/SubNav';
+/* [삭제됨] Header, Footer, RoleHeader, MobileMenu, SubNav 임포트 제거 */
 
 // 모달 컴포넌트
 import BoardWriteModal from '../../components/common/BoardWriteModal';       
@@ -45,10 +40,8 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
   const db = getFirestore();
   const navigate = useNavigate();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [selectedMenuKey, setSelectedMenuKey] = useState<string>('');
-
+  // [삭제됨] 메뉴 관련 state(selectedMenuKey, isMobile 등) 삭제
+  
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -59,38 +52,21 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
-  // [추가] 헤더 애니메이션 즉시 실행을 위한 상태
-  const [headerVisible, setHeaderVisible] = useState(false);
+  // [삭제됨] headerVisible 관련 로직 삭제 (MainLayout이 헤더 담당)
 
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  // [애니메이션] 리스트 아이템 등장은 페이지 내부 요소이므로 유지
+  const observerRef = React.useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile) setIsMobileMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-
-    // [핵심] 페이지 로드 0.1초 후 무조건 헤더 노출 (타이틀 사라짐 방지)
-    setTimeout(() => {
-      setHeaderVisible(true);
-    }, 100);
-
-    // [애니메이션] 스크롤 감지 옵저버 설정
     observerRef.current = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) entry.target.classList.add('cb-active');
       });
     }, { threshold: 0.1 });
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      observerRef.current?.disconnect();
-    };
+    return () => observerRef.current?.disconnect();
   }, []);
 
-  // [애니메이션] 데이터 로드 후 리스트 아이템에 옵저버 부착
   useEffect(() => {
     if (!isLoading) {
       setTimeout(() => {
@@ -100,6 +76,7 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
     }
   }, [isLoading, posts]);
 
+  // ... (사용자 인증 및 데이터 fetch 로직은 그대로 유지) ...
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -138,17 +115,10 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
         list = list.filter(post => post.authorRole === 'admin' || post.authorRole === 'subadmin' || !post.authorRole);
       }
       setPosts(list);
-    } catch (error) {
-      console.error("게시글 로딩 실패:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (error) { console.error(error); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchPosts();
-    setAdminFilter('all'); 
-  }, [category, currentUser, isAdmin]);
+  useEffect(() => { fetchPosts(); setAdminFilter('all'); }, [category, currentUser, isAdmin]);
 
   const formatDate = (ts: Timestamp) => ts.toDate().toISOString().split('T')[0];
   const isNewPost = (createdAt: Timestamp) => {
@@ -159,24 +129,16 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
   };
 
   const handlePostClick = async (post: CommunityPost) => {
-    if (!currentUser && category !== 'notice' && category !== 'update') {
-         alert("로그인이 필요한 서비스입니다."); return;
-    }
-    if (category === 'suggestion') {
-        if (!isAdmin && post.authorUid !== currentUser?.uid) {
-            alert("비공개 글입니다. 작성자와 관리자만 확인할 수 있습니다."); return;
-        }
-    }
+    // ... (기존 로직 동일)
+    if (!currentUser && category !== 'notice' && category !== 'update') { alert("로그인이 필요한 서비스입니다."); return; }
+    if (category === 'suggestion') { if (!isAdmin && post.authorUid !== currentUser?.uid) { alert("비공개 글입니다."); return; } }
     setSelectedPost(post);
-    
+    // 조회수 증가 로직 등...
     let collectionName = 'adminPosts';
     if (category === 'suggestion') collectionName = 'suggestionPosts';
     if (category === 'inquiry') collectionName = 'inquiryPosts';
     const postRef = doc(db, collectionName, post.id);
-    try {
-        await updateDoc(postRef, { viewCount: increment(1) });
-        post.viewCount = (post.viewCount || 0) + 1;
-    } catch (e) { console.error(e); }
+    try { await updateDoc(postRef, { viewCount: increment(1) }); post.viewCount = (post.viewCount || 0) + 1; } catch (e) { console.error(e); }
   };
 
   const getHeaderInfo = () => {
@@ -192,12 +154,8 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
   
   const canWrite = (category === 'suggestion' || category === 'inquiry') ? !!currentUser : isAdmin;
   const isPrivateBoard = category === 'suggestion' || category === 'inquiry';
-
   const handleCloseWrite = (refresh: boolean) => { setIsWriteModalOpen(false); if (refresh) fetchPosts(); };
   const handleCloseDetail = (refresh?: boolean) => { setSelectedPost(null); if (refresh) fetchPosts(); };
-  
-  // [수정] 메뉴 선택 핸들러 (Header에 전달)
-  const handleMenuSelect = (key: string) => { setSelectedMenuKey(key); };
 
   const filteredPosts = posts.filter(post => {
     if (!isAdmin || category !== 'inquiry') return true; 
@@ -210,35 +168,25 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
 
   return (
     <div className="cb-page-container"> 
-
-      <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      
-      {/* [수정] SubNav에 onClose 콜백 전달하여 외부 클릭 시 닫기 구현 */}
-      {!isMobile && selectedMenuKey && (
-        <SubNav 
-          selectedMenuKey={selectedMenuKey} 
-          onClose={() => setSelectedMenuKey('')} 
-        />
-      )}
+      {/* [삭제됨] RoleHeader, Header, SubNav 제거 */}
 
       <div className="cb-main-wrapper">
         <div className="cb-container">
           
-          {/* Header Section: 타이틀 마스크 리빌 & 헤더 강제 노출 적용 */}
+          {/* [수정] 타이틀 애니메이션: headerVisible 상태가 없으므로 즉시 cb-active 적용하거나, 
+                   이 페이지 전용 애니메이션 로직을 간단히 추가해도 되지만,
+                   가장 깔끔한 방법은 그냥 정적으로 보여주거나, useEffect에서 setTimeout으로 클래스 붙이는 것입니다. 
+                   여기서는 기존 구조 유지하되 클래스만 바로 적용되게 합니다. */}
           <div className="cb-header-section">
             <div className="cb-reveal-mask">
-              <h1 className={`cb-title cb-reveal-text ${headerVisible ? 'cb-active' : ''}`}>
-                {headerInfo.title}
-              </h1>
+              <h1 className="cb-title cb-reveal-text cb-active">{headerInfo.title}</h1>
             </div>
-            <div className={`cb-divider-long cb-fade-up ${headerVisible ? 'cb-active' : ''}`}></div>
-            <p className={`cb-desc cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
-              {headerInfo.desc}
-            </p>
+            <div className="cb-divider-long cb-fade-up cb-active"></div>
+            <p className="cb-desc cb-fade-up cb-active">{headerInfo.desc}</p>
           </div>
 
           {isAdmin && category === 'inquiry' && (
-            <div className={`cb-filter-bar cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
+            <div className="cb-filter-bar cb-fade-up cb-active">
               {['all', 'pending', 'additional', 'completed'].map(f => (
                   <button key={f} className={adminFilter === f ? 'cb-active' : ''} onClick={() => setAdminFilter(f as AdminFilterType)}>
                       {f === 'all' ? '전체' : f === 'pending' ? '답변대기' : f === 'additional' ? '추가문의' : '답변완료'}
@@ -248,7 +196,7 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
           )}
 
           <div className="cb-list-wrapper">
-            <div className={`cb-top-bar cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
+            <div className="cb-top-bar cb-fade-up cb-active">
                 <span className="cb-total-count">총 <strong>{filteredPosts.length}</strong>개의 게시글</span>
                 {canWrite && (
                     <button className="cb-btn-write" onClick={() => setIsWriteModalOpen(true)}>
@@ -258,6 +206,7 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
                 )}
             </div>
 
+            {/* ... 테이블 리스트 부분 (기존 동일) ... */}
             {isLoading ? (
               <div className="cb-loading">데이터를 불러오는 중입니다...</div>
             ) : (
@@ -270,8 +219,7 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
                   <col style={{width: '130px'}} />
                   <col style={{width: '80px'}} />
                 </colgroup>
-                {/* 테이블 헤더도 부드럽게 등장 */}
-                <thead className={`cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
+                <thead className="cb-fade-up cb-active">
                   <tr>
                     <th>번호</th>
                     {isPrivateBoard && <th>상태</th>}
@@ -284,7 +232,7 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
                 <tbody>
                   {posts.length === 0 ? (
                     <tr>
-                      <td colSpan={isPrivateBoard ? 6 : 5} className={`cb-no-posts cb-fade-up ${headerVisible ? 'cb-active' : ''}`}>
+                      <td colSpan={isPrivateBoard ? 6 : 5} className="cb-no-posts cb-fade-up cb-active">
                         {(isPrivateBoard && !currentUser) ? "로그인이 필요한 서비스입니다." : "등록된 게시글이 없습니다."}
                       </td>
                     </tr>
@@ -294,34 +242,23 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
                         key={post.id} 
                         onClick={() => handlePostClick(post)} 
                         className="cb-post-row cb-fade-up"
-                        // [핵심] 순차적 등장을 위한 딜레이 적용
                         style={{ transitionDelay: `${index * 0.05}s` }}
                       >
+                        {/* ... 내용 동일 ... */}
                         <td className="cb-num">{filteredPosts.length - index}</td>
-                        
                         {isPrivateBoard && (
                           <td>
-                             {post.hasAdditionalQuestion ? (
-                                <span className="cb-badge cb-additional">추가문의</span>
-                             ) : post.status === 'completed' ? (
-                                <span className="cb-badge cb-completed">완료</span>
-                             ) : (
-                                <span className="cb-badge cb-pending">대기</span>
-                             )}
+                             {post.hasAdditionalQuestion ? <span className="cb-badge cb-additional">추가문의</span> : post.status === 'completed' ? <span className="cb-badge cb-completed">완료</span> : <span className="cb-badge cb-pending">대기</span>}
                           </td>
                         )}
-
                         <td className="cb-post-title">
                             <div className="cb-title-inner">
                                 {category === 'suggestion' && <span className="cb-lock-icon">🔒</span>}
                                 {post.title}
                                 {isNewPost(post.createdAt) && <span className="cb-new-dot"></span>}
-                                {isPrivateBoard && post.commentCount! > 0 && (
-                                   <span className="cb-comment-count">({post.commentCount})</span>
-                                )}
+                                {isPrivateBoard && post.commentCount! > 0 && (<span className="cb-comment-count">({post.commentCount})</span>)}
                             </div>
                         </td>
-                        
                         <td className="cb-date">{formatDate(post.createdAt)}</td>
                         <td><span className="cb-author">{post.authorName}</span></td>
                         <td className="cb-views">{post.viewCount || 0}</td>
@@ -335,9 +272,8 @@ const CommunityBoardPage: React.FC<CommunityBoardPageProps> = ({ category }) => 
         </div>
       </div>
 
-      <Footer />
-      {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
-
+      {/* [삭제됨] Footer, MobileMenu 제거 */}
+      
       {isWriteModalOpen && (
         (category === 'suggestion' || category === 'inquiry') ? (
           <SuggestionWriteModal user={currentUser} category={category} onClose={handleCloseWrite} />

@@ -348,15 +348,6 @@ const ThreeDSimulationPage: React.FC = () => {
 
     return (
       <div className="page-container">
-        {!isMobile && <RoleHeader />}
-        <Header onMenuSelected={(k) => setSelectedMenu(k)} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-        {!isMobile && selectedMenu && (
-        <SubNav 
-          selectedMenuKey={selectedMenu} 
-          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
-        />
-      )}
-
         <main className="td-page-main">
           <div className="td-page-container">
               <div className="td-page-header">

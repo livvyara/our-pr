@@ -31,7 +31,6 @@
   background-color: var(--cb-bg);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   color: var(--cb-text-main);
-  padding-top: var(--header-height-pc);
   width: 100%;
   overflow-x: hidden; /* 가로 스크롤 원천 차단 */
 }

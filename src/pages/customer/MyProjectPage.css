@@ -22,6 +22,7 @@
   flex-direction: column;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   color: var(--mp-text-main);
+    padding: 80px 20px; /* 상단 여백 확보 */
   overflow-x: hidden;
 }
 
@@ -30,7 +31,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 160px 20px 80px 20px;
+  padding: 0px 20px 80px 20px;
 }
 
 .mp-inner-container {

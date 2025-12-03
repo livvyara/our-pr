@@ -4,7 +4,7 @@
   /* --- Modern Atelier Theme --- */
   --a-bg: #fdfdfd;       /* 따뜻한 톤의 화이트 */
   --a-bg-light: #f4f4f4; /* 밝은 회색 배경 */
-  --a-text-main: #222222; /* 진한 차콜 (완전 블랙보다 부드러움) */
+  --a-text-main: #222222; /* 진한 차콜 */
   --a-text-sub: #666666;  /* 중간 회색 */
   --a-accent: #9c8258;    /* 고급스러운 브론즈 골드 */
   --a-border: #e0e0e0;
@@ -23,12 +23,14 @@
   width: 100%;
   overflow-x: hidden;
   word-break: keep-all; /* 한글 줄바꿈 최적화 */
+
 }
 
 a, button { cursor: pointer; }
 
 /* Utilities */
 .a-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+
 .a-container.center { text-align: center; }
 .a-section { padding: 140px 0; }
 .bg-light { background-color: var(--a-bg-light); }
@@ -52,6 +54,8 @@ a, button { cursor: pointer; }
 .a-hero-slider {
   position: relative; width: 100%; height: 85vh; /* 화면 꽉 차게 */
   min-height: 600px; background: #000; overflow: hidden;
+  /* 헤더에 가려지지 않도록 상단 패딩 제거 */
+  margin-top: 0; 
 }
 
 .a-slide-item {
@@ -69,7 +73,7 @@ a, button { cursor: pointer; }
 
 /* 어두운 오버레이 */
 .a-slide-overlay {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.3); z-index: 1;
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1;
 }
 
 /* 슬라이드 텍스트 컨텐츠 */
@@ -80,7 +84,7 @@ a, button { cursor: pointer; }
 }
 
 .a-slide-title {
-  font-size: 56px; font-weight: 700; margin-bottom: 20px;
+  font-size: 56px; font-weight: 700; margin-bottom: 20px; line-height: 1.2;
   opacity: 0; transform: translateY(30px);
 }
 .a-slide-desc {
@@ -89,8 +93,8 @@ a, button { cursor: pointer; }
 }
 .a-slide-btn {
   padding: 15px 40px; background: transparent; color: #fff;
-  border: 1px solid rgba(255,255,255,0.6); font-size: 15px;
-  transition: all 0.3s; opacity: 0; transform: translateY(30px);
+  border: 1px solid rgba(255,255,255,0.6); font-size: 16px; font-weight: 600;
+  transition: all 0.3s; opacity: 0; transform: translateY(30px); border-radius: 4px;
 }
 .a-slide-btn:hover { background: #fff; color: #000; border-color: #fff; }
 
@@ -180,13 +184,13 @@ a, button { cursor: pointer; }
 .s-text h4 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
 .s-text p { font-size: 15px; color: var(--a-text-sub); line-height: 1.6; }
 
-/* --- 5. CTA Section (High Contrast) --- */
+/* --- 5. CTA Section --- */
 .a-cta {
   position: relative; padding: 160px 0; text-align: center; color: #fff;
   display: flex; align-items: center; justify-content: center;
 }
 .a-cta-bg {
-  position: absolute; inset: 0; background: #1a1a1a; /* 어두운 배경색으로 고정하여 가독성 확보 */
+  position: absolute; inset: 0; background: #1a1a1a; /* 어두운 배경색 고정 */
   z-index: 0;
 }
 .a-cta-content { position: relative; z-index: 2; max-width: 600px; padding: 0 20px; }
@@ -196,6 +200,7 @@ a, button { cursor: pointer; }
 .a-btn-solid {
   padding: 18px 50px; background: #fff; color: #000; border: none;
   font-size: 16px; font-weight: 700; transition: transform 0.3s, background 0.3s;
+  border-radius: 4px;
 }
 .a-btn-solid:hover { background: var(--a-accent); color: #fff; transform: scale(1.05); }
 

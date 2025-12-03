@@ -1,65 +1,89 @@
-/* src/pages/program/PartnerProgramPage.css (전체 코드) */
+/* src/pages/program/PartnerProgramPage.css */
 
-/* [ ⭐ 1. 핵심 레이아웃 ] 
-   사이드바(좌) + 콘텐츠(우)를 가로로 배치
-*/
+/* [수정] 부모(MainLayout)의 흐름을 따르도록 설정 */
 .program-main-layout {
   display: flex;
-  padding-top : 100px !important;
-  flex-direction: row; /* 좌->우 배치 */
-  flex-grow: 1; /* (스티키 푸터를 위해) 남은 공간 모두 차지 */
-  padding: 0; 
-}
-
-/* [ ⭐ 2. 핵심 레이아웃 ] 
-   사이드바를 제외한 실제 "위젯"이 표시될 영역
-*/
-.program-content-area {
-  flex-grow: 1; /* 사이드바를 제외한 모든 너비 차지 */
-  padding: 5px; 
-  box-sizing: border-box;
-  overflow-y: auto; /* (콘텐츠가 길어질 경우 스크롤) */
-  background-color: white; 
-}
-
-/* [ ⭐ 3. 대시보드 3분할 그리드 ] */
-.dashboard-grid {
-  display: grid;
-  /* [수정] 2:1 (3분할) -> 3:1 (4분할) */
-  grid-template-columns: 3fr 1fr; 
-  grid-template-rows: auto auto; /* 2행, 자동 높이 */
-  gap: 20px;
+  flex-direction: row; /* 좌측 사이드바 + 우측 콘텐츠 */
   width: 100%;
-  height: 100%;
+  
+  /* 화면 전체 높이가 아니라, 내용물만큼 늘어나되 최소 높이만 보장 */
+  min-height: calc(100vh - 120px); 
+  
+  /* 배경색 */
+  background-color: #f5f7fa;
+  
+  /* [중요] padding과 margin을 0으로 하여 MainLayout의 padding-top을 방해하지 않음 */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  padding-top: 0px;
+  
+  /* 위치 고정 속성 제거 (혹시 있을 경우를 대비해 명시) */
+  position: static;
 }
 
-.calendar-widget-area {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3; 
+/* 콘텐츠 영역 */
+.program-content-area {
+  flex-grow: 1;
+  padding: 10px; /* 내부 여백 */
+  box-sizing: border-box;
+  
+  /* 가로 스크롤 방지 */
+  overflow-x: hidden; 
   
   display: flex;
   flex-direction: column;
-  padding: 0; 
-  min-height: 800px; 
 }
 
-/* 2열 1행 (1/4 너비) */
-.widget-top-right {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
+/* 대시보드 그리드 */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 3fr 1fr; 
+  grid-template-rows: auto auto;
+  gap: 20px;
+  width: 100%;
 }
 
-/* 2열 2행 (1/4 너비) */
-.widget-bottom-right {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-}
-
-/* (공통) 위젯 스타일 */
+/* 위젯 공통 스타일 */
 .widget {
   background-color: white;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   border: 1px solid #eee; 
+}
+
+.calendar-widget-area {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3; 
+  display: flex;
+  flex-direction: column;
+  min-height: 800px; 
+}
+
+.widget-top-right {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.widget-bottom-right {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .program-main-layout {
+    flex-direction: column;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .program-content-area {
+    padding: 15px;
+  }
 }

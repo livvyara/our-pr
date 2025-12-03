@@ -13,6 +13,7 @@ import AuthActionPage from '../pages/AuthActionPage';
 import GuideMainPC from '../pages/guide/GuideMainPC';
 import GuideWritePage from '../pages/admin/GuideWritePage';
 import ThreeDSimulationPage from '../pages/customer/ThreeDSimulationPage';
+import MainLayout from '../components/layout/MainLayout';
 
 
 // [⭐ 1. 추가] 파트너 전산 메인 페이지 임포트
@@ -31,14 +32,11 @@ function App() {
     // (MenuProvider가 Routes를 감싸고 있다고 가정)
     <MenuProvider>
       <Routes>
+        <Route element={<MainLayout />}>
         {/* 1. 기본 경로 */}
         <Route path="/" element={<HomePage />} /> 
         
-        {/* 2. 로그인 경로 */}
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* 3. 회원가입 경로 */}
-        <Route path="/signup" element={<SignUpPage />} />
+
         
         {/* 4. 비밀번호 재설정 */}
         <Route path="/reset-password" element={<div>비밀번호 재설정 페이지</div>} />
@@ -100,7 +98,12 @@ function App() {
 
         {/* 이용안내 글쓰기 (관리자용) */}
         <Route path="/admin/guide/write" element={<GuideWritePage />} />
-  
+  </Route>
+          {/* 2. 로그인 경로 */}
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* 3. 회원가입 경로 */}
+        <Route path="/signup" element={<SignUpPage />} />
       </Routes>
         
     </MenuProvider>

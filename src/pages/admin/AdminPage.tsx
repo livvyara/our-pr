@@ -214,10 +214,6 @@ const AdminPage: React.FC = () => {
         onHamburgerPressed={handleHamburgerPressed}
       />
       
-      <SubNav 
-  selectedMenuKey={selectedMenu} 
-  onClose={() => setSelectedMenu('')} 
-/>
 
       <main 
         className="main-content admin-main-layout"

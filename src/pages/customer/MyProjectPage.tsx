@@ -1,21 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy 
 } from 'firebase/firestore';
 import { auth } from '../../firebase-config';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ChatIcons } from '../../components/common/ChatIcons';
 import ChatWidget from '../../components/common/ChatWidget';
 
-import Header from '../../components/common/Header';
-import SubNav from '../../components/common/SubNav'; 
-import MobileMenu from '../../components/common/MobileMenu'; 
-import Footer from '../../components/common/Footer';
-import RoleHeader from '../../components/common/RoleHeader';
-import { useMenu } from '../../contexts/MenuContext';
+// [삭제] Header, SubNav, Footer, RoleHeader, MobileMenu, useMenu 임포트 제거
 
-/* [수정] 4개의 버튼 모두 고객 전용 모달로 연결 */
 import CustomerConstructionScheduleModal from '../../components/customer/CustomerConstructionScheduleModal';
 import SiteWorkLogListModal from '../../components/customer/SiteWorkLogListModal';
 import CustomerSiteFilesModal from '../../components/customer/CustomerSiteFilesModal';
@@ -25,34 +18,19 @@ import './MyProjectPage.css';
 
 const db = getFirestore();
 
-// [Simple SVG Icons]
 const ProjectIcons = {
-  Schedule: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><rect x="3" y="4" width="18" height="18"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-  ),
-  Worklog: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-  ),
-  Files: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-  ),
-  Cost: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-  ),
-  Estimate: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-  ),
-  Contract: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
-  ),
-  Insurance: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-  ),
-  ArrowDown: () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><path d="M6 9l6 6 6-6"/></svg>
-  )
+  /* ... 아이콘 코드는 그대로 유지 ... */
+  Schedule: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><rect x="3" y="4" width="18" height="18"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>),
+  Worklog: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>),
+  Files: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>),
+  Cost: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>),
+  Estimate: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>),
+  Contract: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>),
+  Insurance: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>),
+  ArrowDown: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><path d="M6 9l6 6 6-6"/></svg>)
 };
 
+/* ... (MySiteData 인터페이스 유지) ... */
 interface MySiteData {
   inviteId: string;
   siteId: string;
@@ -75,11 +53,9 @@ interface MySiteData {
 
 const MyProjectPage: React.FC = () => {
   const navigate = useNavigate();
-  const { mainMenus, isLoading: isMenuLoading } = useMenu();
-  const [selectedMenu, setSelectedMenu] = useState('lounge'); 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
-
+  
+  // [삭제] useMenu, selectedMenu, isMobile, isMobileMenuOpen 관련 코드 모두 삭제
+  
   const [mySites, setMySites] = useState<MySiteData[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [expandedSiteId, setExpandedSiteId] = useState<string | null>(null);
@@ -91,34 +67,17 @@ const MyProjectPage: React.FC = () => {
       partnerUid: string;
   } | null>(null);
 
-  // 애니메이션 강제 실행을 위한 상태
   const [isPageLoaded, setIsPageLoaded] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => {
-      const isCurrentlyMobile = window.innerWidth < 768;
-      setIsMobile(isCurrentlyMobile);
-      if (!isCurrentlyMobile) setIsMobileMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    
-    // 페이지 마운트 후 즉시 애니메이션 활성화 (옵저버 제거하고 강제 실행)
+    // [수정] resize 이벤트 리스너 중 isMobile 설정 부분 삭제
     const timer = setTimeout(() => {
         setIsPageLoaded(true);
     }, 100);
-
-    return () => {
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-      if (!isMenuLoading && mainMenus.length > 0) {
-          const hasLounge = mainMenus.find(m => m.key === 'lounge');
-          if (hasLounge) setSelectedMenu('lounge');
-      }
-  }, [isMenuLoading, mainMenus]);
+  // [삭제] useMenu 관련 useEffect 삭제
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -132,7 +91,8 @@ const MyProjectPage: React.FC = () => {
   }, [navigate]);
 
   const fetchMyProjects = async (uid: string) => {
-    try {
+    // ... (기존 로직 유지) ...
+     try {
       const q = query(
         collection(db, 'siteInvitations'),
         where('redeemedBy', '==', uid),
@@ -187,9 +147,7 @@ const MyProjectPage: React.FC = () => {
     } catch (e) { console.error(e); } finally { setLoadingData(false); }
   };
 
-  const handleMenuSelect = (key: string) => { setSelectedMenu(key); };
   const toggleExpand = (id: string) => { setExpandedSiteId(prev => (prev === id ? null : id)); };
-  
   const getStatusLabel = (status: string) => status; 
 
   const handleButtonClick = (type: any, site: MySiteData) => {
@@ -201,22 +159,14 @@ const MyProjectPage: React.FC = () => {
   };
 
   return (
+    // [수정] Layout 관련 컴포넌트 제거하고 mp-page-container만 남김
     <div className="mp-page-container">
-      {!isMobile && <RoleHeader />}
-      <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && selectedMenu && (
-        <SubNav 
-          selectedMenuKey={selectedMenu} 
-          onClose={() => setSelectedMenu('')} /* 빈 문자열로 설정하여 숨김 처리 */
-        />
-      )}
-
-      <main className="mp-main-content">
+      <div className="mp-main-content">
         <div className="mp-inner-container">
-            
+            {/* ... 본문 내용 (기존 유지) ... */}
             <div className="mp-header-section">
                 <div className="mp-reveal-mask">
-                    <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>마이 프로젝트</h2>
+                    <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>MY LOUNGE</h2>
                 </div>
                 <div className={`mp-divider-long mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}></div>
                 <p className={`mp-subtitle mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}>진행 중인 프로젝트를 확인하세요</p>
@@ -243,8 +193,6 @@ const MyProjectPage: React.FC = () => {
                             className={`mp-project-card ${isExpanded ? 'active' : ''} mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}
                             style={{ transitionDelay: isPageLoaded ? '0s' : `${index * 0.1}s` }}
                         >
-                            
-                            {/* Card Header */}
                             <div className="mp-card-header" onClick={() => toggleExpand(site.siteId)}>
                                 <div className="mp-header-content">
                                     <div className="mp-status-indicator">{statusText}</div>
@@ -259,11 +207,8 @@ const MyProjectPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Card Body */}
                             <div className="mp-card-body">
                                 <div className="mp-body-inner">
-                                    
-                                    {/* 정보 그리드 */}
                                     <div className="mp-info-grid">
                                         <div className="mp-info-col">
                                             <span className="mp-label">INFO</span>
@@ -308,7 +253,6 @@ const MyProjectPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* 액션 버튼 그리드 */}
                                     <div className="mp-actions-section">
                                         <span className="mp-label">ACTIONS</span>
                                         <div className="mp-actions-grid">
@@ -352,13 +296,12 @@ const MyProjectPage: React.FC = () => {
                 </div>
             )}
         </div>
-      </main>
+      </div>
       
-      <Footer /> 
-      {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
+      {/* [수정] Footer, MobileMenu 삭제 */}
       {isChatOpen && <ChatWidget onClose={() => setIsChatOpen(false)} />}
       
-      {/* Modals: 모두 고객 전용 컴포넌트로 연결 */}
+      {/* Modals */}
       {modalState?.type === 'schedule' && <CustomerConstructionScheduleModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'changeOrder' && <CustomerChangeOrderModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'worklog' && <SiteWorkLogListModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
