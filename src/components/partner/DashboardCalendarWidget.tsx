@@ -5,9 +5,8 @@ import './DashboardCalendarWidget.css';
 
 import { 
   getFirestore, collectionGroup, collection, query, where, onSnapshot,
-  Timestamp, doc, getDoc, setDoc, addDoc, serverTimestamp, orderBy, getDocs 
+  Timestamp, doc, getDoc, setDoc, addDoc, serverTimestamp, orderBy 
 } from 'firebase/firestore';
-import { auth } from '../../firebase-config'; 
 
 // --- [ 1. 타입 정의 ] ---
 
@@ -19,7 +18,7 @@ type ScheduleItem = {
   type: 'meeting' | 'construction' | 'personal'; 
   isPublic?: boolean;
   dateKey: string; // 'YYYY-MM-DD'
-  fullTitle?: string; // 툴팁용 (그룹화된 일정 상세)
+  fullTitle?: string; 
   siteName?: string;
 };
 
@@ -46,17 +45,8 @@ interface SiteScheduleEntry {
     date: string;
     processes: string[];
     isNoisy: boolean;
-    siteId?: string; // 경로에서 추출되거나 데이터에 포함
+    siteId?: string;
     partnerUid?: string;
-}
-
-interface PersonalScheduleEntry {
-  title: string;
-  date: string;
-  time: string;
-  isPublic: boolean;
-  partnerUid: string;
-  createdAt: Timestamp;
 }
 
 interface DashboardCalendarWidgetProps {
@@ -67,7 +57,6 @@ interface DashboardCalendarWidgetProps {
 // --- [ 2. 헬퍼 함수 ] ---
 
 const getISODateString = (date: Date): string => {
-  // Timezone 문제 방지 (날짜 경계를 정확히 하기 위함)
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().split('T')[0];
 };
@@ -100,7 +89,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
   const [filterPrefs, setFilterPrefs] = useState({ showMeetings: true, showConstruction: true, showPersonal: true });
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [siteNamesCache, setSiteNamesCache] = useState<Map<string, string>>(new Map()); // 현장명 캐싱
+  const [siteNamesCache, setSiteNamesCache] = useState<Map<string, string>>(new Map()); 
 
   // 1. 필터 설정 불러오기
   useEffect(() => {
@@ -128,7 +117,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       setIsLoading(false);
     };
 
-    // (A) 현장명 캐시 업데이트 함수 (필수)
     const fetchSiteNameIfNeeded = async (siteId: string) => {
         if (!siteId || siteNamesCache.has(siteId)) return;
         try {
@@ -140,14 +128,13 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         } catch(e) { console.warn('Site name fetch failed', e); }
     };
 
-    // 1. 미팅 일정 (memos)
+    // 1. 미팅 일정
     const qMemos = query(collectionGroup(db, 'memos'), where('partnerUid', '==', partnerUid), where('memoType', '==', 'meeting'));
     const unsubMemos = onSnapshot(qMemos, (snap) => {
       meetings = snap.docs.map(d => {
         const data = d.data() as MemoEntry;
         if(data.siteId) fetchSiteNameIfNeeded(data.siteId);
         
-        // [수정됨] 제목에 시간 추가 (예: 14:00 미팅: 내용...)
         return { 
             id: d.id, 
             time: data.meetingTime, 
@@ -161,7 +148,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       updateAll();
     });
 
-    // 2. 공사 일정 (workLogs - 익일 작업)
+    // 2. 공사 일정 (workLogs)
     const qWork = query(collectionGroup(db, 'workLogs'), where('partnerUid', '==', partnerUid), where('tomorrowProcess', '!=', ''));
     const unsubWork = onSnapshot(qWork, (snap) => {
       constructionLogs = [];
@@ -176,13 +163,12 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       updateAll();
     });
 
-    // 3. 공사 일정 (schedules - 새로 만든 모달 데이터)
+    // 3. 공사 일정 (schedules)
     const qSchedules = query(collectionGroup(db, 'schedules'));
     const unsubSchedules = onSnapshot(qSchedules, (snap) => {
         constructionSchedules = [];
         snap.forEach(d => {
           const pathSegments = d.ref.path.split('/');
-          // 내 파트너 데이터인지 확인 (경로: users/{uid}/sites/{siteId}/schedules/{docId})
           if (pathSegments.length > 1 && pathSegments[1] === partnerUid) { 
             const data = d.data() as SiteScheduleEntry;
             const siteId = pathSegments[3]; 
@@ -216,8 +202,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
 
 
   // 3. 필터링 및 그룹화 로직
-
-  // 1단계: 상단 필터 (미팅/공사/개인) 적용
   const filteredSchedulesList = useMemo(() => {
     return allSchedules.filter(schedule => {
       if (schedule.type === 'personal' && filterPrefs.showPersonal) return true; 
@@ -227,7 +211,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
     });
   }, [allSchedules, filterPrefs]);
 
-  // 2단계: 캘린더 타일용 (그룹화 로직 적용)
   const schedulesByDateMap = useMemo(() => {
     const map = new Map<string, ScheduleItem[]>();
     filteredSchedulesList.forEach(schedule => {
@@ -237,7 +220,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       map.get(dateKey)!.push(schedule);
     });
 
-    // [타일 그룹화 로직]
     const finalMap = new Map<string, ScheduleItem[]>();
     map.forEach((dailyItems, dateKey) => {
         const constructions = dailyItems.filter(s => s.type === 'construction' && s.siteId);
@@ -246,7 +228,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         const groupedBySite = new Map<string, ScheduleItem[]>();
         constructions.forEach(item => {
             const sId = item.siteId!;
-            // const name = item.siteName || siteNamesCache.get(sId) || '현장'; 
             if (!groupedBySite.has(sId)) groupedBySite.set(sId, []);
             groupedBySite.get(sId)!.push(item);
         });
@@ -277,7 +258,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
   }, [filteredSchedulesList, siteNamesCache]);
 
 
-  // 3단계: 하단 리스트 데이터 (비그룹화된 원본 리스트 사용)
   const displayedSchedules = useMemo(() => {
     const selectedDateKey = getISODateString(selectedDate);
     const rawList = filteredSchedulesList;
@@ -302,11 +282,10 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
   }, [filterType, filteredSchedulesList, selectedDate]);
 
 
-  // 캘린더 타일 내용
   const tileContent = ({ date, view }: { date: Date, view: string }) => {
     if (view === 'month') {
       const dateKey = getISODateString(date);
-      const dailySchedules = schedulesByDateMap.get(dateKey); // 그룹화된 맵 사용
+      const dailySchedules = schedulesByDateMap.get(dateKey); 
       
       if (dailySchedules && dailySchedules.length > 0) {
         return (
@@ -320,7 +299,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
                 {item.title} 
               </div>
             ))}
-            {dailySchedules.length > 3 && <div style={{fontSize:'10px', color:'#999'}}>+{dailySchedules.length - 3}</div>}
+            {dailySchedules.length > 3 && <div className="calendar-more">+{dailySchedules.length - 3}</div>}
           </div>
         );
       }
@@ -328,8 +307,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
     return null;
   };
 
-
-  // 필터 저장, 토글, 날짜 변경 등 핸들러들은 동일합니다.
   const handleDateChange = (value: any) => setSelectedDate(value as Date);
   const toggleFilter = (key: 'showMeetings' | 'showConstruction' | 'showPersonal') => setFilterPrefs(prev => ({ ...prev, [key]: !prev[key] }));
   
@@ -338,11 +315,11 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
     setIsSavingPrefs(true);
     try {
       await setDoc(doc(db, 'users', partnerUid), { calendarFilters: filterPrefs }, { merge: true });
-      alert('저장되었습니다.');
+      // alert 제거 (조용한 저장)
     } catch (e) { console.error(e); } finally { setIsSavingPrefs(false); }
   };
 
-const scheduleListTitle = useMemo(() => {
+  const scheduleListTitle = useMemo(() => {
     const formatOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', weekday: 'short' };
     
     if (filterType === 'today') {
@@ -350,13 +327,8 @@ const scheduleListTitle = useMemo(() => {
     }
     if (filterType === 'week') {
       const { start, end } = getWeekRange(selectedDate); 
-      const startStr = start.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
-      let endStr;
-      if (start.getMonth() !== end.getMonth()) {
-        endStr = end.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
-      } else {
-        endStr = end.toLocaleDateString('ko-KR', { day: 'numeric', weekday: 'short' });
-      }
+      const startStr = start.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+      const endStr = end.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
       return `${startStr} ~ ${endStr}`;
     }
     if (filterType === 'month') {
@@ -364,99 +336,88 @@ const scheduleListTitle = useMemo(() => {
     }
     return '';
   }, [filterType, selectedDate]);
-  if (isLoading) return <div className="dashboard-calendar-widget" style={{padding:'20px', textAlign:'center'}}>일정 로딩 중...</div>;
 
-  // --- [ 4. 렌더링 ] ---
+  if (isLoading) return <div className="dc-loading">일정을 불러오는 중입니다...</div>;
 
   return (
     <div className="dashboard-calendar-widget">
       
-      {/* 1. 헤더 (컨트롤) */}
       <div className="widget-header">
-        <div className="header-left">
-          <h3 className="widget-title">일정 관리</h3>
-          <button className={`filter-toggle ${filterPrefs.showMeetings?'active':''}`} onClick={()=>toggleFilter('showMeetings')}>미팅</button>
-          <button className={`filter-toggle ${filterPrefs.showConstruction?'active':''}`} onClick={()=>toggleFilter('showConstruction')}>공사</button>
-          <button className={`filter-toggle ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>개인</button>
-          <button className="btn-save-filter" onClick={handleSaveFilters}>{isSavingPrefs?'저장중':'필터저장'}</button>
+        <div className="header-title-area">
+           <h3 className="widget-title">일정 캘린더</h3>
+           <div className="filter-chips">
+              <button className={`filter-chip ${filterPrefs.showMeetings?'active':''}`} onClick={()=>toggleFilter('showMeetings')}>미팅</button>
+              <button className={`filter-chip ${filterPrefs.showConstruction?'active':''}`} onClick={()=>toggleFilter('showConstruction')}>공사</button>
+              <button className={`filter-chip ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>개인</button>
+           </div>
         </div>
-        <button className="btn-add-personal" onClick={() => setIsModalOpen(true)}>+ 일정 추가</button>
+        <div className="header-actions">
+           <button className="btn-text-save" onClick={handleSaveFilters}>{isSavingPrefs?'저장중...':'필터 저장'}</button>
+           <button className="btn-add-schedule" onClick={() => setIsModalOpen(true)}>+ 일정 등록</button>
+        </div>
       </div>
 
-      {/* 2. 캘린더 */}
-      <div className="calendar-container">
+      <div className="calendar-wrapper">
         <Calendar
           onChange={handleDateChange}
           value={selectedDate}
           locale="ko-KR"
           formatDay={(locale, date) => date.getDate().toString()}
           tileContent={tileContent}
+          next2Label={null}
+          prev2Label={null}
         />
       </div>
 
-      {/* 3. 리스트 */}
-      <div className="schedule-list-container">
-        <div className="list-header-row">
-          <button className={`view-filter-btn ${filterType==='today'?'active':''}`} onClick={()=>setFilterType('today')}>오늘</button>
-          <button className={`view-filter-btn ${filterType==='week'?'active':''}`} onClick={()=>setFilterType('week')}>주간</button>
-          <button className={`view-filter-btn ${filterType==='month'?'active':''}`} onClick={()=>setFilterType('month')}>월간</button>
-          <span style={{marginLeft:'auto', fontWeight:'bold', color:'#555'}}>{scheduleListTitle}</span>
+      <div className="schedule-list-wrapper">
+        <div className="list-header">
+          <div className="view-tabs">
+             <button className={`view-tab ${filterType==='today'?'active':''}`} onClick={()=>setFilterType('today')}>오늘</button>
+             <button className={`view-tab ${filterType==='week'?'active':''}`} onClick={()=>setFilterType('week')}>주간</button>
+             <button className={`view-tab ${filterType==='month'?'active':''}`} onClick={()=>setFilterType('month')}>월간</button>
+          </div>
+          <span className="list-date-label">{scheduleListTitle}</span>
         </div>
 
-        {displayedSchedules.length === 0 ? (
-          <div className="no-data">일정이 없습니다.</div>
-        ) : (
-          <ul className="schedule-list">
-            {displayedSchedules.map((item) => {
-              const d = new Date(item.dateKey);
-              const dayOfMonth = d.getDate();
-              const dayOfWeek = d.toLocaleDateString('ko-KR', { weekday: 'short' });
-              const displaySiteName = item.siteName || (item.siteId ? `[${item.siteId.substring(0, 4)}...]` : null);
+        <div className="list-content">
+            {displayedSchedules.length === 0 ? (
+            <div className="no-data-message">등록된 일정이 없습니다.</div>
+            ) : (
+            <ul className="schedule-ul">
+                {displayedSchedules.map((item) => {
+                const d = new Date(item.dateKey);
+                const dateStr = `${d.getMonth() + 1}/${d.getDate()} (${d.toLocaleDateString('ko-KR', { weekday: 'short' })})`;
+                const displaySiteName = item.siteName || (item.siteId ? '현장' : null);
+                
+                // 제목 정리
+                let cleanTitle = item.title;
+                if (displaySiteName && item.title.includes(`[${displaySiteName}]`)) {
+                    cleanTitle = item.title.replace(`[${displaySiteName}]`, '').trim();
+                }
 
-              // 제목에서 [현장명] 부분을 제거
-              const cleanTitle = item.title.startsWith(`[${displaySiteName}]`) 
-                  ? item.title.substring(`[${displaySiteName}]`.length).trim() 
-                  : item.title;
-
-              // 액티비티 내용 (공정/메모)
-              const activityContent = item.type === 'meeting' || item.type === 'construction'
-                  ? cleanTitle.replace(/^(미팅:|공사예정:|공사예정:\s?공정입력|공정입력:)/, '').trim() // 불필요한 라벨 제거
-                  : item.title;
-
-              return (
-                <li key={item.id} className={`schedule-item ${item.siteId?'clickable':''}`} onClick={() => item.siteId && onSiteSelect(item.siteId)} title={item.fullTitle || item.title}>
-                  
-                  {/* 날짜/시간 영역 */}
-                  <div className="time-badge">
-                    {filterType !== 'today' && (
-                      <span className="schedule-item-date">
-                        {d.getMonth() + 1}/{dayOfMonth} ({dayOfWeek})
-                      </span>
-                    )}
-                    <span style={{color: '#555'}}>{item.time}</span>
-                  </div>
-                  
-                  {/* 내용 영역 */}
-                  <div className="content-text">
-                    <span className={`tag ${item.type}`}>
-                      {item.type==='meeting'?'미팅':item.type==='construction'?'공사':'개인'}
-                    </span>
-                    
-                    {displaySiteName && item.type !== 'personal' && (
-                        <strong style={{marginRight:'8px', color:'#333'}}>
-                            [{displaySiteName}]
-                        </strong>
-                    )}
-                    
-                    <span className="schedule-title">
-                        {activityContent}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                return (
+                    <li key={item.id} className="schedule-li" onClick={() => item.siteId && onSiteSelect(item.siteId)}>
+                    <div className="li-time-col">
+                        <span className="li-date">{dateStr}</span>
+                        <span className="li-time">{item.time}</span>
+                    </div>
+                    <div className="li-info-col">
+                        <div className="li-tags">
+                            <span className={`badge-type ${item.type}`}>
+                                {item.type==='meeting'?'미팅':item.type==='construction'?'공사':'개인'}
+                            </span>
+                            {displaySiteName && item.type !== 'personal' && (
+                                <span className="badge-site">{displaySiteName}</span>
+                            )}
+                        </div>
+                        <span className="li-title">{cleanTitle}</span>
+                    </div>
+                    </li>
+                );
+                })}
+            </ul>
+            )}
+        </div>
       </div>
 
       {/* 개인 일정 추가 모달 */}
@@ -465,7 +426,6 @@ const scheduleListTitle = useMemo(() => {
   );
 };
 
-// 개인 일정 추가 모달 (별도 컴포넌트)
 const PersonalScheduleModal: React.FC<{ partnerUid: string, onClose: () => void }> = ({ partnerUid, onClose }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(getISODateString(new Date()));
@@ -481,23 +441,34 @@ const PersonalScheduleModal: React.FC<{ partnerUid: string, onClose: () => void 
       await addDoc(collection(db, 'users', partnerUid, 'personalSchedules'), {
         title, date, time, isPublic, partnerUid, createdAt: serverTimestamp()
       });
-      alert('저장되었습니다.');
+      alert('일정이 등록되었습니다.');
       onClose();
     } catch(e) { console.error(e); alert('오류 발생'); } finally { setSubmitting(false); }
   };
 
   return (
-    <div className="calendar-modal-overlay">
-      <div className="calendar-modal-content">
-        <h3>개인 일정 추가</h3>
+    <div className="cal-modal-overlay">
+      <div className="cal-modal-box">
+        <h3>새로운 일정</h3>
         <form onSubmit={save}>
-          <div className="modal-form-group"><label>날짜</label><input type="date" value={date} onChange={e=>setDate(e.target.value)} required /></div>
-          <div className="modal-form-group"><label>시간</label><input type="time" value={time} onChange={e=>setTime(e.target.value)} required /></div>
-          <div className="modal-form-group"><label>내용</label><input type="text" value={title} onChange={e=>setTitle(e.target.value)} required /></div>
-          <div className="modal-form-checkbox"><label><input type="checkbox" checked={isPublic} onChange={e=>setIsPublic(e.target.checked)} /> 직원 공개</label></div>
-          <div className="modal-form-actions">
-            <button type="button" className="btn-cancel" onClick={onClose}>취소</button>
-            <button type="submit" className="btn-save" disabled={submitting}>저장</button>
+          <div className="cal-form-group">
+              <label>날짜</label>
+              <input type="date" value={date} onChange={e=>setDate(e.target.value)} required />
+          </div>
+          <div className="cal-form-group">
+              <label>시간</label>
+              <input type="time" value={time} onChange={e=>setTime(e.target.value)} required />
+          </div>
+          <div className="cal-form-group">
+              <label>내용</label>
+              <input type="text" value={title} onChange={e=>setTitle(e.target.value)} placeholder="일정 내용을 입력하세요" required />
+          </div>
+          <div className="cal-form-check">
+              <label><input type="checkbox" checked={isPublic} onChange={e=>setIsPublic(e.target.checked)} /> 직원들과 공유하기</label>
+          </div>
+          <div className="cal-form-actions">
+            <button type="button" className="btn-text" onClick={onClose}>취소</button>
+            <button type="submit" className="btn-submit" disabled={submitting}>등록</button>
           </div>
         </form>
       </div>

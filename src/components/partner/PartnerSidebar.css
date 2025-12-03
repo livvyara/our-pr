@@ -1,13 +1,13 @@
 /* src/components/partner/PartnerSidebar.css */
 
 .partner-sidebar {
-  width: 220px;
+  /* [수정] 너비 220px -> 176px (80% 축소) */
+  width: 176px;
   flex-shrink: 0;
   background-color: #f8f9fa;
   border-right: 1px solid rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
   
-  /* [수정 1] 가로 스크롤 강제 숨김 */
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -24,7 +24,7 @@
   justify-content: space-between; 
   align-items: center;
   width: 100%;
-  padding: 15px 20px; 
+  padding: 12px 15px; /* [수정] 패딩 약간 축소 */
   background: none;
   border: none;
   text-align: left;
@@ -33,9 +33,22 @@
   color: #333;
   cursor: pointer;
   transition: background-color 0.1s;
-
-  /* [수정 2] 패딩이 너비에 포함되도록 설정 (필수) */
   box-sizing: border-box;
+}
+
+/* [추가] 아이콘과 텍스트를 묶는 래퍼 */
+.menu-label {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 아이콘과 텍스트 사이 간격 */
+}
+
+/* [추가] 아이콘 스타일 */
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
 }
 
 .partner-menu-parent:hover {
@@ -67,20 +80,23 @@
 .partner-submenu-item {
   display: block;
   width: 100%;
-  padding: 12px 20px 12px 35px;
+  
+  /* [수정] 좌측 공백 제거 (기존 padding-left: 35px -> 15px) */
+  /* 상위 메뉴와 라인을 맞추거나 살짝만 들여쓰기 (여기선 아이콘 너비 고려해 15px + 아이콘공간 정도가 적당하나 요청대로 공백 최소화) */
+  padding: 10px 15px 10px 40px; /* 아이콘 아래쪽으로 정렬되게 조정 */
+  
   background: none;
   border: none;
   text-align: left;
-  font-size: 14px;
+  
+  /* [수정] 폰트 크기 80% 수준으로 축소 (14px -> 11.5px) */
+  font-size: 13px; 
   font-weight: normal;
-  color: #444;
+  color: #333;
   cursor: pointer;
   text-decoration: none;
-
-  /* [수정 3] 패딩이 너비에 포함되도록 설정 (필수) */
   box-sizing: border-box;
   
-  /* (선택) 글자가 길어질 경우 줄바꿈 방지 및 말줄임표 처리 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -101,9 +117,10 @@
   width: 0; 
   height: 0; 
   border-style: solid;
-  border-width: 5px 0 5px 6px;
-  border-color: transparent transparent transparent #666;
+  border-width: 4px 0 4px 5px; /* 크기 약간 축소 */
+  border-color: transparent transparent transparent #888;
   transition: transform 0.3s ease;
+  margin-left: 5px;
 }
 
 .accordion-icon.open {

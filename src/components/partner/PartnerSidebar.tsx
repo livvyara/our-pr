@@ -1,42 +1,45 @@
 // src/components/partner/PartnerSidebar.tsx
 
-import React, { useState, useEffect, useMemo } from 'react'; // [⭐ 1. useMemo 추가]
+import React, { useState, useEffect, useMemo } from 'react'; 
 import { NavLink, useLocation } from 'react-router-dom'; 
 import './PartnerSidebar.css';
-// [⭐ 2. 수정] 분리된 메뉴 데이터 임포트
 import { PARTNER_MENUS_DATA, type PartnerMenu } from './partnerMenuData';
 
-// [⭐ 3. 추가] 부모(PartnerProgramPage)로부터 받을 Props
+// [NEW] 메뉴 아이콘 컴포넌트 (단순 SVG)
+const MenuIcon = ({ menuKey }: { menuKey: string }) => {
+  switch (menuKey) {
+    case 'dashboard': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>;
+    case 'sites': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M5 21V7l8-4 8 4v14H5z"></path></svg>;
+    case 'hr': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+    case 'accounting': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>;
+    case 'employees': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>;
+    case 'profile': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
+    case 'portfolio': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>;
+    default: return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>;
+  }
+};
+
 interface PartnerSidebarProps {
-  userRole: 'partner' | 'sub_partner' | 'admin' | 'subadmin'; // 현재 사용자 역할
-  permissions: string[]; // sub_partner일 경우, 허용된 메뉴 키 목록
+  userRole: 'partner' | 'sub_partner' | 'admin' | 'subadmin'; 
+  permissions: string[]; 
 }
 
 const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }) => {
   
   const location = useLocation(); 
   
-  // [⭐ 4. 수정] 렌더링할 메뉴 목록을 useMemo로 계산
   const menusToRender = useMemo(() => {
-    
-    // admin/subadmin은 모든 메뉴를 봅니다.
     if (userRole === 'admin' || userRole === 'subadmin') {
       return PARTNER_MENUS_DATA;
     }
-    
-    // 'partner' (대표)는 '권한관리'를 포함한 모든 메뉴를 봅니다.
     if (userRole === 'partner') {
       return PARTNER_MENUS_DATA;
     }
-
-    // 'sub_partner' (직원)는 권한에 따라 필터링됩니다.
     if (userRole === 'sub_partner') {
       const allowedMenus: PartnerMenu[] = [];
 
       PARTNER_MENUS_DATA.forEach(parentMenu => {
-        // 부모 메뉴(예: 'sites') 자체가 허용되었는지 확인
         if (permissions.includes(parentMenu.key)) {
-          // '직원관리' 메뉴는 '권한관리'를 제외하고 필터링
           if (parentMenu.key === 'employees') {
             const allowedSubMenus = parentMenu.subMenus.filter(
               sub => sub.key !== 'emp-permission' && permissions.includes(sub.key)
@@ -45,7 +48,6 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
               allowedMenus.push({ ...parentMenu, subMenus: allowedSubMenus });
             }
           } else {
-            // 다른 메뉴들은 하위 메뉴 권한을 확인
             const allowedSubMenus = parentMenu.subMenus.filter(
               sub => permissions.includes(sub.key)
             );
@@ -57,13 +59,10 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
       });
       return allowedMenus;
     }
-    
-    return []; // customer 등 그 외 역할은 아무것도 보지 못함
-    
+    return []; 
   }, [userRole, permissions]);
 
 
-  // [⭐ 5. 수정] 아코디언 상태 로직 (menusToRender 기반으로 변경)
   const [activeParentKey, setActiveParentKey] = useState<string | null>(() => {
     const activeParent = menusToRender.find(menu => 
       menu.subMenus.some(sub => sub.path === location.pathname)
@@ -85,30 +84,32 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
     } else if (location.pathname.startsWith('/program/dashboard')) {
       setActiveParentKey('dashboard');
     }
-  }, [location.pathname, menusToRender]); // [수정] menusToRender 의존성 추가
+  }, [location.pathname, menusToRender]);
 
 
   const handleParentClick = (key: string) => {
-    setActiveParentKey(prevKey => (prevKey === key ? null : key)); // 토글
+    setActiveParentKey(prevKey => (prevKey === key ? null : key)); 
   };
 
   return (
     <nav className="partner-sidebar">
       <ul className="partner-menu-list">
         
-        {/* '대시보드'는 sub_partner도 권한(permissions)이 있어야 보이도록 수정 */}
         {permissions.includes('dashboard') && (
           <li>
             <NavLink
               to="/program/dashboard"
               className="partner-menu-parent"
             >
-              <span>대시보드</span>
+              {/* [수정] 아이콘 추가 */}
+              <div className="menu-label">
+                <span className="menu-icon"><MenuIcon menuKey="dashboard" /></span>
+                <span>대시보드</span>
+              </div>
             </NavLink>
           </li>
         )}
         
-        {/* [⭐ 6. 수정] menusToRender (필터링된 메뉴)를 기준으로 렌더링 */}
         {menusToRender.map((menu) => {
           const isExpanded = activeParentKey === menu.key;
           const isParentActive = activeParentKey === menu.key;
@@ -119,14 +120,17 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
                 className={`partner-menu-parent ${isParentActive ? 'active' : ''}`}
                 onClick={() => handleParentClick(menu.key)}
               >
-                <span>{menu.title}</span>
+                {/* [수정] 아이콘 추가 및 레이아웃 변경 */}
+                <div className="menu-label">
+                  <span className="menu-icon"><MenuIcon menuKey={menu.key} /></span>
+                  <span>{menu.title}</span>
+                </div>
                 <span className={`accordion-icon ${isExpanded ? 'open' : ''}`}></span>
               </button>
               
               <ul className={`partner-submenu-list ${isExpanded ? 'open' : ''}`}>
                 {menu.subMenus.map(subMenu => (
                   <li key={subMenu.key}>
-                    
                     <NavLink
                       to={subMenu.path!}
                       className={({ isActive }) =>
@@ -139,7 +143,6 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
                     >
                       {subMenu.title}
                     </NavLink>
-
                   </li>
                 ))}
               </ul>
