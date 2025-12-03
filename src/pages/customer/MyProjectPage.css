@@ -20,7 +20,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: 'Pretendard', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   color: var(--mp-text-main);
   overflow-x: hidden;
 }

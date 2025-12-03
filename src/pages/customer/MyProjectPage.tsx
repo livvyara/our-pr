@@ -216,7 +216,7 @@ const MyProjectPage: React.FC = () => {
             
             <div className="mp-header-section">
                 <div className="mp-reveal-mask">
-                    <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>MY LOUNGE</h2>
+                    <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>마이 프로젝트</h2>
                 </div>
                 <div className={`mp-divider-long mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}></div>
                 <p className={`mp-subtitle mp-fade-up ${isPageLoaded ? 'mp-active' : ''}`}>진행 중인 프로젝트를 확인하세요</p>
