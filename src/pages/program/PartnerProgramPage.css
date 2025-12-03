@@ -5,7 +5,7 @@
 */
 .program-main-layout {
   display: flex;
-  padding-top : 60px !important;
+  padding-top : 100px !important;
   flex-direction: row; /* 좌->우 배치 */
   flex-grow: 1; /* (스티키 푸터를 위해) 남은 공간 모두 차지 */
   padding: 0; 

@@ -214,7 +214,10 @@ const AdminPage: React.FC = () => {
         onHamburgerPressed={handleHamburgerPressed}
       />
       
-      {!isMobile && <SubNav selectedMenuKey={selectedMenu} />}
+      <SubNav 
+  selectedMenuKey={selectedMenu} 
+  onClose={() => setSelectedMenu('')} 
+/>
 
       <main 
         className="main-content admin-main-layout"

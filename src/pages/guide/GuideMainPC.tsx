@@ -29,6 +29,7 @@ interface GuidePost {
 const GuideMainPC: React.FC = () => {
   const db = getFirestore();
   const [selectedMenuKey, setSelectedMenuKey] = useState<string>('');
+  const [selectedMenu, setSelectedMenu] = useState('menu1'); 
 
   const [mainCategories, setMainCategories] = useState<GuideCategory[]>([]);
   const [subCategories, setSubCategories] = useState<GuideCategory[]>([]);
@@ -115,7 +116,10 @@ const GuideMainPC: React.FC = () => {
     <div className="page-container">
       {!isMobile && <RoleHeader />}
       <Header onMenuSelected={handleMenuSelect} isMobile={isMobile} onHamburgerPressed={() => setIsMobileMenuOpen(true)} />
-      {!isMobile && selectedMenuKey && <SubNav selectedMenuKey={selectedMenuKey} />}
+      <SubNav 
+  selectedMenuKey={selectedMenu} 
+  onClose={() => setSelectedMenu('')} 
+/>
 
       <div className="guide-page-wrapper">
         {/* 상단 탭 */}
