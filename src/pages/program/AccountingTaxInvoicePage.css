@@ -83,7 +83,16 @@
   background: var(--ati-white); border-radius: 12px; 
   box-shadow: 0 2px 10px rgba(0,0,0,0.03); padding: 20px; min-height: 500px;
 }
-.ati-table-container { overflow-x: auto; }
+
+/* [수정] 스크롤바 숨김 처리 */
+.ati-table-container { 
+    overflow-x: auto; 
+    scrollbar-width: none; /* Firefox */
+}
+.ati-table-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 .ati-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
 
 .ati-table th {
@@ -93,6 +102,10 @@
 .ati-table td {
   padding: 15px 10px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: var(--ati-text); vertical-align: top;
 }
+
+/* [수정] 귀속 여부에 따른 행 배경색 */
+.row-unassigned { background-color: #fff5f5 !important; } /* 연한 빨강 */
+.row-assigned { background-color: #f0f9ff !important; }   /* 연한 파랑 */
 
 /* 컬럼 스타일 */
 .td-date { width: 110px; }
@@ -116,15 +129,19 @@
 .text-gray { color: #999; }
 .font-bold { font-weight: 700; }
 
+/* [수정] 연결 버튼 폰트 색상 강화 */
 .btn-link {
   padding: 5px 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 12px;
+  color: #333; /* 폰트 색상 명시 */
+  font-weight: 600;
 }
 .btn-link.linked { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
 
 .ati-select, .ati-input {
   width: 100%; padding: 6px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 13px;
+  background: transparent; /* 배경색 투명으로 해서 행 배경색 보이게 함 */
 }
-.ati-select:focus, .ati-input:focus { border-color: #333; outline: none; }
+.ati-select:focus, .ati-input:focus { border-color: #333; outline: none; background: #fff; }
 
 /* 애니메이션 */
 .ati-fade-up {

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, getDocs, doc, updateDoc, getDoc, deleteDoc,
-  query, orderBy, serverTimestamp, addDoc
+  query, orderBy, where, serverTimestamp, addDoc
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
@@ -53,7 +53,6 @@ const AccountingOrderRequestPage: React.FC = () => {
   const listRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // 관리 권한 (대표 + 권한 받은 직원)
   const canManage = useMemo(() => isOwner || authorizedUids.includes(myUid), [isOwner, authorizedUids, myUid]);
 
   useEffect(() => {
@@ -134,7 +133,6 @@ const AccountingOrderRequestPage: React.FC = () => {
       } catch(e) { alert("오류 발생"); }
   };
 
-  // [수정] 초기화는 오직 대표자(isOwner)만 가능
   const handleReset = async (req: OrderRequest) => {
       if (!isOwner) return alert("대표자만 상태를 초기화할 수 있습니다.");
       
@@ -193,6 +191,7 @@ const AccountingOrderRequestPage: React.FC = () => {
                   status: 'approved'
               });
 
+              // [참고] 여기서도 한번 더 업데이트 해주지만, 이미 연결 시점에 업데이트 되었을 수 있음
               if (req.type === 'tax_invoice' && req.linkedInvoiceId) {
                   const invoiceRef = doc(db, 'users', currentUid, 'TAX_PURCHASE', req.linkedInvoiceId);
                   await updateDoc(invoiceRef, {
@@ -214,16 +213,39 @@ const AccountingOrderRequestPage: React.FC = () => {
       }
   };
 
+  // [⭐ 기능 복구] 세금계산서 연결 시 현장/분류 자동 업데이트 로직 복구
   const handleLinkComplete = async (invoiceId: string) => {
       if (!linkTargetRequest || !currentUid) return;
       try {
+          // 1. 발주 요청서 업데이트 (연결된 계산서 ID 저장)
           await updateDoc(doc(db, 'users', currentUid, 'ORDER_REQUESTS', linkTargetRequest.id), {
               linkedInvoiceId: invoiceId
           });
-          alert("세금계산서가 연결되었습니다.");
+
+          // 2. [복구됨] 세금계산서 업데이트 (현장 및 분류 자동 입력)
+          // 발주 요청에 있는 siteId, category1, category2 정보를 해당 세금계산서 문서에 덮어씁니다.
+          const invoiceRef = doc(db, 'users', currentUid, 'TAX_PURCHASE', invoiceId);
+          await updateDoc(invoiceRef, {
+              siteId: linkTargetRequest.siteId,        // 현장 자동 귀속
+              category1: linkTargetRequest.category1,  // 1차 분류 자동 입력
+              category2: linkTargetRequest.category2,  // 2차 분류 자동 입력
+          });
+
+          // 3. 로그 기록
+          await addDoc(collection(db, 'users', currentUid, 'activityLogs'), {
+            text: `[발주연결] ${myName}님이 발주 건(${linkTargetRequest.itemDetails})에 세금계산서를 연결하고 분류를 자동 적용했습니다.`,
+            createdAt: serverTimestamp(),
+            type: 'order_link'
+          });
+
+          alert("세금계산서가 연결되었으며, 현장 및 분류 정보가 자동으로 적용되었습니다.");
           setLinkTargetRequest(null);
           fetchRequests(currentUid);
-      } catch(e) { alert("연결 실패"); }
+
+      } catch(e) { 
+          console.error("연결 오류:", e); 
+          alert("연결 중 오류가 발생했습니다."); 
+      }
   };
 
   const renderSecretCell = (req: OrderRequest, content: React.ReactNode) => {

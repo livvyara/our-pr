@@ -7,7 +7,6 @@ import {
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom'; 
 import { firebaseConfig } from '../../firebase-config';
-import { K_BRAND_COLOR } from '../../constants';
 import './AccountingTaxInvoicePage.css'; 
 
 import AccountingManualSalesPage from './AccountingManualSalesPage';
@@ -23,13 +22,12 @@ export interface TaxInvoice {
   vendorName: string; vendorRegNo?: string; vendorCeo?: string; vendorAddr?: string;
   buyerName?: string; buyerRegNo?: string; buyerCeo?: string; buyerAddr?: string;
   supplyAmount: number; taxAmount: number; totalAmount: number; remark: string;
-  siteId?: string; category1?: string; category2?: string; remark2?: string;
+  siteId?: string; category1?: string; category2?: string; category2_manual?: string; remark2?: string;
   linkedTransactionId?: string; items?: any[]; approvalNo?: string;
 }
 interface Site { id: string; name: string; status: string; }
 
 const LIMIT_PER_PAGE = 100;
-const SITE_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'];
 
 const AccountingTaxInvoicePage: React.FC = () => {
   const navigate = useNavigate(); 
@@ -377,7 +375,7 @@ const AccountingTaxInvoicePage: React.FC = () => {
                <tr>
                  <th className="th-date">작성일</th>
                  <th className="th-type">구분</th>
-                 {/* [수정] 거래처는 매입/매출에 따라 달라지므로 '상호'로 통칭하거나 조건부 렌더링 */}
+                 {/* [수정] 상호명 헤더 */}
                  <th className="th-vendor">상호(거래처)</th>
                  <th className="th-supply">공급가액</th>
                  <th className="th-tax">세액</th>
@@ -395,16 +393,25 @@ const AccountingTaxInvoicePage: React.FC = () => {
                ) : (
                  list.map((item, index) => {
                    const isSiteAssigned = !!item.siteId; 
+                   const isClassified = isSiteAssigned || (!!item.category1 && !!item.category2);
+                   
                    const targetCategories = isSiteAssigned ? siteCategories : generalCategories;
                    const currentCat1 = targetCategories.find(c => c.name === item.category1);
                    const subCategories = currentCat1 ? currentCat1.subCategories : [];
                    const isPaid = !!item.linkedTransactionId;
                    
-                   // [수정] 리스트 표시 이름 결정 (매출: 공급받는자, 매입: 공급자)
+                   // [수정] 리스트 상호명 결정 로직 (매출->공급받는자, 매입->공급자)
                    const displayCompanyName = item.inOut === '매출' ? (item.buyerName || '이름없음') : (item.vendorName || '이름없음');
 
+                   // [수정] 배경색 클래스 결정 (귀속/미귀속)
+                   const rowClass = isClassified ? 'row-assigned' : 'row-unassigned';
+
                    return (
-                     <tr key={item.id} className={`ati-fade-up ${item.inOut === '매출' ? 'row-sales' : 'row-purchase'}`} style={{transitionDelay: `${index * 0.02}s`}}>
+                     <tr 
+                        key={item.id} 
+                        className={`ati-fade-up ${rowClass}`} 
+                        style={{transitionDelay: `${index * 0.01}s`}}
+                     >
                         <td data-label="작성일" className="td-date">
                             <div className="date-wrap">
                                 <span className={`status-dot ${isPaid ? 'paid' : 'unpaid'}`}></span>
@@ -416,7 +423,6 @@ const AccountingTaxInvoicePage: React.FC = () => {
                            <span className="sub-type">{item.type}</span>
                         </td>
                         
-                        {/* [수정] 계산된 상호명 표시 */}
                         <td data-label="상호" className="td-vendor" onClick={() => setSelectedInvoice(item)} title={displayCompanyName}>
                            {displayCompanyName}
                         </td>
@@ -465,7 +471,9 @@ const AccountingTaxInvoicePage: React.FC = () => {
         )}
       </div>
 
+      {/* 세금계산서 상세 모달 (복구됨) */}
       {selectedInvoice && <TaxInvoiceModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onUpdate={(field, value) => handleFieldChange(selectedInvoice.id, selectedInvoice.inOut, field, value)} />}
+      
       {isSiteModalOpen && <SiteSelectionModal sites={siteList} onClose={() => setIsSiteModalOpen(false)} onSelect={(siteId, siteName) => { setSearchSiteId(siteId); setSearchSiteName(siteName); setIsSiteModalOpen(false); }} />}
       {paymentModalTarget && <PaymentConnectionModal invoice={paymentModalTarget} currentUserUid={currentUid || ''} onClose={() => setPaymentModalTarget(null)} onConfirm={(txId) => handleLinkTransaction(paymentModalTarget.id, paymentModalTarget.inOut, txId)} />}
       
@@ -491,9 +499,8 @@ const AccountingTaxInvoicePage: React.FC = () => {
   );
 };
 
-// [수정] TaxInvoiceModal을 실제 종이 세금계산서 스타일로 복구
+// [수정] 종이 세금계산서 스타일 모달
 const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUpdate: (field: string, value: string) => void; }> = ({ invoice, onClose, onUpdate }) => {
-    // 색상 테마 결정 (매출: 레드, 매입: 블루)
     const colorTheme = invoice.inOut === '매출' ? 'red-theme' : 'blue-theme';
     const [memo, setMemo] = useState(invoice.remark2 || "");
 
@@ -510,7 +517,6 @@ const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUp
                 </div>
 
                 <div className="invoice-body-content">
-                    {/* 공급자 / 공급받는자 테이블 (가로 배치) */}
                     <div className="invoice-parties">
                         {/* 공급자 */}
                         <table className="party-table">
@@ -521,20 +527,14 @@ const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUp
                                     <td colSpan={3} className="value highlight">{invoice.vendorRegNo}</td>
                                 </tr>
                                 <tr>
-                                    <td className="label">상 호<br/>(법인명)</td>
+                                    <td className="label">상 호</td>
                                     <td className="value">{invoice.vendorName}</td>
-                                    <td className="label">성 명<br/>(대표자)</td>
+                                    <td className="label">성 명</td>
                                     <td className="value">{invoice.vendorCeo}</td>
                                 </tr>
                                 <tr>
                                     <td className="label">주 소</td>
                                     <td colSpan={3} className="value">{invoice.vendorAddr}</td>
-                                </tr>
-                                <tr>
-                                    <td className="label">업 태</td>
-                                    <td className="value"></td>
-                                    <td className="label">종 목</td>
-                                    <td className="value"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -548,33 +548,23 @@ const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUp
                                     <td colSpan={3} className="value highlight">{invoice.buyerRegNo}</td>
                                 </tr>
                                 <tr>
-                                    <td className="label">상 호<br/>(법인명)</td>
+                                    <td className="label">상 호</td>
                                     <td className="value">{invoice.buyerName}</td>
-                                    <td className="label">성 명<br/>(대표자)</td>
+                                    <td className="label">성 명</td>
                                     <td className="value">{invoice.buyerCeo}</td>
                                 </tr>
                                 <tr>
                                     <td className="label">주 소</td>
                                     <td colSpan={3} className="value">{invoice.buyerAddr}</td>
                                 </tr>
-                                <tr>
-                                    <td className="label">업 태</td>
-                                    <td className="value"></td>
-                                    <td className="label">종 목</td>
-                                    <td className="value"></td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    {/* 작성일자 및 금액 합계 */}
                     <table className="summary-table">
                         <thead>
                             <tr>
-                                <th>작성일자</th>
-                                <th>공급가액</th>
-                                <th>세 액</th>
-                                <th>비 고</th>
+                                <th>작성일자</th><th>공급가액</th><th>세 액</th><th>비 고</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -587,19 +577,11 @@ const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUp
                         </tbody>
                     </table>
 
-                    {/* 품목 상세 리스트 */}
                     <div className="items-wrapper">
                         <table className="items-table">
                             <thead>
                                 <tr>
-                                    <th>월/일</th>
-                                    <th>품 목</th>
-                                    <th>규 격</th>
-                                    <th>수 량</th>
-                                    <th>단 가</th>
-                                    <th>공급가액</th>
-                                    <th>세 액</th>
-                                    <th>비 고</th>
+                                    <th>월/일</th><th>품 목</th><th>규 격</th><th>수 량</th><th>단 가</th><th>공급가액</th><th>세 액</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -613,20 +595,17 @@ const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUp
                                             <td className="right">{item.unitPrice > 0 ? Number(item.unitPrice).toLocaleString() : ''}</td>
                                             <td className="right">{Number(item.supplyAmount).toLocaleString()}</td>
                                             <td className="right">{Number(item.taxAmount).toLocaleString()}</td>
-                                            <td>{item.remark}</td>
                                         </tr>
                                     ))
                                 ) : (
-                                    // 품목이 없는 경우 빈 줄 처리 (디자인 유지)
                                     Array.from({length: 4}).map((_, i) => (
-                                        <tr key={i}><td className="center"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                                        <tr key={i}><td className="center"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
                                     ))
                                 )}
                             </tbody>
                         </table>
                     </div>
 
-                    {/* 하단 합계 및 메모 */}
                     <div className="invoice-bottom">
                         <div className="total-box">
                             <span>합계금액 (현금/수표/어음/외상미수금)</span>
@@ -653,7 +632,8 @@ const TaxInvoiceModal: React.FC<{ invoice: TaxInvoice; onClose: () => void; onUp
     );
 };
 
-// (이하 다른 모달들은 기존 코드 그대로 유지)
+// ... (PaymentConnectionModal, SiteSelectionModal 등은 기존과 동일하여 생략하거나 그대로 두셔도 됩니다) ...
+// (전체 코드가 필요하면 이전 응답의 하단부 컴포넌트를 그대로 붙여넣으시면 됩니다.)
 const PaymentConnectionModal: React.FC<{ invoice: TaxInvoice, currentUserUid: string, onClose: () => void, onConfirm: (transactionId: string) => void }> = ({ invoice, currentUserUid, onClose, onConfirm }) => {
     const [transactions, setTransactions] = useState<BankTransaction[]>([]);
     const [searchDateStart, setSearchDateStart] = useState(invoice.writeDate);
@@ -683,7 +663,7 @@ const PaymentConnectionModal: React.FC<{ invoice: TaxInvoice, currentUserUid: st
     return (
         <div className="invoice-modal-backdrop" onClick={onClose} style={{zIndex: 3000}}>
             <div className="invoice-paper" onClick={e => e.stopPropagation()} style={{width: '700px', height:'600px', display:'flex', flexDirection:'column', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.3)'}}>
-                <div style={{borderBottom:'1px solid #eee', paddingBottom:'15px', marginBottom:'15px'}}><h3 style={{margin:0}}>결제 내역 연결</h3><p style={{margin:'5px 0 0 0', fontSize:'13px', color:'#666'}}>세금계산서: <strong>{invoice.writeDate} / {invoice.vendorName} / {invoice.totalAmount.toLocaleString()}원</strong></p></div>
+                <div style={{borderBottom:'1px solid #eee', paddingBottom:'15px', marginBottom:'15px'}}><h3 style={{margin:0}}>결제 내역 연결</h3></div>
                 <div className="ati-filter-bar" style={{marginBottom:'15px'}}>
                     <input type="date" value={searchDateStart} onChange={e=>setSearchDateStart(e.target.value)} /> ~ <input type="date" value={searchDateEnd} onChange={e=>setSearchDateEnd(e.target.value)} />
                     <button onClick={fetchTransactions} className="btn-search" style={{padding:'5px 10px', height:'34px'}}>조회</button>
