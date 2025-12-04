@@ -135,7 +135,6 @@ const AccountingOrderRequestPage: React.FC = () => {
 
   const handleReset = async (req: OrderRequest) => {
       if (!isOwner) return alert("대표자만 상태를 초기화할 수 있습니다.");
-      
       if (!confirm("상태를 '승인대기'로 초기화하시겠습니까?\n(연결된 세금계산서 정보는 유지됩니다)")) return;
 
       try {
@@ -191,7 +190,6 @@ const AccountingOrderRequestPage: React.FC = () => {
                   status: 'approved'
               });
 
-              // [참고] 여기서도 한번 더 업데이트 해주지만, 이미 연결 시점에 업데이트 되었을 수 있음
               if (req.type === 'tax_invoice' && req.linkedInvoiceId) {
                   const invoiceRef = doc(db, 'users', currentUid, 'TAX_PURCHASE', req.linkedInvoiceId);
                   await updateDoc(invoiceRef, {
@@ -213,25 +211,20 @@ const AccountingOrderRequestPage: React.FC = () => {
       }
   };
 
-  // [⭐ 기능 복구] 세금계산서 연결 시 현장/분류 자동 업데이트 로직 복구
   const handleLinkComplete = async (invoiceId: string) => {
       if (!linkTargetRequest || !currentUid) return;
       try {
-          // 1. 발주 요청서 업데이트 (연결된 계산서 ID 저장)
           await updateDoc(doc(db, 'users', currentUid, 'ORDER_REQUESTS', linkTargetRequest.id), {
               linkedInvoiceId: invoiceId
           });
 
-          // 2. [복구됨] 세금계산서 업데이트 (현장 및 분류 자동 입력)
-          // 발주 요청에 있는 siteId, category1, category2 정보를 해당 세금계산서 문서에 덮어씁니다.
           const invoiceRef = doc(db, 'users', currentUid, 'TAX_PURCHASE', invoiceId);
           await updateDoc(invoiceRef, {
-              siteId: linkTargetRequest.siteId,        // 현장 자동 귀속
-              category1: linkTargetRequest.category1,  // 1차 분류 자동 입력
-              category2: linkTargetRequest.category2,  // 2차 분류 자동 입력
+              siteId: linkTargetRequest.siteId,        
+              category1: linkTargetRequest.category1,  
+              category2: linkTargetRequest.category2,  
           });
 
-          // 3. 로그 기록
           await addDoc(collection(db, 'users', currentUid, 'activityLogs'), {
             text: `[발주연결] ${myName}님이 발주 건(${linkTargetRequest.itemDetails})에 세금계산서를 연결하고 분류를 자동 적용했습니다.`,
             createdAt: serverTimestamp(),
@@ -241,19 +234,25 @@ const AccountingOrderRequestPage: React.FC = () => {
           alert("세금계산서가 연결되었으며, 현장 및 분류 정보가 자동으로 적용되었습니다.");
           setLinkTargetRequest(null);
           fetchRequests(currentUid);
-
-      } catch(e) { 
-          console.error("연결 오류:", e); 
-          alert("연결 중 오류가 발생했습니다."); 
-      }
+      } catch(e) { alert("연결 실패"); }
   };
 
+  // [핵심 수정] 정보 공개 로직 (LinkedInvoiceId가 있어야만 보임)
   const renderSecretCell = (req: OrderRequest, content: React.ReactNode) => {
+      // 관리자(대표)는 항상 보임
       if (canManage) return content;
-      if (req.status === 'pending_payment' || req.status === 'approved') {
+
+      // 인터넷 구매(online)는 항상 보임 (세금계산서 연결 개념이 없으므로)
+      if (req.type === 'online') return content;
+
+      // 세금계산서(tax_invoice)일 때
+      // '결제대기(pending_payment)' 이상 상태이고, '연결된 세금계산서'가 있어야 보임
+      if ((req.status === 'pending_payment' || req.status === 'approved') && req.linkedInvoiceId) {
           return content;
       }
-      return <span className="or-secret-mask">🔒 승인 대기 (비공개)</span>;
+
+      // 그 외 (미연결 상태)
+      return <span className="or-secret-mask">🔒 세금계산서 연결 필요</span>;
   };
 
   const getStatusText = (status: string) => {
@@ -324,25 +323,25 @@ const AccountingOrderRequestPage: React.FC = () => {
                                          <div className="or-detail-box">
                                              <div className="or-category">{req.category1} &gt; {req.category2}</div>
                                              <div className="or-detail-content">
-                                                 {renderSecretCell(req, (
-                                                     req.type === 'tax_invoice' ? (
-                                                         <>
-                                                             <div className="or-vendor">{req.vendorName}</div>
-                                                             <div className="or-item-name">{req.itemDetails}</div>
-                                                         </>
-                                                     ) : (
-                                                         <>
-                                                             <div className="or-item-name">{req.memo}</div>
-                                                             {req.link && <a href={req.link} target="_blank" rel="noreferrer" className="or-link">🔗 상품 링크</a>}
-                                                         </>
-                                                     )
-                                                 ))}
+                                                 {/* 내역 상세는 항상 보임 (단, 금액은 아님) */}
+                                                 {req.type === 'tax_invoice' ? (
+                                                     <>
+                                                         <div className="or-vendor">{req.vendorName}</div>
+                                                         <div className="or-item-name">{req.itemDetails}</div>
+                                                     </>
+                                                 ) : (
+                                                     <>
+                                                         <div className="or-item-name">{req.memo}</div>
+                                                         {req.link && <a href={req.link} target="_blank" rel="noreferrer" className="or-link">🔗 상품 링크</a>}
+                                                     </>
+                                                 )}
                                              </div>
                                              {req.rejectReason && <div className="or-reject-reason">🚫 사유: {req.rejectReason}</div>}
                                          </div>
                                      </td>
 
                                      <td data-label="금액/수량" className="td-amount">
+                                         {/* [수정] renderSecretCell 적용: 연결 안되면 숨김 */}
                                          {renderSecretCell(req, (
                                              req.type === 'tax_invoice' ? (
                                                  <>
@@ -357,7 +356,6 @@ const AccountingOrderRequestPage: React.FC = () => {
 
                                      <td data-label="관리" className="td-action">
                                          <div className="or-action-btns">
-                                            {/* 1. 승인 대기 상태 (대표/권한자 승인/부결) */}
                                             {req.status === 'pending' && canManage && (
                                                 <>
                                                     <button className="btn-mini reject" onClick={() => handleReject(req)}>부결</button>
@@ -365,7 +363,6 @@ const AccountingOrderRequestPage: React.FC = () => {
                                                 </>
                                             )}
 
-                                            {/* 2. 결제 대기 상태 (직원/대표 모두 처리 가능) */}
                                             {req.status === 'pending_payment' && (
                                                 <>
                                                     {req.type === 'tax_invoice' && (
@@ -380,12 +377,10 @@ const AccountingOrderRequestPage: React.FC = () => {
                                                 </>
                                             )}
 
-                                            {/* 3. 완료 또는 부결 상태 (초기화 가능 - 오직 대표자 isOwner만) */}
                                             {(req.status === 'approved' || req.status === 'rejected') && isOwner && (
                                                 <button className="btn-mini reset" onClick={() => handleReset(req)}>↺ 초기화</button>
                                             )}
 
-                                            {/* 삭제 버튼 (권한자에게 항상 표시) */}
                                             {canManage && (
                                                 <button className="btn-icon-del" onClick={() => handleDelete(req)} title="삭제">🗑️</button>
                                             )}
