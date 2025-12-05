@@ -220,8 +220,6 @@ const HomePage: React.FC = () => {
 
       </main>
 
-      <Footer />
-      {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
     </div>
   );
 };

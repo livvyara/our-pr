@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, query, where, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore'; // getDoc 추가
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
 import './SiteSettlementPage.css';
@@ -9,66 +9,55 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-interface SiteData {
-  id: string;
-  siteName: string;
-  status: string;
-}
-
-// 통합 데이터 인터페이스
-interface SettlementItem {
-  id: string;
-  date: string;          
-  type: '매출' | '매입' | '지출' | '현금영수증'; 
-  detailType: string;    
-  category: string;      // 1차 분류
-  subCategory: string;   // 2차 분류
-  vendorName: string;    
-  amount: number;        
-  memo: string;
-  collectionName: string; 
-}
-
-// 공종 데이터 구조
-interface CategoryOption {
-  name: string;
-  subCategories: string[];
-}
-
+// ... (인터페이스들은 기존 유지)
+interface SiteData { id: string; siteName: string; status: string; }
+interface SettlementItem { id: string; date: string; type: '매출' | '매입' | '지출' | '현금영수증'; detailType: string; category: string; subCategory: string; vendorName: string; amount: number; memo: string; collectionName: string; }
+interface CategoryOption { name: string; subCategories: string[]; }
 const SITE_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소'];
 
 const SiteSettlementPage: React.FC = () => {
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const [sites, setSites] = useState<SiteData[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // 공종 데이터 (1차 + 2차 포함)
+  // ... (나머지 state 유지)
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
-
-  // 필터 및 선택 상태
   const [statusFilter, setStatusFilter] = useState<string>('공사중'); 
   const [selectedSiteId, setSelectedSiteId] = useState<string>('');
-  
-  // 1차, 2차 필터 상태
   const [categoryFilter, setCategoryFilter] = useState<string>('전체'); 
   const [subCategoryFilter, setSubCategoryFilter] = useState<string>('전체');
-  
-  // 통합 데이터 상태
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
 
+  // [수정 1] 인증 및 권한 확인 로직 개선
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setCurrentUid(user.uid);
-        fetchSites(user.uid);
-        fetchCategories(user.uid); 
+        try {
+            // 사용자 정보 가져오기 (직원일 경우 대표 UID 확인)
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                let targetUid = user.uid;
+
+                // 서브 파트너(직원)라면 대표(owner) UID 사용
+                if (data.role === 'sub_partner' && data.partnerInfo?.ownerUid) {
+                    targetUid = data.partnerInfo.ownerUid;
+                }
+
+                setCurrentUid(targetUid);
+                // [중요] UID가 확정된 직후 데이터 로딩 호출
+                fetchSites(targetUid);
+                fetchCategories(targetUid);
+            }
+        } catch (e) {
+            console.error("사용자 정보 로드 실패", e);
+        }
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, []); // 빈 배열로 최초 1회만 실행
 
-  // 1. 현장 목록 불러오기
+  // 현장 목록 불러오기
   const fetchSites = async (uid: string) => {
     try {
       const q = query(collection(db, 'users', uid, 'sites'), orderBy('siteName'));
@@ -82,7 +71,9 @@ const SiteSettlementPage: React.FC = () => {
     }
   };
 
-  // 2. 지출 품목(공종) 설정 불러오기
+  // ... (나머지 fetchCategories, useEffect, fetchAllData, handleDelete, useMemo 등은 기존 코드와 동일)
+  // ... (Render 부분도 동일)
+
   const fetchCategories = async (uid: string) => {
       try {
           const q = query(collection(db, 'users', uid, 'EXPENSE_CATEGORIES_SITE'), orderBy('order', 'asc'));
@@ -100,7 +91,6 @@ const SiteSettlementPage: React.FC = () => {
     return sites.filter(s => s.status === statusFilter);
   }, [sites, statusFilter]);
 
-  // 3. 통합 데이터 불러오기
   useEffect(() => {
     if (!currentUid || !selectedSiteId) {
         setItems([]);
@@ -110,6 +100,7 @@ const SiteSettlementPage: React.FC = () => {
   }, [selectedSiteId, currentUid]);
 
   const fetchAllData = async (uid: string, siteId: string) => {
+      // ... (기존 fetchAllData 로직 그대로 사용)
       setDataLoading(true);
       setCategoryFilter('전체'); 
       setSubCategoryFilter('전체');
@@ -178,59 +169,47 @@ const SiteSettlementPage: React.FC = () => {
       } catch (e) { alert("삭제 실패"); }
   };
 
-  // [수정] 2차 분류 옵션 동적 생성
-  // 1차 분류가 '전체', '미지정', '매출' 등일 때는 "모든 2차 분류"를 보여줌
   const currentSubOptions = useMemo(() => {
       const target = categoryOptions.find(c => c.name === categoryFilter);
       if (target) {
           return target.subCategories;
       } else {
-          // 선택된 1차 분류가 설정에 없거나 '전체'인 경우 -> 전체 2차 분류 수집 (중복 제거)
           const allSubs = new Set<string>();
           categoryOptions.forEach(cat => {
               cat.subCategories.forEach(sub => allSubs.add(sub));
           });
-          // 배열로 변환 후 정렬
           return Array.from(allSubs).sort();
       }
   }, [categoryOptions, categoryFilter]);
 
-  // [수정] 필터링 로직 (독립적 적용)
   const filteredItems = useMemo(() => {
       let result = items;
-
-      // 1차 분류 필터
       if (categoryFilter !== '전체') {
           result = result.filter(item => item.category === categoryFilter);
       }
-
-      // 2차 분류 필터 (1차 분류와 상관없이 독립적으로 체크)
       if (subCategoryFilter !== '전체') {
           result = result.filter(item => item.subCategory === subCategoryFilter);
       }
-
       return result;
   }, [items, categoryFilter, subCategoryFilter]);
 
-  // 합계 계산
   const summary = useMemo(() => {
       let totalRevenue = 0;
       let totalExpense = 0;
-
       filteredItems.forEach(item => {
           if (item.type === '매출') totalRevenue += item.amount;
           else totalExpense += item.amount;
       });
-
       return { revenue: totalRevenue, expense: totalExpense, profit: totalRevenue - totalExpense };
   }, [filteredItems]);
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       setCategoryFilter(e.target.value);
-      setSubCategoryFilter('전체'); // 1차 변경 시 2차는 초기화
+      setSubCategoryFilter('전체');
   };
 
   return (
+    // ... (기존 return JSX 코드 그대로 사용)
     <div className="settlement-page-container">
         <div className="page-header">
             <h2>현장 결산</h2>
@@ -278,7 +257,6 @@ const SiteSettlementPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* [수정] 공종 필터 바 (1차, 2차 분류) */}
                     <div className="category-filter-bar">
                         <span className="filter-group">
                             <span className="label">📂 공종(1차): </span>
@@ -298,7 +276,6 @@ const SiteSettlementPage: React.FC = () => {
                                 value={subCategoryFilter} 
                                 onChange={(e) => setSubCategoryFilter(e.target.value)} 
                                 className="category-select"
-                                // [수정] 비활성화 조건 완화 (옵션이 있으면 활성화)
                                 disabled={currentSubOptions.length === 0}
                             >
                                 <option value="전체">전체 보기</option>

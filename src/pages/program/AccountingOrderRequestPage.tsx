@@ -135,7 +135,7 @@ const AccountingOrderRequestPage: React.FC = () => {
 
   const handleReset = async (req: OrderRequest) => {
       if (!isOwner) return alert("대표자만 상태를 초기화할 수 있습니다.");
-      if (!confirm("상태를 '승인대기'로 초기화하시겠습니까?\n(연결된 세금계산서 정보는 유지됩니다)")) return;
+      if (!confirm("상태를 '승인대기'로 초기화하시겠습니까?\n(이미 등록된 지출 내역 등은 별도로 삭제해야 합니다)")) return;
 
       try {
           await updateDoc(doc(db, 'users', currentUid!, 'ORDER_REQUESTS', req.id), {
@@ -166,48 +166,92 @@ const AccountingOrderRequestPage: React.FC = () => {
   const handleApprove = async (req: OrderRequest) => {
       if (!currentUid) return;
 
+      // 1단계: 대표 승인
       if (req.status === 'pending') {
           if (!canManage) return alert("관리 권한이 없습니다.");
-          if (!confirm("1차 승인 하시겠습니까?\n(직원에게 결제 정보가 공개됩니다)")) return;
+          if (!confirm("1차 승인 하시겠습니까?\n(직원에게 구매 진행이 요청됩니다)")) return;
 
           try {
               await updateDoc(doc(db, 'users', currentUid, 'ORDER_REQUESTS', req.id), {
                   status: 'pending_payment'
               });
-              alert("1차 승인 완료. 결제 대기 상태로 변경되었습니다.");
+              alert("1차 승인 완료. 구매/결제 대기 상태로 변경되었습니다.");
               fetchRequests(currentUid);
           } catch(e) { console.error(e); alert("오류 발생"); }
       } 
       
+      // 2단계: 최종 완료 (구매 완료)
       else if (req.status === 'pending_payment') {
-          if (req.type === 'tax_invoice' && !req.linkedInvoiceId) {
-              return alert("세금계산서를 먼저 연결해주세요.");
-          }
-          if (!confirm("최종 완료 처리 하시겠습니까?")) return;
+          
+          // [CASE 1] 세금계산서 건
+          if (req.type === 'tax_invoice') {
+              if (!req.linkedInvoiceId) return alert("세금계산서를 먼저 연결해주세요.");
+              if (!confirm("최종 완료 처리 하시겠습니까?")) return;
 
-          try {
-              await updateDoc(doc(db, 'users', currentUid, 'ORDER_REQUESTS', req.id), {
-                  status: 'approved'
-              });
+              try {
+                  await updateDoc(doc(db, 'users', currentUid, 'ORDER_REQUESTS', req.id), { status: 'approved' });
 
-              if (req.type === 'tax_invoice' && req.linkedInvoiceId) {
                   const invoiceRef = doc(db, 'users', currentUid, 'TAX_PURCHASE', req.linkedInvoiceId);
                   await updateDoc(invoiceRef, {
                       siteId: req.siteId,
                       category1: req.category1,
                       category2: req.category2,
                   });
-              }
-              
-              await addDoc(collection(db, 'users', currentUid, 'activityLogs'), {
-                  text: `[발주완료] ${myName}님이 ${req.siteName} 발주 건을 최종 완료 처리했습니다.`,
-                  createdAt: serverTimestamp(),
-                  type: 'order_approve'
-              });
+                  
+                  await addDoc(collection(db, 'users', currentUid, 'activityLogs'), {
+                      text: `[발주완료] ${myName}님이 ${req.siteName} 세금계산서 발주 건을 완료 처리했습니다.`,
+                      createdAt: serverTimestamp(),
+                      type: 'order_approve'
+                  });
 
-              alert("최종 완료되었습니다.");
-              fetchRequests(currentUid);
-          } catch(e) { console.error(e); alert("오류 발생"); }
+                  alert("최종 완료되었습니다.");
+                  fetchRequests(currentUid);
+              } catch(e) { console.error(e); alert("오류 발생"); }
+          }
+          
+          // [CASE 2] 인터넷 구매 건 (수기 지출 등록)
+          else if (req.type === 'online') {
+              const inputAmount = prompt("최종 구매 금액을 입력해주세요. (숫자만 입력)", req.amount?.toString() || "0");
+              if (inputAmount === null) return; // 취소
+
+              const finalAmount = parseInt(inputAmount.replace(/,/g, ''), 10);
+              if (isNaN(finalAmount) || finalAmount <= 0) return alert("유효한 금액을 입력해주세요.");
+
+              if (!confirm(`구매 금액: ${finalAmount.toLocaleString()}원\n해당 금액으로 현장 지출 내역에 등록하고 완료하시겠습니까?`)) return;
+
+              try {
+                  // 1. 지출 내역(expenses) 등록
+                  await addDoc(collection(db, 'users', currentUid, 'expenses'), {
+                      siteId: req.siteId,
+                      siteName: req.siteName,
+                      useDate: new Date().toISOString().split('T')[0], // 오늘 날짜
+                      category: req.category1,
+                      subCategory: req.category2, // expenses 컬렉션 구조에 따라 필드명 확인 필요 (보통 memo나 detail로 저장)
+                      vendorName: req.vendorName || '인터넷구매',
+                      amount: finalAmount,
+                      memo: `[발주요청] ${req.memo} (구매자: ${myName})`,
+                      cardName: '법인카드', // 기본값 (필요 시 선택 모달 추가 가능)
+                      createdAt: serverTimestamp(),
+                      type: '지출'
+                  });
+
+                  // 2. 발주 상태 완료 처리 및 실제 구매금액 업데이트
+                  await updateDoc(doc(db, 'users', currentUid, 'ORDER_REQUESTS', req.id), { 
+                      status: 'approved',
+                      amount: finalAmount // 실제 구매 금액으로 업데이트
+                  });
+
+                  // 3. 로그 기록
+                  await addDoc(collection(db, 'users', currentUid, 'activityLogs'), {
+                      text: `[발주완료] ${myName}님이 ${req.siteName} 인터넷 구매 건(${finalAmount.toLocaleString()}원)을 완료하고 지출을 등록했습니다.`,
+                      createdAt: serverTimestamp(),
+                      type: 'order_approve'
+                  });
+
+                  alert("지출 등록 및 완료 처리가 되었습니다.");
+                  fetchRequests(currentUid);
+              } catch(e) { console.error(e); alert("오류 발생"); }
+          }
       }
   };
 
@@ -226,39 +270,29 @@ const AccountingOrderRequestPage: React.FC = () => {
           });
 
           await addDoc(collection(db, 'users', currentUid, 'activityLogs'), {
-            text: `[발주연결] ${myName}님이 발주 건(${linkTargetRequest.itemDetails})에 세금계산서를 연결하고 분류를 자동 적용했습니다.`,
+            text: `[발주연결] ${myName}님이 발주 건에 세금계산서를 연결했습니다.`,
             createdAt: serverTimestamp(),
             type: 'order_link'
           });
 
-          alert("세금계산서가 연결되었으며, 현장 및 분류 정보가 자동으로 적용되었습니다.");
+          alert("세금계산서가 연결되었습니다.");
           setLinkTargetRequest(null);
           fetchRequests(currentUid);
       } catch(e) { alert("연결 실패"); }
   };
 
-  // [핵심 수정] 정보 공개 로직 (LinkedInvoiceId가 있어야만 보임)
   const renderSecretCell = (req: OrderRequest, content: React.ReactNode) => {
-      // 관리자(대표)는 항상 보임
       if (canManage) return content;
-
-      // 인터넷 구매(online)는 항상 보임 (세금계산서 연결 개념이 없으므로)
-      if (req.type === 'online') return content;
-
-      // 세금계산서(tax_invoice)일 때
-      // '결제대기(pending_payment)' 이상 상태이고, '연결된 세금계산서'가 있어야 보임
-      if ((req.status === 'pending_payment' || req.status === 'approved') && req.linkedInvoiceId) {
+      if (req.status === 'pending_payment' || req.status === 'approved') {
           return content;
       }
-
-      // 그 외 (미연결 상태)
-      return <span className="or-secret-mask">🔒 세금계산서 연결 필요</span>;
+      return <span className="or-secret-mask">🔒 승인 대기 (비공개)</span>;
   };
 
   const getStatusText = (status: string) => {
       switch(status) {
           case 'pending': return '승인대기';
-          case 'pending_payment': return '결제대기';
+          case 'pending_payment': return '결제/구매대기'; // 텍스트 변경
           case 'approved': return '완료됨';
           case 'rejected': return '부결';
           default: return status;
@@ -270,7 +304,7 @@ const AccountingOrderRequestPage: React.FC = () => {
         <div className="or-header">
             <div className="or-header-left">
                <h2 className="or-title">현장별 발주 요청 관리</h2>
-               <p className="or-desc">승인 프로세스: 승인대기(비공개) → 1차승인(결제대기) → 최종완료</p>
+               <p className="or-desc">승인 프로세스: 승인대기 → 1차승인(구매진행) → 최종완료(지출등록)</p>
             </div>
             <div className="or-header-right">
                 {isOwner && <button className="btn-perm" onClick={() => setIsPermissionModalOpen(true)}>🔐 권한 설정</button>}
@@ -323,25 +357,25 @@ const AccountingOrderRequestPage: React.FC = () => {
                                          <div className="or-detail-box">
                                              <div className="or-category">{req.category1} &gt; {req.category2}</div>
                                              <div className="or-detail-content">
-                                                 {/* 내역 상세는 항상 보임 (단, 금액은 아님) */}
-                                                 {req.type === 'tax_invoice' ? (
-                                                     <>
-                                                         <div className="or-vendor">{req.vendorName}</div>
-                                                         <div className="or-item-name">{req.itemDetails}</div>
-                                                     </>
-                                                 ) : (
-                                                     <>
-                                                         <div className="or-item-name">{req.memo}</div>
-                                                         {req.link && <a href={req.link} target="_blank" rel="noreferrer" className="or-link">🔗 상품 링크</a>}
-                                                     </>
-                                                 )}
+                                                 {renderSecretCell(req, (
+                                                     req.type === 'tax_invoice' ? (
+                                                         <>
+                                                             <div className="or-vendor">{req.vendorName}</div>
+                                                             <div className="or-item-name">{req.itemDetails}</div>
+                                                         </>
+                                                     ) : (
+                                                         <>
+                                                             <div className="or-item-name">{req.memo}</div>
+                                                             {req.link && <a href={req.link} target="_blank" rel="noreferrer" className="or-link">🔗 상품 링크</a>}
+                                                         </>
+                                                     )
+                                                 ))}
                                              </div>
                                              {req.rejectReason && <div className="or-reject-reason">🚫 사유: {req.rejectReason}</div>}
                                          </div>
                                      </td>
 
                                      <td data-label="금액/수량" className="td-amount">
-                                         {/* [수정] renderSecretCell 적용: 연결 안되면 숨김 */}
                                          {renderSecretCell(req, (
                                              req.type === 'tax_invoice' ? (
                                                  <>
@@ -349,6 +383,7 @@ const AccountingOrderRequestPage: React.FC = () => {
                                                      <div className="or-bank-info">{req.bankName} {req.accountNumber}</div>
                                                  </>
                                              ) : (
+                                                 // 인터넷 구매는 수량 대신 '예상 금액'이나 '수량'을 보여줄 수 있음. 여기선 수량 유지
                                                  <strong className="or-amount-val">{req.quantity} 개</strong>
                                              )
                                          ))}
