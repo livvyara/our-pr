@@ -1,9 +1,6 @@
-// src/pages/program/PartnerProgramPage.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 
-// [수정] 레이아웃 컴포넌트(Header, Footer 등) 임포트 모두 제거
 import PartnerSidebar from '../../components/partner/PartnerSidebar'; 
 
 // 탭 컴포넌트 임포트
@@ -31,6 +28,9 @@ import SiteDeleteList from '../../components/partner/SiteDeleteList';
 import WorkerManagementPage from './WorkerManagementPage';
 import LaborCostManagementPage from './LaborCostManagementPage';
 
+// [중요] 직원 관리 페이지 임포트 (파일 경로: src/pages/program/StaffManagementPage.tsx)
+import StaffManagementPage from './StaffManagementPage';
+
 // Firebase
 import { auth } from '../../firebase-config';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -44,7 +44,6 @@ const PartnerProgramPage: React.FC = () => {
   const navigate = useNavigate(); 
   const db = getFirestore();
 
-  // [삭제] 레이아웃 관련 state 제거 (MainLayout에서 처리됨)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -153,7 +152,6 @@ const PartnerProgramPage: React.FC = () => {
   }
 
   return (
-    // [수정] Layout 관련 래퍼 제거하고 바로 본문 렌더링
     <div className="program-main-layout">
       {!isMobile ? ( 
         <>
@@ -206,15 +204,24 @@ const PartnerProgramPage: React.FC = () => {
                 <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
                 <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
                 <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />
+                
                 <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
                 <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
                 <Route path="emp-permission" element={<ProtectedContent requiredPerm="emp-permission"><PartnerPermissionTab partnerUid={currentPartnerUid} partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
                 
+                {/* [중요] 직원 관리 페이지 라우트 연결 */}
+                {/* requiredPerm은 기존 'emp-list'나 'hr' 등을 사용 (여기서는 hr로 설정) */}
+                <Route path="emp-management" element={
+                    <ProtectedContent requiredPerm="hr"> 
+                        <StaffManagementPage partnerUid={currentPartnerUid} />
+                    </ProtectedContent>
+                } />
+
                 <Route path="portfolio-add" element={<ProtectedContent requiredPerm="portfolio-add"><h2>포트폴리오 등록</h2></ProtectedContent>} />
                 <Route path="portfolio-list" element={<ProtectedContent requiredPerm="portfolio-list"><h2>포트폴리오 목록</h2></ProtectedContent>} />
                 <Route path="activity-log" element={<ProtectedContent requiredPerm="activity-log"><PartnerActivityLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
 
-                <Route path="*" element={<h2>페이지를 찾을 수 없습니다.</h2>} />
+                <Route path="*" element={<h2>페이지를 찾을 수 없습니다. (URL 확인 필요)</h2>} />
               </Routes>
             ) : (
               <h2>사용자 정보 로딩 중...</h2>

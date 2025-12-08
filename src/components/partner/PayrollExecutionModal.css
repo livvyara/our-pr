@@ -1,0 +1,98 @@
+/* PayrollExecutionModal.css */
+
+.payroll-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); z-index: 2500;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.payroll-modal-content {
+    background: white; width: 1600px; max-width: 98vw; height: 95vh;
+    border-radius: 12px; display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;
+}
+
+.payroll-header {
+    padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.payroll-header h3 { margin: 0; font-size: 20px; color: #333; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.btn-new-mode {
+    padding: 6px 12px; background: #fff; border: 1px solid #1976d2; color: #1976d2;
+    border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;
+}
+.btn-new-mode:hover { background: #e3f2fd; }
+.btn-close { border: none; background: none; font-size: 28px; cursor: pointer; color: #999; }
+
+.payroll-controls {
+    padding: 15px 20px; display: flex; gap: 20px; align-items: center; background: #fff;
+    border-bottom: 1px solid #eee;
+}
+.control-group { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.control-group input { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+.readonly-val { font-weight: bold; font-size: 16px; color: #333; padding: 5px 10px; background: #f5f5f5; border-radius: 4px; }
+.period-info { font-size: 14px; color: #555; background: #f0f8ff; padding: 5px 12px; border-radius: 4px; border: 1px solid #cce5ff; }
+
+.btn-excel {
+    margin-left: auto; padding: 8px 16px; background: #217346; color: white;
+    border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+}
+.btn-excel:hover { background: #1e6b40; }
+
+.payroll-table-wrapper {
+    flex: 1; overflow: auto; padding: 10px; min-height: 300px;
+}
+.payroll-table {
+    width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap;
+}
+.payroll-table th, .payroll-table td {
+    border: 1px solid #ddd; padding: 6px 8px; vertical-align: middle;
+}
+.payroll-table th {
+    background: #f1f1f1; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10;
+}
+/* 2단 헤더 고정 */
+.payroll-table thead tr:nth-child(1) th { top: 0; }
+.payroll-table thead tr:nth-child(2) th { top: 33px; z-index: 11; font-size: 11px; color: #555; }
+
+.payroll-table td.center { text-align: center; }
+.payroll-table td.right { text-align: right; }
+.payroll-table td.bold { font-weight: bold; }
+
+/* 하단 영역 (액션 + 히스토리) */
+.payroll-bottom-section {
+    border-top: 2px solid #eee; background: #fff; display: flex; flex-direction: column;
+}
+.action-row {
+    padding: 15px 20px; display: flex; justify-content: flex-end; align-items: center; gap: 15px;
+    background: #fdfdfd; border-bottom: 1px solid #eee;
+}
+.info-txt { font-size: 13px; color: #d32f2f; font-weight: bold; }
+.btn-exec {
+    background: #1976d2; color: white; border: none; padding: 10px 30px;
+    border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.btn-exec:hover { background: #1565c0; }
+
+.history-list-area {
+    padding: 15px 20px; background: #f8f9fa; height: 180px; overflow-y: auto;
+}
+.history-list-area h4 { margin: 0 0 10px 0; font-size: 14px; color: #555; }
+.no-history { font-size: 13px; color: #999; text-align: center; margin-top: 20px; }
+
+.history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.history-list li {
+    background: white; border: 1px solid #ddd; border-radius: 6px; padding: 10px 15px;
+    cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 2px;
+    min-width: 140px;
+}
+.history-list li:hover { border-color: #1976d2; transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.history-list li.active { border-color: #1976d2; background: #e3f2fd; }
+
+.h-month { font-weight: bold; font-size: 15px; color: #1976d2; }
+.h-amount { font-size: 13px; color: #333; font-weight: bold; }
+.h-count { font-size: 12px; color: #666; }
+.h-date { font-size: 11px; color: #999; margin-top: 4px; }

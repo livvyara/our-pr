@@ -44,10 +44,8 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'accounting-banking-excel', title: '계좌/카드 거래내역 등록', path: '/program/accounting-banking-excel' },
       { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' },
       
-      // [수정됨] 키 값 중복 수정 (tax-invoice -> cash-receipt)
       { key: 'accounting-cash-receipt', title: '현금영수증', path: '/program/accounting-cash-receipt' },
       
-      // [NEW] 발주 요청 메뉴 추가
       { key: 'accounting-order-request', title: '현장별 발주요청', path: '/program/accounting-order-request' },
 
       { key: 'accounting-expense-category', title: '지출품목 설정', path: '/program/accounting-expense-category' },
@@ -59,6 +57,10 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     subMenus: [
       { key: 'emp-add', title: '직원 등록', path: '/program/emp-add' },
       { key: 'emp-list', title: '직원 목록', path: '/program/emp-list' },
+      
+      // [NEW] 직원 급여/정보 관리 메뉴 추가
+      { key: 'emp-management', title: '직원 급여', path: '/program/emp-management' },
+      
       { key: 'emp-permission', title: '권한관리', path: '/program/emp-permission' },
     ]
   },
