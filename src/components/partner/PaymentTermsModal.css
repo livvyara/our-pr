@@ -1,0 +1,44 @@
+.pt-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 2500;
+    display: flex; justify-content: center; align-items: center;
+}
+.pt-modal-content {
+    background: white; width: 600px; border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden;
+    display: flex; flex-direction: column;
+}
+.pt-header {
+    padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.pt-header h3 { margin: 0; font-size: 16px; font-weight: bold; }
+.pt-close { background: none; border: none; font-size: 24px; cursor: pointer; }
+
+.pt-body { padding: 20px; }
+.pt-info { margin-bottom: 15px; font-size: 14px; text-align: right; }
+
+.pt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pt-table th { background: #f1f1f1; padding: 10px; border-bottom: 2px solid #ddd; }
+.pt-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+.pt-table tr.disabled-row { opacity: 0.5; background: #f9f9f9; }
+
+.pt-checkbox { cursor: pointer; font-weight: bold; }
+.pt-input-rate { width: 40px; text-align: right; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+.pt-input-amount { width: 100%; text-align: right; padding: 4px; border: none; background: transparent; font-weight: bold; }
+.pt-input-date { width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+
+.pt-total-box { 
+    margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; 
+    text-align: right; font-weight: bold;
+}
+.valid { color: #1976d2; }
+.invalid { color: #d32f2f; }
+.warning-msg { font-size: 12px; color: #d32f2f; margin-left: 10px; font-weight: normal; }
+
+.pt-footer {
+    padding: 15px 20px; border-top: 1px solid #eee; background: #f8f9fa;
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+.btn-cancel { padding: 8px 16px; background: white; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+.btn-save { padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }

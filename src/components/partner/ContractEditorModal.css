@@ -1,0 +1,24 @@
+.ce-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+}
+.ce-modal-content {
+    background: white; width: 800px; height: 85vh;
+    border-radius: 8px; display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.ce-header {
+    padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;
+}
+.ce-header h3 { margin: 0; font-size: 18px; color: #333; }
+.ce-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+.editor-section { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.editor-section label { font-weight: bold; color: #333; font-size: 14px; }
+.ce-guide { font-size: 12px; color: #1976d2; margin: 0 0 5px 0; background: #e3f2fd; padding: 5px 10px; border-radius: 4px; display: inline-block; }
+.ce-textarea {
+    width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 15px; font-size: 14px; line-height: 1.6; resize: none; font-family: 'Pretendard', sans-serif;
+}
+.ce-textarea.main { flex: 2; min-height: 300px; }
+.ce-textarea.special { flex: 1; min-height: 100px; }
+.ce-footer { padding: 15px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }

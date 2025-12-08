@@ -1,159 +1,186 @@
-/* SiteInfoWidget.css */
+/* SiteInfoWidget.css - Namespaced & Compact */
 
 .site-info-widget {
-  background-color: #fff;
-  padding: 15px;
-  height: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
+    background-color: #fff;
+    padding: 16px;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    font-family: 'Pretendard', sans-serif;
+    font-size: 13px;
 }
 
 /* 헤더 */
-.widget-title-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-}
-.widget-title-header h3 { margin: 0; font-size: 16px; color: #333; }
-
-.site-status-selector { display: flex; align-items: center; gap: 5px; }
-.status-label { font-size: 12px; font-weight: bold; color: #555; }
-.status-dropdown {
-  padding: 2px 6px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-/* 폼 그리드 */
-.info-form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* 간격 축소 */
-}
-
-.info-row { display: flex; gap: 10px; }
-
-/* 4열 그리드 */
-.info-row-4 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 10px;
-}
-
-.form-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.form-group.full-width { width: 100%; }
-
-.form-label { font-size: 11px; font-weight: bold; color: #666; white-space: nowrap; }
-.required { color: red; margin-left: 2px; }
-
-.form-input, .form-select {
-  padding: 0 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
-  height: 30px; /* 높이 컴팩트하게 */
-  box-sizing: border-box;
-}
-.form-input:focus { border-color: #333; outline: none; }
-
-/* 주소 입력 한줄 */
-.address-inputs-row {
-    display: flex;
-    gap: 8px;
-}
-.addr-select { width: 100px; flex-shrink: 0; }
-.addr-detail { flex: 1; }
-
-/* 도급인 정보 박스 */
-.contractor-info-box {
-  background: #f8f9fa;
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  color: #555;
-  margin-bottom: 5px;
-  border: 1px solid #eee;
-}
-.contractor-info-box p { margin: 0; }
-
-/* 하단 버튼 */
-.info-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 5px;
-  border-top: 1px solid #eee;
-  padding-top: 10px;
-}
-
-.btn-save-changes, .btn-invite-contractor {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 12px;
-  color: white;
-  transition: opacity 0.2s;
-}
-.btn-save-changes:hover { opacity: 0.9; }
-.btn-save-changes:disabled { background-color: #ccc !important; cursor: not-allowed; }
-
-.btn-invite-contractor { background-color: #6c757d; }
-.btn-invite-contractor:hover { background-color: #5a6268; }
-.btn-invite-contractor:disabled { background-color: #e9ecef; color: #aaa; cursor: default; }
-
-.contractors-list-section {
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.contractor-info-box {
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    color: #555;
-    border: 1px solid #eee;
+.site-info-widget .widget-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #f1f3f5;
+    padding-bottom: 8px;
 }
+.site-info-widget .widget-header-row h3 { margin: 0; font-size: 15px; font-weight: 700; color: #333; }
 
-.contractor-details {
+.site-info-widget .header-right-group { display: flex; gap: 10px; align-items: center; }
+
+/* 타입 토글 */
+.site-info-widget .site-type-toggle {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.c-name { font-weight: bold; color: #333; }
-.c-phone { color: #666; }
-.c-email { color: #888; }
-
-.btn-remove-contractor {
-    padding: 4px 8px;
-    background-color: #fff;
-    border: 1px solid #e74c3c;
-    color: #e74c3c;
+    background: #f1f3f5;
     border-radius: 4px;
+    padding: 2px;
+}
+.site-info-widget .site-type-toggle label {
+    padding: 4px 8px;
     cursor: pointer;
     font-size: 11px;
-    font-weight: bold;
+    color: #888;
+    border-radius: 4px;
     transition: all 0.2s;
+    /* [중요] 전역 label 스타일 오염 방지를 위해 초기화 후 재설정 */
+    width: auto; 
+    text-align: center;
+    margin: 0;
+    font-weight: normal;
 }
-.btn-remove-contractor:hover {
-    background-color: #e74c3c;
-    color: #fff;
+.site-info-widget .site-type-toggle label.active {
+    background: white;
+    color: #333;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+.site-info-widget .site-type-toggle input { display: none; }
+
+.site-info-widget .status-dropdown {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 11px;
+    height: 28px;
+    cursor: pointer;
+}
+
+/* 폼 레이아웃 */
+.site-info-widget .info-form-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; 
+}
+
+.site-info-widget .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.site-info-widget .input-f {
+    padding: 0 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 12px;
+    height: 32px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    color: #333;
+}
+.site-info-widget .input-f:focus { border-color: #333; outline: none; }
+.site-info-widget .input-f.right { text-align: right; }
+
+/* [중요] 네임스페이싱 적용된 라벨 스타일 */
+.site-info-widget label {
+    width: 45px; 
+    font-weight: 600;
+    color: #555;
+    text-align: right;
+    margin-right: 6px;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.site-info-widget .label-short { width: auto; margin-left: 10px; margin-right: 6px; }
+
+/* Flex 유틸 */
+.site-info-widget .flex-1 { flex: 1; }
+.site-info-widget .flex-2 { flex: 2; }
+.site-info-widget .flex-3 { flex: 3; }
+
+/* 주소 입력 그룹 */
+.site-info-widget .addr-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex: 1;
+}
+
+/* 도급인 영역 */
+.site-info-widget .contractor-area {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 0 10px;
+    border-radius: 4px;
+    height: 32px;
+    border: 1px dashed #ddd;
+    overflow: hidden;
+}
+.site-info-widget .contractor-list-inline { display: flex; gap: 5px; align-items: center; }
+.site-info-widget .contractor-tag-inline {
+    background: white; border: 1px solid #ddd; padding: 1px 6px; border-radius: 10px;
+    font-size: 11px; display: flex; align-items: center; gap: 4px;
+}
+.site-info-widget .contractor-tag-inline button { border: none; background: none; color: #e74c3c; cursor: pointer; font-weight: bold; }
+.site-info-widget .btn-add-mini-inline {
+    width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc; background: white;
+    cursor: pointer; display: flex; justify-content: center; align-items: center; color: #666; font-size: 14px;
+}
+.site-info-widget .btn-invite-text {
+    border: none; background: none; color: #1976d2; font-size: 12px; font-weight: bold; cursor: pointer;
+}
+
+/* 고객 정보 그리드 */
+.site-info-widget .client-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 10px auto 1fr 1.2fr;
+    gap: 5px;
+    align-items: center;
+}
+.site-info-widget .client-sep { text-align: center; color: #ccc; }
+
+/* 상세 정보 그리드 */
+.site-info-widget .detail-grid {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.site-info-widget .d-item {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 5px;
+}
+.site-info-widget .d-item .input-f { width: 100%; }
+.site-info-widget .d-label {
+    font-size: 11px; color: #666; white-space: nowrap; font-weight: 600;
+}
+
+/* 하단 버튼 */
+.site-info-widget .footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+.site-info-widget .btn-save-compact {
+    padding: 0 20px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    color: white;
+    cursor: pointer;
+    height: 32px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: opacity 0.2s;
+}
+.site-info-widget .btn-save-compact:hover { opacity: 0.9; }
+.site-info-widget .btn-save-compact:disabled { background-color: #ccc !important; box-shadow: none; }

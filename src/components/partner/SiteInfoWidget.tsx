@@ -3,13 +3,13 @@ import './SiteInfoWidget.css';
 import { K_BRAND_COLOR } from '../../constants';
 import { 
   getFirestore, doc, updateDoc, serverTimestamp, deleteDoc,
-  collection, query, where, getDocs, getDoc, limit, orderBy 
+  collection, query, where, getDocs, getDoc, orderBy 
 } from 'firebase/firestore';
 import { auth } from '../../firebase-config';
 import ContractorInviteModal from './ContractorInviteModal';
-// [NEW] openSiteChat 추가 임포트
 import { createOrUpdateSiteChat, closeSiteChat, openSiteChat } from '../../utils/chatService';
 
+// ... (ADDRESS_DATA 기존과 동일 - 생략) ...
 const ADDRESS_DATA: { [key: string]: string[] } = {
   "서울특별시": ["강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구"],
   "경기도": ["수원시", "성남시", "의정부시", "안양시", "부천시", "광명시", "평택시", "동두천시", "안산시", "고양시", "과천시", "구리시", "남양주시", "오산시", "시흥시", "군포시", "의왕시", "하남시", "용인시", "파주시", "이천시", "안성시", "김포시", "화성시", "광주시", "양주시", "포천시", "여주시", "연천군", "가평군", "양평군"],
@@ -159,7 +159,7 @@ const SiteInfoWidget: React.FC<SiteInfoWidgetProps> = ({
                   loadedContractors.push({
                       invitationId: docSnap.id,
                       uid: contractorUid,
-                      name: userData.nickname || userData.name || '이름 없음',
+                      name: userData.name || '이름 없음', 
                       email: userData.email || '-',
                       phone: userData.phone || '-'
                   });
@@ -184,11 +184,10 @@ const SiteInfoWidget: React.FC<SiteInfoWidgetProps> = ({
   }, [siteId, db, partnerUid, siteData.siteName]);
 
   const handleRemoveContractor = async (contractor: ContractorInfo) => {
-      if (!confirm(`'${contractor.name}'님을 이 현장의 도급인에서 해제하시겠습니까?\n(해제 후 다시 초대할 수 있습니다)`)) return;
+      if (!confirm(`'${contractor.name}'님을 이 현장의 도급인에서 해제하시겠습니까?`)) return;
       try {
           const inviteRef = doc(db, 'siteInvitations', contractor.invitationId);
           await deleteDoc(inviteRef); 
-          
           alert("도급인이 해제되었습니다.");
           fetchContractors(); 
       } catch (e) {
@@ -225,7 +224,6 @@ const SiteInfoWidget: React.FC<SiteInfoWidgetProps> = ({
           if (aptHo) fullAddress += ` ${aptHo}호`;
       }
 
-      // [중요] 상태 변경 감지
       const isCompleting = editData.status === '공사완료' && siteData.status !== '공사완료';
       const isReopening = siteData.status === '공사완료' && editData.status !== '공사완료';
 
@@ -236,12 +234,11 @@ const SiteInfoWidget: React.FC<SiteInfoWidgetProps> = ({
       
       await updateDoc(doc(db, 'users', partnerUid, 'sites', siteId), dataToSaveForFirestore);
 
-      // 상태 변경에 따른 채팅방 처리
       if (isCompleting) {
           await closeSiteChat(siteId);
           alert("공사가 완료 처리되었습니다.\n현장 채팅방이 비활성화됩니다.");
       } else if (isReopening) {
-          await openSiteChat(siteId); // [NEW] 재활성화 호출
+          await openSiteChat(siteId); 
           alert("현장 정보가 저장되었습니다.\n(채팅방이 다시 활성화됩니다)");
       } else {
           alert('현장 정보가 저장되었습니다.');
@@ -256,31 +253,107 @@ const SiteInfoWidget: React.FC<SiteInfoWidgetProps> = ({
   };
 
   return (
-    <div className="site-info-widget">
-      <div className="widget-title-header"><h3>{widgetTitle}</h3><div className="site-status-selector"><span className="status-label">상태:</span><select className="status-dropdown" name="status" value={editData.status} onChange={handleChange} disabled={isSaving}>{STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}</select></div></div>
-      <div className="site-type-switcher" style={{marginBottom:'10px', display:'flex', gap:'10px'}}><label style={{cursor:'pointer', fontWeight: siteType==='commercial'?'bold':'normal'}}><input type="radio" name="siteTypeEdit" value="commercial" checked={siteType === 'commercial'} onChange={() => setSiteType('commercial')} /> 상업공간</label><label style={{cursor:'pointer', fontWeight: siteType==='residential'?'bold':'normal'}}><input type="radio" name="siteTypeEdit" value="residential" checked={siteType === 'residential'} onChange={() => setSiteType('residential')} /> 주거공간</label></div>
-      <form className="info-form-grid" onSubmit={handleUpdateSiteInfo}>
-        <div className="info-row"><div className="form-group" style={{flex: 2}}><label className="form-label">현장명 <span className="required">*</span></label><input type="text" name="siteName" className="form-input" value={editData.siteName} onChange={handleChange} required /></div><div className="form-group" style={{flex: 1}}><label className="form-label">공사 예산</label><input type="text" inputMode="numeric" name="budget" className="form-input" value={editData.budget} onChange={handleBudgetChange} /></div></div>
-        <div className="form-group full-width"><label className="form-label">주소 <span className="required">*</span></label><div className="address-inputs-row"><select className="form-select addr-select" value={sido} onChange={handleSidoChange} required><option value="">시/도</option>{Object.keys(ADDRESS_DATA).map(area => <option key={area} value={area}>{area}</option>)}</select><select className="form-select addr-select" value={sigungu} onChange={e => setSigungu(e.target.value)} required disabled={!sido}><option value="">시/군/구</option>{sido && ADDRESS_DATA[sido]?.map(dist => <option key={dist} value={dist}>{dist}</option>)}</select><input type="text" className="form-input addr-detail" value={detailAddress} onChange={e => setDetailAddress(e.target.value)} placeholder={siteType === 'residential' ? "도로명/지번" : "상세 주소"} required style={{flex: siteType === 'residential' ? 2 : 1}} />{siteType === 'residential' && (<><input type="text" className="form-input" value={aptName} onChange={e => setAptName(e.target.value)} placeholder="아파트명" style={{flex:1}} /><input type="text" className="form-input" value={aptDong} onChange={e => setAptDong(e.target.value)} placeholder="동" style={{width:'50px'}} /><input type="text" className="form-input" value={aptHo} onChange={e => setAptHo(e.target.value)} placeholder="호" style={{width:'50px'}} /></>)}</div></div>
-        
-        {contractors.length > 0 && (
-          <div className="contractors-list-section">
-             {contractors.map(ct => (
-                 <div key={ct.invitationId} className="contractor-info-box">
-                    <div className="contractor-details">
-                        <span className="c-name"><strong>도급인:</strong> {ct.name}</span>
-                        <span className="c-phone">({ct.phone})</span>
-                        <span className="c-email">{ct.email}</span>
-                    </div>
-                    <button type="button" className="btn-remove-contractor" onClick={() => handleRemoveContractor(ct)} title="지정 해제">해제</button>
-                 </div>
-             ))}
+    <div className="site-info-widget compact">
+      <div className="widget-header-row">
+          <h3>{widgetTitle}</h3>
+          <div className="header-right-group">
+            <div className="site-type-toggle">
+                <label className={siteType === 'commercial' ? 'active' : ''}><input type="radio" name="siteTypeEdit" value="commercial" checked={siteType === 'commercial'} onChange={() => setSiteType('commercial')} /> 상업</label>
+                <label className={siteType === 'residential' ? 'active' : ''}><input type="radio" name="siteTypeEdit" value="residential" checked={siteType === 'residential'} onChange={() => setSiteType('residential')} /> 주거</label>
+            </div>
+            <select className="status-dropdown" name="status" value={editData.status} onChange={handleChange} disabled={isSaving}>
+                {STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+            </select>
           </div>
-        )}
+      </div>
 
-        <div className="info-row-4"><div className="form-group"><label className="form-label">고객명1 <span className="required">*</span></label><input type="text" name="client1Name" className="form-input" value={editData.client1Name} onChange={handleChange} required /></div><div className="form-group"><label className="form-label">연락처1 <span className="required">*</span></label><input type="tel" name="client1Phone" className="form-input" value={editData.client1Phone} onChange={handlePhoneChange} placeholder="010-0000-0000" maxLength={13} required /></div><div className="form-group"><label className="form-label">고객명2</label><input type="text" name="client2Name" className="form-input" value={editData.client2Name} onChange={handleChange} /></div><div className="form-group"><label className="form-label">연락처2</label><input type="tel" name="client2Phone" className="form-input" value={editData.client2Phone} onChange={handlePhoneChange} placeholder="010-0000-0000" maxLength={13} /></div></div>
-        <div className="info-row-4"><div className="form-group"><label className="form-label">면적</label><input type="text" name="area" className="form-input" value={editData.area} onChange={handleChange} placeholder="30평" /></div>{siteType === 'commercial' ? (<><div className="form-group"><label className="form-label">업종</label><input type="text" name="businessType" className="form-input" value={editData.businessType} onChange={handleChange} placeholder="카페" /></div><div className="form-group"><label className="form-label">공사시작</label><input type="date" name="startDate" className="form-input" value={editData.startDate} onChange={handleChange} /></div><div className="form-group"><label className="form-label">오픈예정</label><input type="date" name="openDate" className="form-input" value={editData.openDate} onChange={handleChange} /></div></>) : (<><div className="form-group"><label className="form-label">입주예정</label><input type="date" name="moveInDate" className="form-input" value={editData.moveInDate} onChange={handleChange} /></div><div className="form-group"><label className="form-label">공사시작</label><input type="date" name="startDate" className="form-input" value={editData.startDate} onChange={handleChange} /></div><div className="form-group"></div></>)}</div>
-        <div className="info-form-actions full-width"><button type="submit" className="btn-save-changes" style={{ backgroundColor: K_BRAND_COLOR }} disabled={isSaving}>{isSaving ? '저장 중...' : '현장 정보 저장'}</button><button type="button" className="btn-invite-contractor" onClick={() => setIsInviteModalOpen(true)} disabled={isSaving}>도급인 초대 추가</button></div>
+      <form className="info-form-compact" onSubmit={handleUpdateSiteInfo}>
+        {/* Row 1: 현장명 (50%) + 도급인 리스트 (50%) */}
+        <div className="row">
+            <label>현장명</label>
+            <input type="text" name="siteName" className="input-f flex-1" value={editData.siteName} onChange={handleChange} required />
+            
+            <div className="contractor-area flex-1">
+                <label style={{width:'auto', marginRight:'5px'}}>도급인</label>
+                {contractors.length > 0 ? (
+                    <div className="contractor-list-inline">
+                        {contractors.map(ct => (
+                            <div key={ct.invitationId} className="contractor-tag-inline">
+                                <span>{ct.name}</span>
+                                <button type="button" onClick={() => handleRemoveContractor(ct)}>×</button>
+                            </div>
+                        ))}
+                        <button type="button" className="btn-add-mini-inline" onClick={() => setIsInviteModalOpen(true)}>+</button>
+                    </div>
+                ) : (
+                    <button type="button" className="btn-invite-text" onClick={() => setIsInviteModalOpen(true)}>+ 초대하기</button>
+                )}
+            </div>
+        </div>
+        
+        {/* Row 2: 주소 (시도 40% 확대, 시군구 10% 확대, 나머지는 자동) */}
+        <div className="row">
+            <label>주소</label>
+            <div className="addr-group flex-1">
+                <select className="input-f" value={sido} onChange={handleSidoChange} style={{flexGrow: 1.4}}> {/* 40% 더 넓게 */}
+                    <option value="">시/도</option>
+                    {Object.keys(ADDRESS_DATA).map(area => <option key={area} value={area}>{area}</option>)}
+                </select>
+                <select className="input-f" value={sigungu} onChange={e => setSigungu(e.target.value)} disabled={!sido} style={{flexGrow: 1.1}}> {/* 10% 더 넓게 */}
+                    <option value="">시/군</option>
+                    {sido && ADDRESS_DATA[sido]?.map(dist => <option key={dist} value={dist}>{dist}</option>)}
+                </select>
+                <input type="text" className="input-f" value={detailAddress} onChange={e => setDetailAddress(e.target.value)} placeholder="상세주소" style={{flexGrow: 1}} />
+                {siteType === 'residential' && (
+                    <>
+                        <input type="text" className="input-f" value={aptName} onChange={e => setAptName(e.target.value)} placeholder="아파트" style={{width:'60px'}} />
+                        <input type="text" className="input-f" value={aptDong} onChange={e => setAptDong(e.target.value)} placeholder="동" style={{width:'40px'}} />
+                        <input type="text" className="input-f" value={aptHo} onChange={e => setAptHo(e.target.value)} placeholder="호" style={{width:'40px'}} />
+                    </>
+                )}
+            </div>
+        </div>
+
+        {/* Row 3: 고객 정보 (전체 너비 균등) */}
+        <div className="row">
+            <label>고객1</label>
+            <div className="client-grid flex-1">
+                <input type="text" name="client1Name" className="input-f" value={editData.client1Name} onChange={handleChange} placeholder="이름" required />
+                <input type="tel" name="client1Phone" className="input-f" value={editData.client1Phone} onChange={handlePhoneChange} placeholder="연락처" required />
+                <span className="client-sep">/</span>
+                <label style={{width:'auto', margin:'0 5px'}}>고객2</label>
+                <input type="text" name="client2Name" className="input-f" value={editData.client2Name} onChange={handleChange} placeholder="이름" />
+                <input type="tel" name="client2Phone" className="input-f" value={editData.client2Phone} onChange={handlePhoneChange} placeholder="연락처" />
+            </div>
+        </div>
+
+        {/* Row 4: 상세 정보 (한 줄 배치) */}
+        <div className="row">
+            <label>면적</label>
+            <div className="detail-grid flex-1">
+                <div className="d-item"><span className="d-label"></span><input type="text" name="area" className="input-f" value={editData.area} onChange={handleChange} /></div>
+                <div className="d-item"><span className="d-label">예산</span><input type="text" inputMode="numeric" name="budget" className="input-f right" value={editData.budget} onChange={handleBudgetChange} /></div>
+                
+                {siteType === 'commercial' ? (
+                    <>
+                        <div className="d-item"><span className="d-label">업종</span><input type="text" name="businessType" className="input-f" value={editData.businessType} onChange={handleChange} /></div>
+                        <div className="d-item"><span className="d-label">시작</span><input type="date" name="startDate" className="input-f" value={editData.startDate} onChange={handleChange} /></div>
+                        <div className="d-item"><span className="d-label">오픈</span><input type="date" name="openDate" className="input-f" value={editData.openDate} onChange={handleChange} /></div>
+                    </>
+                ) : (
+                    <>
+                        <div className="d-item"><span className="d-label">입주</span><input type="date" name="moveInDate" className="input-f" value={editData.moveInDate} onChange={handleChange} /></div>
+                        <div className="d-item"><span className="d-label">시작</span><input type="date" name="startDate" className="input-f" value={editData.startDate} onChange={handleChange} /></div>
+                    </>
+                )}
+            </div>
+        </div>
+
+        <div className="footer-actions">
+            <button type="submit" className="btn-save-compact" style={{ backgroundColor: K_BRAND_COLOR }} disabled={isSaving}>
+                {isSaving ? '...' : '저장'}
+            </button>
+        </div>
       </form>
       {isInviteModalOpen && (<ContractorInviteModal siteId={siteId} siteName={editData.siteName} partnerUid={partnerUid} clientPhone={editData.client1Phone} onClose={() => { setIsInviteModalOpen(false); fetchContractors(); }} />)}
     </div>

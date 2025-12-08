@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy 
+  getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy, updateDoc 
 } from 'firebase/firestore';
 import { auth } from '../../firebase-config';
 import { onAuthStateChanged } from 'firebase/auth';
 import ChatWidget from '../../components/common/ChatWidget';
 
-// [삭제] Header, SubNav, Footer, RoleHeader, MobileMenu, useMenu 임포트 제거
-
 import CustomerConstructionScheduleModal from '../../components/customer/CustomerConstructionScheduleModal';
 import SiteWorkLogListModal from '../../components/customer/SiteWorkLogListModal';
 import CustomerSiteFilesModal from '../../components/customer/CustomerSiteFilesModal';
 import CustomerChangeOrderModal from '../../components/customer/CustomerChangeOrderModal'; 
+import ElectronicContractSignModal from '../../components/customer/ElectronicContractSignModal'; 
+import SignedContractViewerModal from '../../components/customer/SignedContractViewerModal';
 
 import './MyProjectPage.css'; 
 
 const db = getFirestore();
 
 const ProjectIcons = {
-  /* ... 아이콘 코드는 그대로 유지 ... */
   Schedule: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><rect x="3" y="4" width="18" height="18"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>),
   Worklog: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>),
   Files: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" strokeLinejoin="miter"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>),
@@ -30,7 +29,6 @@ const ProjectIcons = {
   ArrowDown: () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter"><path d="M6 9l6 6 6-6"/></svg>)
 };
 
-/* ... (MySiteData 인터페이스 유지) ... */
 interface MySiteData {
   inviteId: string;
   siteId: string;
@@ -49,12 +47,15 @@ interface MySiteData {
   contractSupply?: number;
   contractVat?: number;
   changeOrderTotal?: number;
+  
+  // 계약 관련 데이터
+  contractStatus?: string; 
+  contractRewriteStatus?: string; // 재작성 요청 상태
+  fullContractData?: any;
 }
 
 const MyProjectPage: React.FC = () => {
   const navigate = useNavigate();
-  
-  // [삭제] useMenu, selectedMenu, isMobile, isMobileMenuOpen 관련 코드 모두 삭제
   
   const [mySites, setMySites] = useState<MySiteData[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -62,22 +63,20 @@ const MyProjectPage: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const [modalState, setModalState] = useState<{
-      type: 'schedule' | 'worklog' | 'files' | 'estimate' | 'contract' | 'insurance' | 'changeOrder' | null;
+      type: 'schedule' | 'worklog' | 'files' | 'estimate' | 'contract' | 'view_contract' | 'insurance' | 'changeOrder' | null;
       siteId: string;
       partnerUid: string;
+      contractData?: any; 
   } | null>(null);
 
   const [isPageLoaded, setIsPageLoaded] = useState(false);
 
   useEffect(() => {
-    // [수정] resize 이벤트 리스너 중 isMobile 설정 부분 삭제
     const timer = setTimeout(() => {
         setIsPageLoaded(true);
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-
-  // [삭제] useMenu 관련 useEffect 삭제
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -91,8 +90,7 @@ const MyProjectPage: React.FC = () => {
   }, [navigate]);
 
   const fetchMyProjects = async (uid: string) => {
-    // ... (기존 로직 유지) ...
-     try {
+      try {
       const q = query(
         collection(db, 'siteInvitations'),
         where('redeemedBy', '==', uid),
@@ -129,6 +127,42 @@ const MyProjectPage: React.FC = () => {
               });
           } catch (e) { console.error("변경견적 조회 실패", e); }
 
+          // 모달에 전달할 전체 계약 데이터 구성
+          const fullContractData = {
+              siteName: sData.siteName,
+              address: sData.address,
+              
+              clientName: contract.clientName || '',
+              clientPhone: contract.clientPhone || '',
+              clientAddress: contract.clientAddress || '',
+
+              // 파트너 정보 (DB 최신값 사용)
+              partnerName: pInfo.companyName || pData.companyName || '시공사',
+              partnerOwner: pInfo.ownerName || pData.name || '대표',
+              partnerBizNum: pInfo.businessNumber || pData.businessNumber || '',
+              partnerPhone: pInfo.contact || pData.phone || '',
+              partnerAddress: pInfo.address || pData.address || '',
+
+              startDate: contract.startDate || sData.startDate,
+              endDate: contract.endDate || sData.endDate,
+              supplyAmount: contract.supplyAmount || 0,
+              vatAmount: contract.vatAmount || 0,
+              totalAmount: contract.totalAmount || 0,
+              asPeriod: contract.asPeriod || 12,
+              paymentTerms: contract.paymentTerms || null,
+              
+              // 계약 내용
+              customContent: contract.customContent || '',
+              specialContent: contract.specialContent || '',
+              
+              // 체결 정보 및 도장
+              signatureUrl: contract.signatureUrl || '',
+              clientRRN: contract.clientRRN || '',
+              idCardUrl: contract.idCardUrl || '',
+              signedAt: contract.signedAt || null,
+              partnerSealUrl: contract.partnerSealUrl || '' // 파트너 도장
+          };
+
           sites.push({
             inviteId: d.id, siteId, partnerUid,
             siteName: sData.siteName, status: sData.status || '진행중',
@@ -139,7 +173,11 @@ const MyProjectPage: React.FC = () => {
             partnerEmail: pData.email || '-',
             contractSupply: contract.supplyAmount,
             contractVat: contract.vatAmount,
-            changeOrderTotal: changeTotal 
+            changeOrderTotal: changeTotal,
+            
+            contractStatus: contract.status || 'draft',
+            contractRewriteStatus: contract.rewriteStatus || null, // 재작성 요청 상태
+            fullContractData: fullContractData
           });
         }
       }
@@ -151,19 +189,85 @@ const MyProjectPage: React.FC = () => {
   const getStatusLabel = (status: string) => status; 
 
   const handleButtonClick = (type: any, site: MySiteData) => {
-      if (type === 'estimate' || type === 'contract' || type === 'insurance') {
+      if (type === 'contract') {
+          // 1. 재작성 요청이 있는 경우 (최우선 처리)
+          if (site.contractRewriteStatus === 'requested') {
+              handleRewriteResponse(site);
+              return;
+          }
+
+          // 2. 이미 체결된 경우 -> 뷰어 열기
+          if (site.contractStatus === 'signed') {
+              setModalState({ 
+                  type: 'view_contract', 
+                  siteId: site.siteId, 
+                  partnerUid: site.partnerUid,
+                  contractData: site.fullContractData 
+              });
+              return;
+          }
+
+          // 3. 체결 요청 상태인 경우 -> 서명 모달 열기
+          if (site.contractStatus === 'requested') {
+            setModalState({ 
+                type: 'contract', 
+                siteId: site.siteId, 
+                partnerUid: site.partnerUid,
+                contractData: site.fullContractData 
+            });
+            return;
+          }
+
+          // 4. 그 외 (아직 요청 안 옴)
+          alert("파트너사가 아직 전자계약 체결을 요청하지 않았습니다.");
+          return;
+      }
+
+      if (type === 'estimate' || type === 'insurance') {
           alert("준비 중인 기능입니다.");
           return;
       }
+      
       setModalState({ type, siteId: site.siteId, partnerUid: site.partnerUid });
   };
 
+  // 재작성 요청 응답 핸들러
+  const handleRewriteResponse = async (site: MySiteData) => {
+      const choice = confirm("파트너가 계약서 재작성을 요청했습니다.\n\n[확인]: 수락 (기존 계약이 파기되고 다시 작성합니다)\n[취소]: 거절 (기존 계약을 유지합니다)");
+      
+      try {
+          if (choice) {
+              // 수락: 상태 초기화 (draft) 및 서명 데이터 삭제
+              await updateDoc(doc(db, 'users', site.partnerUid, 'sites', site.siteId), {
+                  'contract.status': 'draft',
+                  'contract.rewriteStatus': 'accepted',
+                  'contract.signatureUrl': null,
+                  'contract.idCardUrl': null,
+                  'contract.clientRRN': null,
+                  'contract.pdfUrl': null,
+                  'contract.signedAt': null
+              });
+              alert("재작성 요청을 수락했습니다.\n파트너가 수정 후 다시 요청할 것입니다.");
+          } else {
+              // 거절: 요청 상태만 제거
+              await updateDoc(doc(db, 'users', site.partnerUid, 'sites', site.siteId), {
+                  'contract.rewriteStatus': 'rejected'
+              });
+              alert("재작성 요청을 거절했습니다.");
+          }
+          // 목록 새로고침
+          if (auth.currentUser) fetchMyProjects(auth.currentUser.uid);
+      } catch (e) {
+          console.error(e);
+          alert("처리 중 오류가 발생했습니다.");
+      }
+  };
+
   return (
-    // [수정] Layout 관련 컴포넌트 제거하고 mp-page-container만 남김
     <div className="mp-page-container">
       <div className="mp-main-content">
         <div className="mp-inner-container">
-            {/* ... 본문 내용 (기존 유지) ... */}
+            
             <div className="mp-header-section">
                 <div className="mp-reveal-mask">
                     <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>MY LOUNGE</h2>
@@ -186,6 +290,29 @@ const MyProjectPage: React.FC = () => {
                         const statusText = getStatusLabel(site.status);
                         const isExpanded = expandedSiteId === site.siteId;
                         const changeAmt = site.changeOrderTotal || 0;
+                        
+                        const isContractRequested = site.contractStatus === 'requested';
+                        const isContractSigned = site.contractStatus === 'signed';
+                        const isRewriteRequested = site.contractRewriteStatus === 'requested';
+
+                        // 버튼 텍스트 및 스타일 결정
+                        let contractBtnText = '전자계약서';
+                        let contractBtnStyle = {};
+                        let contractIconStyle = {};
+
+                        if (isRewriteRequested) {
+                            contractBtnText = '🔴 재작성 요청 도착';
+                            contractBtnStyle = { color: '#d32f2f', fontWeight: 'bold' };
+                            contractIconStyle = { borderColor: '#d32f2f', color: '#d32f2f' };
+                        } else if (isContractSigned) {
+                            contractBtnText = '계약 체결 완료';
+                            contractBtnStyle = { color: '#2e7d32', fontWeight: 'bold' }; // Green
+                            contractIconStyle = { borderColor: '#2e7d32', color: '#2e7d32' };
+                        } else if (isContractRequested) {
+                            contractBtnText = '✍️ 전자계약 체결';
+                            contractBtnStyle = { color: '#d32f2f', fontWeight: 'bold' };
+                            contractIconStyle = { borderColor: '#d32f2f', color: '#d32f2f' };
+                        }
 
                         return (
                         <div 
@@ -210,83 +337,92 @@ const MyProjectPage: React.FC = () => {
                             <div className="mp-card-body">
                                 <div className="mp-body-inner">
                                     <div className="mp-info-grid">
-                                        <div className="mp-info-col">
-                                            <span className="mp-label">INFO</span>
-                                            <div className="mp-data-row">
-                                                <span>공사유형</span>
-                                                <strong>{site.siteType === 'commercial' ? '상업공간' : '주거공간'}</strong>
-                                            </div>
-                                            <div className="mp-data-row">
-                                                <span>면적</span>
-                                                <strong>{site.area || '-'}</strong>
-                                            </div>
-                                            <div className="mp-data-row">
-                                                <span>기간</span>
-                                                <strong>{site.startDate} ~ {site.endDate || '미정'}</strong>
-                                            </div>
-                                        </div>
-
-                                        <div className="mp-info-col">
-                                            <span className="mp-label">COST</span>
-                                            <div className="mp-data-row">
-                                                <span>최초계약</span>
-                                                <strong>{(site.budget || 0).toLocaleString()} 원</strong>
-                                            </div>
-                                            {changeAmt !== 0 && (
-                                                <div className="mp-data-row highlight">
-                                                    <span>변경/추가</span>
-                                                    <strong>{changeAmt > 0 ? '+' : ''}{changeAmt.toLocaleString()} 원</strong>
+                                            <div className="mp-info-col">
+                                                <span className="mp-label">INFO</span>
+                                                <div className="mp-data-row">
+                                                    <span>공사유형</span>
+                                                    <strong>{site.siteType === 'commercial' ? '상업공간' : '주거공간'}</strong>
                                                 </div>
-                                            )}
-                                            <div className="mp-total-row">
-                                                <span>TOTAL</span>
-                                                <strong>{((site.budget || 0) + changeAmt).toLocaleString()} 원</strong>
+                                                <div className="mp-data-row">
+                                                    <span>면적</span>
+                                                    <strong>{site.area || '-'}</strong>
+                                                </div>
+                                                <div className="mp-data-row">
+                                                    <span>기간</span>
+                                                    <strong>{site.startDate} ~ {site.endDate || '미정'}</strong>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="mp-info-col partner">
-                                            <span className="mp-label">PARTNER</span>
-                                            <strong className="mp-p-name">{site.partnerName}</strong>
-                                            <button className="mp-chat-btn" onClick={(e) => { e.stopPropagation(); setIsChatOpen(true); }}>
-                                                1:1 문의하기
-                                            </button>
-                                        </div>
+                                            <div className="mp-info-col">
+                                                <span className="mp-label">COST</span>
+                                                <div className="mp-data-row">
+                                                    <span>최초계약</span>
+                                                    <strong>{(site.budget || 0).toLocaleString()} 원</strong>
+                                                </div>
+                                                {changeAmt !== 0 && (
+                                                    <div className="mp-data-row highlight">
+                                                        <span>변경/추가</span>
+                                                        <strong>{changeAmt > 0 ? '+' : ''}{changeAmt.toLocaleString()} 원</strong>
+                                                    </div>
+                                                )}
+                                                <div className="mp-total-row">
+                                                    <span>TOTAL</span>
+                                                    <strong>{((site.budget || 0) + changeAmt).toLocaleString()} 원</strong>
+                                                </div>
+                                            </div>
+
+                                            <div className="mp-info-col partner">
+                                                <span className="mp-label">PARTNER</span>
+                                                <strong className="mp-p-name">{site.partnerName}</strong>
+                                                <button className="mp-chat-btn" onClick={(e) => { e.stopPropagation(); setIsChatOpen(true); }}>
+                                                    1:1 문의하기
+                                                </button>
+                                            </div>
                                     </div>
 
                                     <div className="mp-actions-section">
-                                        <span className="mp-label">ACTIONS</span>
-                                        <div className="mp-actions-grid">
-                                            <button className="mp-menu-btn" onClick={() => handleButtonClick('schedule', site)}>
-                                                <div className="icon-box"><ProjectIcons.Schedule /></div>
-                                                <span className="btn-text">공사 일정</span>
-                                            </button>
-                                            <button className="mp-menu-btn" onClick={() => handleButtonClick('worklog', site)}>
-                                                <div className="icon-box"><ProjectIcons.Worklog /></div>
-                                                <span className="btn-text">작업 일지</span>
-                                            </button>
-                                            <button className="mp-menu-btn" onClick={() => handleButtonClick('files', site)}>
-                                                <div className="icon-box"><ProjectIcons.Files /></div>
-                                                <span className="btn-text">공사자료 열람</span>
-                                            </button>
-                                            <button className="mp-menu-btn" onClick={() => handleButtonClick('changeOrder', site)}>
-                                                <div className="icon-box"><ProjectIcons.Cost /></div>
-                                                <span className="btn-text">추가/변경 견적</span>
-                                            </button>
-                                            <button className="mp-menu-btn disabled" onClick={() => handleButtonClick('estimate', site)}>
-                                                <div className="icon-box"><ProjectIcons.Estimate /></div>
-                                                <span className="btn-text">견적서 확인</span>
-                                            </button>
-                                            <button className="mp-menu-btn disabled" onClick={() => handleButtonClick('contract', site)}>
-                                                <div className="icon-box"><ProjectIcons.Contract /></div>
-                                                <span className="btn-text">전자계약서</span>
-                                            </button>
-                                            <button className="mp-menu-btn disabled" onClick={() => handleButtonClick('insurance', site)}>
-                                                <div className="icon-box"><ProjectIcons.Insurance /></div>
-                                                <span className="btn-text">보험가입 요청</span>
-                                            </button>
-                                        </div>
-                                    </div>
+                                            <span className="mp-label">ACTIONS</span>
+                                            <div className="mp-actions-grid">
+                                                <button className="mp-menu-btn" onClick={() => handleButtonClick('schedule', site)}>
+                                                    <div className="icon-box"><ProjectIcons.Schedule /></div>
+                                                    <span className="btn-text">공사 일정</span>
+                                                </button>
+                                                <button className="mp-menu-btn" onClick={() => handleButtonClick('worklog', site)}>
+                                                    <div className="icon-box"><ProjectIcons.Worklog /></div>
+                                                    <span className="btn-text">작업 일지</span>
+                                                </button>
+                                                <button className="mp-menu-btn" onClick={() => handleButtonClick('files', site)}>
+                                                    <div className="icon-box"><ProjectIcons.Files /></div>
+                                                    <span className="btn-text">공사자료 열람</span>
+                                                </button>
+                                                <button className="mp-menu-btn" onClick={() => handleButtonClick('changeOrder', site)}>
+                                                    <div className="icon-box"><ProjectIcons.Cost /></div>
+                                                    <span className="btn-text">추가/변경 견적</span>
+                                                </button>
+                                                <button className="mp-menu-btn disabled" onClick={() => handleButtonClick('estimate', site)}>
+                                                    <div className="icon-box"><ProjectIcons.Estimate /></div>
+                                                    <span className="btn-text">견적서 확인</span>
+                                                </button>
+                                                
+                                                {/* 계약 버튼 (상태에 따라 다르게 표시) */}
+                                                <button 
+                                                    className={`mp-menu-btn ${(!isContractRequested && !isContractSigned && !isRewriteRequested) ? 'disabled' : ''}`} 
+                                                    onClick={() => handleButtonClick('contract', site)}
+                                                >
+                                                    <div className="icon-box" style={contractIconStyle}>
+                                                        <ProjectIcons.Contract />
+                                                    </div>
+                                                    <span className="btn-text" style={contractBtnStyle}>
+                                                        {contractBtnText}
+                                                    </span>
+                                                </button>
 
+                                                <button className="mp-menu-btn disabled" onClick={() => handleButtonClick('insurance', site)}>
+                                                    <div className="icon-box"><ProjectIcons.Insurance /></div>
+                                                    <span className="btn-text">보험가입 요청</span>
+                                                </button>
+                                            </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -298,14 +434,34 @@ const MyProjectPage: React.FC = () => {
         </div>
       </div>
       
-      {/* [수정] Footer, MobileMenu 삭제 */}
       {isChatOpen && <ChatWidget onClose={() => setIsChatOpen(false)} />}
       
-      {/* Modals */}
       {modalState?.type === 'schedule' && <CustomerConstructionScheduleModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'changeOrder' && <CustomerChangeOrderModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'worklog' && <SiteWorkLogListModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'files' && <CustomerSiteFilesModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
+      
+      {/* 서명 모달 (요청 시) */}
+      {modalState?.type === 'contract' && modalState.contractData && (
+          <ElectronicContractSignModal
+              siteId={modalState.siteId}
+              partnerUid={modalState.partnerUid}
+              data={modalState.contractData}
+              onClose={() => setModalState(null)}
+              onSignedSuccess={() => {
+                  setModalState(null);
+                  if(auth.currentUser) fetchMyProjects(auth.currentUser.uid);
+              }}
+          />
+      )}
+
+      {/* 뷰어 모달 (완료 시) */}
+      {modalState?.type === 'view_contract' && modalState.contractData && (
+          <SignedContractViewerModal
+              data={modalState.contractData}
+              onClose={() => setModalState(null)}
+          />
+      )}
     </div>
   );
 };
