@@ -165,34 +165,38 @@ const SignedContractViewerModal: React.FC<Props> = ({ data, onClose, onRequestRe
     const renderPaymentRows = () => {
         if (!data.paymentTerms) return <tr><td colSpan={4} className="center">별도 협의</td></tr>;
         
-        // items가 객체일 수 있으므로 안전하게 처리
-        const items = data.paymentTerms.items 
-            ? Object.values(data.paymentTerms.items as any).filter((i: any) => i.checked)
-            : [];
-            
         // 날짜순 정렬
-        items.sort((a: any, b: any) => {
-            if (!a.date) return 1;
-            if (!b.date) return -1;
-            return new Date(a.date).getTime() - new Date(b.date).getTime();
-        });
+        const items = Object.values(data.paymentTerms.items as any)
+            .filter((i: any) => i.checked)
+            .sort((a: any, b: any) => {
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return new Date(a.date).getTime() - new Date(b.date).getTime();
+            });
 
-        return items.map((item: any, idx: number) => {
-            let displayAmount = item.amount;
-            let note = "";
-            if (item.id === 'balance') {
-                displayAmount += data.vatAmount;
-                note = "(VAT포함)";
-            }
-            return (
-                <tr key={idx}>
+        return items.map((item: any, idx: number) => (
+            <React.Fragment key={idx}>
+                {/* 1. 일반 항목 (공급가액) */}
+                <tr>
                     <td className="center">{item.label}</td>
                     <td className="center">{item.rate}%</td>
-                    <td className="right">{displayAmount.toLocaleString()} 원 {note && <small>{note}</small>}</td>
+                    <td className="right">{item.amount.toLocaleString()} 원</td>
                     <td className="center">{item.date || '날짜 미정'}</td>
                 </tr>
-            );
-        });
+
+                {/* 2. 잔금(balance)일 경우 바로 밑에 부가세 행 추가 */}
+                {item.id === 'balance' && (
+                    <tr className="vat-row" style={{ backgroundColor: '#f9f9f9' }}>
+                        <td className="center" style={{ fontWeight: 'bold' }}>부가세</td>
+                        <td className="center"></td> {/* 비율 표기 안 함 */}
+                        <td className="right" style={{ fontWeight: 'bold' }}>
+                            {data.vatAmount.toLocaleString()} 원
+                        </td>
+                        <td className="center">{item.date || '날짜 미정'}</td> {/* 잔금일과 동일 */}
+                    </tr>
+                )}
+            </React.Fragment>
+        ));
     };
 
     const processContent = (text: string) => {
