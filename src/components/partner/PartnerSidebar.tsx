@@ -5,7 +5,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import './PartnerSidebar.css';
 import { PARTNER_MENUS_DATA, type PartnerMenu } from './partnerMenuData';
 
-// [NEW] 메뉴 아이콘 컴포넌트 (단순 SVG)
+// 아이콘 컴포넌트 (변경 없음)
 const MenuIcon = ({ menuKey }: { menuKey: string }) => {
   switch (menuKey) {
     case 'dashboard': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>;
@@ -21,10 +21,12 @@ const MenuIcon = ({ menuKey }: { menuKey: string }) => {
 
 interface PartnerSidebarProps {
   userRole: 'partner' | 'sub_partner' | 'admin' | 'subadmin'; 
-  permissions: string[]; 
+  permissions: string[];
+  // [NEW] 모바일에서 메뉴 클릭 시 사이드바를 닫기 위한 콜백
+  onMenuClick?: () => void; 
 }
 
-const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }) => {
+const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions, onMenuClick }) => {
   
   const location = useLocation(); 
   
@@ -100,8 +102,8 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
             <NavLink
               to="/program/dashboard"
               className="partner-menu-parent"
+              onClick={onMenuClick} // [NEW] 클릭 시 닫기
             >
-              {/* [수정] 아이콘 추가 */}
               <div className="menu-label">
                 <span className="menu-icon"><MenuIcon menuKey="dashboard" /></span>
                 <span>대시보드</span>
@@ -120,7 +122,6 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
                 className={`partner-menu-parent ${isParentActive ? 'active' : ''}`}
                 onClick={() => handleParentClick(menu.key)}
               >
-                {/* [수정] 아이콘 추가 및 레이아웃 변경 */}
                 <div className="menu-label">
                   <span className="menu-icon"><MenuIcon menuKey={menu.key} /></span>
                   <span>{menu.title}</span>
@@ -140,6 +141,7 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ userRole, permissions }
                           : ''
                         }`
                       }
+                      onClick={onMenuClick} // [NEW] 클릭 시 닫기
                     >
                       {subMenu.title}
                     </NavLink>

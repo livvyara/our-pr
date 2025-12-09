@@ -51,7 +51,6 @@ export interface ExpenseCategory {
 type CategoryType = 'site' | 'general';
 
 const AccountingExpenseCategoryPage: React.FC = () => {
-  // [중요] 데이터 소유자 UID (직원이면 대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -64,7 +63,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [editTargetIndex, setEditTargetIndex] = useState<number>(-1);
 
-  // [1] 권한 확인 및 UID 설정
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -72,14 +70,11 @@ const AccountingExpenseCategoryPage: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if(userDoc.exists()) {
                 const d = userDoc.data();
-                
-                // [핵심] 데이터 소유자 결정
                 let targetUid = user.uid;
                 if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
                     targetUid = d.partnerInfo.ownerUid;
                 }
-                
-                setCurrentUid(targetUid); // -> 이 값이 설정되면 아래 useEffect 실행
+                setCurrentUid(targetUid);
             }
         } catch (e) { console.error("사용자 정보 로드 실패", e); }
       }
@@ -87,7 +82,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // [2] 데이터 로드 (UID 설정 후)
   useEffect(() => {
     if (currentUid) {
         fetchCategories(currentUid);
@@ -130,22 +124,18 @@ const AccountingExpenseCategoryPage: React.FC = () => {
       if (targetIndex < 0 || targetIndex >= newCategories.length) return;
 
       [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
-      
       setCategories(newCategories);
 
       try {
           const batch = writeBatch(db);
           const colName = getCollectionName();
-          
           newCategories.forEach((cat, idx) => {
               const docRef = doc(db, 'users', currentUid, colName, cat.id);
               batch.update(docRef, { order: idx });
           });
-
           await batch.commit();
       } catch (e) {
           console.error("순서 저장 실패:", e);
-          alert("순서 저장 중 오류가 발생했습니다.");
           fetchCategories(currentUid); 
       }
   };
@@ -168,7 +158,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
           const updatedCat = { ...selectedCategory, subCategories: newSubs };
           setSelectedCategory(updatedCat);
           setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
-
       } catch (e) { console.error("순서 저장 실패:", e); }
   };
 
@@ -190,32 +179,24 @@ const AccountingExpenseCategoryPage: React.FC = () => {
               DEFAULT_SITE_L1.forEach((name, idx) => {
                   const docRef = doc(collection(db, 'users', currentUid, colName));
                   batch.set(docRef, {
-                      name: name,
-                      subCategories: DEFAULT_SITE_L2_COMMON,
-                      order: startOrder + idx
+                      name: name, subCategories: DEFAULT_SITE_L2_COMMON, order: startOrder + idx
                   });
               });
           } else {
               DEFAULT_GENERAL_DATA.forEach((item, idx) => {
                   const docRef = doc(collection(db, 'users', currentUid, colName));
                   batch.set(docRef, {
-                      name: item.name,
-                      subCategories: item.subs,
-                      order: startOrder + idx
+                      name: item.name, subCategories: item.subs, order: startOrder + idx
                   });
               });
           }
-
           await batch.commit();
           alert("기본 분류가 생성되었습니다.");
           fetchCategories(currentUid);
-
       } catch (e) {
           console.error("초기화 실패:", e);
           alert("초기화 중 오류가 발생했습니다.");
-      } finally {
-          setLoading(false);
-      }
+      } finally { setLoading(false); }
   };
 
   const handleDeleteLevel1 = async (cat: ExpenseCategory) => {
@@ -257,10 +238,7 @@ const AccountingExpenseCategoryPage: React.FC = () => {
         const newDocRef = doc(collection(db, 'users', currentUid, colName));
         const newOrder = categories.length; 
         const newCat: ExpenseCategory = { 
-            id: newDocRef.id, 
-            name: inputValue.trim(), 
-            subCategories: [],
-            order: newOrder
+            id: newDocRef.id, name: inputValue.trim(), subCategories: [], order: newOrder
         };
         await setDoc(newDocRef, newCat);
         setCategories(prev => [...prev, newCat]);
@@ -268,7 +246,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
       else if (modalMode === 'edit1' && selectedCategory) {
         const docRef = doc(db, 'users', currentUid, colName, selectedCategory.id);
         await updateDoc(docRef, { name: inputValue.trim() });
-        
         const updatedCat = { ...selectedCategory, name: inputValue.trim() };
         setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
         setSelectedCategory(updatedCat);
@@ -277,7 +254,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
         const newSubs = [...selectedCategory.subCategories, inputValue.trim()];
         const docRef = doc(db, 'users', currentUid, colName, selectedCategory.id);
         await updateDoc(docRef, { subCategories: newSubs });
-
         const updatedCat = { ...selectedCategory, subCategories: newSubs };
         setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
         setSelectedCategory(updatedCat);
@@ -287,7 +263,6 @@ const AccountingExpenseCategoryPage: React.FC = () => {
         newSubs[editTargetIndex] = inputValue.trim();
         const docRef = doc(db, 'users', currentUid, colName, selectedCategory.id);
         await updateDoc(docRef, { subCategories: newSubs });
-
         const updatedCat = { ...selectedCategory, subCategories: newSubs };
         setCategories(prev => prev.map(c => c.id === updatedCat.id ? updatedCat : c));
         setSelectedCategory(updatedCat);
@@ -309,103 +284,106 @@ const AccountingExpenseCategoryPage: React.FC = () => {
   };
 
   return (
-    <div className="hometax-page-container">
-      <div className="hometax-header-wrapper" style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end'}}>
-          <div>
-            <div className="hometax-title" style={{marginBottom:'10px'}}>
-                <h2>지출품목 설정</h2>
-                <p>매입/지출 결의 및 세금계산서/현금영수증 조회 시 사용할 분류를 설정합니다.</p>
-            </div>
-            <div className="category-tab-container">
-                <label className={`tab-radio ${currentTab === 'site' ? 'active' : ''}`}>
-                    <input type="radio" name="categoryType" checked={currentTab === 'site'} onChange={() => setCurrentTab('site')}/>
-                    🏗️ 현장 지출품목 (공정)
-                </label>
-                <label className={`tab-radio ${currentTab === 'general' ? 'active' : ''}`}>
-                    <input type="radio" name="categoryType" checked={currentTab === 'general'} onChange={() => setCurrentTab('general')}/>
-                    🏢 기타/관리 지출품목
-                </label>
-            </div>
+    <div className="expense-category-page-container">
+      {/* 1. 헤더 (통합 페이지 스타일) */}
+      <div className="expense-category-header-wrapper">
+          <div className="expense-category-title">
+            <h2>지출품목 설정</h2>
+            <p>매입/지출 결의 및 세금계산서/현금영수증 조회 시 사용할 분류를 설정합니다.</p>
           </div>
           
-          <div style={{paddingBottom:'10px'}}>
-              <button className="btn-reset-defaults" onClick={handleInitializeDefaults}>
-                  🔄 기본값 셋팅하기
-              </button>
+          {/* 2. 컨트롤 패널 (회색 박스) */}
+          <div className="expense-category-control-panel">
+               <div className="expense-category-filter-row">
+                    {/* 모드 버튼 (탭) */}
+                    <div className="expense-category-mode-buttons">
+                        <button 
+                            className={`expense-category-mode-btn ${currentTab === 'site' ? 'active' : ''}`} 
+                            onClick={() => setCurrentTab('site')}
+                        >
+                            🏗️ 현장 지출품목
+                        </button>
+                        <button 
+                            className={`expense-category-mode-btn ${currentTab === 'general' ? 'active' : ''}`} 
+                            onClick={() => setCurrentTab('general')}
+                        >
+                            🏢 기타/관리 지출품목
+                        </button>
+                    </div>
+                    <span className="expense-category-info-text">
+                        ℹ️ 분류를 선택하고 하위 항목을 관리하세요.
+                    </span>
+               </div>
+
+               {/* 우측 액션 버튼 */}
+               <button className="expense-category-btn-manual" onClick={handleInitializeDefaults}>
+                   🔄 기본값 셋팅하기
+               </button>
           </div>
       </div>
 
-      <div className="expense-setting-container">
+      {/* 3. 메인 콘텐츠 (2단 컬럼 - 통합 페이지 테이블 스타일 적용) */}
+      <div className="expense-category-content-wrapper">
+        
         {/* [좌측] 1차 분류 */}
-        <div className="expense-column">
-            <div className="column-header">
+        <div className="expense-category-column">
+            <div className="expense-category-column-header">
                 <h3>1차 분류 ({currentTab === 'site' ? '대공종' : '대분류'})</h3>
-                <button className="btn-add-mini" onClick={() => openModal('add1')}>+ 추가</button>
+                <button className="expense-category-btn-add" onClick={() => openModal('add1')}>+ 추가</button>
             </div>
-            <div className="column-body">
-                {loading ? <p className="loading-text">로딩 중...</p> : categories.map((cat, idx) => (
+            <div className="expense-category-list">
+                {loading ? <p className="expense-category-empty">로딩 중...</p> : categories.map((cat, idx) => (
                     <div 
                         key={cat.id} 
-                        className={`category-item ${selectedCategory?.id === cat.id ? 'active' : ''}`}
+                        className={`expense-category-item ${selectedCategory?.id === cat.id ? 'active' : ''}`}
                         onClick={() => setSelectedCategory(cat)}
                     >
-                        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                            <span className="cat-name">{cat.name}</span>
-                        </div>
+                        <span>{cat.name}</span>
                         
-                        <div className="item-actions">
-                            <button onClick={(e) => { e.stopPropagation(); handleMoveLevel1(idx, 'up'); }} disabled={idx === 0} title="위로">▲</button>
-                            <button onClick={(e) => { e.stopPropagation(); handleMoveLevel1(idx, 'down'); }} disabled={idx === categories.length - 1} title="아래로">▼</button>
-                            <div className="divider-vertical"></div>
-                            <button onClick={(e) => { e.stopPropagation(); openModal('edit1', cat.name); }}>✎</button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDeleteLevel1(cat); }} className="del">×</button>
+                        <div className="expense-category-item-actions">
+                            <button onClick={(e) => { e.stopPropagation(); handleMoveLevel1(idx, 'up'); }} disabled={idx === 0} className="expense-category-btn-icon" title="위로">▲</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleMoveLevel1(idx, 'down'); }} disabled={idx === categories.length - 1} className="expense-category-btn-icon" title="아래로">▼</button>
+                            <button onClick={(e) => { e.stopPropagation(); openModal('edit1', cat.name); }} className="expense-category-btn-icon">✎</button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteLevel1(cat); }} className="expense-category-btn-icon del">×</button>
                         </div>
                     </div>
                 ))}
-                {!loading && categories.length === 0 && <div className="empty-state">등록된 분류가 없습니다.<br/>우측 상단 '기본값 셋팅하기'를 눌러보세요.</div>}
+                {!loading && categories.length === 0 && <div className="expense-category-empty">등록된 분류가 없습니다.</div>}
             </div>
         </div>
 
-        <div className="arrow-divider">▶</div>
+        <div className="expense-category-arrow">▶</div>
 
         {/* [우측] 2차 분류 */}
-        <div className="expense-column">
-            <div className="column-header">
+        <div className="expense-category-column">
+            <div className="expense-category-column-header">
                 <h3>2차 분류 ({currentTab === 'site' ? '상세공종' : '상세분류'})</h3>
                 <button 
-                    className="btn-add-mini" 
+                    className="expense-category-btn-add" 
                     onClick={() => openModal('add2')} 
                     disabled={!selectedCategory}
-                    style={{opacity: !selectedCategory ? 0.5 : 1}}
                 >
                     + 추가
                 </button>
             </div>
-            <div className="column-body">
+            <div className="expense-category-list">
                 {!selectedCategory ? (
-                    <div className="empty-state">좌측에서 1차 분류를 먼저 선택해주세요.</div>
+                    <div className="expense-category-empty">좌측에서 1차 분류를 먼저 선택해주세요.</div>
                 ) : (
                     <>
-                        <div className="selected-label">
-                            선택됨: <strong>{selectedCategory.name}</strong>
-                            <span style={{fontSize:'11px', color:'#888', marginLeft:'5px'}}>
-                                ({currentTab === 'site' ? '현장' : '기타'})
-                            </span>
-                        </div>
                         {selectedCategory.subCategories.map((sub, idx) => (
-                            <div key={idx} className="category-item sub">
-                                <span className="cat-name">└ {sub}</span>
-                                <div className="item-actions">
-                                    <button onClick={() => handleMoveLevel2(idx, 'up')} disabled={idx === 0} title="위로">▲</button>
-                                    <button onClick={() => handleMoveLevel2(idx, 'down')} disabled={idx === selectedCategory.subCategories.length - 1} title="아래로">▼</button>
-                                    <div className="divider-vertical"></div>
-                                    <button onClick={() => openModal('edit2', sub, idx)}>✎</button>
-                                    <button onClick={() => handleDeleteLevel2(sub, idx)} className="del">×</button>
+                            <div key={idx} className="expense-category-item">
+                                <span>└ {sub}</span>
+                                <div className="expense-category-item-actions">
+                                    <button onClick={() => handleMoveLevel2(idx, 'up')} disabled={idx === 0} className="expense-category-btn-icon" title="위로">▲</button>
+                                    <button onClick={() => handleMoveLevel2(idx, 'down')} disabled={idx === selectedCategory.subCategories.length - 1} className="expense-category-btn-icon" title="아래로">▼</button>
+                                    <button onClick={() => openModal('edit2', sub, idx)} className="expense-category-btn-icon">✎</button>
+                                    <button onClick={() => handleDeleteLevel2(sub, idx)} className="expense-category-btn-icon del">×</button>
                                 </div>
                             </div>
                         ))}
                         {selectedCategory.subCategories.length === 0 && (
-                            <div className="empty-state">등록된 2차 분류가 없습니다.</div>
+                            <div className="expense-category-empty">등록된 2차 분류가 없습니다.</div>
                         )}
                     </>
                 )}
@@ -415,27 +393,25 @@ const AccountingExpenseCategoryPage: React.FC = () => {
 
       {/* 입력/수정 모달 */}
       {isModalOpen && (
-        <div className="invoice-modal-backdrop" onClick={() => setIsModalOpen(false)}>
-            <div className="invoice-paper small-modal" onClick={e => e.stopPropagation()}>
-                <h3 style={{marginTop:0}}>
+        <div className="expense-category-modal-backdrop" onClick={() => setIsModalOpen(false)}>
+            <div className="expense-category-modal-paper" onClick={e => e.stopPropagation()}>
+                <h3 className="expense-category-modal-title">
                     {modalMode === 'add1' ? '1차 분류 추가' : 
                      modalMode === 'edit1' ? '1차 분류 수정' :
                      modalMode === 'add2' ? '2차 분류 추가' : '2차 분류 수정'}
                 </h3>
-                <div style={{margin: '20px 0'}}>
-                    <input 
-                        type="text" 
-                        className="modal-input"
-                        value={inputValue} 
-                        onChange={e => setInputValue(e.target.value)}
-                        placeholder={currentTab === 'site' ? "예: 목공사, 전기공사..." : "예: 식대, 교통비..."}
-                        onKeyPress={e => e.key === 'Enter' && handleSave()}
-                        autoFocus
-                    />
-                </div>
-                <div className="modal-btn-group">
-                    <button onClick={() => setIsModalOpen(false)} className="btn-cancel">취소</button>
-                    <button onClick={handleSave} className="btn-save" style={{background: K_BRAND_COLOR}}>저장</button>
+                <input 
+                    type="text" 
+                    className="expense-category-modal-input"
+                    value={inputValue} 
+                    onChange={e => setInputValue(e.target.value)}
+                    placeholder={currentTab === 'site' ? "예: 목공사, 전기공사..." : "예: 식대, 교통비..."}
+                    onKeyPress={e => e.key === 'Enter' && handleSave()}
+                    autoFocus
+                />
+                <div className="expense-category-modal-btns">
+                    <button onClick={() => setIsModalOpen(false)} className="expense-category-btn-cancel">취소</button>
+                    <button onClick={handleSave} className="expense-category-btn-save" style={{background: K_BRAND_COLOR}}>저장</button>
                 </div>
             </div>
         </div>

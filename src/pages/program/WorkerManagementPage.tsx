@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, getDocs, doc, deleteDoc, 
-  query, where, orderBy, onSnapshot, writeBatch, addDoc, serverTimestamp, getDoc
+  query, orderBy, onSnapshot, writeBatch, addDoc, serverTimestamp, getDoc
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
@@ -44,10 +44,7 @@ const WorkerManagementPage: React.FC = () => {
   const [workers, setWorkers] = useState<WorkerData[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // [중요] 데이터 소유자의 UID (파트너 본인 또는 직원의 경우 대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
-  
-  // 로그인한 사용자 정보 (로그 기록용)
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,27 +67,17 @@ const WorkerManagementPage: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if(userDoc.exists()) {
                 const d = userDoc.data();
-                
-                // 1. 로그인한 사용자 정보 저장 (로그용)
                 setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
 
-                // 2. [핵심 수정] 데이터 소유자(Target UID) 결정
-                let targetUid = user.uid; // 기본은 본인
-                
-                // 직원이면 대표(owner)의 UID를 사용
+                let targetUid = user.uid;
                 if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
                     targetUid = d.partnerInfo.ownerUid;
                 }
-
-                setCurrentUid(targetUid); // 상태 업데이트
-                
-                // 3. 데이터 로드 (Target UID 기준)
+                setCurrentUid(targetUid);
                 fetchTrades(targetUid); 
                 subscribeWorkers(targetUid);
             }
-        } catch (e) {
-            console.error("사용자 정보 로드 실패", e);
-        }
+        } catch (e) { console.error("사용자 정보 로드 실패", e); }
       }
     });
     return () => unsubscribe();
@@ -102,10 +89,7 @@ const WorkerManagementPage: React.FC = () => {
       const snap = await getDocs(q);
       const list = snap.docs.map(d => d.data().name);
       setTradeOptions(['전체', ...list]);
-    } catch (e) {
-      console.log("공종 로드 실패", e);
-      setTradeOptions(['전체']);
-    }
+    } catch (e) { console.log("공종 로드 실패", e); setTradeOptions(['전체']); }
   };
 
   const subscribeWorkers = (uid: string) => {
@@ -116,12 +100,7 @@ const WorkerManagementPage: React.FC = () => {
       const list: WorkerData[] = [];
       snapshot.forEach(doc => {
         const d = doc.data();
-        
-        let finalRrn = d.residentNumber;
-        if (!finalRrn) finalRrn = d.rrn;
-        if (!finalRrn) finalRrn = d.residentNo;
-        if (!finalRrn) finalRrn = '';
-
+        let finalRrn = d.residentNumber || d.rrn || d.residentNo || '';
         list.push({
           id: doc.id,
           workerName: d.workerName || '',
@@ -156,20 +135,13 @@ const WorkerManagementPage: React.FC = () => {
   const getBirthDateFromRrn = (rrn: string) => {
       const cleanRrn = rrn.replace(/-/g, '').trim();
       if (cleanRrn.length < 7) return 0;
-
       const yy = parseInt(cleanRrn.substring(0, 2), 10);
       const mmdd = cleanRrn.substring(2, 6);
       const gender = cleanRrn.charAt(6);
-
       let fullYear = yy;
-      if (['1', '2', '5', '6'].includes(gender)) {
-          fullYear += 1900;
-      } else if (['3', '4', '7', '8'].includes(gender)) {
-          fullYear += 2000;
-      } else if (['9', '0'].includes(gender)) {
-          fullYear += 1800;
-      }
-
+      if (['1', '2', '5', '6'].includes(gender)) fullYear += 1900;
+      else if (['3', '4', '7', '8'].includes(gender)) fullYear += 2000;
+      else if (['9', '0'].includes(gender)) fullYear += 1800;
       return parseInt(`${fullYear}${mmdd}`, 10);
   };
 
@@ -178,10 +150,9 @@ const WorkerManagementPage: React.FC = () => {
           if (selectedTrade !== '전체' && worker.trade !== selectedTrade) return false;
           if (searchQuery) {
               const lowerQuery = searchQuery.toLowerCase();
-              const nameMatch = worker.workerName.toLowerCase().includes(lowerQuery);
-              const companyMatch = worker.companyName.toLowerCase().includes(lowerQuery);
-              const tradeMatch = worker.trade.toLowerCase().includes(lowerQuery);
-              if (!nameMatch && !companyMatch && !tradeMatch) return false;
+              if (!worker.workerName.toLowerCase().includes(lowerQuery) && 
+                  !worker.companyName.toLowerCase().includes(lowerQuery) && 
+                  !worker.trade.toLowerCase().includes(lowerQuery)) return false;
           }
           return true;
       });
@@ -197,18 +168,16 @@ const WorkerManagementPage: React.FC = () => {
               }
               const aValue = (a[sortConfig.key] || '').toString();
               const bValue = (b[sortConfig.key] || '').toString();
-              
               if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
               if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
               return 0;
           });
       }
-
       return filtered;
   }, [workers, searchQuery, selectedTrade, sortConfig]);
 
   const getSortIcon = (key: SortKey) => {
-      if (sortConfig.key !== key) return <span className="sort-icon">⇵</span>;
+      if (sortConfig.key !== key) return <span className="sort-icon">⇅</span>;
       return sortConfig.direction === 'asc' ? <span className="sort-icon active">▲</span> : <span className="sort-icon active">▼</span>;
   };
 
@@ -237,17 +206,13 @@ const WorkerManagementPage: React.FC = () => {
               batch.update(ref, { trade: newTrade });
           });
           await batch.commit();
-
           await addDoc(collection(db, 'users', currentUid, 'ACTIVITY_LOGS'), {
               text: `${currentUserInfo.name}님이 작업자 ${selectedIds.size}명의 공종을 [${newTrade}]로 일괄 수정했습니다.`,
-              createdAt: serverTimestamp(),
-              type: 'worker_update_bulk'
+              createdAt: serverTimestamp(), type: 'worker_update_bulk'
           });
-
           alert("일괄 수정되었습니다.");
-          setIsBulkEditOpen(false);
-          setSelectedIds(new Set()); 
-      } catch (e) { console.error(e); alert("오류 발생"); }
+          setIsBulkEditOpen(false); setSelectedIds(new Set()); 
+      } catch (e) { alert("오류 발생"); }
   };
 
   const handleBulkTypeUpdate = async (newType: 'agency' | 'freelance') => {
@@ -266,29 +231,18 @@ const WorkerManagementPage: React.FC = () => {
               batch.update(ref, { workerType: newType, appliedTaxRate: newRate });
           });
           await batch.commit();
-
           const typeName = newType === 'agency' ? '인력소' : '프리랜서';
           await addDoc(collection(db, 'users', currentUid, 'ACTIVITY_LOGS'), {
               text: `${currentUserInfo.name}님이 작업자 ${selectedIds.size}명의 유형을 [${typeName}]로 일괄 수정했습니다.`,
-              createdAt: serverTimestamp(),
-              type: 'worker_update_bulk'
+              createdAt: serverTimestamp(), type: 'worker_update_bulk'
           });
-
           alert("일괄 수정되었습니다.");
-          setIsBulkTypeEditOpen(false);
-          setSelectedIds(new Set()); 
-      } catch (e) { console.error(e); alert("오류 발생"); }
+          setIsBulkTypeEditOpen(false); setSelectedIds(new Set()); 
+      } catch (e) { alert("오류 발생"); }
   };
 
-  const openBulkEditModal = () => {
-      if (selectedIds.size === 0) return alert("수정할 작업자를 선택해주세요.");
-      setIsBulkEditOpen(true);
-  };
-
-  const openBulkTypeEditModal = () => {
-      if (selectedIds.size === 0) return alert("수정할 작업자를 선택해주세요.");
-      setIsBulkTypeEditOpen(true);
-  };
+  const openBulkEditModal = () => { if (selectedIds.size === 0) return alert("수정할 작업자를 선택해주세요."); setIsBulkEditOpen(true); };
+  const openBulkTypeEditModal = () => { if (selectedIds.size === 0) return alert("수정할 작업자를 선택해주세요."); setIsBulkTypeEditOpen(true); };
 
   const handleDelete = async (id: string) => {
       if(!currentUid) return;
@@ -305,116 +259,105 @@ const WorkerManagementPage: React.FC = () => {
 
   const handleOpenAdd = () => { setEditTarget(null); setIsModalOpen(true); };
   const handleOpenEdit = (worker: WorkerData) => { setEditTarget(worker); setIsModalOpen(true); };
-
-  const handleTradeManagerClose = () => {
-      setIsTradeManagerOpen(false);
-      if (currentUid) fetchTrades(currentUid);
-  };
+  const handleTradeManagerClose = () => { setIsTradeManagerOpen(false); if (currentUid) fetchTrades(currentUid); };
 
   return (
     <div className="worker-page-container">
-      <div className="worker-header">
-        <h2>작업자 관리</h2>
-        <p>등록된 작업자 정보를 조회하고 관리합니다.</p>
-      </div>
+      
+      {/* 1. 헤더 */}
+      <div className="worker-header-wrapper">
+        <div className="worker-title">
+          <h2>작업자 관리</h2>
+          <p>등록된 작업자 정보를 조회하고 관리합니다.</p>
+        </div>
 
-      <div className="worker-control-panel">
-        <div className="filter-row">
-            <div className="search-box">
-                <input type="text" placeholder="이름, 업체명, 공종 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                <span className="icon">🔍</span>
-            </div>
-            <div className="filter-box">
-                <select value={selectedTrade} onChange={(e) => setSelectedTrade(e.target.value)}>
+        {/* 2. 컨트롤 패널 */}
+        <div className="worker-control-panel">
+            <div className="worker-filter-row">
+                <input 
+                    type="text" 
+                    placeholder="이름, 업체명, 공종 검색" 
+                    className="worker-search-input" 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                />
+                <select 
+                    className="worker-select"
+                    value={selectedTrade} 
+                    onChange={(e) => setSelectedTrade(e.target.value)}
+                >
                     {tradeOptions.map((trade, idx) => (
                         <option key={idx} value={trade}>{trade === '전체' ? '전체 공종' : trade}</option>
                     ))}
                 </select>
             </div>
             
-            <div style={{flex:1}}></div>
-
-            <button className="btn-bulk-edit" onClick={openBulkTypeEditModal}>
-                👥 유형 일괄 수정
-            </button>
-
-            <button className="btn-bulk-edit" onClick={openBulkEditModal}>
-                ✏️ 공종 일괄 수정
-            </button>
-
-            <button className="btn-manage-trade" onClick={() => setIsTradeManagerOpen(true)}>
-                ⚙️ 공종 관리
-            </button>
-            
-            <button className="btn-add-worker" onClick={handleOpenAdd} style={{background: K_BRAND_COLOR}}>
-                + 작업자 등록
-            </button>
+            <div className="worker-action-group">
+                <button className="worker-btn-manual" onClick={openBulkTypeEditModal}>👥 유형 일괄수정</button>
+                <button className="worker-btn-manual" onClick={openBulkEditModal}>✏️ 공종 일괄수정</button>
+                <button className="worker-btn-manual" onClick={() => setIsTradeManagerOpen(true)}>⚙️ 공종 관리</button>
+                <button className="worker-btn-primary" onClick={handleOpenAdd}>+ 작업자 등록</button>
+            </div>
         </div>
       </div>
 
-      <div className="worker-list-section">
+      {/* 3. 리스트 영역 */}
+      <div className="worker-result-section">
         {loading ? (
-            <div className="loading">데이터를 불러오는 중입니다...</div>
+            <div className="worker-loading">데이터를 불러오는 중입니다...</div>
         ) : processedWorkers.length === 0 ? (
-            <div className="no-data">검색된 작업자가 없습니다.</div>
+            <div className="worker-no-data">검색된 작업자가 없습니다.</div>
         ) : (
             <div className="worker-table-wrapper">
                 <table className="worker-table">
                     <thead>
                         <tr>
-                            <th style={{width:'40px', textAlign:'center', paddingLeft:'10px'}}>
+                            <th style={{width:'40px', paddingLeft:'10px'}}>
                                 <input 
                                     type="checkbox" 
                                     checked={processedWorkers.length > 0 && selectedIds.size === processedWorkers.length}
                                     onChange={handleSelectAll}
+                                    style={{cursor:'pointer'}}
                                 />
                             </th>
-                            <th className="sortable-th" onClick={() => handleSort('workerName')}>
-                                이름 {getSortIcon('workerName')}
-                            </th>
-                            <th className="sortable-th" onClick={() => handleSort('companyName')}>
-                                소속(업체) {getSortIcon('companyName')}
-                            </th>
-                            <th className="sortable-th center-th" style={{width:'180px'}} onClick={() => handleSort('trade')}>
-                                공종 {getSortIcon('trade')}
-                            </th>
-                            <th className="sortable-th" onClick={() => handleSort('phoneNumber')}>
-                                연락처 {getSortIcon('phoneNumber')}
-                            </th>
-                            <th className="sortable-th" onClick={() => handleSort('residentNumber')}>
-                                주민등록번호(생년월일) {getSortIcon('residentNumber')}
-                            </th>
+                            <th className="sortable-th" onClick={() => handleSort('workerName')}>이름 {getSortIcon('workerName')}</th>
+                            <th className="sortable-th" onClick={() => handleSort('companyName')}>소속(업체) {getSortIcon('companyName')}</th>
+                            <th className="sortable-th" onClick={() => handleSort('trade')}>공종 {getSortIcon('trade')}</th>
+                            <th className="sortable-th" onClick={() => handleSort('phoneNumber')}>연락처 {getSortIcon('phoneNumber')}</th>
+                            <th className="sortable-th" onClick={() => handleSort('residentNumber')}>주민번호 {getSortIcon('residentNumber')}</th>
                             <th>계좌정보</th>
-                            <th style={{width:'120px', textAlign:'center'}}>관리</th>
+                            <th style={{width:'100px', textAlign:'center'}}>관리</th>
                         </tr>
                     </thead>
                     <tbody>
                         {processedWorkers.map(worker => (
                             <tr key={worker.id} className={selectedIds.has(worker.id) ? 'selected-row' : ''}>
-                                <td style={{textAlign:'center', paddingLeft:'10px'}}>
+                                <td style={{textAlign:'center'}}>
                                     <input 
                                         type="checkbox" 
                                         checked={selectedIds.has(worker.id)}
                                         onChange={() => handleSelectRow(worker.id)}
                                     />
                                 </td>
-                                <td style={{fontWeight:'bold', cursor:'pointer'}} onClick={() => handleOpenEdit(worker)}>{worker.workerName}</td>
-                                <td>{worker.companyName || '-'}</td>
-                                <td style={{textAlign:'center'}}>
-                                    <span className="badge">{worker.trade}</span>
+                                <td style={{fontWeight:'bold', cursor:'pointer', color:'#1976d2'}} onClick={() => handleOpenEdit(worker)}>
+                                    {worker.workerName}
                                 </td>
-                                <td>{worker.phoneNumber || '-'}</td>
-                                <td>
+                                <td data-label="소속">{worker.companyName || '-'}</td>
+                                <td data-label="공종" style={{textAlign:'center'}}>
+                                    <span className="worker-badge">{worker.trade}</span>
+                                </td>
+                                <td data-label="연락처">{worker.phoneNumber || '-'}</td>
+                                <td data-label="주민번호">
                                     {worker.residentNumber && worker.residentNumber.length >= 8 
                                         ? worker.residentNumber.substring(0,8)+'******' 
                                         : (worker.residentNumber || '-')}
                                 </td>
-                                <td style={{fontSize:'12px', color:'#666'}}>
+                                <td data-label="계좌정보" style={{fontSize:'12px', color:'#666'}}>
                                     {worker.bankName} {worker.accountNumber}
                                 </td>
-                                <td style={{textAlign:'center'}}>
-                                    <button className="btn-edit-mini" onClick={() => handleOpenEdit(worker)}>수정</button>
-                                    <button className="btn-del-mini" onClick={() => handleDelete(worker.id)}>삭제</button>
+                                <td data-label="관리" style={{textAlign:'center'}}>
+                                    <button className="worker-btn-mini" onClick={() => handleOpenEdit(worker)}>수정</button>
+                                    <button className="worker-btn-mini del" onClick={() => handleDelete(worker.id)}>삭제</button>
                                 </td>
                             </tr>
                         ))}
@@ -426,39 +369,29 @@ const WorkerManagementPage: React.FC = () => {
 
       {isModalOpen && currentUid && (
           <WorkerModal 
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            partnerUid={currentUid}
-            targetWorker={editTarget}
-            tradeOptions={tradeOptions} 
-            userName={currentUserInfo.name} 
+            isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+            partnerUid={currentUid} targetWorker={editTarget}
+            tradeOptions={tradeOptions} userName={currentUserInfo.name} 
           />
       )}
 
       {isTradeManagerOpen && currentUid && (
           <TradeManageModal 
-            onClose={handleTradeManagerClose} 
-            partnerUid={currentUid}
-            onUpdate={() => fetchTrades(currentUid)} 
+            onClose={handleTradeManagerClose} partnerUid={currentUid} onUpdate={() => fetchTrades(currentUid)} 
           />
       )}
 
       {isBulkEditOpen && (
           <BulkTradeEditModal
-            isOpen={isBulkEditOpen}
-            onClose={() => setIsBulkEditOpen(false)}
-            selectedCount={selectedIds.size}
-            tradeOptions={tradeOptions}
-            onConfirm={handleBulkUpdate}
+            isOpen={isBulkEditOpen} onClose={() => setIsBulkEditOpen(false)}
+            selectedCount={selectedIds.size} tradeOptions={tradeOptions} onConfirm={handleBulkUpdate}
           />
       )}
 
       {isBulkTypeEditOpen && (
           <BulkTypeEditModal
-            isOpen={isBulkTypeEditOpen}
-            onClose={() => setIsBulkTypeEditOpen(false)}
-            selectedCount={selectedIds.size}
-            onConfirm={handleBulkTypeUpdate}
+            isOpen={isBulkTypeEditOpen} onClose={() => setIsBulkTypeEditOpen(false)}
+            selectedCount={selectedIds.size} onConfirm={handleBulkTypeUpdate}
           />
       )}
     </div>

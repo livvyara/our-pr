@@ -1,89 +1,357 @@
 /* src/pages/program/PartnerProgramPage.css */
 
-/* [수정] 부모(MainLayout)의 흐름을 따르도록 설정 */
+/* 1. 메인 레이아웃 (PC 기준) */
 .program-main-layout {
-  display: flex;
-  flex-direction: row; /* 좌측 사이드바 + 우측 콘텐츠 */
-  width: 100%;
-  
-  /* 화면 전체 높이가 아니라, 내용물만큼 늘어나되 최소 높이만 보장 */
-  min-height: calc(100vh - 120px); 
-  
-  /* 배경색 */
-  background-color: #f5f7fa;
-  
-  /* [중요] padding과 margin을 0으로 하여 MainLayout의 padding-top을 방해하지 않음 */
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  padding-top: 0px;
-  
-  /* 위치 고정 속성 제거 (혹시 있을 경우를 대비해 명시) */
-  position: static;
+    display: flex;
+    flex-direction: row; /* 좌: 사이드바, 우: 콘텐츠 */
+    width: 100%;
+    min-height: 100vh; /* 화면 전체 높이 */
+    background-color: #f5f7fa; /* 통합 배경색 */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
 }
 
-/* 콘텐츠 영역 */
+/* 2. 사이드바 래퍼 (모바일 제어용) */
+.partner-sidebar-wrapper {
+    width: auto;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-right: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+/* 3. 콘텐츠 영역 */
 .program-content-area {
-  flex-grow: 1;
-  padding: 10px; /* 내부 여백 */
-  box-sizing: border-box;
-  
-  /* 가로 스크롤 방지 */
-  overflow-x: hidden; 
-  
-  display: flex;
-  flex-direction: column;
+    flex-grow: 1;
+    padding: 30px; /* 통합 페이지 여백 통일 */
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%; /* 남은 공간 차지 */
+    display: flex;
+    flex-direction: column;
 }
 
-/* 대시보드 그리드 */
+/* 4. 대시보드 그리드 (Dashboard Logic) */
 .dashboard-grid {
-  display: grid;
-  grid-template-columns: 3fr 1fr; 
-  grid-template-rows: auto auto;
-  gap: 20px;
-  width: 100%;
+    display: grid;
+    grid-template-columns: 3fr 1fr; /* 3:1 비율 */
+    grid-template-rows: auto auto;
+    gap: 20px;
+    width: 100%;
 }
 
-/* 위젯 공통 스타일 */
+/* 위젯 스타일 (카드 형태 통일) */
 .widget {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  border: 1px solid #eee; 
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    border: 1px solid #eee; 
+    height: 100%; /* 그리드 셀 높이 채움 */
+    box-sizing: border-box;
 }
 
 .calendar-widget-area {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3; 
-  display: flex;
-  flex-direction: column;
-  min-height: 800px; 
+    grid-column: 1 / 2;
+    grid-row: 1 / 3; 
+    display: flex;
+    flex-direction: column;
+    min-height: 800px; 
 }
 
 .widget-top-right {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    min-height: 300px;
 }
 
 .widget-bottom-right {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
 }
 
-/* 모바일 반응형 */
+/* 모바일 메뉴 토글 버튼 (PC 숨김) */
+.mobile-menu-toggle {
+    display: none;
+}
+
+/* =========================================
+   [Mobile Responsive] 모바일 대응 스타일
+   ========================================= */
 @media (max-width: 768px) {
-  .program-main-layout {
-    flex-direction: column;
-  }
-  
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+    .program-main-layout {
+        flex-direction: column; /* 사이드바 상단, 콘텐츠 하단 배치 */
+    }
+
+    /* 모바일 사이드바 제어 */
+    .partner-sidebar-wrapper {
+        width: 100%;
+        display: none; /* 기본 숨김 */
+    }
+    .partner-sidebar-wrapper.open {
+        display: block;
+    }
+
+    /* 모바일 메뉴 토글 버튼 표시 */
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #333;
+        color: #fff;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    /* 콘텐츠 영역 여백 축소 */
+    .program-content-area {
+        padding: 10px;
+    }
+    
+    /* 대시보드 그리드 -> 세로 스택 */
+    .dashboard-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* 위젯 공통: 너비 100% */
+    .calendar-widget-area, 
+    .widget-top-right, 
+    .widget-bottom-right {
+        grid-column: auto;
+        grid-row: auto;
+        width: 100%;
+        min-height: auto !important; /* 고정 높이 해제 */
+    }
+
+    /* --- [1] 캘린더 위젯: 달력 그리드 & 날짜 선택기 숨김 --- */
+    .calendar-widget-area {
+        min-height: auto !important; 
+        padding-bottom: 20px;
+    }
+
+    /* (A) 달력 본문(그리드) 숨김 */
+    .calendar-widget-area .fc-view-harness,
+    .calendar-widget-area .fc-daygrid,
+    .calendar-widget-area .fc-timegrid,
+    .calendar-widget-area .rbc-month-view,
+    .calendar-widget-area .react-calendar__viewContainer {
+        display: none !important;
+    }
+
+    /* (B) [NEW] 연도/날짜 선택 텍스트 및 네비게이션 버튼 숨김 */
+    /* FullCalendar 기준 */
+    .calendar-widget-area .fc-toolbar-title,  /* "2023년 12월" 텍스트 */
+    .calendar-widget-area .fc-prev-button,    /* "<" 버튼 */
+    .calendar-widget-area .fc-next-button,    /* ">" 버튼 */
+    .calendar-widget-area .fc-today-button,   /* "오늘" 버튼 */
+    /* React Calendar / Big Calendar 등 일반적인 라이브러리 대응 */
+    .calendar-widget-area .rbc-toolbar-label, 
+    .calendar-widget-area .react-calendar__navigation {
+        display: none !important;
+    }
+
+    /* --- [2] 캘린더 위젯: 필터 버튼 스타일 수정 --- */
+    /* 버튼들을 감싸는 영역(Toolbar)의 줄바꿈 허용 */
+    .calendar-widget-area .fc-toolbar-chunk, /* FullCalendar 툴바 영역 */
+    .calendar-widget-area div {
+        display: flex;
+        flex-wrap: wrap !important; /* 공간 부족 시 줄바꿈 */
+        gap: 5px; /* 버튼 사이 간격 */
+    }
+
+    /* 캘린더 영역 내부의 모든 버튼(필터 등) 타겟팅 */
+    .calendar-widget-area button {
+        /* 텍스트 한 줄 강제 (두 줄 깨짐 방지) */
+        white-space: nowrap !important;
+        
+        /* 버튼 크기 및 폰트 축소 */
+        width: auto !important;
+        min-width: 60px !important; /* 너무 작아지지 않게 최소폭 지정 */
+        flex: 1 1 auto; /* 화면 너비에 맞춰 유동적으로 늘어남 */
+        
+        height: 36px !important; 
+        padding: 0 12px !important;
+        font-size: 13px !important;
+        
+        /* 기존 마진 초기화 및 간격 조정 */
+        margin: 0 !important; 
+    }
+}
+
+/* PartnerProgramPage.css 추가 */
+
+/* --- 대시보드 현장 목록 위젯 테이블 스타일 (통합 페이지와 통일) --- */
+.dashboard-site-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.dashboard-site-table th {
+    background-color: #f1f3f5; /* 헤더 배경 통일 */
+    color: #333;
+    font-weight: 700;
+    padding: 10px 8px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+
+.dashboard-site-table td {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: #444;
+}
+
+.dashboard-site-table tr:hover {
+    background-color: #fafafa;
+}
+
+/* --- [중요] 상태값 배지 스타일 (통합 페이지와 완벽 일치) --- */
+.dashboard-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: center;
+    /* 기본값 */
+    background: #f5f5f5; 
+    color: #333; 
+    border: 1px solid #ddd;
+}
+
+/* 상태별 컬러 (연한 배경 + 진한 글씨 + 테두리) */
+.dashboard-status-badge.미팅중 { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+.dashboard-status-badge.계약대기 { background: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
+.dashboard-status-badge.계약완료 { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.dashboard-status-badge.공사전 { background: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+.dashboard-status-badge.공사중 { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
+.dashboard-status-badge.공사완료 { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
+.dashboard-status-badge.보류 { background: #eceff1; color: #546e7a; border: 1px solid #cfd8dc; }
+.dashboard-status-badge.취소 { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+.dashboard-status-badge.deleted { background: #333; color: #fff; border: 1px solid #000; }
+
+/* 링크 텍스트 스타일 */
+.dashboard-link-text {
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: transparent;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+}
+.dashboard-link-text:hover {
+    color: #1976d2;
+    text-decoration-color: #1976d2;
+}
+
+.dashboard-widget-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dashboard-btn-text {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.dashboard-btn-text:hover { color: #333; text-decoration: underline; }
+
+
+/* --- 대시보드 모달 스타일 (현장 목록 페이지와 디자인 통일) --- */
+.dashboard-modal-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.dashboard-modal-paper {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 350px;
+    max-width: 90%;
+    padding: 25px;
+    border: 1px solid #ddd;
     display: flex;
     flex-direction: column;
-  }
-  
-  .program-content-area {
-    padding: 15px;
-  }
+}
+
+.dashboard-modal-title {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #333;
+    text-align: center;
+}
+
+.dashboard-modal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dashboard-modal-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f9f9f9;
+    display: flex;
+    align-items: center;
+}
+.dashboard-modal-item:last-child { border-bottom: none; }
+
+.dashboard-checkbox-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+}
+.dashboard-checkbox-label input {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.dashboard-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.dashboard-btn-cancel {
+    padding: 6px 15px; border: 1px solid #ddd; background: #fff; 
+    border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: #555;
+}
+.dashboard-btn-save {
+    padding: 6px 15px; border: none; background: #333; 
+    border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; color: #fff;
 }

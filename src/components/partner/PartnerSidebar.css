@@ -1,128 +1,148 @@
 /* src/components/partner/PartnerSidebar.css */
 
 .partner-sidebar {
-  /* [수정] 너비 220px -> 176px (80% 축소) */
-  width: 176px;
-  flex-shrink: 0;
-  background-color: #f8f9fa;
-  border-right: 1px solid rgba(0, 0, 0, 0.05);
-  box-sizing: border-box;
-  
-  overflow-x: hidden;
-  overflow-y: auto;
+    /* 기본 데스크탑 너비 */
+    width: 176px;
+    flex-shrink: 0;
+    background-color: #f8f9fa;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    
+    /* 스크롤 처리 */
+    overflow-x: hidden;
+    overflow-y: auto;
+    
+    /* 화면 높이에 맞게 설정 (부모 레이아웃에 따름) */
+    height: 100%; 
+    min-height: 100%;
 }
 
 .partner-menu-list {
-  list-style: none;
-  padding: 0;
-  margin: 10px 0;
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
 }
 
 /* 1차 메뉴 (부모) */
 .partner-menu-parent {
-  display: flex;
-  justify-content: space-between; 
-  align-items: center;
-  width: 100%;
-  padding: 12px 15px; /* [수정] 패딩 약간 축소 */
-  background: none;
-  border: none;
-  text-align: left;
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-  transition: background-color 0.1s;
-  box-sizing: border-box;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    width: 100%;
+    padding: 12px 15px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    box-sizing: border-box;
 }
 
-/* [추가] 아이콘과 텍스트를 묶는 래퍼 */
+/* 아이콘과 텍스트 래퍼 */
 .menu-label {
-  display: flex;
-  align-items: center;
-  gap: 8px; /* 아이콘과 텍스트 사이 간격 */
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* [추가] 아이콘 스타일 */
+/* 아이콘 스타일 */
 .menu-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
 }
 
 .partner-menu-parent:hover {
-  background-color: rgba(0, 0, 0, 0.05); 
+    background-color: rgba(0, 0, 0, 0.05); 
 }
 
 .partner-menu-parent.active {
-  background-color: #e9ecef; 
-  color: black;
+    background-color: #e9ecef; 
+    color: black;
 }
 
 /* 하위 메뉴 리스트 */
 .partner-submenu-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  background-color: #f1f1f1;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background-color: #f1f1f1;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
 }
 
 .partner-submenu-list.open {
-  max-height: 500px;
-  transition: max-height 0.3s ease-in;
+    max-height: 800px; /* 충분히 크게 설정 */
+    transition: max-height 0.3s ease-in;
 }
 
 /* 하위 메뉴 아이템 */
 .partner-submenu-item {
-  display: block;
-  width: 100%;
-  
-  /* [수정] 좌측 공백 제거 (기존 padding-left: 35px -> 15px) */
-  /* 상위 메뉴와 라인을 맞추거나 살짝만 들여쓰기 (여기선 아이콘 너비 고려해 15px + 아이콘공간 정도가 적당하나 요청대로 공백 최소화) */
-  padding: 10px 15px 10px 40px; /* 아이콘 아래쪽으로 정렬되게 조정 */
-  
-  background: none;
-  border: none;
-  text-align: left;
-  
-  /* [수정] 폰트 크기 80% 수준으로 축소 (14px -> 11.5px) */
-  font-size: 13px; 
-  font-weight: normal;
-  color: #333;
-  cursor: pointer;
-  text-decoration: none;
-  box-sizing: border-box;
-  
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+    padding: 10px 15px 10px 40px; /* 아이콘 아래 정렬 */
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 13px; 
+    font-weight: normal;
+    color: #333;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .partner-submenu-item:hover {
-  background-color: #e5e5e5;
+    background-color: #e5e5e5;
 }
 
 .partner-submenu-item.active {
-  background-color: #ffffff;
-  font-weight: bold;
-  color: #007bff;
+    background-color: #ffffff;
+    font-weight: bold;
+    color: #007bff;
 }
 
 /* 화살표 아이콘 */
 .accordion-icon {
-  width: 0; 
-  height: 0; 
-  border-style: solid;
-  border-width: 4px 0 4px 5px; /* 크기 약간 축소 */
-  border-color: transparent transparent transparent #888;
-  transition: transform 0.3s ease;
-  margin-left: 5px;
+    width: 0; 
+    height: 0; 
+    border-style: solid;
+    border-width: 4px 0 4px 5px;
+    border-color: transparent transparent transparent #888;
+    transition: transform 0.3s ease;
+    margin-left: 5px;
 }
 
 .accordion-icon.open {
-  transform: rotate(90deg);
+    transform: rotate(90deg);
+}
+
+/* =========================================
+   [Mobile Responsive] 모바일 대응 스타일
+   ========================================= */
+@media (max-width: 768px) {
+    .partner-sidebar {
+        /* 모바일에서는 전체 너비 사용 */
+        width: 100%;
+        height: auto; /* 내용만큼 높이 지정 */
+        border-right: none;
+        border-bottom: 1px solid #ddd; /* 하단 구분선 추가 */
+    }
+
+    /* 터치 영역 확보를 위해 패딩 약간 증가 */
+    .partner-menu-parent {
+        padding: 15px 20px;
+    }
+
+    .partner-submenu-item {
+        padding: 12px 20px 12px 45px;
+    }
 }

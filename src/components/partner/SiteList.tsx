@@ -56,14 +56,12 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
-  // 데이터 상태
   const [meetingMap, setMeetingMap] = useState<Record<string, CellContent>>({});
   const [meetingDateMap, setMeetingDateMap] = useState<Record<string, Date>>({});
   const [recentMemoMap, setRecentMemoMap] = useState<Record<string, CellContent>>({}); 
 
   const db = getFirestore();
 
-  // 1. 현장 목록 로딩
   const fetchSites = useCallback(async () => {
     setIsLoading(true);
     if (!partnerUid) {
@@ -93,7 +91,6 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     fetchSites();
   }, [fetchSites]);
 
-  // [수정] 2. 미팅 일정 구독 (단독 쿼리)
   useEffect(() => {
     if (!partnerUid) return;
     
@@ -109,8 +106,6 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            
-            // siteId 추출 (데이터 없으면 경로에서)
             let siteId = data.siteId;
             if (!siteId && doc.ref.parent.parent) {
                 siteId = doc.ref.parent.parent.id;
@@ -123,7 +118,7 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
 
                 if (meetingDate >= now) {
                     if (!siteNextMeeting[siteId] || meetingDate < siteNextMeeting[siteId].date) {
-                        const dateStr = data.meetingDate.slice(5); // MM-DD
+                        const dateStr = data.meetingDate.slice(5);
                         const contentStr = data.memoContent || '';
                         const shortContent = contentStr.length > 12 ? contentStr.substring(0, 12) + '..' : contentStr;
                         
@@ -152,7 +147,6 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     return () => unsubscribe();
   }, [partnerUid, db]);
 
-  // [수정] 3. 최근 메모 구독 (단독 쿼리 - 일반 메모)
   useEffect(() => {
     if (!partnerUid) return;
 
@@ -211,35 +205,27 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     }
     result = result.filter(site => visibleStatuses.includes(site.status));
     
-    // [정렬 로직]
     result.sort((a, b) => {
-      // 1. 삭제 대기 맨 뒤
       const isDeletedA = a.status === 'deleted';
       const isDeletedB = b.status === 'deleted';
       if (isDeletedA && !isDeletedB) return 1;
       if (!isDeletedA && isDeletedB) return -1;
       if (isDeletedA && isDeletedB) return 0;
 
-      // 2. 상태 순서
       const indexA = currentOrder.indexOf(a.status);
       const indexB = currentOrder.indexOf(b.status);
       if (indexA !== indexB) {
           return indexA - indexB;
       }
 
-      // 3. [중요] '미팅중' 상태 내부 정렬 (약속 가까운 순)
       if (a.status === '미팅중') {
           const dateA = meetingDateMap[a.uid];
           const dateB = meetingDateMap[b.uid];
-
-          // 둘 다 약속 있으면 날짜순
           if (dateA && dateB) return dateA.getTime() - dateB.getTime();
-          // 약속 있는 쪽을 위로
           if (dateA) return -1;
           if (dateB) return 1;
       }
 
-      // 4. 기본 최신순
       const timeA = a.createdAt?.toMillis() || 0;
       const timeB = b.createdAt?.toMillis() || 0;
       return timeB - timeA;
@@ -248,7 +234,6 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     return result;
   }, [allSites, searchTerm, currentOrder, visibleStatuses, meetingDateMap]);
 
-  // Modal Handlers (기존 동일)
   const openSortModal = () => { setTempOrder([...currentOrder]); setIsSortModalOpen(true); };
   const moveSortItem = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...tempOrder];
@@ -269,136 +254,141 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
   const saveVisibility = () => { setVisibleStatuses(tempVisible); setIsVisibilityModalOpen(false); };
 
   return (
-    <div className="site-list-container">
+    <div className="site-list-page-container">
       
-      <div className="list-header">
-        <h2>현장 목록</h2>
-        <div className="header-actions">
-          <button className="header-btn add-btn" onClick={() => setIsAddModalOpen(true)}>
-            + 현장 추가
-          </button>
-          <button className="header-btn" onClick={openSortModal}>
-            ⚙️ 정렬 순서
-          </button>
-          <button className="header-btn" onClick={openVisibilityModal}>
-            👁️ 노출 변경
-          </button>
+      {/* 1. 헤더 */}
+      <div className="site-list-header-wrapper">
+        <div className="site-list-title">
+          <h2>현장 목록</h2>
+          <p>등록된 현장을 조회하고 관리합니다.</p>
+        </div>
+
+        {/* 2. 컨트롤 패널 */}
+        <div className="site-list-control-panel">
+            <div className="site-list-filter-row">
+                <input
+                    type="text"
+                    placeholder="현장명, 주소, 고객명으로 검색"
+                    className="site-list-search-input"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            
+            <div className="site-list-action-group">
+                <button className="site-list-btn-manual" onClick={openSortModal}>
+                    ⚙️ 정렬 순서
+                </button>
+                <button className="site-list-btn-manual" onClick={openVisibilityModal}>
+                    👁️ 노출 변경
+                </button>
+                <button className="site-list-btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                    + 현장 추가
+                </button>
+            </div>
         </div>
       </div>
       
-      <input
-        type="text"
-        placeholder="현장명, 주소, 고객명으로 검색"
-        className="site-search-bar"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-
-      {isLoading && <p>현장 목록을 불러오는 중입니다...</p>}
-      
-      {!isLoading && (
-        <div className="site-table-wrapper">
-          <table className="site-table">
-            <thead>
-              <tr>
-                <th>현장명</th>
-                <th>고객명1</th>
-                <th>연락처1</th>
-                <th>주소</th>
-                <th>상태</th>
-                <th>미팅약속</th>
-                <th>최근메모</th>
-              </tr>
-            </thead>
-            <tbody>
-              {processedSites.map(site => (
-                <tr key={site.uid} className={site.status === 'deleted' ? 'row-deleted' : ''}>
-                  <td>
-                    <button className="site-link-button" onClick={() => onSiteSelect(site.uid)}>
-                      {site.siteName}
-                    </button>
-                  </td>
-                  <td>{site.client1Name}</td>
-                  <td>{formatPhoneNumber(site.client1Phone)}</td>
-                  <td className="address-cell" title={site.address}>{site.address}</td>
-                  
-                  <td>
-                      <span className={`status-badge ${site.status}`}>
-                          {site.status === 'deleted' ? '삭제대기' : site.status}
-                      </span>
-                  </td>
-                  
-                  <td 
-                    className="meeting-cell"
-                    style={{
-                        color: meetingMap[site.uid] ? '#1976d2' : '#ccc', 
-                        fontWeight: meetingMap[site.uid] ? 'bold' : 'normal',
-                        cursor: meetingMap[site.uid] ? 'help' : 'default'
-                    }}
-                    title={meetingMap[site.uid]?.full || ''}
-                  >
-                      {meetingMap[site.uid]?.display || '-'}
-                  </td>
-
-                  <td 
-                    className="memo-cell"
-                    title={recentMemoMap[site.uid]?.full || ''}
-                    style={{ cursor: recentMemoMap[site.uid] ? 'help' : 'default' }}
-                  >
-                      {recentMemoMap[site.uid]?.display || '-'}
-                  </td>
-                </tr>
-              ))}
-              {processedSites.length === 0 && (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>조건에 맞는 현장이 없습니다.</td></tr>
-              )}
-            </tbody>
-          </table>
+      {/* 3. 테이블 영역 */}
+      <div className="site-list-result-section">
+        <div className="site-list-table-wrapper">
+            <table className="site-list-table">
+                <thead>
+                  <tr>
+                    <th style={{width:'150px'}}>현장명</th>
+                    <th style={{width:'100px', textAlign:'center'}}>고객명</th>
+                    <th style={{width:'120px', textAlign:'center'}}>연락처</th>
+                    <th>주소</th>
+                    <th style={{width:'80px', textAlign:'center'}}>상태</th>
+                    <th style={{width:'180px'}}>미팅약속</th>
+                    <th style={{width:'180px'}}>최근메모</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                      <tr><td colSpan={7} className="site-list-loading-td">로딩 중...</td></tr>
+                  ) : processedSites.length === 0 ? (
+                      <tr><td colSpan={7} className="site-list-no-data">조건에 맞는 현장이 없습니다.</td></tr>
+                  ) : (
+                    processedSites.map(site => (
+                        <tr key={site.uid} className={site.status === 'deleted' ? 'row-deleted' : ''}>
+                          {/* 현장명: 모바일에서 카드 헤더로 쓰임 */}
+                          <td data-label="현장명">
+                            <button className="site-link-text" onClick={() => onSiteSelect(site.uid)}>
+                              {site.siteName}
+                            </button>
+                          </td>
+                          <td data-label="고객명" style={{textAlign:'center'}}>{site.client1Name}</td>
+                          <td data-label="연락처" style={{textAlign:'center'}}>{formatPhoneNumber(site.client1Phone)}</td>
+                          <td data-label="주소" title={site.address}>{site.address}</td>
+                          <td data-label="상태" style={{textAlign:'center'}}>
+                              <span className={`site-status-badge ${site.status}`}>
+                                  {site.status === 'deleted' ? '삭제대기' : site.status}
+                              </span>
+                          </td>
+                          <td data-label="미팅약속" title={meetingMap[site.uid]?.full || ''}>
+                              {meetingMap[site.uid] ? (
+                                  <span className="cell-meeting">{meetingMap[site.uid].display}</span>
+                              ) : <span className="cell-empty">-</span>}
+                          </td>
+                          <td data-label="최근메모" title={recentMemoMap[site.uid]?.full || ''}>
+                              {recentMemoMap[site.uid] ? (
+                                  <span className="cell-memo">{recentMemoMap[site.uid].display}</span>
+                              ) : <span className="cell-empty">-</span>}
+                          </td>
+                        </tr>
+                    ))
+                  )}
+                </tbody>
+            </table>
         </div>
-      )}
+      </div>
 
+      {/* 모달: 현장 추가 */}
       {isAddModalOpen && <SiteAddModal partnerUid={partnerUid} onClose={() => setIsAddModalOpen(false)} onSuccess={() => fetchSites()} />}
       
+      {/* 모달: 정렬 순서 (기존 유지) */}
       {isSortModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h3>상태값 정렬 순서</h3>
-            <ul className="modal-list">
+        <div className="site-list-modal-backdrop" onClick={() => setIsSortModalOpen(false)}>
+          <div className="site-list-modal-paper" onClick={e => e.stopPropagation()}>
+            <h3 className="site-list-modal-title">상태값 정렬 순서</h3>
+            <ul className="site-list-modal-list">
               {tempOrder.map((status, index) => (
-                <li key={status} className="modal-item">
+                <li key={status} className="site-list-modal-item">
                   <span>{index + 1}. {status}</span>
-                  <div className="sort-controls">
-                    <button onClick={() => moveSortItem(index, 'up')} disabled={index === 0}>▲</button>
-                    <button onClick={() => moveSortItem(index, 'down')} disabled={index === tempOrder.length - 1}>▼</button>
+                  <div>
+                    <button className="site-list-sort-btn" onClick={() => moveSortItem(index, 'up')} disabled={index === 0}>▲</button>
+                    <button className="site-list-sort-btn" onClick={() => moveSortItem(index, 'down')} disabled={index === tempOrder.length - 1}>▼</button>
                   </div>
                 </li>
               ))}
             </ul>
-            <div className="modal-footer">
-              <button className="btn-close" onClick={() => setIsSortModalOpen(false)}>취소</button>
-              <button className="btn-save" onClick={saveSortOrder}>저장</button>
+            <div className="site-list-modal-footer">
+              <button className="site-list-btn-cancel" onClick={() => setIsSortModalOpen(false)}>취소</button>
+              <button className="site-list-btn-save" onClick={saveSortOrder}>저장</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* 모달: 노출 변경 (기존 유지) */}
       {isVisibilityModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h3>현장 노출 설정</h3>
-            <ul className="modal-list">
+        <div className="site-list-modal-backdrop" onClick={() => setIsVisibilityModalOpen(false)}>
+          <div className="site-list-modal-paper" onClick={e => e.stopPropagation()}>
+            <h3 className="site-list-modal-title">현장 노출 설정</h3>
+            <ul className="site-list-modal-list">
               {ALL_STATUSES.map((status) => (
-                <li key={status} className="modal-item">
-                  <label className="visibility-label">
+                <li key={status} className="site-list-modal-item">
+                  <label className="site-list-checkbox-label">
                     <input type="checkbox" checked={tempVisible.includes(status)} onChange={() => toggleVisibility(status)} />
                     {status === 'deleted' ? '삭제대기' : status}
                   </label>
                 </li>
               ))}
             </ul>
-            <div className="modal-footer">
-              <button className="btn-close" onClick={() => setIsVisibilityModalOpen(false)}>취소</button>
-              <button className="btn-save" onClick={saveVisibility}>저장</button>
+            <div className="site-list-modal-footer">
+              <button className="site-list-btn-cancel" onClick={() => setIsVisibilityModalOpen(false)}>취소</button>
+              <button className="site-list-btn-save" onClick={saveVisibility}>저장</button>
             </div>
           </div>
         </div>

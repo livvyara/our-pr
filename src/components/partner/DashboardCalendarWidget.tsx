@@ -9,7 +9,6 @@ import {
 } from 'firebase/firestore';
 
 // --- [ 1. 타입 정의 ] ---
-
 type ScheduleItem = {
   id: string;
   time: string;
@@ -55,7 +54,6 @@ interface DashboardCalendarWidgetProps {
 }
 
 // --- [ 2. 헬퍼 함수 ] ---
-
 const getISODateString = (date: Date): string => {
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().split('T')[0];
@@ -73,7 +71,6 @@ const getWeekRange = (date: Date): { start: Date, end: Date } => {
 
 
 // --- [ 3. 메인 컴포넌트 ] ---
-
 const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ 
   partnerUid, 
   onSiteSelect 
@@ -85,13 +82,11 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const db = getFirestore();
 
-  // 설정 및 캐시 상태
   const [filterPrefs, setFilterPrefs] = useState({ showMeetings: true, showConstruction: true, showPersonal: true });
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [siteNamesCache, setSiteNamesCache] = useState<Map<string, string>>(new Map()); 
 
-  // 1. 필터 설정 불러오기
   useEffect(() => {
     if (!partnerUid) return;
     getDoc(doc(db, 'users', partnerUid)).then(snap => {
@@ -101,8 +96,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
     });
   }, [db, partnerUid]);
 
-
-  // 2. 데이터 구독 및 통합
   useEffect(() => {
     if (!partnerUid) return;
     setIsLoading(true);
@@ -128,27 +121,19 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         } catch(e) { console.warn('Site name fetch failed', e); }
     };
 
-    // 1. 미팅 일정
     const qMemos = query(collectionGroup(db, 'memos'), where('partnerUid', '==', partnerUid), where('memoType', '==', 'meeting'));
     const unsubMemos = onSnapshot(qMemos, (snap) => {
       meetings = snap.docs.map(d => {
         const data = d.data() as MemoEntry;
         if(data.siteId) fetchSiteNameIfNeeded(data.siteId);
-        
         return { 
-            id: d.id, 
-            time: data.meetingTime, 
-            title: `${data.meetingTime} 미팅: ${data.memoContent}`, 
-            siteId: data.siteId, 
-            type: 'meeting', 
-            dateKey: data.meetingDate, 
-            siteName: data.siteName 
+            id: d.id, time: data.meetingTime, title: `${data.meetingTime} 미팅: ${data.memoContent}`, 
+            siteId: data.siteId, type: 'meeting', dateKey: data.meetingDate, siteName: data.siteName 
         };
       });
       updateAll();
     });
 
-    // 2. 공사 일정 (workLogs)
     const qWork = query(collectionGroup(db, 'workLogs'), where('partnerUid', '==', partnerUid), where('tomorrowProcess', '!=', ''));
     const unsubWork = onSnapshot(qWork, (snap) => {
       constructionLogs = [];
@@ -163,7 +148,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       updateAll();
     });
 
-    // 3. 공사 일정 (schedules)
     const qSchedules = query(collectionGroup(db, 'schedules'));
     const unsubSchedules = onSnapshot(qSchedules, (snap) => {
         constructionSchedules = [];
@@ -173,21 +157,15 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
             const data = d.data() as SiteScheduleEntry;
             const siteId = pathSegments[3]; 
             fetchSiteNameIfNeeded(siteId);
-
             constructionSchedules.push({
-                id: d.id, time: '10:00', 
-                title: data.processes.join(', '), 
-                siteId: siteId, 
-                type: 'construction', 
-                dateKey: data.date, 
-                siteName: siteNamesCache.get(siteId) 
+                id: d.id, time: '10:00', title: data.processes.join(', '), siteId: siteId, 
+                type: 'construction', dateKey: data.date, siteName: siteNamesCache.get(siteId) 
             });
           }
         });
         updateAll();
     });
 
-    // 4. 개인 일정
     const qPersonal = query(collection(db, 'users', partnerUid, 'personalSchedules'), orderBy('time', 'asc')); 
     const unsubPersonal = onSnapshot(qPersonal, (snap) => {
       personals = snap.docs.map(d => {
@@ -201,7 +179,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
   }, [db, partnerUid, siteNamesCache]);
 
 
-  // 3. 필터링 및 그룹화 로직
   const filteredSchedulesList = useMemo(() => {
     return allSchedules.filter(schedule => {
       if (schedule.type === 'personal' && filterPrefs.showPersonal) return true; 
@@ -233,11 +210,9 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         });
 
         const result: ScheduleItem[] = [...others];
-        
         groupedBySite.forEach((list, siteId) => {
             const siteName = list[0].siteName || siteNamesCache.get(siteId) || '현장';
             const isSingleProcess = list.length === 1 && list[0].title.indexOf(',') === -1;
-            
             result.push({
                 id: list.map(i => i.id).join('-'), 
                 time: list[0].time,
@@ -249,11 +224,9 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
                 siteName: siteName
             } as ScheduleItem);
         });
-
         result.sort((a, b) => a.time.localeCompare(b.time));
         finalMap.set(dateKey, result);
     });
-
     return finalMap;
   }, [filteredSchedulesList, siteNamesCache]);
 
@@ -286,16 +259,11 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
     if (view === 'month') {
       const dateKey = getISODateString(date);
       const dailySchedules = schedulesByDateMap.get(dateKey); 
-      
       if (dailySchedules && dailySchedules.length > 0) {
         return (
           <div className="calendar-tile-content">
             {dailySchedules.slice(0, 3).map(item => (
-              <div 
-                key={item.id}
-                className={`calendar-dot ${item.type}`}
-                title={item.fullTitle || item.title}
-              >
+              <div key={item.id} className={`calendar-dot ${item.type}`} title={item.fullTitle || item.title}>
                 {item.title} 
               </div>
             ))}
@@ -315,25 +283,19 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
     setIsSavingPrefs(true);
     try {
       await setDoc(doc(db, 'users', partnerUid), { calendarFilters: filterPrefs }, { merge: true });
-      // alert 제거 (조용한 저장)
     } catch (e) { console.error(e); } finally { setIsSavingPrefs(false); }
   };
 
   const scheduleListTitle = useMemo(() => {
     const formatOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', weekday: 'short' };
-    
-    if (filterType === 'today') {
-      return selectedDate.toLocaleDateString('ko-KR', formatOptions);
-    }
+    if (filterType === 'today') return selectedDate.toLocaleDateString('ko-KR', formatOptions);
     if (filterType === 'week') {
       const { start, end } = getWeekRange(selectedDate); 
       const startStr = start.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
       const endStr = end.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
       return `${startStr} ~ ${endStr}`;
     }
-    if (filterType === 'month') {
-      return selectedDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }); 
-    }
+    if (filterType === 'month') return selectedDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }); 
     return '';
   }, [filterType, selectedDate]);
 
@@ -342,21 +304,28 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
   return (
     <div className="dashboard-calendar-widget">
       
+      {/* 헤더 영역 */}
       <div className="widget-header">
-        <div className="header-title-area">
-           <h3 className="widget-title">일정 캘린더</h3>
-           <div className="filter-chips">
-              <button className={`filter-chip ${filterPrefs.showMeetings?'active':''}`} onClick={()=>toggleFilter('showMeetings')}>미팅</button>
-              <button className={`filter-chip ${filterPrefs.showConstruction?'active':''}`} onClick={()=>toggleFilter('showConstruction')}>공사</button>
-              <button className={`filter-chip ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>개인</button>
-           </div>
-        </div>
-        <div className="header-actions">
-           <button className="btn-text-save" onClick={handleSaveFilters}>{isSavingPrefs?'저장중...':'필터 저장'}</button>
-           <button className="btn-add-schedule" onClick={() => setIsModalOpen(true)}>+ 일정 등록</button>
+        <div className="widget-title">
+           <h3>일정 캘린더</h3>
+           <p>일별, 주간별 일정을 확인하고 관리합니다.</p>
         </div>
       </div>
 
+      {/* 컨트롤 패널 (회색 박스) */}
+      <div className="calendar-control-panel">
+         <div className="filter-chips">
+            <button className={`filter-chip ${filterPrefs.showMeetings?'active':''}`} onClick={()=>toggleFilter('showMeetings')}>미팅</button>
+            <button className={`filter-chip ${filterPrefs.showConstruction?'active':''}`} onClick={()=>toggleFilter('showConstruction')}>공사</button>
+            <button className={`filter-chip ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>개인</button>
+         </div>
+         <div className="header-actions">
+            <button className="btn-text-save" onClick={handleSaveFilters}>{isSavingPrefs?'저장중...':'필터 저장'}</button>
+            <button className="btn-add-schedule" onClick={() => setIsModalOpen(true)}>+ 일정 등록</button>
+         </div>
+      </div>
+
+      {/* 캘린더 (모바일에서는 CSS로 숨김 처리됨) */}
       <div className="calendar-wrapper">
         <Calendar
           onChange={handleDateChange}
@@ -369,6 +338,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         />
       </div>
 
+      {/* 리스트 영역 */}
       <div className="schedule-list-wrapper">
         <div className="list-header">
           <div className="view-tabs">
@@ -389,7 +359,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
                 const dateStr = `${d.getMonth() + 1}/${d.getDate()} (${d.toLocaleDateString('ko-KR', { weekday: 'short' })})`;
                 const displaySiteName = item.siteName || (item.siteId ? '현장' : null);
                 
-                // 제목 정리
                 let cleanTitle = item.title;
                 if (displaySiteName && item.title.includes(`[${displaySiteName}]`)) {
                     cleanTitle = item.title.replace(`[${displaySiteName}]`, '').trim();

@@ -1,65 +1,130 @@
 /* src/pages/program/SiteDetailPage.css */
 
-.site-detail-page {
-  /* 2x2 그리드 레이아웃 */
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* 50% 50% */
-  grid-template-rows: 50vh 1fr; /* 상단 50vh, 하단 나머지 */
-  gap: 20px;
-  width: 100%;
-  height: 100%; /* 부모(.program-content-area)의 높이를 채움 */
-  
-  grid-template-areas: 
-    "info memo"
-    "files actions";
+/* 1. 페이지 레이아웃 (통합 스타일) */
+.site-detail-page-container {
+    padding: 30px;
+    background-color: #fff;
+    min-height: 100vh;
+    font-family: 'Pretendard', sans-serif;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. 헤더 영역 */
+.site-detail-header-wrapper {
+    background: #fff;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    flex-shrink: 0;
+}
+
+.site-detail-title h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.site-detail-title p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+/* 뒤로가기 버튼 */
+.site-detail-btn-back {
+    padding: 4px 10px;
+    font-size: 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #555;
+    font-weight: bold;
+}
+.site-detail-btn-back:hover { background-color: #f5f5f5; }
+
+/* 3. 그리드 레이아웃 (PC: 2x2) */
+.site-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 50% 50% */
+    grid-template-rows: minmax(500px, auto) auto; /* 상단 최소 높이 확보 */
+    gap: 20px;
+    flex: 1; /* 남은 공간 차지 */
+    width: 100%;
+    
+    grid-template-areas: 
+        "info memo"
+        "files actions";
 }
 
 /* --- 4개 사분면(Quadrant) --- */
 .quadrant-box {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background-color: #ffffff; 
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  padding: 5px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #ffffff; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    padding: 20px; /* 내부 여백 증가 */
+    box-sizing: border-box;
 
-  /* 자식 위젯이 높이를 100% 채우도록 함 */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* (내부 스크롤은 자식 요소가 담당) */
+    /* 자식 위젯이 높이를 100% 채우도록 함 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+    height: 100%;
 }
 
-/* 1. 현장 정보 (좌상단) */
-.quadrant-info {
-  grid-area: info;
+/* 각 영역 지정 */
+.quadrant-info { grid-area: info; }
+.quadrant-memo { grid-area: memo; }
+.quadrant-files { grid-area: files; }
+.quadrant-actions { grid-area: actions; }
+
+/* 로딩/에러 메시지 */
+.site-detail-loading {
+    text-align: center; padding: 100px; color: #888; font-style: italic; font-size: 16px;
 }
 
-/* 2. 메모 (우상단) */
-.quadrant-memo {
-  grid-area: memo;
-}
 
-/* 3. 자료 등록 (좌하단) */
-.quadrant-files {
-  grid-area: files;
-}
+/* =========================================
+   [Mobile Responsive] 모바일 대응 스타일
+   ========================================= */
+@media (max-width: 768px) {
+    .site-detail-page-container {
+        padding: 15px; /* 패딩 축소 */
+    }
 
-/* 4. 기타 등록 (우하단) */
-.quadrant-actions {
-  grid-area: actions;
-}
+    /* 그리드 -> 세로 스택(Column) 변환 */
+    .site-detail-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: auto; /* 높이 자동 */
+    }
 
-/* 공통 헤더 */
-.quadrant-box h3 {
-  margin-top: 0;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 10px;
-  flex-shrink: 0; /* (고정) */
-  margin-bottom: 0px;
-}
+    /* 각 박스 높이 조정 (모바일 최적화) */
+    .quadrant-box {
+        min-height: auto;
+        height: auto; /* 내용물만큼 늘어남 */
+        padding: 15px;
+    }
 
-/*
- [⭐ 수정됨]
- .info-form-grid, .form-group, .form-label, .form-input, .info-form-actions 등
- 폼 관련 스타일을 모두 SiteInfoWidget.css로 옮겼으므로
- 이 파일에서 모두 삭제합니다.
-*/
+    /* 특정 영역 높이 제한 (선택 사항) */
+    .quadrant-memo {
+        min-height: 400px; /* 메모는 어느 정도 높이 확보 */
+    }
+    
+    .quadrant-info {
+        order: 1; /* 순서 지정 (정보가 맨 위) */
+    }
+    .quadrant-memo { order: 2; }
+    .quadrant-files { order: 3; }
+    .quadrant-actions { order: 4; }
+}

@@ -1,126 +1,312 @@
 /* src/components/partner/DashboardCalendarWidget.css */
 
-:root {
-  --dc-bg: #ffffff;
-  --dc-border: #e0e0e0;
-  --dc-text: #333;
-  --dc-sub: #666;
-  --dc-accent: #007bff;
-  --dc-hover: #f8f9fa;
-}
-
+/* 1. 기본 레이아웃 */
 .dashboard-calendar-widget {
-  display: flex; flex-direction: column; height: 100%;
-  background-color: var(--dc-bg); overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+    font-family: 'Pretendard', sans-serif;
+    overflow: hidden; 
+    box-sizing: border-box;
 }
 
-.dc-loading { padding: 40px; text-align: center; color: var(--dc-sub); }
-
-/* --- 헤더 --- */
+/* 2. 헤더 영역 */
 .widget-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--dc-border);
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
 }
 
-.header-title-area { display: flex; align-items: center; gap: 20px; }
-.widget-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--dc-text); }
+.widget-title h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #333;
+}
 
-/* 필터 칩 */
-.filter-chips { display: flex; gap: 8px; }
+.widget-title p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+/* 3. 컨트롤 패널 (회색 박스) */
+.calendar-control-panel {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 15px;
+    flex-wrap: wrap; 
+}
+
+/* 필터 칩 그룹 */
+.filter-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap; 
+}
+
 .filter-chip {
-  padding: 6px 12px; border: 1px solid var(--dc-border); background: #fff;
-  border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--dc-sub);
-  transition: all 0.2s;
+    padding: 6px 14px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
-.filter-chip:hover { background-color: var(--dc-hover); }
+
+.filter-chip:hover { background-color: #f0f0f0; }
 .filter-chip.active { background-color: #333; color: #fff; border-color: #333; }
 
-.header-actions { display: flex; align-items: center; gap: 15px; }
+/* 액션 버튼 그룹 */
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .btn-text-save {
-  background: none; border: none; color: var(--dc-sub); font-size: 13px; cursor: pointer;
-  text-decoration: underline;
+    background: none; border: none; color: #666; font-size: 12px; cursor: pointer; text-decoration: underline; white-space: nowrap;
 }
 .btn-add-schedule {
-  background: var(--dc-accent); color: #fff; border: none; padding: 8px 16px;
-  border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: #1976d2; color: #fff; border: none; padding: 6px 14px;
+    border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap;
 }
-.btn-add-schedule:hover { opacity: 0.9; }
+.btn-add-schedule:hover { background: #1565c0; }
 
-/* --- 캘린더 --- */
+
+/* 4. 캘린더 스타일 커스텀 */
 .calendar-wrapper { margin-bottom: 20px; }
 .react-calendar { border: none !important; width: 100% !important; font-family: inherit; }
-.react-calendar__navigation button { font-size: 16px; font-weight: 700; }
-.react-calendar__month-view__weekdays { font-size: 13px; color: var(--dc-sub); text-transform: uppercase; }
+.react-calendar__navigation button { font-size: 16px; font-weight: 800; color: #333; }
+.react-calendar__month-view__weekdays { font-size: 12px; color: #888; text-transform: uppercase; font-weight: 600; }
 .react-calendar__tile {
-  height: 100px; padding: 5px !important; text-align: left; font-size: 13px;
-  border: 1px solid #f5f5f5; vertical-align: top; position: relative;
+    height: 90px; padding: 5px !important; text-align: left; font-size: 12px;
+    border: 1px solid #f9f9f9; vertical-align: top; position: relative;
+    color: #333;
 }
 .react-calendar__tile--now { background: #fffde7 !important; }
-.react-calendar__tile--active { background: #e3f2fd !important; color: inherit !important; }
+.react-calendar__tile--active { background: #e3f2fd !important; color: #333 !important; }
 
-/* 캘린더 내 일정 표시 */
-.calendar-tile-content { display: flex; flex-direction: column; gap: 3px; margin-top: 20px; }
+/* 일정 점(Dot) 스타일 */
+.calendar-tile-content { display: flex; flex-direction: column; gap: 3px; margin-top: 15px; }
 .calendar-dot {
-  font-size: 11px; padding: 2px 4px; border-radius: 3px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  line-height: 1.2;
+    font-size: 10px; padding: 2px 4px; border-radius: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.2; font-weight: 500;
 }
 .calendar-dot.meeting { background: #e3f2fd; color: #1565c0; }
 .calendar-dot.construction { background: #e8f5e9; color: #2e7d32; }
 .calendar-dot.personal { background: #fff3e0; color: #ef6c00; }
-.calendar-more { font-size: 10px; color: #999; text-align: right; }
+.calendar-more { font-size: 10px; color: #999; text-align: right; margin-top: 2px; }
 
-/* --- 리스트 영역 --- */
-.schedule-list-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* 5. 리스트 영역 (PC) */
+.schedule-list-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #eee; padding-top: 20px; }
 .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.view-tabs { display: flex; gap: 5px; background: #f0f0f0; padding: 3px; border-radius: 6px; }
+
+/* 뷰 탭 (오늘/주간/월간) */
+.view-tabs { display: flex; background: #f1f3f5; padding: 3px; border-radius: 6px; }
 .view-tab {
-  background: transparent; border: none; padding: 6px 12px; font-size: 13px; color: #666;
-  border-radius: 4px; cursor: pointer;
+    background: transparent; border: none; padding: 6px 14px; font-size: 12px; color: #666;
+    border-radius: 4px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.view-tab.active { background: #fff; color: #333; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.list-date-label { font-size: 14px; font-weight: 600; color: var(--dc-text); }
+.view-tab.active { background: #fff; color: #333; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-.list-content { flex: 1; overflow-y: auto; }
-.no-data-message { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+.list-date-label { font-size: 14px; font-weight: 700; color: #333; white-space: nowrap; }
 
-.schedule-ul { list-style: none; padding: 0; margin: 0; }
+/* 리스트 아이템 (PC) */
+.list-content { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding-right: 5px;
+    display: block; /* Flex 대신 Block 사용해 정렬 이슈 방지 */
+} 
+
+.schedule-ul { list-style: none; padding: 0; margin: 0; width: 100%; }
+
 .schedule-li {
-  display: flex; padding: 15px 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer;
-  transition: background 0.2s;
+    display: flex; padding: 12px 10px; border-bottom: 1px solid #f5f5f5; cursor: pointer;
+    transition: background 0.2s; align-items: center;
+    width: 100%; box-sizing: border-box;
 }
-.schedule-li:hover { background: #f9f9f9; }
+.schedule-li:hover { background: #fafafa; }
 
-.li-time-col { width: 120px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
-.li-date { font-size: 12px; color: #888; }
-.li-time { font-size: 15px; font-weight: 600; color: var(--dc-text); }
+/* PC: 좌측 정렬, 텍스트는 우측 정렬 */
+.li-time-col { 
+    width: 130px; 
+    flex-shrink: 0; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 2px; 
+    align-items: flex-end; 
+    text-align: right;
+}
 
-.li-info-col { flex: 1; min-width: 0; }
-.li-tags { display: flex; gap: 6px; margin-bottom: 6px; }
-.badge-type { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-.badge-type.meeting { background: #e3f2fd; color: #1565c0; }
-.badge-type.construction { background: #e8f5e9; color: #2e7d32; }
-.badge-type.personal { background: #fff3e0; color: #ef6c00; }
-.badge-site { font-size: 11px; background: #f0f0f0; color: #666; padding: 2px 6px; border-radius: 4px; }
+/* 날짜/시간 폰트 스타일 통일 (PC) */
+.li-date, .li-time {
+    font-size: 14px; 
+    font-weight: 700;
+    color: #333; 
+    white-space: nowrap;
+}
 
-.li-title { font-size: 14px; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li-info-col { flex: 1; min-width: 0; padding-left: 15px; }
+.li-tags { display: flex; gap: 6px; margin-bottom: 4px; align-items: center; flex-wrap: wrap; }
 
-/* --- 모달 --- */
+/* 배지 스타일 */
+.badge-type { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 700; white-space: nowrap; }
+.badge-type.meeting { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+.badge-type.construction { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.badge-type.personal { background: #fff3e0; color: #ef6c00; border: 1px solid #ffe0b2; }
+
+.badge-site { font-size: 10px; background: #f5f5f5; color: #666; padding: 2px 6px; border-radius: 3px; border: 1px solid #ddd; white-space: nowrap; }
+
+.li-title { font-size: 13px; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 모달 스타일 */
 .cal-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000;
-  display: flex; justify-content: center; align-items: center;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
 }
 .cal-modal-box {
-  background: #fff; width: 400px; padding: 30px; border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    background: #fff; width: 100%; max-width: 400px; padding: 30px; border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid #ddd; box-sizing: border-box;
 }
-.cal-modal-box h3 { margin: 0 0 20px 0; font-size: 20px; text-align: center; }
+.cal-modal-box h3 { margin: 0 0 20px 0; font-size: 18px; text-align: center; color: #333; }
 .cal-form-group { margin-bottom: 15px; }
-.cal-form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: #555; }
+.cal-form-group label { display: block; font-size: 12px; margin-bottom: 5px; color: #555; font-weight: bold; }
 .cal-form-group input {
-  width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;
+    width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 13px;
 }
-.cal-form-check { margin-bottom: 20px; font-size: 14px; }
+.cal-form-group input:focus { border-color: #333; outline: none; }
+.cal-form-check { margin-bottom: 20px; font-size: 13px; }
 .cal-form-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.btn-text { background: none; border: none; color: #666; cursor: pointer; padding: 8px 16px; }
-.btn-submit { background: var(--dc-accent); color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+.btn-text { background: #fff; border: 1px solid #ddd; color: #555; cursor: pointer; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+.btn-submit { background: #1976d2; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+
+
+/* =========================================
+   [Mobile Responsive] 모바일 대응 스타일
+   ========================================= */
+@media (max-width: 768px) {
+    /* 1. 달력 그리드 및 네비게이션 숨김 */
+    .calendar-wrapper,
+    .react-calendar__navigation,
+    .react-calendar__viewContainer {
+        display: none !important;
+    }
+
+    /* 2. 컨트롤 패널 재배치 */
+    .calendar-control-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .filter-chips {
+        justify-content: center;
+        width: 100%;
+    }
+    .filter-chip {
+        flex: 1;
+        text-align: center;
+        max-width: 100px;
+    }
+
+    .header-actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+    .btn-text-save, .btn-add-schedule {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        height: 36px;
+    }
+
+    /* 3. 리스트 헤더 재배치 */
+    .list-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .view-tabs { width: 100%; display: flex; }
+    .view-tab { flex: 1; text-align: center; }
+    
+    .list-date-label { 
+        width: 100%;
+        text-align: center; 
+        font-size: 14px; 
+        margin-top: 5px;
+    }
+
+    /* 4. 리스트 아이템 스타일 (모바일 카드뷰) */
+    .schedule-li { 
+        /* Flex 해제하고 Block으로 변경하여 100% 너비 확보 */
+        display: block !important; 
+        width: 100%;
+        box-sizing: border-box;
+        padding: 15px;
+        /* 그림자/테두리 추가하여 카드 느낌 */
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    
+    /* [핵심 수정] 날짜/시간 영역 우측 강제 정렬 */
+    .li-time-col { 
+        /* display: block 사용, text-align: right */
+        display: block !important;
+        width: 100% !important; 
+        text-align: right !important; /* 내용물 우측 정렬 */
+        
+        border-bottom: 1px dashed #eee;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+    }
+    
+    /* 날짜와 시간을 인라인 블록으로 만들어 한 줄에 표시 */
+    .li-date, .li-time {
+        display: inline-block !important;
+        font-size: 14px !important;
+        font-weight: 800 !important; /* 진하게 */
+        color: #333 !important;
+        margin-left: 8px; /* 둘 사이 간격 */
+    }
+    
+    /* 정보 컬럼 초기화 */
+    .li-info-col { 
+        display: block;
+        padding-left: 0; 
+        width: 100%; 
+    }
+
+    .li-title {
+        font-size: 14px;
+        margin-top: 4px;
+        white-space: normal;
+        word-break: break-all;
+        line-height: 1.4;
+    }
+}

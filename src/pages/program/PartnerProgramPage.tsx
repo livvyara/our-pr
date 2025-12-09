@@ -20,16 +20,11 @@ import AccountingManualPurchasePage from './AccountingManualPurchasePage';
 import AccountingBankingExcelPage from './AccountingBankingExcelPage';
 import SiteSettlementPage from './SiteSettlementPage';
 import AccountingOrderRequestPage from './AccountingOrderRequestPage';
-
-// [NEW] 지로/영수증 페이지 임포트
 import GiroReceiptExpensePage from './GiroReceiptExpensePage';
-
 import WorkLogPage from './WorkLogPage';
 import SiteDeleteList from '../../components/partner/SiteDeleteList';
 import WorkerManagementPage from './WorkerManagementPage';
 import LaborCostManagementPage from './LaborCostManagementPage';
-
-// [중요] 직원 관리 페이지 임포트 (파일 경로: src/pages/program/StaffManagementPage.tsx)
 import StaffManagementPage from './StaffManagementPage';
 
 // Firebase
@@ -45,7 +40,9 @@ const PartnerProgramPage: React.FC = () => {
   const navigate = useNavigate(); 
   const db = getFirestore();
 
+  // [상태] 모바일 여부 및 사이드바 토글 상태
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
@@ -66,7 +63,7 @@ const PartnerProgramPage: React.FC = () => {
     return (
       <div style={{ padding: '80px 20px', textAlign: 'center', color: '#666' }}>
         <h2 style={{ color: '#dc3545', marginBottom: '15px' }}>🚫 접근 권한이 없습니다.</h2>
-        <p style={{ fontSize: '16px', lineHeight: '1.6' }}>
+        <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
           이 메뉴에 접근할 권한이 부여되지 않았습니다.<br />
           관리자(대표)에게 문의하여 권한을 요청하세요.
         </p>
@@ -133,7 +130,9 @@ const PartnerProgramPage: React.FC = () => {
     });
 
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setIsMobileSidebarOpen(false); // PC로 커지면 모바일 메뉴 닫기
     };
     window.addEventListener('resize', handleResize);
     return () => {
@@ -147,95 +146,105 @@ const PartnerProgramPage: React.FC = () => {
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <h2>파트너 페이지 권한을 확인 중입니다...</h2>
+        <h3 style={{color:'#666'}}>파트너 페이지 권한을 확인 중입니다...</h3>
       </div>
     );
   }
 
   return (
     <div className="program-main-layout">
-      {!isMobile ? ( 
-        <>
-          <PartnerSidebar userRole={currentUserRole as any} permissions={partnerPermissions} />
-          
-          <div className="program-content-area">
-            {currentPartnerUid ? (
-              <Routes>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                
-                <Route path="dashboard" element={
-                  <ProtectedContent requiredPerm="dashboard">
-                    <div className="dashboard-grid">
-                      <div className="calendar-widget-area widget">
-                        <DashboardCalendarWidget partnerUid={currentPartnerUid} onSiteSelect={handleSiteSelect} /> 
-                      </div>
-                      <div className="widget-top-right widget">
-                        <h2>매입매출 집계</h2>
-                        <p>(개발 예정)</p>
-                      </div>
-                      <div className="widget-bottom-right widget">
-                        {currentPartnerUid && auth.currentUser?.uid ? (
-                          <DashboardSiteListWidget partnerUid={currentPartnerUid} currentUserId={auth.currentUser.uid} />
-                        ) : <p>사용자 정보 로딩 중...</p>}
-                      </div>
-                    </div>
-                  </ProtectedContent>
-                } />
-                
-                <Route path="site-add" element={<ProtectedContent requiredPerm="site-add"><SiteAdd partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                <Route path="site-list" element={<ProtectedContent requiredPerm="site-list"><SiteList onSiteSelect={handleSiteSelect} partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                <Route path="site-delete" element={<ProtectedContent requiredPerm="site-delete"><SiteDeleteList partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                <Route path="site-log" element={<ProtectedContent requiredPerm="site-log"><WorkLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                <Route path="site-log/:siteId" element={<ProtectedContent requiredPerm="site-log"><WorkLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                <Route path="site-schedule" element={<ProtectedContent requiredPerm="site-schedule"><h2>공사 일정</h2></ProtectedContent>} />
-                <Route path="site-settlement" element={<ProtectedContent requiredPerm="site-list"><SiteSettlementPage /></ProtectedContent>} />
-                <Route path="site-detail/:siteId" element={<ProtectedContent requiredPerm="site-list"><SiteDetailPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
-
-                <Route path="hr-add-worker" element={<ProtectedContent requiredPerm="hr-add-worker"><h2>작업자 등록</h2></ProtectedContent>} />
-                <Route path="worker-management" element={<ProtectedContent requiredPerm="hr-add-worker"><WorkerManagementPage /></ProtectedContent>} />
-                <Route path="hr-labor-cost" element={<ProtectedContent requiredPerm="hr-add-log"><LaborCostManagementPage /></ProtectedContent>} />
-                <Route path="hr-export-excel" element={<ProtectedContent requiredPerm="hr-export-excel"><h2>엑셀다운로드(신고용)</h2></ProtectedContent>} />
-                <Route path="accounting-integrated" element={<ProtectedContent requiredPerm="accounting"><AccountingIntegratedPage /></ProtectedContent>} />
-                <Route path="accounting-hometax" element={<ProtectedContent requiredPerm="accounting"><AccountingHometaxPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
-                
-                {/* [NEW] 지로/영수증 페이지 연결 */}
-                <Route path="accounting-giro-receipt" element={<ProtectedContent requiredPerm="accounting"><GiroReceiptExpensePage /></ProtectedContent>} />
-
-                <Route path="accounting-order-request" element={<ProtectedContent requiredPerm="accounting"><AccountingOrderRequestPage /></ProtectedContent>} />
-
-                <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
-                <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
-                <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />
-                
-                <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
-                <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
-                <Route path="emp-permission" element={<ProtectedContent requiredPerm="emp-permission"><PartnerPermissionTab partnerUid={currentPartnerUid} partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
-                
-                {/* [중요] 직원 관리 페이지 라우트 연결 */}
-                {/* requiredPerm은 기존 'emp-list'나 'hr' 등을 사용 (여기서는 hr로 설정) */}
-                <Route path="emp-management" element={
-                    <ProtectedContent requiredPerm="hr"> 
-                        <StaffManagementPage partnerUid={currentPartnerUid} />
-                    </ProtectedContent>
-                } />
-
-                <Route path="portfolio-add" element={<ProtectedContent requiredPerm="portfolio-add"><h2>포트폴리오 등록</h2></ProtectedContent>} />
-                <Route path="portfolio-list" element={<ProtectedContent requiredPerm="portfolio-list"><h2>포트폴리오 목록</h2></ProtectedContent>} />
-                <Route path="activity-log" element={<ProtectedContent requiredPerm="activity-log"><PartnerActivityLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
-
-                <Route path="*" element={<h2>페이지를 찾을 수 없습니다. (URL 확인 필요)</h2>} />
-              </Routes>
-            ) : (
-              <h2>사용자 정보 로딩 중...</h2>
-            )}
-          </div>
-        </>
-      ) : (
-        <div style={{ padding: '20px' }}>
-          <h2>파트너 전산 (모바일)</h2>
-          <p>파트너 전산 기능은 PC환경에서만 지원됩니다.</p>
+      
+      {/* [모바일 전용] 메뉴 토글 버튼 */}
+      {isMobile && (
+        <div className="mobile-menu-toggle" onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}>
+          <span>☰ 파트너 메뉴</span>
+          <span>{isMobileSidebarOpen ? '▲' : '▼'}</span>
         </div>
       )}
+
+      {/* 사이드바 영역 (모바일에서는 open 클래스로 제어) */}
+      <div className={`partner-sidebar-wrapper ${isMobile ? (isMobileSidebarOpen ? 'open' : '') : ''}`}>
+        <PartnerSidebar 
+            userRole={currentUserRole as any} 
+            permissions={partnerPermissions} 
+            onMenuClick={() => setIsMobileSidebarOpen(false)} // 메뉴 클릭 시 닫힘
+        />
+      </div>
+      
+      {/* 메인 콘텐츠 영역 */}
+      <div className="program-content-area">
+        {currentPartnerUid ? (
+          <Routes>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            
+            <Route path="dashboard" element={
+              <ProtectedContent requiredPerm="dashboard">
+                <div className="dashboard-grid">
+                  {/* 달력 위젯 */}
+                  <div className="calendar-widget-area widget">
+                    <DashboardCalendarWidget partnerUid={currentPartnerUid} onSiteSelect={handleSiteSelect} /> 
+                  </div>
+                  {/* 우측 상단 위젯 */}
+                  <div className="widget-top-right widget">
+                    <h3 style={{margin:'0 0 10px 0', fontSize:'16px', color:'#333'}}>매입매출 요약</h3>
+                    <div style={{textAlign:'center', padding:'40px 0', color:'#999', fontSize:'14px'}}>
+                        준비 중입니다.
+                    </div>
+                  </div>
+                  {/* 우측 하단 위젯 */}
+                  <div className="widget-bottom-right widget">
+                    {currentPartnerUid && auth.currentUser?.uid ? (
+                      <DashboardSiteListWidget partnerUid={currentPartnerUid} currentUserId={auth.currentUser.uid} />
+                    ) : <p>사용자 정보 로딩 중...</p>}
+                  </div>
+                </div>
+              </ProtectedContent>
+            } />
+            
+            <Route path="site-add" element={<ProtectedContent requiredPerm="site-add"><SiteAdd partnerUid={currentPartnerUid} /></ProtectedContent>} />
+            <Route path="site-list" element={<ProtectedContent requiredPerm="site-list"><SiteList onSiteSelect={handleSiteSelect} partnerUid={currentPartnerUid} /></ProtectedContent>} />
+            <Route path="site-delete" element={<ProtectedContent requiredPerm="site-delete"><SiteDeleteList partnerUid={currentPartnerUid} /></ProtectedContent>} />
+            <Route path="site-log" element={<ProtectedContent requiredPerm="site-log"><WorkLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
+            <Route path="site-log/:siteId" element={<ProtectedContent requiredPerm="site-log"><WorkLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
+            <Route path="site-schedule" element={<ProtectedContent requiredPerm="site-schedule"><h2>공사 일정</h2></ProtectedContent>} />
+            <Route path="site-settlement" element={<ProtectedContent requiredPerm="site-list"><SiteSettlementPage /></ProtectedContent>} />
+            <Route path="site-detail/:siteId" element={<ProtectedContent requiredPerm="site-list"><SiteDetailPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
+
+            <Route path="hr-add-worker" element={<ProtectedContent requiredPerm="hr-add-worker"><h2>작업자 등록</h2></ProtectedContent>} />
+            <Route path="worker-management" element={<ProtectedContent requiredPerm="hr-add-worker"><WorkerManagementPage /></ProtectedContent>} />
+            <Route path="hr-labor-cost" element={<ProtectedContent requiredPerm="hr-add-log"><LaborCostManagementPage /></ProtectedContent>} />
+            <Route path="hr-export-excel" element={<ProtectedContent requiredPerm="hr-export-excel"><h2>엑셀다운로드(신고용)</h2></ProtectedContent>} />
+            <Route path="accounting-integrated" element={<ProtectedContent requiredPerm="accounting"><AccountingIntegratedPage /></ProtectedContent>} />
+            <Route path="accounting-hometax" element={<ProtectedContent requiredPerm="accounting"><AccountingHometaxPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
+            
+            <Route path="accounting-giro-receipt" element={<ProtectedContent requiredPerm="accounting"><GiroReceiptExpensePage /></ProtectedContent>} />
+
+            <Route path="accounting-order-request" element={<ProtectedContent requiredPerm="accounting"><AccountingOrderRequestPage /></ProtectedContent>} />
+
+            <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
+            <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
+            <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />
+            
+            <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
+            <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
+            <Route path="emp-permission" element={<ProtectedContent requiredPerm="emp-permission"><PartnerPermissionTab partnerUid={currentPartnerUid} partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
+            
+            <Route path="emp-management" element={
+                <ProtectedContent requiredPerm="hr"> 
+                    <StaffManagementPage partnerUid={currentPartnerUid} />
+                </ProtectedContent>
+            } />
+
+            <Route path="portfolio-add" element={<ProtectedContent requiredPerm="portfolio-add"><h2>포트폴리오 등록</h2></ProtectedContent>} />
+            <Route path="portfolio-list" element={<ProtectedContent requiredPerm="portfolio-list"><h2>포트폴리오 목록</h2></ProtectedContent>} />
+            <Route path="activity-log" element={<ProtectedContent requiredPerm="activity-log"><PartnerActivityLogPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
+
+            <Route path="*" element={<h2>페이지를 찾을 수 없습니다. (URL 확인 필요)</h2>} />
+          </Routes>
+        ) : (
+          <h2>사용자 정보 로딩 중...</h2>
+        )}
+      </div>
     </div>
   );
 };

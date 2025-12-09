@@ -1,334 +1,325 @@
-/* src/pages/program/WorkLogPage.css */
+/* WorkLogPage.css */
 
-/* 1. 전체 컨테이너 */
-.worklog-list-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  padding-bottom: 40px;
+/* 1. 페이지 레이아웃 */
+.worklog-page-container {
+    padding: 30px;
+    background-color: #fff;
+    min-height: 100vh;
+    font-family: 'Pretendard', sans-serif;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* 2. 헤더 영역 (타이틀 + 버튼 그룹) */
-.worklog-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #333;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
+/* 2. 헤더 영역 */
+.worklog-header-wrapper {
+    background: #fff;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
 }
 
-.worklog-header-row h2 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
+.worklog-title h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-/* 헤더 우측 버튼 그룹 */
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.header-btn {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 8px 15px;
-  border-radius: 5px; /* Radius 5 */
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: bold;
-  color: #555;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.2s;
-}
-
-.header-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #bbb;
-  color: #333;
+.worklog-title p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
 }
 
 /* 뒤로가기 버튼 */
-.btn-back {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  padding: 6px 12px;
-  border-radius: 5px;
-  margin-right: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
+.worklog-btn-back {
+    padding: 4px 10px;
+    font-size: 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #555;
+    font-weight: bold;
 }
-.btn-back:hover {
-  background: #e9ecef;
+.worklog-btn-back:hover { background-color: #f5f5f5; }
+
+/* 3. 컨트롤 패널 */
+.worklog-control-panel {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-/* 3. 검색창 스타일 */
-.worklog-search-bar {
-  margin-bottom: 15px;
-  width: 100%;
-  max-width: 400px;
-  height: 40px;
-  padding: 0 12px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-sizing: border-box;
-}
-.worklog-search-bar:focus {
-  outline: none;
-  border-color: #333;
+.worklog-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 280px;
 }
 
-/* 4. 테이블 스타일 */
+/* 검색 인풋 */
+.worklog-search-input {
+    padding: 0 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    height: 38px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 400px;
+    transition: all 0.2s;
+}
+.worklog-search-input:focus { border-color: #333; outline: none; }
+
+/* 액션 버튼 그룹 */
+.worklog-action-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.worklog-btn-manual {
+    padding: 0 16px;
+    height: 38px;
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.worklog-btn-manual:hover { background-color: #f5f5f5; border-color: #bbb; }
+
+.worklog-btn-primary {
+    padding: 0 20px;
+    height: 38px;
+    background-color: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.worklog-btn-primary:hover { background-color: #1565c0; }
+
+
+/* 4. 테이블 영역 */
+.worklog-result-section {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
 .worklog-table-wrapper {
-  overflow-x: auto;
-  border-top: 1px solid #ddd; /* 상단 얇은 회색 줄 */
+    width: 100%;
 }
 
 .worklog-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-.worklog-table th,
-.worklog-table td {
-  border-bottom: 1px solid #ddd;
-  padding: 12px 10px;
-  text-align: left;
-  white-space: nowrap; /* 줄바꿈 방지 */
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .worklog-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-  color: #333;
-  text-align: center; /* 헤더는 가운데 정렬 */
-  border-bottom: 1px solid #ccc;
+    background-color: #f1f3f5;
+    color: #333;
+    font-weight: 700;
+    padding: 12px 8px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.worklog-table tr:hover {
-  background-color: #f8fff9; /* 마우스 오버 시 아주 연한 색 */
+.worklog-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: #444;
 }
 
-/* 링크 버튼 (날짜/현장명 클릭) */
-.worklog-link-button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  color: #007bff;
-  font-weight: bold;
-  font-size: 14px;
-  text-align: left;
-  cursor: pointer;
+.worklog-table tr:hover { background-color: #fafafa !important; }
+
+/* 링크 텍스트 & 버튼 */
+.worklog-link-text {
+    font-weight: 600; color: #333; cursor: pointer; text-decoration: underline;
+    text-underline-offset: 3px; text-decoration-color: transparent; background: none; border: none; padding: 0; font-size: 13px;
 }
-.worklog-link-button:hover {
-  text-decoration: underline;
+.worklog-link-text:hover { color: #1976d2; text-decoration-color: #1976d2; }
+
+/* 상태 뱃지 (통합 스타일) */
+.worklog-status-badge {
+    display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; min-width: 50px; text-align: center;
+}
+.worklog-status-badge.deleted { background: #333; color: #fff; }
+/* 나머지 상태값 색상은 필요 시 추가 (기본 회색) */
+.worklog-status-badge { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
+
+/* 상세 내용 셀 (말줄임) */
+.cell-content-truncate {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
 }
 
-/* 말줄임 처리 (긴 텍스트) */
-.col-content {
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block; /* td 안에서 ellipsis 적용 위해 */
-}
-
-/* 5. 모달 공통 스타일 (정렬/노출/상세) */
-.modal-backdrop {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 2000;
-  display: flex; justify-content: center; align-items: center;
-}
-
-/* --- (A) 작은 모달 (정렬/노출 설정용) --- */
-.sort-modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 320px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-}
-
-.sort-modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  text-align: center;
-  font-size: 18px;
-  color: #333;
-}
-
-.modal-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.modal-item {
-  padding: 10px 15px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fff;
-  font-size: 14px;
-}
-.modal-item:last-child {
-  border-bottom: none;
-}
-
-/* 정렬 화살표 버튼 */
-.sort-controls button {
-  background: #f1f3f5;
-  border: 1px solid #ddd;
-  padding: 4px 8px;
-  margin-left: 5px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #555;
-}
-.sort-controls button:hover {
-  background-color: #e2e6ea;
-}
-.sort-controls button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-/* 노출 체크박스 라벨 */
-.visibility-label {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  cursor: pointer;
-}
-.visibility-label input {
-  margin-right: 10px;
-  transform: scale(1.2);
-  cursor: pointer;
-}
-
-/* 모달 하단 버튼 */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn-save {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 13px;
-}
-.btn-save:hover { opacity: 0.9; }
-
-.btn-close {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 13px;
-}
-.btn-close:hover { opacity: 0.9; }
+/* 로딩/데이터 없음 */
+.worklog-loading-td { text-align: center; padding: 50px; color: #888; font-style: italic; }
+.worklog-no-data { text-align: center; padding: 60px; color: #999; font-size: 14px; }
 
 
-/* --- (B) 큰 모달 (상세 보기용) --- */
-.detail-modal {
-  background-color: #fff;
-  width: 800px;
-  max-width: 95%;
-  max-height: 90vh;
-  border-radius: 8px;
-  overflow-y: auto;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  display: flex;
-  flex-direction: column;
+/* 5. 모달 스타일 (통합 페이지 스타일) */
+.worklog-modal-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
 }
 
-.detail-header {
-  padding: 20px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* 정렬/노출 설정 모달 */
+.worklog-modal-paper {
+    background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 350px; padding: 30px; border: 1px solid #ddd; display: flex; flex-direction: column; max-width: 90%;
 }
-.detail-header h2 { margin: 0; font-size: 22px; color: #333; }
+.worklog-modal-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: #333; text-align: center; }
+.worklog-modal-list { list-style: none; padding: 0; margin: 0 0 20px 0; border: 1px solid #eee; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+.worklog-modal-item { padding: 10px 15px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.worklog-modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+.worklog-btn-save { padding: 8px 20px; border: none; background: #333; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: #fff; }
+.worklog-btn-cancel { padding: 8px 20px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: #555; }
 
-.detail-body {
-  padding: 30px;
+/* 상세 보기 모달 (큰 모달) */
+.worklog-detail-paper {
+    background-color: #fff;
+    width: 800px; max-width: 95%; max-height: 90vh;
+    border-radius: 8px; overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column;
 }
+.worklog-detail-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.worklog-detail-header h2 { margin: 0; font-size: 20px; color: #333; font-weight: 800; }
+.worklog-detail-body { padding: 30px; }
+.worklog-detail-section { margin-bottom: 20px; }
+.worklog-detail-label { font-weight: bold; display: block; margin-bottom: 8px; font-size: 14px; color: #555; }
+.worklog-detail-box { padding: 15px; background: #f9f9f9; border: 1px solid #eee; border-radius: 5px; min-height: 40px; white-space: pre-line; line-height: 1.5; font-size: 14px; color: #333; }
+.worklog-photo-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.worklog-photo-item { width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; cursor: zoom-in; }
+.worklog-photo-item img { width: 100%; height: 100%; object-fit: cover; }
 
-.detail-section {
-  margin-bottom: 20px;
-}
 
-.detail-label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #555;
-}
+/* =========================================
+   [Mobile Responsive] 모바일 카드뷰 변환
+   ========================================= */
+@media (max-width: 768px) {
+    .worklog-page-container {
+        padding: 15px;
+    }
 
-.detail-content-box {
-  padding: 15px;
-  background: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 5px;
-  min-height: 40px;
-  white-space: pre-line; /* 줄바꿈 유지 */
-  line-height: 1.5;
-  font-size: 14px;
-  color: #333;
-}
+    /* 컨트롤 패널 세로 정렬 */
+    .worklog-control-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 15px;
+    }
 
-/* 사진 그리드 */
-.photo-grid {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
+    .worklog-filter-row { width: 100%; }
+    .worklog-action-group { justify-content: space-between; }
+    .worklog-action-group button { flex: 1; }
 
-.photo-item {
-  width: 100px;
-  height: 100px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  overflow: hidden;
-  cursor: zoom-in;
-}
+    /* --- 테이블 -> 카드 변환 --- */
+    .worklog-table, .worklog-table tbody, .worklog-table tr, .worklog-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
 
-.photo-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.2s;
-}
+    .worklog-table thead { display: none; } /* 헤더 숨김 */
 
-.photo-item:hover img {
-  transform: scale(1.1);
+    .worklog-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        padding: 15px;
+    }
+
+    .worklog-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 8px 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: 13px;
+        white-space: normal; /* 줄바꿈 허용 */
+    }
+
+    .worklog-table td:last-child { border-bottom: none; }
+
+    /* data-label로 항목 표시 */
+    .worklog-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        color: #888;
+        margin-right: 10px;
+        font-size: 12px;
+        min-width: 60px;
+        text-align: left;
+    }
+
+    /* [CASE A] 현장 목록: 현장명 강조 */
+    .site-row td[data-label="현장명"] {
+        background-color: #f8f9fa;
+        margin: -15px -15px 10px -15px;
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        border-radius: 8px 8px 0 0;
+        justify-content: flex-start;
+    }
+    .site-row td[data-label="현장명"]::before { display: none; }
+    .site-row td[data-label="현장명"] .worklog-link-text { font-size: 16px; font-weight: 800; color: #1976d2; }
+
+    /* [CASE B] 작업일지 목록: 날짜 강조 */
+    .log-row td[data-label="작업 날짜"] {
+        background-color: #f8f9fa;
+        margin: -15px -15px 10px -15px;
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        border-radius: 8px 8px 0 0;
+        justify-content: flex-start;
+    }
+    .log-row td[data-label="작업 날짜"]::before { display: none; }
+    .log-row td[data-label="작업 날짜"] .worklog-link-text { font-size: 15px; font-weight: 800; }
+
+    .cell-content-truncate { max-width: 100%; white-space: normal; }
 }

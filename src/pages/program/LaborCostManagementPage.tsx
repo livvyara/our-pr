@@ -18,11 +18,7 @@ const auth = getAuth(app);
 
 const LaborCostManagementPage: React.FC = () => {
   const [laborList, setLaborList] = useState<any[]>([]);
-  
-  // [중요] 데이터 소유자의 UID (대표 UID)
   const [currentUid, setCurrentUid] = useState<string | null>(null);
-  
-  // 로그인한 사용자 정보 (로그용)
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
   
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -30,8 +26,8 @@ const LaborCostManagementPage: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // [1] 권한 확인 및 UID 설정
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -39,32 +35,20 @@ const LaborCostManagementPage: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if(userDoc.exists()) {
                 const d = userDoc.data();
-                
-                // 1. 내 정보 저장 (로그용)
-                setCurrentUserInfo({ 
-                    uid: user.uid, 
-                    name: d.nickname || d.email || '사용자' 
-                });
+                setCurrentUserInfo({ uid: user.uid, name: d.nickname || d.email || '사용자' });
 
-                // 2. [핵심] 데이터 소유자(Target UID) 결정
-                let targetUid = user.uid; // 기본은 본인
-                
-                // 직원이면 대표(owner)의 UID를 사용
+                let targetUid = user.uid;
                 if (d.role === 'sub_partner' && d.partnerInfo && d.partnerInfo.ownerUid) {
                     targetUid = d.partnerInfo.ownerUid;
                 }
-
-                setCurrentUid(targetUid); // 상태 업데이트 -> 이후 fetchLabors 실행됨
+                setCurrentUid(targetUid);
             }
-        } catch (e) {
-            console.error("사용자 정보 로드 실패", e);
-        }
+        } catch (e) { console.error("사용자 정보 로드 실패", e); }
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // [2] 데이터 구독 (currentUid가 설정된 후 실행)
   useEffect(() => {
       if (currentUid) {
           const unsubscribe = fetchLabors(currentUid, currentMonth);
@@ -73,6 +57,7 @@ const LaborCostManagementPage: React.FC = () => {
   }, [currentUid, currentMonth]); 
 
   const fetchLabors = (uid: string, month: string) => {
+    setLoading(true);
     const q = query(
         collection(db, 'users', uid, 'labor_costs'),
         where('paymentMonth', '==', month),
@@ -82,6 +67,7 @@ const LaborCostManagementPage: React.FC = () => {
     const unsubscribe = onSnapshot(q, (snap) => {
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setLaborList(docs);
+        setLoading(false);
     });
     return unsubscribe;
   };
@@ -102,37 +88,25 @@ const LaborCostManagementPage: React.FC = () => {
       if (!currentUid) return;
       const isPaid = newStatus === '지급완료';
       try {
-          await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), {
-              isPaid: isPaid
-          });
-      } catch (e) {
-          console.error("상태 변경 실패", e);
-          alert("오류가 발생했습니다.");
-      }
+          await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), { isPaid: isPaid });
+      } catch (e) { console.error(e); alert("오류가 발생했습니다."); }
   };
 
   const handleExcelDownload = async () => {
       if (filteredList.length === 0) return alert("데이터가 없습니다.");
       if (!currentUid) return;
 
-      // 1. 전체 작업자 정보 미리 가져오기 (주민번호 조회용)
       const workersSnap = await getDocs(collection(db, 'users', currentUid, 'workers'));
       const workerMap: {[key: string]: any} = {};
-      workersSnap.forEach(doc => {
-          workerMap[doc.id] = doc.data();
-      });
+      workersSnap.forEach(doc => { workerMap[doc.id] = doc.data(); });
 
-      // 2. 데이터 병합 (동일 작업자 합산 로직)
       const consolidatedMap: { [key: string]: any } = {};
-      
       filteredList.forEach(item => {
           const workerId = item.workerId;
           if (consolidatedMap[workerId]) {
               consolidatedMap[workerId].preTaxAmount += (item.preTaxAmount || 0);
-              
               const existingDays = new Set<number>(consolidatedMap[workerId].workedDays);
               (item.workedDays || []).forEach((d: number) => existingDays.add(d));
-              
               consolidatedMap[workerId].workedDays = Array.from(existingDays).sort((a, b) => a - b);
           } else {
               consolidatedMap[workerId] = { ...item };
@@ -141,7 +115,6 @@ const LaborCostManagementPage: React.FC = () => {
 
       const consolidatedList = Object.values(consolidatedMap);
       const excelRows: any[] = [];
-      
       const dayHeaders = Array.from({length: 31}, (_, i) => (i + 1).toString());
       const headers = [
           '보험구분', '성명', '주민(외국인)등록번호', '국적코드', '체류자격코드', '전화(지역번호)', '전화(국번)', '전화(뒷번호)', '직종코드',
@@ -157,15 +130,9 @@ const LaborCostManagementPage: React.FC = () => {
           const preTaxAmount = data.preTaxAmount || 0;
           const isAgency = data.workerType === 'agency';
 
-          let incomeTax = 0;
-          let localIncomeTax = 0;
-          let employmentInsurance = 0;
-          let freelancerDeduction = 0;
-          let agencyPayment = 0;
-          let freelancerPayment = 0;
+          let incomeTax = 0, localIncomeTax = 0, employmentInsurance = 0, freelancerDeduction = 0, agencyPayment = 0, freelancerPayment = 0;
 
           if (isAgency) {
-              // 인력소: 일용직 세금 계산
               const taxBase = preTaxAmount - (workedDaysCount * 150000);
               incomeTax = (taxBase > 0) ? Math.floor(taxBase * 0.027) : 0;
               if (incomeTax < 1000) incomeTax = 0;
@@ -173,7 +140,6 @@ const LaborCostManagementPage: React.FC = () => {
               employmentInsurance = Math.floor(preTaxAmount * 0.009);
               agencyPayment = preTaxAmount - incomeTax - localIncomeTax - employmentInsurance;
           } else {
-              // 프리랜서: 3.3%
               freelancerDeduction = Math.floor(preTaxAmount * 0.033);
               freelancerPayment = preTaxAmount - freelancerDeduction;
           }
@@ -184,7 +150,6 @@ const LaborCostManagementPage: React.FC = () => {
               rrn = wData.residentNumber || wData.rrn || wData.residentNo || '';
           }
           rrn = rrn.replace(/-/g, '');
-
           const phoneParts = (data.phoneNumber || '').split('-');
           const dailyWorkStatus = Array(31).fill(0);
           workedDaysList.forEach(d => { if (d >= 1 && d <= 31) dailyWorkStatus[d - 1] = 1; });
@@ -210,82 +175,118 @@ const LaborCostManagementPage: React.FC = () => {
 
   return (
     <div className="labor-page-container">
-        <div className="labor-header">
-            <h2>노무 관리</h2>
-            <div className="header-controls">
-                <select className="status-filter" value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value as any)}>
+      
+      {/* 1. 헤더 */}
+      <div className="labor-header-wrapper">
+        <div className="labor-title">
+          <h2>노무 관리</h2>
+          <p>등록된 작업자에게 지급된 노무비를 관리합니다.</p>
+        </div>
+
+        {/* 2. 컨트롤 패널 */}
+        <div className="labor-control-panel">
+            <div className="labor-filter-row">
+                <input 
+                    type="month" 
+                    className="labor-input-month"
+                    value={currentMonth} 
+                    onChange={e => setCurrentMonth(e.target.value)} 
+                />
+                <select 
+                    className="labor-select"
+                    value={paymentFilter} 
+                    onChange={(e) => setPaymentFilter(e.target.value as any)}
+                >
                     <option value="all">전체 보기</option>
                     <option value="unpaid">미지급 건만</option>
                     <option value="paid">지급완료 건만</option>
                 </select>
-                <input type="month" value={currentMonth} onChange={e => setCurrentMonth(e.target.value)} />
-                <button className="btn-excel" onClick={handleExcelDownload}>엑셀 다운로드</button>
-                <button className="btn-add" onClick={() => { setEditTarget(null); setIsModalOpen(true); }} style={{backgroundColor: K_BRAND_COLOR}}>+ 노무 등록</button>
+            </div>
+            
+            <div className="labor-action-group">
+                <button className="labor-btn-manual" onClick={handleExcelDownload}>
+                    📥 엑셀 다운로드
+                </button>
+                <button 
+                    className="labor-btn-primary" 
+                    onClick={() => { setEditTarget(null); setIsModalOpen(true); }}
+                >
+                    + 노무 등록
+                </button>
             </div>
         </div>
+      </div>
 
-        <div className="labor-list-wrapper">
+      {/* 3. 테이블 영역 */}
+      <div className="labor-result-section">
+        <div className="labor-table-wrapper">
             <table className="labor-table">
                 <thead>
                     <tr>
                         <th>성명 (구분)</th>
                         <th>현장</th>
-                        <th>근무일수</th>
-                        <th>세전금액</th>
-                        <th>공제액</th>
-                        <th>실지급액</th>
+                        <th className="tac">근무일수</th>
+                        <th className="tar">세전금액</th>
+                        <th className="tar">공제액</th>
+                        <th className="tar">실지급액</th>
                         <th>지급일</th>
-                        <th>지급상태</th>
-                        <th>관리</th>
+                        <th className="tac">지급상태</th>
+                        <th className="tac">관리</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredList.length === 0 ? <tr><td colSpan={9} className="no-data">등록된 노무 내역이 없습니다.</td></tr> :
-                    filteredList.map(item => (
-                        <tr key={item.id}>
-                            <td>
-                                {item.workerName} 
-                                <span className="type-badge">
-                                    {item.workerType === 'agency' ? '인력' : '프리'}
-                                </span>
-                            </td>
-                            <td>{item.siteName}</td>
-                            <td>{item.totalDays}일</td>
-                            <td className="tar">{item.preTaxAmount.toLocaleString()}</td>
-                            <td className="tar text-red">{item.deductionAmount.toLocaleString()}</td>
-                            <td className="tar bold">{item.finalAmount.toLocaleString()}</td>
-                            <td>{item.paymentCycle?.join(', ')}</td>
-                            <td className="tac">
-                                <select 
-                                    className={`status-select ${item.isPaid ? 'paid' : 'unpaid'}`}
-                                    value={item.isPaid ? '지급완료' : '미지급'}
-                                    onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                                >
-                                    <option value="미지급">미지급</option>
-                                    <option value="지급완료">지급완료</option>
-                                </select>
-                            </td>
-                            <td className="tac">
-                                <button className="btn-mini-edit" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>수정</button>
-                                <button className="btn-mini-del" onClick={() => handleDelete(item.id)}>삭제</button>
-                            </td>
-                        </tr>
-                    ))}
+                    {loading ? (
+                        <tr><td colSpan={9} className="labor-loading">로딩 중...</td></tr>
+                    ) : filteredList.length === 0 ? (
+                        <tr><td colSpan={9} className="labor-no-data">등록된 노무 내역이 없습니다.</td></tr>
+                    ) : (
+                        filteredList.map(item => (
+                            <tr key={item.id}>
+                                <td>
+                                    <strong>{item.workerName}</strong>
+                                    <span className="type-badge">
+                                        {item.workerType === 'agency' ? '인력' : '프리'}
+                                    </span>
+                                </td>
+                                <td data-label="현장">{item.siteName}</td>
+                                <td data-label="근무일수" className="tac">{item.totalDays}일</td>
+                                <td data-label="세전금액" className="tar">{item.preTaxAmount.toLocaleString()}</td>
+                                <td data-label="공제액" className="tar text-red">{item.deductionAmount.toLocaleString()}</td>
+                                <td data-label="실지급액" className="tar bold">{item.finalAmount.toLocaleString()}</td>
+                                <td data-label="지급일">{item.paymentCycle?.join(', ')}</td>
+                                <td data-label="지급상태" className="tac">
+                                    <select 
+                                        className={`status-select ${item.isPaid ? 'paid' : 'unpaid'}`}
+                                        value={item.isPaid ? '지급완료' : '미지급'}
+                                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                                    >
+                                        <option value="미지급">미지급</option>
+                                        <option value="지급완료">지급완료</option>
+                                    </select>
+                                </td>
+                                <td data-label="관리" className="tac">
+                                    <button className="btn-mini-edit" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>수정</button>
+                                    <button className="btn-mini-del" onClick={() => handleDelete(item.id)}>삭제</button>
+                                </td>
+                            </tr>
+                        ))
+                    )}
                 </tbody>
             </table>
         </div>
+      </div>
 
-        {isModalOpen && currentUid && (
-            <LaborCostModal 
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                partnerUid={currentUid} // 대표 UID 전달됨
-                targetLabor={editTarget}
-                currentMonth={currentMonth}
-                onRefresh={() => {}} 
-                userName={currentUserInfo.name} 
-            />
-        )}
+      {isModalOpen && currentUid && (
+        <LaborCostModal 
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            partnerUid={currentUid} 
+            targetLabor={editTarget}
+            currentMonth={currentMonth}
+            onRefresh={() => {}} 
+            userName={currentUserInfo.name} 
+        />
+      )}
     </div>
   );
 };

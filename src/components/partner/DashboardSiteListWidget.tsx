@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getFirestore, collection, query, orderBy, getDocs, doc, getDoc, updateDoc 
-} from 'firebase/firestore';
-import './DashboardSiteListWidget.css'; // [NEW] CSS 파일 임포트
 
-interface SiteSummary {
-  uid: string;
+interface SiteData {
+  id: string;
   siteName: string;
+  address: string;
   client1Name: string;
-  client1Phone: string;
-  status: SiteStatus;
+  status: string;
 }
 
 interface Props {
@@ -18,175 +15,193 @@ interface Props {
   currentUserId: string;
 }
 
-type SiteStatus = '미팅중' | '계약대기' | '계약완료' | '공사전' | '공사중' | '공사완료' | '보류' | '취소' | 'deleted';
-
-const ALL_STATUSES: SiteStatus[] = [
-  '미팅중', '계약대기', '계약완료', '공사전', '공사중', 
-  '공사완료', '보류', '취소', 'deleted'
+// 모든 상태값 정의
+const ALL_STATUSES = [
+  '미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'
 ];
 
-// 상태별 뱃지 스타일 매핑
-const getStatusClass = (status: string) => {
-  if (['공사중', '계약완료'].includes(status)) return 'status-active';
-  if (['공사완료'].includes(status)) return 'status-done';
-  if (['보류', '취소', 'deleted'].includes(status)) return 'status-gray';
-  return 'status-default';
-};
+const DashboardSiteListWidget: React.FC<Props> = ({ partnerUid }) => {
+  const [sites, setSites] = useState<SiteData[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // 노출 설정 상태
+  const [visibleStatuses, setVisibleStatuses] = useState<string[]>([]);
+  const [tempVisible, setTempVisible] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-const DashboardSiteListWidget: React.FC<Props> = ({ partnerUid, currentUserId }) => {
   const navigate = useNavigate();
   const db = getFirestore();
-  
-  const [allSites, setAllSites] = useState<SiteSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const [visibleStatuses, setVisibleStatuses] = useState<SiteStatus[]>(ALL_STATUSES);
-  const [isVisModalOpen, setIsVisModalOpen] = useState(false);
-  const [tempVisible, setTempVisible] = useState<SiteStatus[]>(ALL_STATUSES);
-
+  // 1. 초기 로드: 로컬 스토리지에서 필터 설정 불러오기
   useEffect(() => {
-    const loadPreferences = async () => {
-      const userRef = doc(db, 'users', currentUserId);
-      const docSnap = await getDoc(userRef);
-      if (docSnap.exists()) {
-        const pref = docSnap.data().preferences?.dashboardSiteStatusFilter as SiteStatus[];
-        if (pref && pref.length > 0) {
-          setVisibleStatuses(pref);
-        }
+    const savedFilter = localStorage.getItem(`dashboard_site_filter_${partnerUid}`);
+    if (savedFilter) {
+      setVisibleStatuses(JSON.parse(savedFilter));
+    } else {
+      // 기본값: 삭제됨을 제외한 모든 상태
+      setVisibleStatuses(ALL_STATUSES.filter(s => s !== 'deleted'));
+    }
+  }, [partnerUid]);
+
+  // 2. 현장 데이터 불러오기 (필터가 변경될 때마다 실행)
+  useEffect(() => {
+    if (visibleStatuses.length === 0) return; // 초기화 전이면 대기
+
+    const fetchSites = async () => {
+      setLoading(true);
+      try {
+        // 필터링 후 5개를 보여주기 위해 넉넉하게 50개를 가져옴 (클라이언트 필터링)
+        const q = query(
+          collection(db, 'users', partnerUid, 'sites'),
+          orderBy('createdAt', 'desc'),
+          limit(50) 
+        );
+        const snap = await getDocs(q);
+        const list: SiteData[] = [];
+        
+        snap.forEach(d => {
+          const data = d.data();
+          const status = data.status || '미팅중';
+          
+          // 여기서 필터링 적용
+          if (visibleStatuses.includes(status)) {
+            list.push({
+              id: d.id,
+              siteName: data.siteName,
+              address: data.address,
+              client1Name: data.client1Name,
+              status: status
+            });
+          }
+        });
+
+        // 상위 5개만 자름
+        setSites(list.slice(0, 10));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
       }
     };
-    loadPreferences();
-  }, [db, currentUserId]);
 
-  const fetchSites = useCallback(async () => {
-    if (!partnerUid) return;
-    setIsLoading(true);
-    try {
-      const sitesRef = collection(db, 'users', partnerUid, 'sites');
-      const q = query(sitesRef, orderBy('createdAt', 'desc')); 
-      const snapshot = await getDocs(q);
-      const siteList: SiteSummary[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        siteList.push({
-          uid: doc.id,
-          siteName: data.siteName || '-',
-          client1Name: data.client1Name || '-',
-          client1Phone: data.client1Phone || '-',
-          status: data.status as SiteStatus,
-        });
-      });
-      setAllSites(siteList);
-    } catch (error) {
-      console.error("현장 목록 로딩 오류:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [partnerUid, db]);
-
-  useEffect(() => {
     fetchSites();
-  }, [fetchSites, visibleStatuses]);
+  }, [partnerUid, db, visibleStatuses]);
 
-  const filteredSites = useMemo(() => {
-    return allSites.filter(site => visibleStatuses.includes(site.status));
-  }, [allSites, visibleStatuses]);
-
-  const handleSiteClick = (siteId: string) => {
-    navigate(`/program/site-detail/${siteId}`, { state: { viewAsAdmin: true, ownerUid: partnerUid } });
-  };
-  
-  const openVisModal = () => {
+  // 모달 열기
+  const openModal = () => {
     setTempVisible([...visibleStatuses]);
-    setIsVisModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const toggleVisibility = (status: SiteStatus) => {
-    setTempVisible(prev => prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]);
+  // 체크박스 토글
+  const toggleStatus = (status: string) => {
+    setTempVisible(prev => 
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
   };
 
-  const saveVisibility = async () => {
-    try {
-      const userRef = doc(db, 'users', currentUserId);
-      await updateDoc(userRef, {
-        "preferences.dashboardSiteStatusFilter": tempVisible
-      });
-      setVisibleStatuses(tempVisible);
-      // alert('노출 설정이 저장되었습니다.'); // 불필요한 알림 제거 (UX 개선)
-    } catch (e) {
-      console.error('설정 저장 실패:', e);
-      alert('설정 저장에 실패했습니다.');
-    } finally {
-      setIsVisModalOpen(false);
-    }
+  // 설정 저장
+  const saveVisibility = () => {
+    setVisibleStatuses(tempVisible);
+    localStorage.setItem(`dashboard_site_filter_${partnerUid}`, JSON.stringify(tempVisible));
+    setIsModalOpen(false);
   };
 
   return (
-    <div className="widget-container">
-      <div className="widget-header">
-        <h3 className="widget-title">현장 목록</h3>
-        <button onClick={openVisModal} className="btn-filter">
-          <span className="icon-filter">⚙️</span> 필터 설정
-        </button>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* 헤더 영역 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>최근 현장 목록</h3>
+        
+        <div className="dashboard-widget-header-actions">
+            {/* 노출 설정 버튼 */}
+            <button className="dashboard-btn-text" onClick={openModal}>
+                👁️ 노출 설정
+            </button>
+            {/* 더보기 버튼 */}
+            <button className="dashboard-btn-text" onClick={() => navigate('/program/site-list')}>
+                더보기 +
+            </button>
+        </div>
       </div>
 
-      <div className="widget-body">
-        {isLoading ? (
-          <div className="loading-state">데이터를 불러오는 중...</div>
-        ) : filteredSites.length === 0 ? (
-          <div className="empty-state">
-            <p>표시할 현장이 없습니다.</p>
-            <span>필터 설정을 확인해보세요.</span>
-          </div>
-        ) : (
-          <div className="site-list">
-            {filteredSites.map((site) => (
-              <div key={site.uid} className="site-item" onClick={() => handleSiteClick(site.uid)}>
-                <div className="site-info-main">
-                  <span className={`status-badge ${getStatusClass(site.status)}`}>{site.status}</span>
-                  <strong className="site-name">{site.siteName}</strong>
-                </div>
-                <div className="site-info-sub">
-                  <span className="client-name">{site.client1Name}</span>
-                  <span className="client-phone">{site.client1Phone}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* 테이블 영역 */}
+      <div style={{ flex: 1, overflowX: 'auto' }}>
+        <table className="dashboard-site-table">
+          <colgroup>
+            <col style={{ width: '80px' }} /> {/* 상태 */}
+            <col /> {/* 현장명 */}
+            <col style={{ width: '80px' }} /> {/* 고객 */}
+          </colgroup>
+          <thead>
+            <tr>
+              <th>상태</th>
+              <th style={{ textAlign: 'left', paddingLeft: '10px' }}>현장명</th>
+              <th>고객명</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={3} style={{ textAlign: 'center', padding: '20px', color: '#999' }}>로딩 중...</td></tr>
+            ) : sites.length === 0 ? (
+              <tr><td colSpan={3} style={{ textAlign: 'center', padding: '20px', color: '#999' }}>표시할 현장이 없습니다.</td></tr>
+            ) : (
+              sites.map(site => (
+                <tr key={site.id}>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className={`dashboard-status-badge ${site.status}`}>
+                      {site.status === 'deleted' ? '삭제대기' : site.status}
+                    </span>
+                  </td>
+                  <td style={{ paddingLeft: '10px' }}>
+                    <button 
+                      className="dashboard-link-text"
+                      onClick={() => navigate(`/program/site-detail/${site.id}`)}
+                    >
+                      {site.siteName}
+                    </button>
+                    {site.address && (
+                        <div style={{fontSize:'11px', color:'#888', marginTop:'2px', maxWidth:'150px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                            {site.address}
+                        </div>
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'center', fontSize:'12px' }}>{site.client1Name}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* 필터 설정 모달 */}
-      {isVisModalOpen && (
-        <div className="filter-modal-overlay" onClick={() => setIsVisModalOpen(false)}>
-          <div className="filter-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>현장 상태 필터</h4>
-              <button className="btn-close" onClick={() => setIsVisModalOpen(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <ul className="filter-list">
-                {ALL_STATUSES.map((status) => (
-                  <li key={status} className="filter-item">
-                    <label className="checkbox-label">
-                      <input 
+      {/* 노출 설정 모달 */}
+      {isModalOpen && (
+        <div className="dashboard-modal-backdrop" onClick={() => setIsModalOpen(false)}>
+          <div className="dashboard-modal-paper" onClick={e => e.stopPropagation()}>
+            <h3 className="dashboard-modal-title">현장 노출 설정</h3>
+            <ul className="dashboard-modal-list">
+              {ALL_STATUSES.map((status) => (
+                <li key={status} className="dashboard-modal-item">
+                  <label className="dashboard-checkbox-label">
+                    <input 
                         type="checkbox" 
                         checked={tempVisible.includes(status)} 
-                        onChange={() => toggleVisibility(status)} 
-                      />
-                      <span className="checkbox-text">{status === 'deleted' ? '삭제대기' : status}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="modal-footer">
-              <button onClick={() => setIsVisModalOpen(false)} className="btn-cancel">취소</button>
-              <button onClick={saveVisibility} className="btn-save">적용하기</button>
+                        onChange={() => toggleStatus(status)} 
+                    />
+                    {status === 'deleted' ? '삭제대기' : status}
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <div className="dashboard-modal-footer">
+              <button className="dashboard-btn-cancel" onClick={() => setIsModalOpen(false)}>취소</button>
+              <button className="dashboard-btn-save" onClick={saveVisibility}>저장</button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

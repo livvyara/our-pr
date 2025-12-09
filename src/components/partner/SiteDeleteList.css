@@ -1,105 +1,223 @@
-/* src/components/partner/SiteDeleteList.css */
+/* SiteDeleteList.css */
 
-.site-delete-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;      /* [수정] 화면 꽉 차게 */
-  max-width: 100%;  /* [수정] 너비 제한 해제 */
-  padding: 0;       /* [수정] 불필요한 여백 제거 (상위 컨테이너 패딩 따름) */
+/* 1. 페이지 레이아웃 */
+.site-delete-page-container {
+    padding: 30px;
+    background-color: #fff;
+    min-height: 100vh;
+    font-family: 'Pretendard', sans-serif;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* 상단 헤더 (현장 목록과 동일) */
-.section-header {
-  border-bottom: 2px solid #333;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
+/* 2. 헤더 영역 */
+.site-delete-header-wrapper {
+    background: #fff;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
 }
 
-.section-header h2 {
-  margin: 0 0 5px 0;
-  font-size: 24px;
-  color: #333;
+.site-delete-title h2 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    color: #333;
 }
 
-.section-header p {
-  margin: 0;
-  font-size: 14px;
-  color: #666;
+.site-delete-title p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
 }
 
-/* 섹션 구분 타이틀 */
-.list-section h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  margin-top: 0;
-  display: flex;
-  align-items: center;
+/* 3. 섹션 타이틀 (운영중/삭제대기 구분) */
+.site-delete-section-header {
+    margin-top: 40px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* 테이블 래퍼 (현장 목록과 동일) */
-.table-wrapper {
-  overflow-x: auto;
-  border-top: 1px solid #333; /* 상단 진한 줄 */
-  margin-bottom: 40px; /* 섹션 간 간격 */
+.site-delete-section-header h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
 }
 
-/* 테이블 스타일 (SiteList와 100% 동일하게 맞춤) */
-.delete-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
+.site-delete-section-header.active h3 { color: #2e7d32; }
+.site-delete-section-header.deleted h3 { color: #c62828; }
+
+.site-delete-count-badge {
+    background-color: #f1f3f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #555;
 }
 
-.delete-table th,
-.delete-table td {
-  border-bottom: 1px solid #ddd;
-  padding: 12px 10px;
-  text-align: left; /* [수정] 좌측 정렬 */
-  white-space: nowrap;
+/* 4. 테이블 영역 (Result Section 스타일 적용) */
+.site-delete-result-section {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    /* overflow: hidden; -> 모바일 카드뷰 그림자 잘림 방지 위해 제거 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    margin-bottom: 20px;
 }
 
-.delete-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-  color: #333;
-  text-align: center; /* 헤더만 가운데 정렬 */
-  border-bottom: 1px solid #ccc;
+.site-delete-table-wrapper {
+    width: 100%;
 }
 
-/* 삭제 대기 행 스타일 */
-.row-deleted {
-  background-color: #fff5f5;
+.site-delete-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px; /* 폰트 12px 통일 */
+    white-space: nowrap;
 }
 
-.row-deleted td {
-  color: #888;
+.site-delete-table th {
+    background-color: #f1f3f5;
+    color: #333;
+    font-weight: 700;
+    padding: 12px 8px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.empty-cell {
-  text-align: center !important;
-  padding: 50px !important;
-  color: #999;
+.site-delete-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: #444;
+}
+
+.site-delete-table tr:hover {
+    background-color: #fafafa !important;
+}
+
+/* 데이터 없음 / 로딩 */
+.site-delete-no-data {
+    text-align: center; padding: 60px; color: #999; font-size: 14px;
 }
 
 /* 버튼 스타일 */
-.btn-action {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  color: #fff;
+.site-delete-btn-mini {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: #fff;
 }
 
-.btn-action.delete {
-  background-color: #dc3545;
+.site-delete-btn-mini.delete {
+    background-color: #dc3545; /* 빨간색 */
+    border-color: #dc3545;
 }
+.site-delete-btn-mini.delete:hover { background-color: #c82333; }
 
-.btn-action.restore {
-  background-color: #28a745;
+.site-delete-btn-mini.restore {
+    background-color: #28a745; /* 초록색 */
+    border-color: #28a745;
 }
+.site-delete-btn-mini.restore:hover { background-color: #218838; }
 
-.btn-action:hover {
-  opacity: 0.9;
+
+/* =========================================
+   [Mobile Responsive] 모바일 카드뷰 변환
+   가로 스크롤 방지를 위해 테이블을 카드로 변환
+   ========================================= */
+@media (max-width: 768px) {
+    .site-delete-page-container {
+        padding: 15px;
+    }
+
+    /* 테이블 요소들을 블록으로 변환 */
+    .site-delete-table, 
+    .site-delete-table tbody, 
+    .site-delete-table tr, 
+    .site-delete-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 헤더 숨김 */
+    .site-delete-table thead {
+        display: none; 
+    }
+
+    /* 행(Row)을 카드(Card)로 스타일링 */
+    .site-delete-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        padding: 15px;
+    }
+
+    /* 셀(Cell) 스타일 */
+    .site-delete-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 8px 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: 13px;
+        white-space: normal; /* 텍스트 줄바꿈 허용 */
+        word-break: break-all;
+    }
+
+    .site-delete-table td:last-child {
+        border-bottom: none;
+        padding-top: 15px;
+        justify-content: flex-end; /* 버튼 우측 정렬 */
+    }
+
+    /* data-label 속성을 이용해 라벨 표시 */
+    .site-delete-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        color: #888;
+        margin-right: 10px;
+        font-size: 12px;
+        min-width: 60px;
+        text-align: left;
+    }
+
+    /* [Active Section] 현장명 강조 */
+    .site-delete-table tr td[data-label="현장명"] {
+        background-color: #f8f9fa;
+        margin: -15px -15px 10px -15px; /* 카드 헤더처럼 확장 */
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+        border-radius: 8px 8px 0 0;
+        font-weight: 800;
+        color: #333;
+        font-size: 15px;
+        justify-content: flex-start;
+    }
+    .site-delete-table tr td[data-label="현장명"]::before {
+        display: none; /* 헤더에서는 라벨 숨김 */
+    }
+
+    /* 관리 버튼 확장 */
+    .site-delete-btn-mini {
+        width: 100%;
+        padding: 8px 0;
+        font-size: 13px;
+    }
 }

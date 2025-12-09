@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore'; // getDoc 추가
+import { getFirestore, collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore'; 
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseConfig } from '../../firebase-config';
-import './SiteSettlementPage.css';
+import './SiteSettlementPage.css'; // [수정] 스타일 파일 교체
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ... (인터페이스들은 기존 유지)
+// 인터페이스 유지
 interface SiteData { id: string; siteName: string; status: string; }
 interface SettlementItem { id: string; date: string; type: '매출' | '매입' | '지출' | '현금영수증'; detailType: string; category: string; subCategory: string; vendorName: string; amount: number; memo: string; collectionName: string; }
 interface CategoryOption { name: string; subCategories: string[]; }
@@ -19,7 +19,7 @@ const SiteSettlementPage: React.FC = () => {
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const [sites, setSites] = useState<SiteData[]>([]);
   const [loading, setLoading] = useState(true);
-  // ... (나머지 state 유지)
+  
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('공사중'); 
   const [selectedSiteId, setSelectedSiteId] = useState<string>('');
@@ -28,51 +28,35 @@ const SiteSettlementPage: React.FC = () => {
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
 
-  // [수정 1] 인증 및 권한 확인 로직 개선
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-            // 사용자 정보 가져오기 (직원일 경우 대표 UID 확인)
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 let targetUid = user.uid;
-
-                // 서브 파트너(직원)라면 대표(owner) UID 사용
                 if (data.role === 'sub_partner' && data.partnerInfo?.ownerUid) {
                     targetUid = data.partnerInfo.ownerUid;
                 }
-
                 setCurrentUid(targetUid);
-                // [중요] UID가 확정된 직후 데이터 로딩 호출
                 fetchSites(targetUid);
                 fetchCategories(targetUid);
             }
-        } catch (e) {
-            console.error("사용자 정보 로드 실패", e);
-        }
+        } catch (e) { console.error("사용자 정보 로드 실패", e); }
       }
     });
     return () => unsubscribe();
-  }, []); // 빈 배열로 최초 1회만 실행
+  }, []);
 
-  // 현장 목록 불러오기
   const fetchSites = async (uid: string) => {
     try {
       const q = query(collection(db, 'users', uid, 'sites'), orderBy('siteName'));
       const snap = await getDocs(q);
       const list = snap.docs.map(d => ({ id: d.id, siteName: d.data().siteName, status: d.data().status }));
       setSites(list);
-    } catch (e) {
-      console.error("현장 로드 실패", e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); } finally { setLoading(false); }
   };
-
-  // ... (나머지 fetchCategories, useEffect, fetchAllData, handleDelete, useMemo 등은 기존 코드와 동일)
-  // ... (Render 부분도 동일)
 
   const fetchCategories = async (uid: string) => {
       try {
@@ -83,7 +67,7 @@ const SiteSettlementPage: React.FC = () => {
               subCategories: d.data().subCategories || []
           }));
           setCategoryOptions(list);
-      } catch (e) { console.error("공종 로드 실패", e); }
+      } catch (e) { console.error(e); }
   };
 
   const filteredSites = useMemo(() => {
@@ -100,7 +84,6 @@ const SiteSettlementPage: React.FC = () => {
   }, [selectedSiteId, currentUid]);
 
   const fetchAllData = async (uid: string, siteId: string) => {
-      // ... (기존 fetchAllData 로직 그대로 사용)
       setDataLoading(true);
       setCategoryFilter('전체'); 
       setSubCategoryFilter('전체');
@@ -121,7 +104,7 @@ const SiteSettlementPage: React.FC = () => {
               const d = doc.data();
               unifiedList.push({
                   id: doc.id, date: d.useDate, type: '지출', detailType: d.cardName || '기타',
-                  category: d.category || '미지정', subCategory: '', // 수기는 2차 없음
+                  category: d.category || '미지정', subCategory: '', 
                   vendorName: d.vendorName, amount: Number(d.amount), memo: d.memo, collectionName: 'expenses'
               });
           });
@@ -171,15 +154,7 @@ const SiteSettlementPage: React.FC = () => {
 
   const currentSubOptions = useMemo(() => {
       const target = categoryOptions.find(c => c.name === categoryFilter);
-      if (target) {
-          return target.subCategories;
-      } else {
-          const allSubs = new Set<string>();
-          categoryOptions.forEach(cat => {
-              cat.subCategories.forEach(sub => allSubs.add(sub));
-          });
-          return Array.from(allSubs).sort();
-      }
+      return target ? target.subCategories : [];
   }, [categoryOptions, categoryFilter]);
 
   const filteredItems = useMemo(() => {
@@ -209,52 +184,63 @@ const SiteSettlementPage: React.FC = () => {
   };
 
   return (
-    // ... (기존 return JSX 코드 그대로 사용)
     <div className="settlement-page-container">
-        <div className="page-header">
-            <h2>현장 결산</h2>
-            <p>현장별 매출/매입/지출 내역을 통합하여 확인합니다.</p>
-        </div>
-
-        <div className="settlement-control-panel">
-            <div className="status-filter-row">
-                <span className="label">현장 상태:</span>
-                <button className={`status-btn ${statusFilter === '전체' ? 'active' : ''}`} onClick={() => setStatusFilter('전체')}>전체</button>
-                {SITE_STATUSES.map(status => (
-                    <button key={status} className={`status-btn ${statusFilter === status ? 'active' : ''}`} onClick={() => { setStatusFilter(status); setSelectedSiteId(''); }}>{status}</button>
-                ))}
+        {/* [스타일 통일] 헤더 영역 */}
+        <div className="settlement-header-wrapper">
+            <div className="settlement-title">
+                <h2>현장 결산 관리</h2>
+                <p>현장별 매출/매입/지출 내역을 통합하여 확인합니다.</p>
             </div>
 
-            <div className="site-select-row">
-                <select value={selectedSiteId} onChange={e => setSelectedSiteId(e.target.value)} className="site-select" disabled={loading}>
-                    <option value="">{filteredSites.length === 0 ? "(해당 상태의 현장이 없습니다)" : "== 현장을 선택하세요 =="}</option>
-                    {filteredSites.map(site => (
-                        <option key={site.id} value={site.id}>[{site.status}] {site.siteName}</option>
-                    ))}
-                </select>
+            <div className="settlement-control-panel">
+                <div className="filter-row top-row">
+                    <span className="label">현장 상태:</span>
+                    <div className="status-buttons">
+                        <button className={`status-btn ${statusFilter === '전체' ? 'active' : ''}`} onClick={() => setStatusFilter('전체')}>전체</button>
+                        {SITE_STATUSES.map(status => (
+                            <button key={status} className={`status-btn ${statusFilter === status ? 'active' : ''}`} onClick={() => { setStatusFilter(status); setSelectedSiteId(''); }}>{status}</button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="filter-row">
+                    <div className="filter-item site-select-box">
+                         <select value={selectedSiteId} onChange={e => setSelectedSiteId(e.target.value)} className="site-select" disabled={loading}>
+                            <option value="">{loading ? "로딩 중..." : "== 현장을 선택하세요 =="}</option>
+                            {filteredSites.map(site => (
+                                <option key={site.id} value={site.id}>[{site.status}] {site.siteName}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div className="settlement-content">
             {selectedSiteId ? (
                 <>
-                    <div className="settlement-summary-box">
-                        <div className="summary-item">
-                            <span className="label">매출</span>
-                            <span className="value revenue">{summary.revenue.toLocaleString()}</span>
-                        </div>
-                        <div className="summary-divider">-</div>
-                        <div className="summary-item">
-                            <span className="label">지출</span>
-                            <span className="value expense">{summary.expense.toLocaleString()}</span>
-                        </div>
-                        <div className="summary-divider">=</div>
-                        <div className="summary-item">
-                            <span className="label">수익</span>
-                            <span className={`value profit ${summary.profit < 0 ? 'negative' : ''}`}>
-                                {summary.profit.toLocaleString()}
-                            </span>
-                        </div>
+                    {/* [스타일 통일] 요약 카드 */}
+                    <div className="summary-section">
+                         <div className="summary-card sales">
+                             <div className="card-header">🔵 총 매출</div>
+                             <div className="card-body">
+                                 <strong className="card-total">{summary.revenue.toLocaleString()} 원</strong>
+                             </div>
+                         </div>
+                         <div className="summary-divider">-</div>
+                         <div className="summary-card purchase">
+                             <div className="card-header">🔴 총 지출</div>
+                             <div className="card-body">
+                                 <strong className="card-total">{summary.expense.toLocaleString()} 원</strong>
+                             </div>
+                         </div>
+                         <div className="summary-divider">=</div>
+                         <div className="summary-card profit">
+                             <div className="card-header">🟢 예상 수익</div>
+                             <div className="card-body">
+                                 <strong className={`card-total ${summary.profit < 0 ? 'negative' : ''}`}>{summary.profit.toLocaleString()} 원</strong>
+                             </div>
+                         </div>
                     </div>
 
                     <div className="category-filter-bar">
@@ -284,30 +270,26 @@ const SiteSettlementPage: React.FC = () => {
                                 ))}
                             </select>
                         </span>
-
-                        <span className="info-text">
-                            * 지출 품목 설정 기준
-                        </span>
                     </div>
 
                     <div className="settlement-table-wrapper">
                         <table className="settlement-table">
                             <thead>
                                 <tr>
-                                    <th>날짜</th>
-                                    <th>구분</th>
-                                    <th>상세</th>
-                                    <th>1차분류(공종)</th>
-                                    <th>2차분류(상세)</th>
+                                    <th style={{width:'100px'}}>날짜</th>
+                                    <th style={{width:'80px'}}>구분</th>
+                                    <th style={{width:'100px'}}>상세</th>
+                                    <th style={{width:'120px'}}>1차분류</th>
+                                    <th style={{width:'120px'}}>2차분류</th>
                                     <th>거래처/사용처</th>
-                                    <th>금액</th>
+                                    <th style={{width:'120px', textAlign:'right'}}>금액</th>
                                     <th>메모</th>
-                                    <th>관리</th>
+                                    <th style={{width:'60px'}}>관리</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {dataLoading ? (
-                                    <tr><td colSpan={9} className="loading">데이터를 불러오는 중...</td></tr>
+                                    <tr><td colSpan={9} className="loading-td">데이터를 불러오는 중...</td></tr>
                                 ) : filteredItems.length === 0 ? (
                                     <tr><td colSpan={9} className="no-data">내역이 없습니다.</td></tr>
                                 ) : (
@@ -338,7 +320,9 @@ const SiteSettlementPage: React.FC = () => {
                     </div>
                 </>
             ) : (
-                <div className="empty-state"><p>☝️ 상단에서 현장을 선택해주세요.</p></div>
+                <div className="empty-state">
+                    <p>☝️ 상단에서 현장을 선택해주세요.</p>
+                </div>
             )}
         </div>
     </div>
