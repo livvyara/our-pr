@@ -5,11 +5,13 @@ import {
 import { K_BRAND_COLOR } from '../../constants';
 import './ContractInfoModal.css';
 
-// [수정] 타입 명시적 임포트
 import PaymentTermsModal, { type PaymentTermData, type PaymentItem } from './PaymentTermsModal'; 
 import ContractEditorModal, { DEFAULT_CONTRACT_TEXT } from './ContractEditorModal';
 import ContractPreviewModal from './ContractPreviewModal';
 import SignedContractViewerModal from '../customer/SignedContractViewerModal';
+
+// [NEW] 채팅 서비스 유틸 임포트
+import { sendSystemMessage } from '../../utils/chatService';
 
 interface ContractInfoModalProps {
   siteId: string;
@@ -31,13 +33,11 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
   const db = getFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 모달 상태
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSignedViewerOpen, setIsSignedViewerOpen] = useState(false);
 
-  // 기본 정보 State
   const [siteType, setSiteType] = useState<SiteType>('residential');
   const [supplyAmount, setSupplyAmount] = useState(''); 
   const [vatAmount, setVatAmount] = useState('');
@@ -56,46 +56,38 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
   const [asPeriod, setAsPeriod] = useState('12'); 
   const [paymentTerms, setPaymentTerms] = useState<PaymentTermData | null>(null);
   
-  // 계약서 양식 및 도장
   const [contractContent, setContractContent] = useState('');
   const [specialTerms, setSpecialTerms] = useState('');
   const [partnerSealUrl, setPartnerSealUrl] = useState('');
 
-  // 파트너 및 현장 정보
-  const [partnerInfo, setPartnerInfo] = useState<PartnerInfoData>({ 
-      name: '', owner: '', bizNum: '', phone: '', address: '' 
-  });
+  const [partnerInfo, setPartnerInfo] = useState<PartnerInfoData>({ name: '', owner: '', bizNum: '', phone: '', address: '' });
   const [currentSiteName, setCurrentSiteName] = useState('');
 
-  // 계약 상태 및 체결 데이터
   const [contractStatus, setContractStatus] = useState<string>(''); 
   const [signedData, setSignedData] = useState<{
-      signatureUrl?: string;
-      idCardUrl?: string;
-      clientRRN?: string;
-      signedAt?: any;
+      signatureUrl?: string; idCardUrl?: string; clientRRN?: string; signedAt?: any;
   }>({});
 
-  // Data Loading
   useEffect(() => {
     const fetchData = async () => {
       if (!siteId) return;
       try {
-        // 1. 파트너 정보 로드
         const partnerDoc = await getDoc(doc(db, 'users', partnerUid));
         if (partnerDoc.exists()) {
             const pData = partnerDoc.data();
             const pInfo = pData.partnerInfo || {};
+            
+            const combinedAddress = `${pInfo.city || ''} ${pInfo.district || ''} ${pInfo.addressDetail || ''}`.trim();
+
             setPartnerInfo({
                 name: pInfo.companyName || pData.companyName || '시공사(상호미입력)',
                 owner: pInfo.ownerName || pInfo.repName || pData.name || '대표',
                 bizNum: pInfo.businessNumber || pData.businessNumber || pInfo.bizNum || '-',
                 phone: pInfo.contact || pInfo.officePhone || pData.phone || '-',
-                address: pInfo.address || pInfo.officeAddress || pData.address || '-'
+                address: combinedAddress || pInfo.address || pData.address || '-'
             });
         }
 
-        // 2. 전역 템플릿 및 도장 로드 (기본값)
         let globalContent = DEFAULT_CONTRACT_TEXT;
         let globalSpecial = '';
         let globalSeal = '';
@@ -110,7 +102,6 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
         }
         setPartnerSealUrl(globalSeal);
 
-        // 3. 현장 정보 로드
         const siteDocRef = doc(db, 'users', partnerUid, 'sites', siteId);
         const siteSnap = await getDoc(siteDocRef);
         
@@ -134,12 +125,10 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
              if (c.asPeriod) setAsPeriod(String(c.asPeriod));
              if (c.paymentTerms) setPaymentTerms(c.paymentTerms);
              
-             // 현장별 스냅샷 우선 사용
              setContractContent(c.customContent || globalContent);
              setSpecialTerms(c.specialContent || globalSpecial);
              if (c.partnerSealUrl) setPartnerSealUrl(c.partnerSealUrl);
 
-             // 상태 및 체결 데이터
              setContractStatus(c.status || 'draft');
              setSignedData({
                  signatureUrl: c.signatureUrl,
@@ -147,20 +136,17 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
                  clientRRN: c.clientRRN,
                  signedAt: c.signedAt
              });
-
           } else {
              setStartDate(data.startDate || '');
              if (data.budget) {
                  setSupplyAmount(Number(data.budget).toLocaleString());
                  setVatAmount(Math.floor(Number(data.budget) * 0.1).toLocaleString());
              }
-             // 계약 정보가 없으면 전역 템플릿 사용
              setContractContent(globalContent);
              setSpecialTerms(globalSpecial);
           }
         }
         
-        // 4. 도급인 초대 정보 확인
         const inviteQuery = query(
           collection(db, 'siteInvitations'),
           where('siteId', '==', siteId),
@@ -202,7 +188,6 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
     e.preventDefault();
     if (!supplyAmount || !startDate || !endDate) return alert("필수 항목을 입력해주세요.");
     
-    // [수정] 타입 캐스팅을 통해 unknown 에러 방지
     if (paymentTerms) {
         const items = Object.values(paymentTerms.items) as PaymentItem[];
         const totalRate = items.reduce((sum, item) => item.checked ? sum + item.rate : sum, 0);
@@ -257,10 +242,7 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
   const handleTemplateSave = async (content: string, special: string, sealUrl: string) => {
       try {
           await setDoc(doc(db, 'users', partnerUid, 'config', 'contractTemplate'), {
-              content, 
-              special, 
-              sealUrl, 
-              updatedAt: serverTimestamp()
+              content, special, sealUrl, updatedAt: serverTimestamp()
           });
           setContractContent(content);
           setSpecialTerms(special);
@@ -270,19 +252,15 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
       } catch (e) { console.error(e); alert("양식 저장 실패"); }
   };
 
+  // [수정] 전자계약 체결 요청 (+ 채팅 알림)
   const handleRequestSign = async () => {
       if (!isClientInvited || !clientUid) return alert("도급인을 먼저 초대해주세요.");
       if (!supplyAmount) return alert("계약 정보를 먼저 저장해주세요.");
-      
-      if (!partnerSealUrl) {
-          alert("⚠️ 시공자(파트너)의 직인/인감이 등록되지 않았습니다.\n[양식 편집] 버튼을 눌러 도장 이미지를 먼저 등록해주세요.");
-          return;
-      }
+      if (!partnerSealUrl) return alert("시공자(파트너)의 직인/인감이 등록되지 않았습니다.\n[양식 편집] 버튼을 눌러 등록해주세요.");
 
       if (!confirm(`도급인(${clientName})에게 전자계약 체결을 요청하시겠습니까?`)) return;
 
       try {
-          // [핵심] 현재 계약 내용과 도장을 스냅샷으로 저장
           await updateDoc(doc(db, 'users', partnerUid, 'sites', siteId), {
               'contract.status': 'requested',
               'contract.requestedAt': serverTimestamp(),
@@ -298,14 +276,17 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
             relatedId: siteId
           });
 
+          // [NEW] 채팅방 알림 전송 (chatService 사용)
+          await sendSystemMessage(siteId, "파트너가 전자계약서 작성을 고객님께 요청했습니다.");
+
           setContractStatus('requested');
           alert("전자계약 체결 요청이 완료되었습니다.");
       } catch (e) { console.error(e); alert("요청 중 오류가 발생했습니다."); }
   };
 
-  // [NEW] 계약서 재작성 요청 (파트너용)
+  // [수정] 계약서 재작성 요청 (+ 채팅 알림)
   const handlePartnerRequestRewrite = async () => {
-      if (!confirm("고객에게 계약서 재작성을 요청하시겠습니까?\n고객이 수락하면 현재 계약은 파기되고 수정 가능한 상태로 돌아갑니다.")) return;
+      if (!confirm("고객에게 계약서 재작성을 요청하시겠습니까?\n고객이 수락하면 현재 계약은 파기됩니다.")) return;
 
       try {
           await updateDoc(doc(db, 'users', partnerUid, 'sites', siteId), {
@@ -320,12 +301,12 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
               relatedId: siteId
           });
 
-          alert("재작성 요청을 보냈습니다.\n고객이 수락하면 계약서를 다시 작성할 수 있습니다.");
-          setIsSignedViewerOpen(false); // 뷰어 닫기
-      } catch (e) {
-          console.error(e);
-          alert("요청 중 오류가 발생했습니다.");
-      }
+          // [NEW] 채팅방 알림 전송
+          await sendSystemMessage(siteId, "파트너가 전자 계약서 재작성을 요청했습니다.");
+
+          alert("재작성 요청을 보냈습니다.\n고객이 수락하면 다시 작성할 수 있습니다.");
+          setIsSignedViewerOpen(false); 
+      } catch (e) { console.error(e); alert("오류가 발생했습니다."); }
   };
 
   const handlePaymentTerms = () => {
@@ -338,35 +319,25 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
       setIsPreviewOpen(true);
   };
 
-  // 상태별 버튼 렌더링
   const renderContractButton = () => {
       if (contractStatus === 'signed') {
           return (
-              <button 
-                  className="top-btn completed" 
-                  onClick={() => setIsSignedViewerOpen(true)}
-                  style={{backgroundColor: '#e8f5e9', color: '#2e7d32', borderColor: '#2e7d32', fontWeight:'bold'}}
-              >
+              <button className="top-btn completed" onClick={() => setIsSignedViewerOpen(true)}
+                  style={{backgroundColor: '#e8f5e9', color: '#2e7d32', borderColor: '#2e7d32', fontWeight:'bold'}}>
                   ✅ 계약 완료 (보기)
               </button>
           );
       } else if (contractStatus === 'requested') {
           return (
-              <button 
-                  className="top-btn disabled" 
-                  disabled
-                  style={{backgroundColor: '#f5f5f5', color: '#999', borderColor: '#ddd', cursor: 'not-allowed'}}
-              >
+              <button className="top-btn disabled" disabled
+                  style={{backgroundColor: '#f5f5f5', color: '#999', borderColor: '#ddd', cursor: 'not-allowed'}}>
                   ⏳ 서명 대기중
               </button>
           );
       } else {
           return (
-              <button 
-                  className="top-btn" 
-                  onClick={handleRequestSign} 
-                  style={{color:'#d32f2f', borderColor:'#d32f2f', fontWeight:'bold'}}
-              >
+              <button className="top-btn" onClick={handleRequestSign} 
+                  style={{color:'#d32f2f', borderColor:'#d32f2f', fontWeight:'bold'}}>
                   ✍️ 전자계약 체결 요청
               </button>
           );
@@ -387,7 +358,6 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
                 <button className="close-btn" onClick={onClose}>&times;</button>
             </div>
           </div>
-
           <form className="contract-form" onSubmit={handleSubmit}>
             <div className="control-box">
               <div className="box-title">현장 기본 정보</div>
@@ -545,7 +515,6 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
                   partnerSealUrl: partnerSealUrl
               }}
               onClose={() => setIsSignedViewerOpen(false)}
-              // [NEW] 재작성 요청 함수 전달
               onRequestRewrite={handlePartnerRequestRewrite}
           />
       )}

@@ -1,18 +1,18 @@
-import React, { useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import React, { useRef } from 'react';
 import './ContractPreviewModal.css';
 
 interface PaymentItem {
     id: string; label: string; checked: boolean; rate: number; amount: number; date: string;
 }
+
 interface ContractData {
     siteName: string; address: string; clientName: string; clientPhone: string; clientAddress: string;
     partnerName: string; partnerOwner: string; partnerBizNum: string; partnerPhone: string; partnerAddress: string;
     startDate: string; endDate: string; supplyAmount: number; vatAmount: number; totalAmount: number; asPeriod: number;
     paymentTerms: { items: { [key: string]: PaymentItem } } | null;
-    customContent: string; specialContent: string;
-    partnerSealUrl?: string; // 파트너 도장
+    customContent: string; 
+    specialContent: string; 
+    partnerSealUrl?: string;
 }
 
 interface Props {
@@ -20,7 +20,7 @@ interface Props {
     onClose: () => void;
 }
 
-const numberToKorean = (number: number) => { /* ... 생략 (기존과 동일) ... */ 
+const numberToKorean = (number: number) => {
     const units = ['', '만', '억', '조'];
     const nums = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
     const strNum = String(number);
@@ -47,67 +47,126 @@ const numberToKorean = (number: number) => { /* ... 생략 (기존과 동일) ..
 
 const ContractPreviewModal: React.FC<Props> = ({ data, onClose }) => {
     const printRef = useRef<HTMLDivElement>(null);
-    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSavePdf = async () => {
+    const handlePrint = () => {
         if (!printRef.current) return;
-        setIsSaving(true);
-        try {
-            const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-            const pdfData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const w = 210, h = 297;
-            const imgH = (canvas.height * w) / canvas.width;
-            let heightLeft = imgH, pos = 0;
-            
-            pdf.addImage(pdfData, 'PNG', 0, pos, w, imgH);
-            heightLeft -= h;
-            while(heightLeft > 0) {
-                pos = heightLeft - imgH;
-                pdf.addPage();
-                pdf.addImage(pdfData, 'PNG', 0, pos, w, imgH);
-                heightLeft -= h;
-            }
-            pdf.save(`계약서_${data.clientName}_${data.siteName}.pdf`);
-        } catch (e) {
-            console.error(e);
-            alert("PDF 저장 중 오류가 발생했습니다.");
-        } finally {
-            setIsSaving(false);
+
+        const contentHtml = printRef.current.innerHTML;
+        const printWindow = window.open('', '_blank', 'width=900,height=1000');
+        if (!printWindow) {
+            alert("팝업 차단을 해제해 주세요.");
+            return;
         }
+
+        printWindow.document.open();
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>계약서_${data.clientName}</title>
+                <style>
+                    body { font-family: 'Batang', serif; margin: 0; padding: 0; background-color: #fff; color: #000; }
+                    
+                    /* A4 출력 설정 */
+                    @page { size: A4 portrait; margin: 20mm; }
+                    
+                    /* 공통 스타일 */
+                    .doc-title { text-align: center; font-size: 22pt; font-weight: bold; margin-bottom: 10px; text-decoration: underline; }
+                    .doc-subtitle { text-align: center; font-size: 11pt; margin-bottom: 30px; color: #333; }
+                    .doc-title-sub { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 20px; text-decoration: underline; margin-top: 40px; }
+                    
+                    .doc-section { margin-bottom: 20px; font-size: 11pt; line-height: 1.6; text-align: justify; }
+                    .doc-section.content { white-space: pre-wrap; word-break: break-all; }
+                    
+                    .special-terms { border: 2px solid #000; padding: 15px; margin-top: 30px; min-height: 100px; page-break-inside: avoid; }
+                    .special-terms h4 { margin-top: 0; text-decoration: underline; }
+
+                    /* 표 스타일 */
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10pt; }
+                    th, td { border: 1px solid #000; padding: 8px; }
+                    th { text-align: center; background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; font-weight: bold; }
+                    td.center { text-align: center; }
+                    td.right { text-align: right; }
+                    .total-row { font-weight: bold; background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+
+                    /* 서명란 */
+                    .doc-footer { margin-top: 50px; text-align: center; page-break-inside: avoid; }
+                    .date-today { margin: 30px 0; font-size: 12pt; font-weight: bold; }
+                    .sign-area { display: flex; justify-content: space-between; gap: 20px; margin-top: 20px; }
+                    .sign-box { flex: 1; text-align: left; position: relative; border: 1px solid #ddd; padding: 15px; page-break-inside: avoid; }
+                    .sign-role { font-weight: bold; font-size: 12pt; margin-bottom: 10px; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                    .sign-row { margin-bottom: 6px; font-size: 10pt; }
+                    .sign-row span { font-weight: bold; width: 80px; display: inline-block; }
+
+                    /* 파트너 도장 */
+                    .partner-seal-box { position: absolute; right: 10px; bottom: 10px; width: 70px; height: 70px; z-index: 10; opacity: 0.8; }
+                    .partner-seal-box img { width: 100%; height: 100%; object-fit: contain; }
+
+                    /* 페이지 분리 */
+                    .page-break { page-break-before: always; }
+                    .doc-appendix-wrapper { margin-top: 50px; }
+                </style>
+            </head>
+            <body>
+                ${contentHtml}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+            // printWindow.close(); // 자동 닫기 원하시면 주석 해제
+        }, 500);
     };
 
-    const getDaysDiff = () => { /* ... 생략 ... */ 
+    const getDaysDiff = () => {
         if (!data.startDate || !data.endDate) return '';
         const start = new Date(data.startDate);
         const end = new Date(data.endDate);
-        const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1; 
         return `${diffDays}일간`;
     };
 
-    // [수정] 잔금 부가세 합산 로직
     const renderPaymentRows = () => {
         if (!data.paymentTerms) return <tr><td colSpan={4} className="center">별도 협의</td></tr>;
-        const items = Object.values(data.paymentTerms.items as any).filter((i: any) => i.checked);
-        return items.map((item: any, idx: number) => {
-            let displayAmount = item.amount;
-            let note = "";
-            if (item.id === 'balance') {
-                displayAmount += data.vatAmount;
-                note = "(VAT포함)";
-            }
-            return (
-                <tr key={idx}>
+        
+        // 날짜순 정렬
+        const items = Object.values(data.paymentTerms.items as any)
+            .filter((i: any) => i.checked)
+            .sort((a: any, b: any) => {
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return new Date(a.date).getTime() - new Date(b.date).getTime();
+            });
+
+        return items.map((item: any, idx: number) => (
+            <React.Fragment key={idx}>
+                {/* 1. 일반 항목 (공급가액) */}
+                <tr>
                     <td className="center">{item.label}</td>
                     <td className="center">{item.rate}%</td>
-                    <td className="right">{displayAmount.toLocaleString()} 원 {note && <small>{note}</small>}</td>
+                    <td className="right">{item.amount.toLocaleString()} 원</td>
                     <td className="center">{item.date || '날짜 미정'}</td>
                 </tr>
-            );
-        });
+
+                {/* 2. 잔금(balance)일 경우 바로 밑에 부가세 행 추가 */}
+                {item.id === 'balance' && (
+                    <tr className="vat-row" style={{ backgroundColor: '#f9f9f9' }}>
+                        <td className="center" style={{ fontWeight: 'bold' }}>부가세</td>
+                        <td className="center"></td> {/* 비율 표기 안 함 */}
+                        <td className="right" style={{ fontWeight: 'bold' }}>
+                            {data.vatAmount.toLocaleString()} 원
+                        </td>
+                        <td className="center">{item.date || '날짜 미정'}</td> {/* 잔금일과 동일 */}
+                    </tr>
+                )}
+            </React.Fragment>
+        ));
     };
 
-    const processContent = (text: string) => { /* ... 생략 ... */ 
+    const processContent = (text: string) => {
         if (!text) return "";
         let processed = text
             .replace(/{{현장명}}/g, `<strong>${data.siteName}</strong>`)
@@ -119,6 +178,7 @@ const ContractPreviewModal: React.FC<Props> = ({ data, onClose }) => {
             .replace(/{{공급가액}}/g, data.supplyAmount.toLocaleString())
             .replace(/{{부가세}}/g, data.vatAmount.toLocaleString())
             .replace(/{{AS기간}}/g, `<strong>${data.asPeriod}</strong>`);
+        
         return processed.split('\n').join('<br/>');
     };
 
@@ -128,9 +188,7 @@ const ContractPreviewModal: React.FC<Props> = ({ data, onClose }) => {
                 <div className="cp-header">
                     <h3>📄 계약서 미리보기</h3>
                     <div className="cp-actions">
-                        <button className="btn-print" onClick={handleSavePdf} disabled={isSaving}>
-                            {isSaving ? '생성 중...' : 'PDF 저장'}
-                        </button>
+                        <button className="btn-print" onClick={handlePrint}>PDF 저장 / 인쇄</button>
                         <button className="btn-close" onClick={onClose}>×</button>
                     </div>
                 </div>
@@ -171,18 +229,9 @@ const ContractPreviewModal: React.FC<Props> = ({ data, onClose }) => {
                                         <div className="sign-row"><span>등록번호 :</span> {data.partnerBizNum}</div>
                                         <div className="sign-row"><span>대표자 :</span> {data.partnerOwner} (인)</div>
                                         
-                                        {/* [수정] 파트너 도장 */}
                                         {data.partnerSealUrl && (
-                                            <div className="partner-seal-box" style={{
-                                                position: 'absolute', right: '10px', bottom: '10px', 
-                                                width: '80px', height: '80px', opacity: 0.8, zIndex: 50
-                                            }}>
-                                                <img 
-                                                    src={data.partnerSealUrl} 
-                                                    alt="직인" 
-                                                    style={{width:'100%', height:'100%', objectFit:'contain'}}
-                                                    crossOrigin="anonymous" 
-                                                />
+                                            <div className="partner-seal-box">
+                                                <img src={data.partnerSealUrl} alt="직인" />
                                             </div>
                                         )}
                                     </div>
@@ -194,16 +243,23 @@ const ContractPreviewModal: React.FC<Props> = ({ data, onClose }) => {
                             <h2 className="doc-title-sub">[별첨] 공사대금 지급 조건</h2>
                             <div className="payment-table-container">
                                 <table>
-                                    <thead><tr><th>구분</th><th>비율</th><th>금액 (VAT 포함)</th><th>지급 예정일</th></tr></thead>
-                                    <tbody>{renderPaymentRows()}</tbody>
-                                    <tfoot>
+                                    <thead>
+                                        <tr>
+                                            <th style={{width:'15%'}}>구분</th>
+                                            <th style={{width:'15%'}}>비율</th>
+                                            <th>금액 (VAT 포함)</th>
+                                            <th style={{width:'25%'}}>지급 예정일</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {renderPaymentRows()}
                                         <tr className="total-row">
                                             <td className="center">합계</td>
                                             <td className="center">100%</td>
                                             <td className="right">{data.totalAmount.toLocaleString()} 원</td>
                                             <td className="center">-</td>
                                         </tr>
-                                    </tfoot>
+                                    </tbody>
                                 </table>
                             </div>
                             <div className="payment-note">

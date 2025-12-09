@@ -3,12 +3,16 @@ import SignatureCanvas from 'react-signature-canvas';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import './ElectronicContractSignModal.css';
+
+// [NEW] 채팅 서비스 유틸 임포트
+import { sendSystemMessage } from '../../utils/chatService';
 
 interface PaymentItem {
     id: string; label: string; checked: boolean; rate: number; amount: number; date: string;
 }
+
 interface ContractData {
     siteName: string; address: string; clientName: string; clientPhone: string; clientAddress: string;
     partnerName: string; partnerOwner: string; partnerBizNum: string; partnerPhone: string; partnerAddress: string;
@@ -67,8 +71,12 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
     const handleResidentNumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.replace(/[^0-9]/g, ''); 
         let formatted = val;
-        if (val.length > 6) formatted = `${val.slice(0, 6)}-${val.slice(6, 13)}`;
-        if (val.length > 13) formatted = `${val.slice(0, 6)}-${val.slice(6, 13)}`; 
+        if (val.length > 6) {
+            formatted = `${val.slice(0, 6)}-${val.slice(6, 13)}`;
+        }
+        if (val.length > 13) { 
+            formatted = `${val.slice(0, 6)}-${val.slice(6, 13)}`; 
+        }
         setResidentNum(formatted);
     };
 
@@ -82,9 +90,10 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
         }
     };
 
-    // [수정] 오류 유발 함수(getTrimmedCanvas) 제거 -> getCanvas 사용
+    // 서명 패드 조작 시마다 이미지 업데이트 (미리보기용)
     const handleEndStroke = () => {
         if (sigCanvas.current) {
+            // [수정] getCanvas() 사용
             setSignatureImg(sigCanvas.current.getCanvas().toDataURL('image/png'));
         }
     };
@@ -102,25 +111,42 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
         return `${diffDays}일간`;
     };
     
+    // [수정] 잔금 부가세 합산
     const renderPaymentRows = () => {
         if (!data.paymentTerms) return <tr><td colSpan={4} className="center">별도 협의</td></tr>;
-        const items = Object.values(data.paymentTerms.items as any).filter((i: any) => i.checked);
-        return items.map((item: any, idx: number) => {
-            let displayAmount = item.amount;
-            let note = "";
-            if (item.id === 'balance') {
-                displayAmount += data.vatAmount;
-                note = "(VAT포함)";
-            }
-            return (
-                <tr key={idx}>
+        
+        // 날짜순 정렬
+        const items = Object.values(data.paymentTerms.items as any)
+            .filter((i: any) => i.checked)
+            .sort((a: any, b: any) => {
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                return new Date(a.date).getTime() - new Date(b.date).getTime();
+            });
+
+        return items.map((item: any, idx: number) => (
+            <React.Fragment key={idx}>
+                {/* 1. 일반 항목 (공급가액) */}
+                <tr>
                     <td className="center">{item.label}</td>
                     <td className="center">{item.rate}%</td>
-                    <td className="right">{displayAmount.toLocaleString()} 원 {note && <small>{note}</small>}</td>
+                    <td className="right">{item.amount.toLocaleString()} 원</td>
                     <td className="center">{item.date || '날짜 미정'}</td>
                 </tr>
-            );
-        });
+
+                {/* 2. 잔금(balance)일 경우 바로 밑에 부가세 행 추가 */}
+                {item.id === 'balance' && (
+                    <tr className="vat-row" style={{ backgroundColor: '#f9f9f9' }}>
+                        <td className="center" style={{ fontWeight: 'bold' }}>부가세</td>
+                        <td className="center"></td> {/* 비율 표기 안 함 */}
+                        <td className="right" style={{ fontWeight: 'bold' }}>
+                            {data.vatAmount.toLocaleString()} 원
+                        </td>
+                        <td className="center">{item.date || '날짜 미정'}</td> {/* 잔금일과 동일 */}
+                    </tr>
+                )}
+            </React.Fragment>
+        ));
     };
 
     const processContent = (text: string) => {
@@ -147,7 +173,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
 
         setIsSubmitting(true);
         try {
-            // [수정] 1. 서명 이미지 추출 (getCanvas 사용)
+            // [수정] 1. 서명 데이터 추출 (getCanvas 사용 - 가장 중요)
             const signatureDataUrl = sigCanvas.current 
                 ? sigCanvas.current.getCanvas().toDataURL('image/png') 
                 : '';
@@ -159,16 +185,17 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
             await uploadBytes(idCardRef, idCardFile);
             const idCardUrl = await getDownloadURL(idCardRef);
 
-            // 3. 계약서 PDF 생성
+            // 3. 계약서 PDF 생성 (화면 캡처 방식)
             let pdfUrl = '';
             if (contentRef.current) {
-                // PDF 생성 전 잠시 대기
+                // PDF 생성 전 잠시 대기 (이미지 렌더링 확보)
                 await new Promise(resolve => setTimeout(resolve, 300));
                 
+                // [수정] allowTaint 제거, useCORS 유지
                 const canvas = await html2canvas(contentRef.current, { 
                     scale: 2, 
                     backgroundColor: '#ffffff',
-                    useCORS: true // [중요] CORS 필수
+                    useCORS: true 
                 });
                 
                 const pdfData = canvas.toDataURL('image/png');
@@ -200,8 +227,11 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
                 'contract.clientRRN': residentNum,
                 'contract.idCardUrl': idCardUrl,
                 'contract.pdfUrl': pdfUrl, 
-                'contract.signatureUrl': signatureDataUrl 
+                'contract.signatureUrl': signatureDataUrl // [확인] 서명 저장
             });
+
+            // [NEW] 채팅 알림 전송
+            await sendSystemMessage(siteId, "고객님이 전자계약서 작성을 완료 했습니다.");
 
             alert("전자계약 체결이 완료되었습니다.");
             onSignedSuccess();
@@ -209,7 +239,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
 
         } catch (e: any) {
             console.error("Contract Submit Error:", e);
-            alert(`처리 중 오류가 발생했습니다.\n${e.message}`);
+            alert(`처리 중 오류가 발생했습니다: ${e.message}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -225,7 +255,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
 
                 <div className="ecs-body">
                     <div className="ecs-scroll-area">
-                        {/* 계약서 본문 */}
+                        {/* 계약서 본문 (PDF 캡처 대상) */}
                         <div className="paper-a4" ref={contentRef}>
                             <div className="doc-content-wrapper">
                                 <h1 className="doc-title">실내건축 공사 표준계약서</h1>
@@ -242,7 +272,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
                                     </div>
                                 )}
 
-                                {/* 신분증 미리보기 */}
+                                {/* [NEW] 신분증 미리보기 (계약서 안에 포함됨) */}
                                 {idCardPreview && (
                                     <div className="doc-id-card-section">
                                         <h4>[별첨] 도급인 신분증 사본</h4>
@@ -255,18 +285,15 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
                                     <p className="date-today">{new Date().toLocaleDateString()} 작성</p>
                                     
                                     <div className="sign-area">
-                                        <div className="sign-box" style={{position:'relative'}}>
+                                        <div className="sign-box">
                                             <div className="sign-role">"소비자" (갑)</div>
                                             <div className="sign-row"><span>주 소 :</span> {data.clientAddress}</div>
                                             <div className="sign-row"><span>연락처 :</span> {data.clientPhone}</div>
                                             <div className="sign-row"><span>성 명 :</span> {data.clientName} (인)</div>
                                             <div className="sign-row"><span>주민번호 :</span> {residentNum || '____________'}</div>
                                             
-                                            {/* 서명 미리보기 (실시간) */}
-                                            <div className="signature-display-box" style={{
-                                                position:'absolute', right:'20px', bottom:'20px', 
-                                                width:'100px', height:'60px', zIndex: 10
-                                            }}>
+                                            {/* 서명 미리보기 (실시간 반영) */}
+                                            <div className="signature-display-box" style={{position:'absolute', right:'20px', bottom:'20px', width:'100px', height:'60px', zIndex: 10}}>
                                                 {signatureImg ? (
                                                     <img src={signatureImg} alt="서명" className="sig-img-final" style={{width:'100%', height:'100%', objectFit:'contain'}} />
                                                 ) : (
@@ -283,7 +310,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
                                             <div className="sign-row"><span>등록번호 :</span> {data.partnerBizNum}</div>
                                             <div className="sign-row"><span>대표자 :</span> {data.partnerOwner} (인)</div>
                                             
-                                            {/* 파트너 도장 */}
+                                            {/* 파트너 도장 표시 */}
                                             {data.partnerSealUrl && (
                                                 <div className="partner-seal-box" style={{
                                                     position: 'absolute', right: '10px', bottom: '10px', 
@@ -306,7 +333,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
                                 <h2 className="doc-title-sub">[별첨] 공사대금 지급 조건</h2>
                                 <div className="payment-table-container">
                                     <table>
-                                        <thead><tr><th>구분</th><th>비율</th><th>금액</th><th>지급일</th></tr></thead>
+                                        <thead><tr><th>구분</th><th>비율</th><th>금액 (VAT 포함)</th><th>지급 예정일</th></tr></thead>
                                         <tbody>{renderPaymentRows()}</tbody>
                                     </table>
                                 </div>
@@ -316,6 +343,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
                         {/* 입력 영역 */}
                         <div className="ecs-input-area">
                             <h4>📝 필수 정보 입력 및 서명</h4>
+                            
                             <div className="sign-input-group">
                                 <label>주민등록번호 <span className="req">*</span></label>
                                 <input 

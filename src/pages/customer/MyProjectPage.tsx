@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy, updateDoc 
+  getFirestore, collection, query, where, getDocs, doc, getDoc, orderBy, updateDoc, addDoc, serverTimestamp 
 } from 'firebase/firestore';
 import { auth } from '../../firebase-config';
 import { onAuthStateChanged } from 'firebase/auth';
 import ChatWidget from '../../components/common/ChatWidget';
 
+// 모달 임포트
 import CustomerConstructionScheduleModal from '../../components/customer/CustomerConstructionScheduleModal';
 import SiteWorkLogListModal from '../../components/customer/SiteWorkLogListModal';
 import CustomerSiteFilesModal from '../../components/customer/CustomerSiteFilesModal';
 import CustomerChangeOrderModal from '../../components/customer/CustomerChangeOrderModal'; 
 import ElectronicContractSignModal from '../../components/customer/ElectronicContractSignModal'; 
 import SignedContractViewerModal from '../../components/customer/SignedContractViewerModal';
+
+// 채팅 알림 유틸
+import { sendSystemMessage } from '../../utils/chatService';
 
 import './MyProjectPage.css'; 
 
@@ -48,9 +52,8 @@ interface MySiteData {
   contractVat?: number;
   changeOrderTotal?: number;
   
-  // 계약 관련 데이터
   contractStatus?: string; 
-  contractRewriteStatus?: string; // 재작성 요청 상태
+  contractRewriteStatus?: string; 
   fullContractData?: any;
 }
 
@@ -114,6 +117,10 @@ const MyProjectPage: React.FC = () => {
           const pInfo = pData.partnerInfo || {};
           const contract = sData.contract || {};
 
+          // [수정] 파트너 주소 조합 (city + district + addressDetail)
+          const partnerCombinedAddr = `${pInfo.city || ''} ${pInfo.district || ''} ${pInfo.addressDetail || ''}`.trim();
+          const finalPartnerAddress = partnerCombinedAddr || pInfo.address || pData.address || '';
+
           let changeTotal = 0;
           try {
               const coQuery = query(
@@ -127,7 +134,6 @@ const MyProjectPage: React.FC = () => {
               });
           } catch (e) { console.error("변경견적 조회 실패", e); }
 
-          // 모달에 전달할 전체 계약 데이터 구성
           const fullContractData = {
               siteName: sData.siteName,
               address: sData.address,
@@ -136,12 +142,12 @@ const MyProjectPage: React.FC = () => {
               clientPhone: contract.clientPhone || '',
               clientAddress: contract.clientAddress || '',
 
-              // 파트너 정보 (DB 최신값 사용)
               partnerName: pInfo.companyName || pData.companyName || '시공사',
               partnerOwner: pInfo.ownerName || pData.name || '대표',
               partnerBizNum: pInfo.businessNumber || pData.businessNumber || '',
               partnerPhone: pInfo.contact || pData.phone || '',
-              partnerAddress: pInfo.address || pData.address || '',
+              // [수정] 조합된 주소 적용
+              partnerAddress: finalPartnerAddress,
 
               startDate: contract.startDate || sData.startDate,
               endDate: contract.endDate || sData.endDate,
@@ -151,16 +157,14 @@ const MyProjectPage: React.FC = () => {
               asPeriod: contract.asPeriod || 12,
               paymentTerms: contract.paymentTerms || null,
               
-              // 계약 내용
               customContent: contract.customContent || '',
               specialContent: contract.specialContent || '',
               
-              // 체결 정보 및 도장
               signatureUrl: contract.signatureUrl || '',
               clientRRN: contract.clientRRN || '',
               idCardUrl: contract.idCardUrl || '',
               signedAt: contract.signedAt || null,
-              partnerSealUrl: contract.partnerSealUrl || '' // 파트너 도장
+              partnerSealUrl: contract.partnerSealUrl || '' 
           };
 
           sites.push({
@@ -176,7 +180,7 @@ const MyProjectPage: React.FC = () => {
             changeOrderTotal: changeTotal,
             
             contractStatus: contract.status || 'draft',
-            contractRewriteStatus: contract.rewriteStatus || null, // 재작성 요청 상태
+            contractRewriteStatus: contract.rewriteStatus || null,
             fullContractData: fullContractData
           });
         }
@@ -190,13 +194,11 @@ const MyProjectPage: React.FC = () => {
 
   const handleButtonClick = (type: any, site: MySiteData) => {
       if (type === 'contract') {
-          // 1. 재작성 요청이 있는 경우 (최우선 처리)
           if (site.contractRewriteStatus === 'requested') {
               handleRewriteResponse(site);
               return;
           }
 
-          // 2. 이미 체결된 경우 -> 뷰어 열기
           if (site.contractStatus === 'signed') {
               setModalState({ 
                   type: 'view_contract', 
@@ -207,7 +209,6 @@ const MyProjectPage: React.FC = () => {
               return;
           }
 
-          // 3. 체결 요청 상태인 경우 -> 서명 모달 열기
           if (site.contractStatus === 'requested') {
             setModalState({ 
                 type: 'contract', 
@@ -218,7 +219,6 @@ const MyProjectPage: React.FC = () => {
             return;
           }
 
-          // 4. 그 외 (아직 요청 안 옴)
           alert("파트너사가 아직 전자계약 체결을 요청하지 않았습니다.");
           return;
       }
@@ -231,13 +231,11 @@ const MyProjectPage: React.FC = () => {
       setModalState({ type, siteId: site.siteId, partnerUid: site.partnerUid });
   };
 
-  // 재작성 요청 응답 핸들러
   const handleRewriteResponse = async (site: MySiteData) => {
-      const choice = confirm("파트너가 계약서 재작성을 요청했습니다.\n\n[확인]: 수락 (기존 계약이 파기되고 다시 작성합니다)\n[취소]: 거절 (기존 계약을 유지합니다)");
+      const choice = confirm("파트너가 계약서 재작성을 요청했습니다.\n\n[확인]: 수락 (기존 계약 파기 후 재작성)\n[취소]: 거절 (기존 계약 유지)");
       
       try {
           if (choice) {
-              // 수락: 상태 초기화 (draft) 및 서명 데이터 삭제
               await updateDoc(doc(db, 'users', site.partnerUid, 'sites', site.siteId), {
                   'contract.status': 'draft',
                   'contract.rewriteStatus': 'accepted',
@@ -247,15 +245,17 @@ const MyProjectPage: React.FC = () => {
                   'contract.pdfUrl': null,
                   'contract.signedAt': null
               });
-              alert("재작성 요청을 수락했습니다.\n파트너가 수정 후 다시 요청할 것입니다.");
+              // 알림 전송
+              await sendSystemMessage(site.siteId, "고객님이 전자계약서 재작성을 수락하셨습니다.");
+              alert("재작성 요청을 수락했습니다.");
           } else {
-              // 거절: 요청 상태만 제거
               await updateDoc(doc(db, 'users', site.partnerUid, 'sites', site.siteId), {
                   'contract.rewriteStatus': 'rejected'
               });
+              // 알림 전송
+              await sendSystemMessage(site.siteId, "고객님이 전자계약서 재작성을 거절하셨습니다.");
               alert("재작성 요청을 거절했습니다.");
           }
-          // 목록 새로고침
           if (auth.currentUser) fetchMyProjects(auth.currentUser.uid);
       } catch (e) {
           console.error(e);
@@ -267,7 +267,6 @@ const MyProjectPage: React.FC = () => {
     <div className="mp-page-container">
       <div className="mp-main-content">
         <div className="mp-inner-container">
-            
             <div className="mp-header-section">
                 <div className="mp-reveal-mask">
                     <h2 className={`mp-title mp-reveal-text ${isPageLoaded ? 'mp-active' : ''}`}>MY LOUNGE</h2>
@@ -295,7 +294,6 @@ const MyProjectPage: React.FC = () => {
                         const isContractSigned = site.contractStatus === 'signed';
                         const isRewriteRequested = site.contractRewriteStatus === 'requested';
 
-                        // 버튼 텍스트 및 스타일 결정
                         let contractBtnText = '전자계약서';
                         let contractBtnStyle = {};
                         let contractIconStyle = {};
@@ -306,7 +304,7 @@ const MyProjectPage: React.FC = () => {
                             contractIconStyle = { borderColor: '#d32f2f', color: '#d32f2f' };
                         } else if (isContractSigned) {
                             contractBtnText = '계약 체결 완료';
-                            contractBtnStyle = { color: '#2e7d32', fontWeight: 'bold' }; // Green
+                            contractBtnStyle = { color: '#2e7d32', fontWeight: 'bold' }; 
                             contractIconStyle = { borderColor: '#2e7d32', color: '#2e7d32' };
                         } else if (isContractRequested) {
                             contractBtnText = '✍️ 전자계약 체결';
@@ -404,7 +402,6 @@ const MyProjectPage: React.FC = () => {
                                                     <span className="btn-text">견적서 확인</span>
                                                 </button>
                                                 
-                                                {/* 계약 버튼 (상태에 따라 다르게 표시) */}
                                                 <button 
                                                     className={`mp-menu-btn ${(!isContractRequested && !isContractSigned && !isRewriteRequested) ? 'disabled' : ''}`} 
                                                     onClick={() => handleButtonClick('contract', site)}
@@ -441,7 +438,6 @@ const MyProjectPage: React.FC = () => {
       {modalState?.type === 'worklog' && <SiteWorkLogListModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       {modalState?.type === 'files' && <CustomerSiteFilesModal siteId={modalState.siteId} partnerUid={modalState.partnerUid} onClose={() => setModalState(null)} />}
       
-      {/* 서명 모달 (요청 시) */}
       {modalState?.type === 'contract' && modalState.contractData && (
           <ElectronicContractSignModal
               siteId={modalState.siteId}
@@ -455,7 +451,6 @@ const MyProjectPage: React.FC = () => {
           />
       )}
 
-      {/* 뷰어 모달 (완료 시) */}
       {modalState?.type === 'view_contract' && modalState.contractData && (
           <SignedContractViewerModal
               data={modalState.contractData}
