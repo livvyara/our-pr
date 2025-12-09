@@ -1,0 +1,53 @@
+/* ShoppingMallManagementTab.css */
+
+.mall-mgmt-container {
+  padding: 20px;
+  background: #fff;
+  min-height: 100%;
+}
+
+.mall-mgmt-container h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* 탭 버튼 영역 */
+.mall-main-tabs {
+  display: flex;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #ddd;
+  gap: 10px;
+}
+
+.mall-tab-button {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.2s;
+}
+
+.mall-tab-button:hover {
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.mall-tab-button.active {
+  color: #000;
+  border-bottom-color: #000;
+}
+
+.mall-tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,392 @@
+/* src/components/admin/mall/MallCommon.css */
+
+/* --- 공통 레이아웃 --- */
+.mall-sub-page {
+    padding: 20px;
+    background-color: #fff;
+    min-height: 600px;
+}
+
+.mall-sub-page h3 {
+    margin: 0 0 20px 0;
+    padding-left: 10px;
+    border-left: 5px solid #333;
+    font-size: 18px;
+    color: #333;
+    font-weight: 700;
+}
+
+.mall-sub-page h4 {
+    margin: 20px 0 10px 0;
+    font-size: 15px;
+    color: #555;
+}
+
+.guide-text {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* --- 공통 폼 스타일 --- */
+.mall-form {
+    display: flex;
+    gap: 30px;
+    background-color: #fff;
+    border: 1px solid #eee;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    margin-bottom: 30px;
+}
+
+.mall-form-full {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative; /* 검색 드롭다운 위치 기준 */
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #444;
+}
+
+.req { color: #e74c3c; margin-left: 2px; }
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+    border-color: #333;
+    outline: none;
+}
+
+/* 상품 등록: 좌우 레이아웃 */
+.mall-form-left {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mall-form-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 이미지 업로드 박스 */
+.img-upload-box {
+    width: 250px;
+    height: 250px;
+    background-color: #fcfcfc;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    color: #aaa;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.img-upload-box:hover {
+    border-color: #1976d2;
+    color: #1976d2;
+    background-color: #f0f8ff;
+}
+
+.img-upload-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 이미지가 박스에 꽉 차게 */
+}
+
+/* 카테고리 선택 (가로 배열) */
+.cat-select-row {
+    display: flex;
+    gap: 10px;
+}
+.cat-select-row select {
+    flex: 1;
+    min-width: 0; /* Flexbox overflow 방지 */
+}
+
+/* 거래처 검색 드롭다운 */
+.search-dropdown {
+    position: absolute;
+    top: 75px; /* input 아래 위치 */
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    z-index: 100;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.search-dropdown li {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
+    color: #333;
+}
+
+.search-dropdown li:hover {
+    background-color: #f0f8ff;
+    color: #1976d2;
+}
+
+.search-dropdown li .sub-text {
+    font-size: 11px;
+    color: #888;
+    margin-left: 5px;
+}
+
+.search-dropdown li.no-result {
+    text-align: center;
+    color: #999;
+    cursor: default;
+}
+
+.selected-badge {
+    font-size: 12px;
+    color: #1976d2;
+    font-weight: bold;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.input-selected {
+    background-color: #e3f2fd;
+    border-color: #1976d2 !important;
+}
+
+
+/* --- 버튼 스타일 --- */
+.btn-submit {
+    margin-top: 10px;
+    padding: 12px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+    background-color: #555;
+}
+
+.btn-submit:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-del {
+    padding: 4px 8px;
+    background-color: #fff;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.btn-del:hover {
+    background-color: #e74c3c;
+    color: white;
+}
+
+
+/* --- 테이블 스타일 --- */
+.list-area {
+    margin-top: 30px;
+}
+
+.mall-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.mall-table th {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-bottom: 2px solid #ddd;
+    text-align: center;
+    font-weight: bold;
+    color: #555;
+}
+
+.mall-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+    vertical-align: middle;
+    color: #333;
+}
+.mall-table tr:hover {
+    background-color: #fafafa;
+}
+
+
+/* --- 카테고리 관리 (4단계 그리드) --- */
+.cat-manager-grid {
+    display: flex;
+    height: 500px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    margin-bottom: 20px;
+}
+
+.cat-column {
+    flex: 1;
+    border-right: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.cat-column:last-child {
+    border-right: none;
+}
+
+.cat-column h4 {
+    margin: 0;
+    padding: 12px;
+    background-color: #f1f1f1;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    color: #333;
+}
+
+.cat-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+/* 스크롤바 커스텀 */
+.cat-list::-webkit-scrollbar { width: 6px; }
+.cat-list::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 3px; }
+
+.cat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #444;
+}
+
+.cat-item:hover {
+    background-color: #f0f0f0;
+}
+
+.cat-item.active {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    font-weight: bold;
+}
+
+.cat-item button {
+    border: none;
+    background: none;
+    color: #ccc;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.cat-item button:hover {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.cat-placeholder {
+    padding: 20px;
+    text-align: center;
+    color: #aaa;
+    font-size: 13px;
+    margin-top: 50px;
+}
+
+.cat-add-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.add-target {
+    font-weight: bold;
+    color: #333;
+    min-width: 150px;
+}
+
+.cat-add-box input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.btn-add-cat {
+    padding: 8px 20px;
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-add-cat:hover {
+    background-color: #1565c0;
+}

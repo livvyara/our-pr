@@ -1,0 +1,17 @@
+/* InvoiceSelectModal.css */
+/* (기존 OrderRequestPage.css 등의 모달 스타일을 공유하거나 새로 생성) */
+.ord-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; justify-content: center; align-items: center;
+}
+.ord-modal-content {
+    background: white; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.ord-header {
+    padding: 15px 20px; border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.ord-header h3 { margin: 0; font-size: 16px; }
+.ord-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; }

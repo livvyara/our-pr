@@ -11,6 +11,15 @@ import ChatWidget from './ChatWidget';
 import { ChatIcons } from './ChatIcons'; 
 import { getFirestore, collection, query, where, onSnapshot } from 'firebase/firestore';
 
+// [NEW] 장바구니 아이콘 (SVG)
+const CartIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="21" r="1"></circle>
+    <circle cx="20" cy="21" r="1"></circle>
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+  </svg>
+);
+
 interface HeaderProps {
   onMenuSelected: (key: string) => void;
   isMobile: boolean;
@@ -22,7 +31,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { isLoading: isLoadingMenus, mainMenus } = useMenu();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  
   const [totalUnread, setTotalUnread] = useState(0);
+  const [cartCount, setCartCount] = useState(0); // [NEW] 장바구니 카운트
+  
   const db = getFirestore();
 
   useEffect(() => {
@@ -32,10 +44,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
     return () => unsubscribe();
   }, []);
 
+  // [NEW] 채팅 & 장바구니 실시간 카운트
   useEffect(() => {
       if (!currentUser) return;
-      const q = query(collection(db, 'chats'), where('participants', 'array-contains', currentUser.uid));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+      
+      // 1. 채팅 안읽음
+      const chatQ = query(collection(db, 'chats'), where('participants', 'array-contains', currentUser.uid));
+      const unsubChat = onSnapshot(chatQ, (snapshot) => {
           let count = 0;
           snapshot.forEach(doc => {
               const data = doc.data();
@@ -45,7 +60,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
           });
           setTotalUnread(count);
       });
-      return () => unsubscribe();
+
+      // 2. 장바구니 아이템 수
+      const cartQ = query(collection(db, 'users', currentUser.uid, 'cart'));
+      const unsubCart = onSnapshot(cartQ, (snapshot) => {
+          setCartCount(snapshot.size);
+      });
+
+      return () => {
+          unsubChat();
+          unsubCart();
+      };
   }, [currentUser]);
 
   const handleLogout = async () => {
@@ -73,10 +98,18 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
             
             <div className="mobile-actions">
                 {currentUser ? (
-                    <button className="mobile-chat-btn" onClick={() => setIsChatOpen(!isChatOpen)}>
-                        <ChatIcons.Chat />
-                        {totalUnread > 0 && <span className="mobile-badge">{totalUnread}</span>}
-                    </button>
+                    <>
+                        {/* [NEW] 모바일 장바구니 */}
+                        <button className="mobile-chat-btn" onClick={() => navigate('/customer/cart')}>
+                            <CartIcon />
+                            {cartCount > 0 && <span className="mobile-badge" style={{backgroundColor:'#333'}}>{cartCount}</span>}
+                        </button>
+
+                        <button className="mobile-chat-btn" onClick={() => setIsChatOpen(!isChatOpen)}>
+                            <ChatIcons.Chat />
+                            {totalUnread > 0 && <span className="mobile-badge">{totalUnread}</span>}
+                        </button>
+                    </>
                 ) : <div className="spacer-56"></div>}
             </div>
         </div>
@@ -109,7 +142,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
         {/* 우측 액션 버튼 */}
         <div className="desktop-actions">
           
-          {/* 검색창 */}
           <div className="search-bar-wrapper">
              <div className="search-icon-placeholder">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -117,15 +149,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
              <input type="text" placeholder="검색" />
           </div>
 
-          {/* 채팅 아이콘 */}
           {currentUser && (
-              <button className="icon-action-btn" onClick={() => setIsChatOpen(!isChatOpen)} title="채팅 상담">
-                  <ChatIcons.Chat />
-                  {totalUnread > 0 && <span className="desktop-badge">{totalUnread}</span>}
-              </button>
+              <>
+                  {/* [NEW] 장바구니 아이콘 */}
+                  <button className="icon-action-btn" onClick={() => navigate('/customer/cart')} title="장바구니">
+                      <CartIcon />
+                      {cartCount > 0 && <span className="desktop-badge" style={{backgroundColor:'#333'}}>{cartCount}</span>}
+                  </button>
+
+                  {/* 채팅 아이콘 */}
+                  <button className="icon-action-btn" onClick={() => setIsChatOpen(!isChatOpen)} title="채팅 상담">
+                      <ChatIcons.Chat />
+                      {totalUnread > 0 && <span className="desktop-badge">{totalUnread}</span>}
+                  </button>
+              </>
           )}
 
-          {/* 로그인/회원가입 버튼 */}
           <div className="auth-btn-group">
               <button className="btn-text" onClick={currentUser ? handleLogout : () => navigate('/login')}>
                 {currentUser ? '로그아웃' : '로그인'}

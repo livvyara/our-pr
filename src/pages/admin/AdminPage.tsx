@@ -15,8 +15,11 @@ import UserManagementTab from '../../components/admin/UserManagementTab';
 import PartnerManagementTab from '../../components/admin/PartnerManagementTab'; 
 import SellerManagementTab from '../../components/admin/SellerManagementTab'; 
 import SupporterManagementTab from '../../components/admin/SupporterManagementTab'; 
-import HomepageManagementTab from '../../components/admin/HomepageManagementTab'; // [⭐ 1. 추가]
+import HomepageManagementTab from '../../components/admin/HomepageManagementTab';
 import ActivityLogTab from '../../components/admin/ActivityLogTab';
+
+// [NEW] 쇼핑몰 관리 탭 임포트
+import ShoppingMallManagementTab from '../../components/admin/ShoppingMallManagementTab';
 
 // Firebase 모듈
 import { auth } from '../../firebase-config';
@@ -24,8 +27,8 @@ import { getFirestore, doc, getDoc, collection, query, where, getCountFromServer
 import { onAuthStateChanged } from 'firebase/auth';
 
 // CSS 임포트
-import '../HomePage.css'; // 스티키 푸터용
-import './AdminPage.css'; // 관리자 페이지 레이아웃
+import '../HomePage.css'; 
+import './AdminPage.css'; 
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate(); 
@@ -71,7 +74,7 @@ const AdminPage: React.FC = () => {
             }
             setIsLoading(false); 
 
-            // [⭐ 3. 카운트 조회 (6종)]
+            // 카운트 조회
             // (파트너)
             const appCollectionRef = collection(db, "partnerApplications");
             const qApps = query(appCollectionRef, where("status", "==", "pending"));
@@ -141,11 +144,12 @@ const AdminPage: React.FC = () => {
     if (isLoading) return; 
 
     if (currentUserRole === 'admin') {
-      setActiveAdminMenu('user-manage'); 
+      // 기본 메뉴를 무엇으로 할지 (여기선 user-manage 유지)
+      if (!activeAdminMenu) setActiveAdminMenu('user-manage'); 
     } else if (currentUserRole === 'subadmin') {
-      setActiveAdminMenu(allowedMenus[0] || ''); 
+      if (!activeAdminMenu) setActiveAdminMenu(allowedMenus[0] || ''); 
     }
-  }, [isLoading, currentUserRole, allowedMenus]);
+  }, [isLoading, currentUserRole, allowedMenus, activeAdminMenu]);
 
 
   // --- 핸들러 함수 ---
@@ -156,7 +160,7 @@ const AdminPage: React.FC = () => {
     setActiveAdminMenu(menuKey);
   };
 
-  // [⭐ 4. 수정] 어드민 콘텐츠 렌더링 함수 (홈페이지 관리 케이스 추가)
+  // [수정] 어드민 콘텐츠 렌더링 함수
   const renderAdminContent = () => { 
     switch (activeAdminMenu) {
       case 'user-manage':
@@ -176,13 +180,18 @@ const AdminPage: React.FC = () => {
                   pendingCount={supporterPendingCount}
                   infoChangeCount={supporterInfoChangeCount}
                 />;
-      // [추가]
       case 'homepage-manage':
         return <HomepageManagementTab />;
+      
+      // [NEW] 쇼핑몰 관리 탭 연결
+      case 'shopping-mall':
+        return <ShoppingMallManagementTab />;
+
       case 'role-manage':
         return <RoleManagementTab />;
-        case 'activity-log':
-        return <ActivityLogTab />; // [⭐ 3. RoleManagementTab -> ActivityLogTab]
+      case 'activity-log':
+        return <ActivityLogTab />;
+        
       default:
         if (currentUserRole === 'subadmin' && allowedMenus.length === 0) {
           return <div><h2>접근 가능 메뉴 없음</h2><p>관리자에게 권한을 요청하세요.</p></div>;
@@ -202,7 +211,7 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  // [⭐ 5. 수정] 기본 뷰 (모든 카운트 전달)
+  // 기본 뷰
   return (
     <div className="page-container">
       
