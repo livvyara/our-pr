@@ -1,5 +1,3 @@
-// src/components/partner/partnerMenuData.ts
-
 export interface PartnerMenu {
   key: string;
   title: string;
@@ -24,7 +22,7 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'site-list', title: '현장 목록', path: '/program/site-list' },
       { key: 'site-log', title: '작업 일지', path: '/program/site-log' },
       { key: 'site-schedule', title: '공사 일정', path: '/program/site-schedule' },
-      { key: 'site-settlement', title: '현장 결산', path: '/program/site-settlement' },
+
     ]
   },
   { 
@@ -41,13 +39,16 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     title: '회계관리', 
     subMenus: [
       { key: 'accounting-hometax', title: '홈택스 수집', path: '/program/accounting-hometax' },
-      { key: 'accounting-banking-excel', title: '계좌/카드 거래내역 등록', path: '/program/accounting-banking-excel' },
-      { key: 'accounting-tax-invoice', title: '세금계산서', path: '/program/accounting-tax-invoice' },
-      
-      { key: 'accounting-cash-receipt', title: '현금영수증', path: '/program/accounting-cash-receipt' },
-      
+      { key: 'accounting-banking-excel', title: '계좌/카드내역 등록', path: '/program/accounting-banking-excel' },
+      { key: 'accounting-integrated', title: '세금/현금 계산서내역', path: '/program/accounting-integrated' },
+    
+      // [NEW] 지로/영수증 지출등록 (현장별 발주요청 위에 배치)
+      { key: 'accounting-giro-receipt', title: '지로/영수증 지출등록', path: '/program/accounting-giro-receipt' },
+
       { key: 'accounting-order-request', title: '현장별 발주요청', path: '/program/accounting-order-request' },
 
+
+      { key: 'site-settlement', title: '현장 결산', path: '/program/site-settlement' },
       { key: 'accounting-expense-category', title: '지출품목 설정', path: '/program/accounting-expense-category' },
     ]
   },
@@ -58,7 +59,6 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'emp-add', title: '직원 등록', path: '/program/emp-add' },
       { key: 'emp-list', title: '직원 목록', path: '/program/emp-list' },
       
-      // [NEW] 직원 급여/정보 관리 메뉴 추가
       { key: 'emp-management', title: '직원 급여', path: '/program/emp-management' },
       
       { key: 'emp-permission', title: '권한관리', path: '/program/emp-permission' },

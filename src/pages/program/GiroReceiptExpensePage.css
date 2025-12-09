@@ -1,0 +1,107 @@
+/* GiroReceiptExpensePage.css - Namespaced */
+
+/* 최상위 컨테이너로 범위 한정 */
+.giro-expense-page-container {
+    padding: 30px;
+    background-color: #fff;
+    min-height: 100vh;
+    font-family: 'Pretendard', sans-serif;
+}
+
+.giro-expense-page-container .gr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+}
+
+.giro-expense-page-container .gr-title { 
+    font-size: 24px; font-weight: 800; color: #333; margin: 0; 
+}
+
+.giro-expense-page-container .gr-desc { 
+    font-size: 14px; color: #666; margin-top: 5px; 
+}
+
+.giro-expense-page-container .btn-register {
+    padding: 10px 20px; background-color: #1976d2; color: white; border: none; 
+    border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px;
+}
+
+.giro-expense-page-container .btn-refresh {
+    padding: 10px 15px; background-color: #fff; border: 1px solid #ccc; 
+    border-radius: 4px; cursor: pointer; color: #555;
+}
+
+/* 테이블 스타일 네임스페이싱 */
+.giro-expense-page-container .gr-table { 
+    width: 100%; border-collapse: collapse; font-size: 13px; 
+}
+
+.giro-expense-page-container .gr-table th { 
+    background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ccc; font-weight: bold; color: #333;
+}
+
+.giro-expense-page-container .gr-table td { 
+    padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; color: #444;
+}
+
+.giro-expense-page-container .gr-table tr:hover { 
+    background: #fdfdfd; 
+}
+
+/* 유틸리티 클래스도 내부에서만 동작하도록 수정 */
+.giro-expense-page-container .center { text-align: center; }
+.giro-expense-page-container .right { text-align: right; }
+.giro-expense-page-container .bold { font-weight: bold; }
+.giro-expense-page-container .text-gray { color: #aaa; }
+
+.giro-expense-page-container .gr-site-info { display: flex; flex-direction: column; }
+.giro-expense-page-container .gr-site-info strong { font-size: 14px; color: #333; }
+.giro-expense-page-container .gr-site-info span { font-size: 12px; color: #666; }
+
+.giro-expense-page-container .gr-bank-info { display: flex; flex-direction: column; font-size: 12px; color: #555; }
+.giro-expense-page-container .gr-bank-info .owner { color: #888; }
+
+/* 뱃지 스타일 */
+.giro-expense-page-container .gr-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+.giro-expense-page-container .gr-badge.pending { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+.giro-expense-page-container .gr-badge.approved { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+.giro-expense-page-container .gr-badge.completed { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+
+/* 버튼 및 액션 */
+.giro-expense-page-container .btn-view-img { 
+    padding: 4px 8px; font-size: 11px; background: #fff; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; 
+}
+
+.giro-expense-page-container .gr-actions {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+
+.giro-expense-page-container .warning-text {
+    font-size: 11px; color: #e74c3c; font-weight: bold; background-color: #fff5f5;
+    padding: 4px 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffcdd2;
+}
+
+.giro-expense-page-container .btn-action { 
+    padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%;
+}
+.giro-expense-page-container .btn-action.approve { background-color: #2e7d32; }
+.giro-expense-page-container .btn-action.complete { background-color: #1976d2; }
+
+.giro-expense-page-container .btn-icon-del { 
+    background: none; border: none; cursor: pointer; font-size: 16px; margin-top: 5px;
+}
+
+/* 이미지 뷰어 (전체 화면이므로 z-index 높게) */
+.giro-expense-page-container .gr-img-viewer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 5000;
+    display: flex; justify-content: center; align-items: center;
+}
+.giro-expense-page-container .gr-img-viewer img { max-width: 90%; max-height: 90%; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+.giro-expense-page-container .gr-img-viewer button {
+    position: absolute; top: 20px; right: 20px; font-size: 40px; color: white; background: none; border: none; cursor: pointer;
+}
