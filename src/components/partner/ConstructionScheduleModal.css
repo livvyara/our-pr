@@ -1,245 +1,353 @@
-/* ConstructionScheduleModal.css */
+/* ==========================================================================
+   [Construction Schedule Modal]
+   Based on PPM Global Design System
+   ========================================================================== */
 
-/* Reset & Base */
-.schedule-overlay * { box-sizing: border-box; }
+/* 1. Core Variables & Reset (Inherited from PPM) */
+:root {
+  /* Color Palette */
+  --ppm-primary: #3182F6;
+  --ppm-primary-hover: #1B64DA;
+  --ppm-bg-overlay: rgba(0, 0, 0, 0.55);
+  --ppm-bg-modal: #ffffff;
+  --ppm-bg-input: #f9fafb;
+  --ppm-bg-grouped: #f2f4f6;
+  --ppm-border: #e5e8eb;
+  --ppm-text-main: #191f28;
+  --ppm-text-sub: #4e5968;
+  --ppm-text-placeholder: #b0b8c1;
+  --ppm-danger: #ef4444;
+  --ppm-success: #10b981;
 
-/* 1. 모달 오버레이 */
-.schedule-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6); z-index: 9999;
-    display: flex; justify-content: center; align-items: center;
-    backdrop-filter: blur(4px);
-    padding: 20px;
+  /* Dimensions */
+  --ppm-radius-lg: 20px;
+  --ppm-radius-md: 14px;
+  --ppm-radius-sm: 8px;
+  --ppm-input-height: 52px;
+  --ppm-spacing-base: 24px;
+
+  /* Shadows */
+  --ppm-shadow-modal: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+  --ppm-shadow-focus: 0 0 0 3px rgba(49, 130, 246, 0.15);
+  
+  /* Transitions */
+  --ppm-ease: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* 2. 모달 컨테이너 */
-.schedule-modal {
-    position: relative; 
-    width: 100%; max-width: 1600px; 
-    height: 90vh;
-    background: #fff; 
-    border-radius: 12px; 
-    display: flex; 
-    overflow: hidden;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-    font-family: 'Pretendard', sans-serif;
+.ppm-overlay * {
+  box-sizing: border-box;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* 3. 사이드바 (입력 및 설정 영역) */
-.sidebar { 
-    width: 380px; 
-    background: #fff; 
-    border-right: 1px solid #eee; 
-    padding: 25px; 
-    display: flex; 
-    flex-direction: column; 
-    flex-shrink: 0; 
-    overflow-y: auto; 
-    z-index: 10;
+/* 2. Modal Layout (Schedule Specific Override) */
+.ppm-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background-color: var(--ppm-bg-overlay);
+  backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: center;
+  padding: 16px;
+  animation: ppmFadeIn 0.25s ease-out;
 }
 
-.sidebar-header { 
-    margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #333; 
-    display: flex; justify-content: space-between; align-items: center;
-}
-.sidebar-header h3 { margin: 0; font-size: 20px; font-weight: 800; color: #333; }
-
-/* 컨트롤 박스 (입력 폼) */
-.control-box { 
-    background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; 
-    padding: 20px; margin-bottom: 15px; 
-}
-
-/* 폼 그룹 (라벨 + 인풋) */
-.form-group {
-    margin-bottom: 15px;
-}
-.form-group label {
-    display: block; font-size: 13px; font-weight: 700; color: #555; margin-bottom: 6px;
+/* Schedule Modal needs more width than standard PPM modal */
+.ppm-container.schedule-mode {
+  background: var(--ppm-bg-modal);
+  width: 100%; max-width: 1600px; height: 90vh;
+  border-radius: var(--ppm-radius-lg);
+  box-shadow: var(--ppm-shadow-modal);
+  display: flex; flex-direction: row; /* Horizontal Layout for PC */
+  overflow: hidden;
+  position: relative;
+  animation: ppmScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 날짜 입력 행 (가로 배치) */
-.date-row {
-    display: flex; gap: 10px;
-}
-.date-col {
-    flex: 1;
-}
+@keyframes ppmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ppmScaleUp { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-.input-compact { 
-    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; 
-    font-size: 14px; background: #fff; height: 42px;
-}
-.input-compact:focus { border-color: #333; outline: none; }
-
-/* 체크박스 그룹 */
-.check-group { 
-    display: flex; align-items: center; justify-content: flex-start; 
-    gap: 8px; font-size: 13px; font-weight: 700; color: #d32f2f; cursor: pointer; 
-    margin-top: 10px;
-}
-.check-group input { transform: scale(1.3); cursor: pointer; margin: 0; }
-
-/* 버튼 영역 */
-.action-area { display: flex; gap: 10px; margin-top: 10px; }
-.btn { 
-    flex: 1; padding: 12px; border: none; border-radius: 6px; 
-    font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; 
-    display: flex; align-items: center; justify-content: center;
-    height: 44px;
-}
-.btn-primary { background: #1976d2; color: #fff; }
-.btn-primary:hover { background: #1565c0; }
-.btn-secondary { background: #fff; color: #555; border: 1px solid #ddd; }
-.btn-secondary:hover { background: #f5f5f5; }
-.btn-danger { background: #fff; color: #d32f2f; border: 1px solid #ffcdd2; }
-
-/* 하단 출력/설정 영역 */
-.bottom-controls { margin-top: auto; border-top: 1px solid #eee; padding-top: 20px; }
-.btn-print-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.btn-print { background: #333; color: white; width: 100%; }
-.btn-notice-print { background: #e67e22; color: white; width: 100%; }
-.sub-actions { display: flex; gap: 8px; margin-top: 8px; }
-.btn-setting, .btn-logo { flex: 1; font-size: 12px; padding: 8px; background: #fff; border: 1px solid #ddd; color: #666; }
-
-
-/* 4. 메인 대시보드 (달력 & 리스트) */
-.screen-view { 
-    flex: 1; background: #fff; padding: 30px; 
-    overflow-y: auto; display: flex; flex-direction: column; 
-    position: relative;
+/* 3. Sidebar (Control Panel) */
+.ppm-sidebar {
+  width: 380px; flex-shrink: 0;
+  background-color: #fff;
+  border-right: 1px solid var(--ppm-border);
+  display: flex; flex-direction: column;
+  padding: 32px;
+  overflow-y: auto;
+  z-index: 10;
 }
 
-.dashboard-header-row {
-    margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; 
-    display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;
+.ppm-sidebar-header { margin-bottom: 32px; display: flex; align-items: flex-start; justify-content: space-between; }
+.ppm-sidebar-title { font-size: 24px; font-weight: 800; color: var(--ppm-text-main); margin: 0; letter-spacing: -0.5px; }
+.ppm-sidebar-desc { margin-top: 8px; font-size: 14px; color: var(--ppm-text-sub); line-height: 1.5; }
+
+/* 4. Inputs & Forms (Matching PPM Standards) */
+.ppm-form-group { margin-bottom: 24px; }
+.ppm-label { display: block; font-size: 13px; font-weight: 600; color: var(--ppm-text-sub); margin-bottom: 6px; }
+
+.ppm-input {
+  width: 100%; height: var(--ppm-input-height);
+  padding: 0 16px;
+  border: 1px solid var(--ppm-border);
+  border-radius: var(--ppm-radius-md);
+  background-color: var(--ppm-bg-input);
+  font-size: 15px; color: var(--ppm-text-main);
+  transition: var(--ppm-ease);
+  outline: none;
 }
-.dashboard-title { margin: 0; font-size: 24px; font-weight: 800; color: #333; }
-.dashboard-period { color: #666; font-weight: 600; font-size: 14px; }
+.ppm-input:focus {
+  background-color: #fff;
+  border-color: var(--ppm-primary);
+  box-shadow: var(--ppm-shadow-focus);
+}
 
-/* PC용 테이블 (기존 유지) */
-.dashboard-table-wrapper { flex: 1; overflow: auto; border: 1px solid #ddd; border-radius: 4px; }
-.dashboard-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 800px; }
-.dashboard-header th { position: sticky; top: 0; background: #f8f9fa; border: 1px solid #ddd; padding: 12px; text-align: center; font-weight: 700; color: #444; z-index: 5; }
-.dashboard-header th.sun { color: #d32f2f; background: #fff5f5; }
-.dashboard-header th.sat { color: #1976d2; background: #f0f7ff; }
-.dashboard-row td { border: 1px solid #eee; vertical-align: top; padding: 8px; height: 140px; transition: background 0.1s; }
-.dashboard-row td:hover { background-color: #fafafa; }
+/* Checkbox Card (Specialized) */
+.ppm-check-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; height: var(--ppm-input-height);
+  background: #fff; border: 1px solid var(--ppm-border);
+  border-radius: var(--ppm-radius-md);
+  cursor: pointer; transition: var(--ppm-ease);
+}
+.ppm-check-card:hover { border-color: #cbd5e1; background: #f8fafc; }
+.ppm-check-card.checked { border-color: var(--ppm-danger); background: #fef2f2; }
+.ppm-checkbox { width: 18px; height: 18px; accent-color: var(--ppm-danger); }
+.ppm-check-label { font-size: 14px; font-weight: 600; color: var(--ppm-text-main); }
+.ppm-check-card.checked .ppm-check-label { color: var(--ppm-danger); }
 
-/* 모바일용 리스트 (기본 숨김) */
-.mobile-schedule-list { display: none; flex-direction: column; gap: 15px; padding-bottom: 20px; }
-.mobile-day-card { border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-.mobile-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-.mobile-date { font-size: 15px; font-weight: 800; color: #333; }
-.mobile-date.sun { color: #d32f2f; }
-.mobile-date.sat { color: #1976d2; }
-.mobile-card-body { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Buttons */
+.ppm-btn-primary {
+  width: 100%; height: 52px;
+  background: var(--ppm-primary); color: #fff;
+  border: none; border-radius: 5px; /* User Request: Radius 5px */
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: var(--ppm-ease);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+.ppm-btn-primary:hover { background: var(--ppm-primary-hover); transform: translateY(-1px); }
 
-/* 공통 요소 */
-.td-date { font-weight: 800; font-size: 14px; display: block; margin-bottom: 8px; color: #333; }
-.proc-bar { padding: 4px 8px; margin-bottom: 4px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; }
-.proc-bar:hover { transform: scale(1.02); }
-.noisy-badge { background: #d32f2f; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
-.btn-close-modal { position: absolute; top: 20px; right: 25px; background: none; border: none; font-size: 28px; color: #999; cursor: pointer; z-index: 1000; }
+.ppm-btn-secondary {
+  height: 52px; background: #fff; border: 1px solid var(--ppm-border);
+  border-radius: 5px;
+  font-size: 15px; font-weight: 600; color: var(--ppm-text-sub);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: var(--ppm-ease);
+}
+.ppm-btn-secondary:hover { background: #f1f5f9; color: var(--ppm-text-main); }
 
-/* 인쇄 및 설정 모달 (숨김) */
-.print-view-container { display: none; }
-.settings-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; }
-.settings-box { background: #fff; border: 1px solid #ccc; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 90%; max-width: 450px; padding: 30px; border-radius: 8px; }
-.settings-input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
-.settings-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; text-align: center; }
-.settings-label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; color: #444; }
+.ppm-btn-danger {
+  height: 52px; background: #fff; border: 1px solid #fee2e2;
+  border-radius: 5px;
+  font-size: 15px; font-weight: 600; color: var(--ppm-danger);
+  cursor: pointer; transition: var(--ppm-ease);
+}
+.ppm-btn-danger:hover { background: #fef2f2; border-color: #fca5a5; }
 
-/* --- Footer --- */
-.ourproject-footer { margin-top: auto; padding-top: 15px; border-top: 1px solid #eee; text-align: center; width: 100%; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.footer-logo-img { height: 24px; width: auto; object-fit: contain; }
-.footer-slogan { font-size: 11px; color: #888; font-weight: 500; }
+.ppm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+/* 5. Bottom Tools (Sidebar Footer) */
+.ppm-bottom-tools {
+  margin-top: auto; padding-top: 32px;
+  border-top: 1px solid var(--ppm-border);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.ppm-tool-label { font-size: 11px; font-weight: 800; color: var(--ppm-text-placeholder); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 
-/* =========================================
-   [Tablet & Mobile] 반응형 스타일
-   ========================================= */
+/* Dropzone */
+.ppm-dropzone {
+  border: 1px dashed var(--ppm-border);
+  border-radius: var(--ppm-radius-md);
+  padding: 16px; text-align: center;
+  background: var(--ppm-bg-input);
+  cursor: pointer; transition: var(--ppm-ease);
+}
+.ppm-dropzone:hover { border-color: var(--ppm-text-sub); background: #f1f5f9; }
+.ppm-dropzone-text { font-size: 13px; color: var(--ppm-text-sub); font-weight: 500; display: block; margin-top: 4px; }
 
-/* 태블릿 (1024px 이하) */
+/* 6. Main Content (Calendar View) */
+.ppm-content-view {
+  flex: 1; display: flex; flex-direction: column;
+  background-color: var(--ppm-bg-modal);
+  padding: 40px;
+  position: relative;
+}
+
+.ppm-view-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 24px; padding-bottom: 16px;
+  border-bottom: 2px solid var(--ppm-primary);
+}
+.ppm-view-title { font-size: 28px; font-weight: 800; color: var(--ppm-text-main); margin: 0; }
+.ppm-view-period { font-size: 14px; font-weight: 600; color: var(--ppm-text-sub); background: #f1f5f9; padding: 6px 12px; border-radius: 20px; }
+
+/* PC Close Button */
+.ppm-close-icon {
+  position: absolute; top: 24px; right: 24px;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--ppm-border); background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--ppm-ease); color: var(--ppm-text-main);
+  z-index: 50;
+}
+.ppm-close-icon:hover { background: var(--ppm-bg-grouped); transform: rotate(90deg); }
+
+/* [NEW] Mobile Close Button Style (Hidden on Desktop) */
+.ppm-close-mobile-btn {
+  display: none; /* Hide on PC */
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none; background: transparent;
+  align-items: center; justify-content: center;
+  cursor: pointer; color: var(--ppm-text-main);
+  transition: var(--ppm-ease);
+}
+.ppm-close-mobile-btn:hover { background: var(--ppm-bg-grouped); }
+.ppm-close-mobile-btn.show { display: flex; } /* Force show helper class */
+
+/* Calendar Table */
+.ppm-calendar-container {
+  flex: 1; overflow-y: auto;
+  border: 1px solid var(--ppm-border);
+  border-radius: var(--ppm-radius-md);
+  background: #fff;
+}
+.ppm-cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+.ppm-cal-th {
+  background: #f8fafc; padding: 16px;
+  border-bottom: 1px solid var(--ppm-border); border-right: 1px solid var(--ppm-border);
+  font-size: 14px; font-weight: 700; color: var(--ppm-text-sub); text-align: center;
+  position: sticky; top: 0; z-index: 5;
+}
+.ppm-cal-th:last-child { border-right: none; }
+
+.ppm-cal-td {
+  vertical-align: top; padding: 8px; height: 140px;
+  border-bottom: 1px solid var(--ppm-border); border-right: 1px solid var(--ppm-border);
+  transition: background 0.1s; cursor: pointer;
+}
+.ppm-cal-td:last-child { border-right: none; }
+.ppm-cal-td:hover { background-color: #fafafa; }
+
+/* Day Number & Chips */
+.ppm-day-num {
+  width: 28px; height: 28px; line-height: 28px; text-align: center;
+  border-radius: 50%; font-size: 13px; font-weight: 600; margin-bottom: 8px; display: inline-block;
+}
+.ppm-day-num.sun { color: var(--ppm-danger); background: #fef2f2; }
+.ppm-day-num.sat { color: var(--ppm-primary); background: #eff6ff; }
+
+.ppm-proc-chip {
+  display: block; padding: 4px 8px; margin-bottom: 4px; border-radius: 6px;
+  font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border: 1px solid transparent;
+}
+.ppm-badge-noise {
+  float: right; font-size: 10px; color: var(--ppm-danger); border: 1px solid #fee2e2;
+  background: #fff; padding: 2px 6px; border-radius: 10px; font-weight: 700;
+}
+
+/* 7. Settings Modal */
+.ppm-settings-overlay {
+  position: absolute; inset: 0; z-index: 100;
+  background: rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+  display: flex; justify-content: center; align-items: center;
+}
+.ppm-settings-modal {
+  width: 440px; background: #fff;
+  border: 1px solid var(--ppm-border); border-radius: var(--ppm-radius-lg);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 32px;
+}
+.ppm-settings-header { display: flex; justify-content: space-between; margin-bottom: 24px; align-items: center; }
+.ppm-settings-title { font-size: 20px; font-weight: 700; color: var(--ppm-text-main); margin: 0; }
+
+/* 8. Responsive (Mobile/Tablet) */
+.ppm-mobile-list { display: none; }
+.ppm-mobile-view-only-header { display: none; }
+
 @media (max-width: 1024px) {
-    .schedule-modal {
-        flex-direction: column; /* 세로 배치 */
-        height: 95vh;
-        overflow-y: auto; /* 전체 스크롤 */
-    }
+  .ppm-container.schedule-mode {
+    flex-direction: column;
+    height: 100vh; max-height: 100vh;
+    border-radius: 0;
+  }
 
-    /* 사이드바를 상단 입력폼으로 변환 */
-    .sidebar {
-        width: 100%;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid #eee;
-        padding: 20px;
-        flex-shrink: 0;
-    }
+  .ppm-sidebar {
+    width: 100%; border-right: none; border-bottom: 1px solid var(--ppm-border);
+    padding: 20px; flex-shrink: 0; height: auto;
+  }
+  
+  .ppm-sidebar-desc { display: none; }
+  .ppm-bottom-tools { display: none !important; }
 
-    /* 입력폼 가로 배치 최적화 */
-    .control-box {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        align-items: flex-end;
-    }
-    .control-box > div { flex: 1; min-width: 200px; margin-bottom: 0; }
-    .form-group { margin-bottom: 0; }
-    
-    .bottom-controls { display: none; } /* 공간 절약을 위해 하단 컨트롤 숨김 (필요시 메뉴로 이동) */
+  /* Content View on Mobile */
+  .ppm-content-view {
+    padding: 20px; overflow-y: auto; display: block;
+  }
+  
+  /* Hide PC Table & Header */
+  .ppm-calendar-container, .ppm-view-header { display: none; }
+  
+  /* Show Mobile Header in ViewOnly Mode */
+  .ppm-mobile-view-only-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--ppm-text-main);
+  }
 
-    .screen-view {
-        min-height: 500px;
-        padding: 20px;
-        overflow: visible;
-    }
+  /* Show Mobile List */
+  .ppm-mobile-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+  
+  .ppm-m-card {
+    background: #fff; border: 1px solid var(--ppm-border); border-radius: var(--ppm-radius-md); padding: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .ppm-m-head { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 700; color: var(--ppm-text-main); }
+  .ppm-m-body { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* [KEY FIX] Show Close Button on Mobile Sidebar */
+  .ppm-close-mobile-btn { display: flex; margin-left: 10px; }
 }
 
-/* 모바일 (768px 이하) */
-@media (max-width: 768px) {
-    .schedule-overlay { padding: 0; }
-    .schedule-modal { width: 100%; height: 100%; border-radius: 0; max-width: none; }
+/* 9. Print Styles */
+.ppm-print-container { display: none; }
 
-    /* 사이드바 스타일 재정의 */
-    .sidebar { padding: 15px; background: #fff; }
-    .sidebar-header { margin-bottom: 15px; padding-bottom: 10px; }
-    .sidebar-header h3 { font-size: 18px; }
-
-    /* 입력폼 세로 스택 */
-    .control-box { display: block; padding: 15px; }
-    .control-box > div { margin-bottom: 15px; }
-    .date-row { gap: 8px; }
-    
-    .action-area { flex-direction: column; }
-    .btn { width: 100%; }
-
-    /* 대시보드 영역 */
-    .screen-view { padding: 15px; background: #f5f7fa; }
-    .dashboard-header-row { display: none; } /* 타이틀 중복 제거 */
-
-    /* [핵심] 테이블 숨기고 리스트 보이기 */
-    .dashboard-table-wrapper { display: none; }
-    .mobile-schedule-list { display: flex; }
-    .ourproject-footer { display: none; } /* 공간 확보 */
-}
-
-/* 인쇄 스타일 */
 @media print {
-    .schedule-overlay { position: static; display: block; background: none; }
-    .schedule-modal { width: 100%; height: auto; box-shadow: none; overflow: visible; display: block; }
-    .sidebar, .btn-close-modal, .screen-view, .mobile-schedule-list { display: none !important; }
-    .print-view-container { display: block !important; }
-    /* ... (기존 인쇄 스타일 유지) ... */
-    .paper-sheet { width: 100%; height: 100vh; break-after: page; padding: 10mm; display: flex; flex-direction: column; }
-    .flex-table { width: 100%; height: 100%; border: 2px solid #000; display: flex; flex-direction: column; }
-    .flex-thead { flex: 0 0 auto; border-bottom: 2px solid #000; }
-    .flex-tbody { flex: 1; display: flex; flex-direction: column; }
-    .flex-tr { flex: 1; display: flex; border-bottom: 1px solid #ccc; }
-    .flex-td { flex: 1; border-right: 1px solid #ccc; padding: 5px; }
-    .flex-tr-header { display: flex; border-bottom: 1px solid #000; background: #eee; }
-    .flex-th-day { flex: 1; padding: 10px; text-align: center; font-weight: bold; border-right: 1px solid #ccc; }
-    .notice-sheet { width: 100% !important; height: 100vh !important; padding: 0 !important; margin: 0 !important; border: none !important; break-after: page; }
-    .notice-design-layout { height: 100%; padding: 15mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+  @page { margin: 0; size: auto; }
+  body { background: #fff; -webkit-print-color-adjust: exact; }
+  .ppm-overlay, .ppm-sidebar, .ppm-content-view, .ppm-close-icon { display: none !important; }
+  .ppm-print-container { display: block !important; }
+  
+  .ppm-print-page {
+    background: white; overflow: hidden; page-break-after: always;
+    position: relative; box-sizing: border-box;
+  }
+  
+  .ppm-print-page.landscape { width: 297mm; height: 210mm; padding: 10mm 15mm; }
+  .ppm-print-table-wrap { width: 100%; height: 100%; display: flex; flex-direction: column; border: 2px solid #000; }
+  
+  .ppm-print-thead { display: flex; border-bottom: 1px solid #000; height: 40px; background: #eee !important; }
+  .ppm-print-th { flex: 1; text-align: center; line-height: 40px; font-weight: bold; border-right: 1px solid #000; font-size: 14px; }
+  .ppm-print-th:last-child { border-right: none; }
+  
+  .ppm-print-tbody { flex: 1; display: flex; flex-direction: column; }
+  .ppm-print-tr { flex: 1; display: flex; border-bottom: 1px solid #ccc; }
+  .ppm-print-tr:last-child { border-bottom: none; }
+  .ppm-print-td { flex: 1; border-right: 1px solid #ccc; padding: 4px; position: relative; }
+  .ppm-print-td:last-child { border-right: none; }
+  
+  .ppm-print-page.portrait { width: 210mm; height: 297mm; padding: 15mm 20mm; }
+  .ppm-notice-layout { height: 100%; display: flex; flex-direction: column; font-family: serif; }
+  
+  .ppm-notice-header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #000; margin-bottom: 30px; }
+  .ppm-notice-title { font-size: 48px; font-weight: 900; letter-spacing: 10px; margin: 0; }
+  .ppm-notice-body { flex: 1; padding: 20px 0; font-size: 16px; line-height: 2; }
+  
+  .ppm-notice-info-box {
+    border: 2px solid #000; padding: 30px; margin-top: 30px;
+    display: grid; grid-template-columns: 100px 1fr; gap: 15px; align-items: center;
+  }
+  .ppm-notice-label { font-weight: 900; font-size: 18px; text-align-last: justify; }
+  .ppm-notice-val { font-size: 18px; font-weight: 500; }
+  
+  .ppm-footer-logo { width: 200px; margin: 20px auto 0; display: block; }
 }

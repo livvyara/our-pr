@@ -1,85 +1,343 @@
 /* WorkLogModal.css */
 
+/* --- 1. Design Tokens (고급 색상 팔레트) --- */
+:root {
+    --wl-bg-overlay: rgba(17, 24, 39, 0.4); /* 깊이감 있는 어두운 오버레이 */
+    --wl-bg-modal: #ffffff;
+    --wl-border: #e2e8f0; /* 매우 연하고 세련된 그레이 */
+    --wl-border-focus: #3b82f6; /* 신뢰감을 주는 블루 (브랜드 컬러로 대체 가능) */
+    --wl-text-primary: #1e293b; /* 짙은 네이비 그레이 (완전 블랙보다 고급스러움) */
+    --wl-text-secondary: #64748b; /* 차분한 서브 텍스트 */
+    --wl-text-placeholder: #94a3b8;
+    --wl-bg-input: #f8fafc; /* 아주 연한 블루 그레이 배경 */
+    --wl-radius-md: 12px;
+    --wl-radius-sm: 8px;
+    --wl-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* --- 2. Modal Layout --- */
 .worklog-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); z-index: 2000;
-    display: flex; justify-content: center; align-items: center;
+    background-color: var(--wl-bg-overlay);
+    backdrop-filter: blur(8px); /* 고급스러운 Glassmorphism 효과 */
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    box-sizing: border-box;
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .worklog-modal-content {
-    background: white; width: 500px; max-height: 90vh;
-    border-radius: 8px; display: flex; flex-direction: column;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    background: var(--wl-bg-modal);
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    max-height: 90vh;
+    border-radius: var(--wl-radius-md);
+    box-shadow: var(--wl-shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    transform-origin: center bottom;
+    animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalSlideUp { 
+    from { opacity: 0; transform: translateY(20px) scale(0.98); } 
+    to { opacity: 1; transform: translateY(0) scale(1); } 
+}
+
+/* --- 3. Header --- */
 .worklog-header {
-    padding: 15px 20px; border-bottom: 1px solid #eee;
-    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--wl-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    flex-shrink: 0;
 }
-.worklog-header h3 { margin: 0; font-size: 18px; color: #333; }
-.btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
 
+.worklog-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--wl-text-primary);
+    letter-spacing: -0.02em;
+}
+
+.btn-close-icon {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.btn-close-icon:hover {
+    background-color: #f1f5f9;
+    color: var(--wl-text-primary);
+}
+.btn-close-icon svg { width: 24px; height: 24px; stroke-width: 2; }
+
+/* --- 4. Body (Form Area) --- */
 .worklog-body {
-    padding: 20px; overflow-y: auto; flex: 1;
-    display: flex; flex-direction: column; gap: 15px;
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    /* 스크롤바 미학 */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.worklog-body::-webkit-scrollbar { width: 6px; }
+.worklog-body::-webkit-scrollbar-track { background: transparent; }
+.worklog-body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+/* Grid System */
+.wl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
 
-/* 날짜 행 스타일 */
-.wl-row { display: flex; align-items: center; margin-bottom: 5px; }
-.wl-label { width: 100px; font-weight: bold; font-size: 14px; color: #555; }
-.wl-value { flex: 1; }
-.wl-value.read-only { 
-    background: #f5f5f5; padding: 10px; border-radius: 4px; 
-    font-size: 14px; color: #777; border: 1px solid #ddd; 
+/* Input Group */
+.wl-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.wl-form-group.full-width { grid-column: span 2; }
+
+.wl-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--wl-text-primary);
+    display: flex;
+    align-items: center;
+}
+.wl-req-dot {
+    width: 4px; height: 4px; background-color: #ef4444; border-radius: 50%; margin-left: 6px;
+    display: inline-block; vertical-align: middle;
 }
 
-.wl-input {
-    width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;
-    font-size: 14px; box-sizing: border-box;
+/* Inputs */
+.wl-input, .wl-textarea {
+    width: 100%;
+    background-color: var(--wl-bg-input);
+    border: 1px solid var(--wl-border);
+    border-radius: var(--wl-radius-sm);
+    padding: 12px 16px;
+    font-size: 15px; /* 가독성 확보 */
+    color: var(--wl-text-primary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    font-family: inherit;
 }
 
-/* 텍스트 영역 섹션 */
-.wl-section { display: flex; flex-direction: column; gap: 6px; }
-.wl-section label { font-weight: bold; font-size: 13px; color: #333; }
-.wl-textarea {
-    width: 100%; height: 80px; padding: 10px;
-    border: 1px solid #ddd; border-radius: 4px; resize: vertical;
-    font-size: 14px; box-sizing: border-box;
+.wl-input { height: 48px; } /* 터치 타겟 최적화 */
+.wl-textarea { min-height: 120px; resize: none; line-height: 1.6; }
+
+.wl-input:focus, .wl-textarea:focus {
+    background-color: #fff;
+    border-color: var(--wl-border-focus);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* 부드러운 글로우 효과 */
+    outline: none;
 }
 
-.req { color: #e74c3c; margin-left: 4px; }
-
-/* 파일 업로드 */
-.file-upload-box { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
-.btn-file-select {
-    padding: 6px 12px; border: 1px solid #ccc; background: #eee;
-    border-radius: 4px; font-size: 13px; cursor: pointer;
-}
-.file-info { font-size: 13px; color: #666; }
-
-.preview-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-    margin-top: 10px;
-}
-.preview-item { position: relative; height: 80px; border: 1px solid #eee; border-radius: 4px; overflow: hidden; }
-.preview-item img { width: 100%; height: 100%; object-fit: cover; }
-.btn-remove-img {
-    position: absolute; top: 2px; right: 2px;
-    background: rgba(0,0,0,0.6); color: white;
-    border: none; border-radius: 50%; width: 20px; height: 20px;
-    cursor: pointer; font-size: 12px; display: flex; justify-content: center; align-items: center;
+.wl-input:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: transparent;
 }
 
-/* 푸터 버튼 */
+/* Date Input Customization */
+.wl-input[type="date"] {
+    position: relative;
+    appearance: none;
+}
+.wl-input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+/* --- 5. File Upload Area (Dropzone Style) --- */
+.wl-upload-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: var(--wl-radius-sm);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #fff;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.wl-upload-zone:hover {
+    border-color: var(--wl-border-focus);
+    background-color: #eff6ff;
+}
+
+.upload-icon-circle {
+    width: 48px; height: 48px;
+    background-color: #f1f5f9;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--wl-text-secondary);
+    transition: all 0.2s;
+}
+.wl-upload-zone:hover .upload-icon-circle {
+    background-color: #dbeafe;
+    color: #3b82f6;
+}
+
+.upload-title { font-size: 14px; font-weight: 600; color: var(--wl-text-primary); }
+.upload-desc { font-size: 12px; color: var(--wl-text-secondary); }
+
+/* Image Preview Grid */
+.wl-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.wl-preview-item {
+    position: relative;
+    aspect-ratio: 1; /* 정사각형 비율 */
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--wl-border);
+    background-color: #f8fafc;
+}
+
+.wl-preview-img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.3s ease;
+}
+.wl-preview-item:hover .wl-preview-img { transform: scale(1.05); }
+
+.btn-remove-preview {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    border: none; border-radius: 50%;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-remove-preview:hover { background-color: #ef4444; }
+.btn-remove-preview svg { width: 14px; height: 14px; }
+
+/* --- 6. Footer (Buttons) --- */
 .worklog-footer {
-    margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;
-    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 20px 24px;
+    background-color: #fff;
+    border-top: 1px solid var(--wl-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
 }
-.btn-cancel {
-    padding: 10px 20px; border: 1px solid #ccc; background: white;
-    border-radius: 4px; cursor: pointer; font-weight: bold;
+
+.wl-btn {
+    height: 48px; /* 버튼 높이 고정 (모바일 터치 타겟 최적화) */
+    padding: 0 24px;
+    border-radius: 8px; /* 버튼 라운드 */
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box; /* 패딩 포함 크기 */
 }
-.btn-submit {
-    padding: 10px 25px; border: none; color: white;
-    border-radius: 4px; cursor: pointer; font-weight: bold;
+
+.wl-btn-secondary {
+    background-color: #fff;
+    border: 1px solid #cbd5e1;
+    color: var(--wl-text-primary);
+}
+.wl-btn-secondary:hover {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.wl-btn-primary {
+    background-color: #111; /* JS에서 브랜드 컬러로 덮어씌움 */
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.wl-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    filter: brightness(1.1); /* 살짝 밝게 */
+}
+.wl-btn-primary:disabled {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* --- 7. Mobile Responsive (모바일 퍼스트 UX) --- */
+@media (max-width: 768px) {
+    .worklog-modal-overlay {
+        align-items: flex-end; /* 바텀 시트 스타일 */
+        padding: 0;
+    }
+
+    .worklog-modal-content {
+        max-width: 100%;
+        border-radius: 20px 20px 0 0; /* 상단만 둥글게 */
+        height: 90vh; /* 화면의 90% */
+        /* 아이폰 하단 바 대응 */
+        padding-bottom: env(safe-area-inset-bottom);
+        animation: modalSlideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUpMobile { 
+        from { transform: translateY(100%); } 
+        to { transform: translateY(0); } 
+    }
+
+    .worklog-header { padding: 16px 20px; }
+    .worklog-body { padding: 20px; gap: 24px; }
+
+    /* 모바일에서는 1열 그리드 */
+    .wl-grid { grid-template-columns: 1fr; gap: 24px; }
+    .wl-form-group.full-width { grid-column: span 1; }
+
+    /* 프리뷰 그리드 2열 */
+    .wl-preview-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* 푸터: 버튼 꽉 차게, 높이 동일 */
+    .worklog-footer {
+        padding: 16px 20px;
+    }
+    .wl-btn {
+        flex: 1; /* 너비 50:50 */
+        font-size: 16px; /* 모바일에서 텍스트 약간 확대 */
+    }
 }

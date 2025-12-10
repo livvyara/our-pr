@@ -33,7 +33,7 @@
     grid-auto-rows: 1fr; /* 높이 균등 분할 */
     gap: 12px;
     flex: 1; /* 남은 공간 차지 */
-    overflow-y: auto; /* 버튼 많으면 스크롤 */
+    overflow-y: auto; 
     padding-right: 5px;
 }
 
@@ -43,11 +43,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     
     width: 100%;
     height: 100%;
-    min-height: 80px; /* 버튼 최소 높이 */
+    min-height: 90px; /* 버튼 최소 높이 확보 */
     
     font-size: 13px;
     font-weight: 600;
@@ -66,7 +66,7 @@
     background-color: #f8f9fa;
     border-color: #ddd;
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     color: #333;
 }
 
@@ -74,10 +74,16 @@
     transform: translateY(0);
 }
 
-/* 아이콘 (이모지 등) */
-.action-icon {
-    font-size: 20px;
-    margin-bottom: 2px;
+/* SVG 아이콘 스타일 */
+.action-icon-svg {
+    width: 24px;
+    height: 24px;
+    color: #666; /* 기본 아이콘 색상 */
+    transition: color 0.2s;
+}
+
+.action-grid-button:hover .action-icon-svg {
+    color: #333; /* 호버 시 진하게 */
 }
 
 /* 비활성화 상태 */
@@ -89,16 +95,15 @@
     box-shadow: none;
     transform: none;
 }
-.action-grid-button:disabled .action-icon {
+.action-grid-button:disabled .action-icon-svg {
+    color: #ccc;
     opacity: 0.5;
 }
 
-/* 특수 버튼 색상 (선택 사항) */
-.action-grid-button.labor { color: #8e44ad; border-color: #e8daef; background-color: #fdfaff; }
-.action-grid-button.labor:hover { background-color: #f4ecf7; }
-
-.action-grid-button.expense { color: #e67e22; border-color: #fbe6d4; background-color: #fff8f3; }
-.action-grid-button.expense:hover { background-color: #fdf2e9; }
+/* 특수 버튼 색상 포인트 (선택) */
+.action-grid-button.labor:hover .action-icon-svg { color: #8e44ad; }
+.action-grid-button.expense:hover .action-icon-svg { color: #e67e22; }
+.action-grid-button.order-request:hover .action-icon-svg { color: #2980b9; }
 
 
 /* =========================================
@@ -111,7 +116,6 @@
         overflow: visible;
     }
 
-    /* 헤더 간격 조정 */
     .actions-header-row {
         margin-bottom: 15px;
     }
@@ -121,16 +125,17 @@
         display: grid;
         grid-template-columns: 1fr 1fr; /* 2열 */
         gap: 10px;
-        height: auto; /* 전체 높이 늘어남 */
+        height: auto; 
         overflow: visible;
     }
 
     .action-grid-button {
-        min-height: 90px; /* 터치하기 편하게 높이 증가 */
+        min-height: 100px; /* 터치하기 편하게 높이 증가 */
         font-size: 14px;
     }
     
-    .action-icon {
-        font-size: 24px;
+    .action-icon-svg {
+        width: 28px; /* 모바일에서 아이콘 조금 더 크게 */
+        height: 28px;
     }
 }
