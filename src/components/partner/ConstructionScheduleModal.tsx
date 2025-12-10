@@ -66,7 +66,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
   const [schedulePaperSize, setSchedulePaperSize] = useState<'a4' | 'a3'>('a4');
   const [noticePaperSize, setNoticePaperSize] = useState<'a4' | 'a3'>('a4');
 
-  useEffect(() => {
+ useEffect(() => {
     if (!siteId || !partnerUid) return;
     const fetchData = async () => {
       try {
@@ -74,18 +74,14 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
         if (siteDoc.exists()) {
             const data = siteDoc.data();
             setCurrentSiteName(data.siteName || '현장');
-            
             let sDate = data.startDate || new Date().toISOString().split('T')[0];
             let eDate = data.endDate || '';
-
-            // [중요] 계약 정보의 날짜 우선 적용
             if (data.contract) {
                 const cInfo = data.contract as ContractInfo;
                 setContractInfo(cInfo);
                 if (cInfo.startDate) sDate = cInfo.startDate;
                 if (cInfo.endDate) eDate = cInfo.endDate;
             }
-
             setSiteStartDate(sDate);
             setSiteEndDate(eDate);
             setInputDateStart(sDate);
@@ -107,7 +103,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
   }, [siteId, partnerUid, db]);
 
   const handleEdit = (schedule: ScheduleEntry) => {
-    if (viewOnly) return; // [수정] 보기 전용이면 수정 불가
+    if (viewOnly) return; 
     setIsEditing(true); setEditId(schedule.id); setInputDateStart(schedule.date); setInputDateEnd(''); setProcessesText(schedule.processes.join(', ')); setIsNoisy(schedule.isNoisy);
   };
   const handleDelete = async () => {
@@ -139,7 +135,6 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
     setInputDateEnd(siteEndDate); setInputDateStart(siteStartDate);
   };
   
-  // ... (Notice 설정, 업로드, 인쇄 핸들러 등 기존 코드 유지) ...
   const handleNoticeSettingChange = (e: React.ChangeEvent<HTMLInputElement>) => { const { name, value } = e.target; setNoticeSettings(prev => ({ ...prev, [name]: value })); };
   const saveNoticeSettings = async () => { try { await setDoc(doc(db, 'users', partnerUid, 'sites', siteId, 'config', 'notice'), noticeSettings, { merge: true }); alert("저장 완료"); setShowNoticeSettings(false); } catch (e) { console.error(e); } };
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { if (!e.target.files || e.target.files.length === 0) return; const file = e.target.files[0]; const fileRef = storageRef(storage, `sites/${siteId}/notice_logo_${Date.now()}`); try { const result = await uploadBytes(fileRef, file); const url = await getDownloadURL(result.ref); setNoticeSettings(prev => ({ ...prev, logoUrl: url })); await setDoc(doc(db, 'users', partnerUid, 'sites', siteId, 'config', 'notice'), { logoUrl: url }, { merge: true }); alert("로고 등록 완료"); } catch (err) { console.error(err); } };
@@ -178,7 +173,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
       while (chunk.length < rowsPerPage) { chunk.push(null); }
       printPages.push(chunk);
   }
-  const getNoticeContent = () => { /* (기존 로직 유지) */ 
+  const getNoticeContent = () => { 
       const period = (siteStartDate && siteEndDate) ? `${siteStartDate} ~ ${siteEndDate}` : '미정';
       let locationText = `[${currentSiteName}]`; let projectName = `${currentSiteName} 인테리어 공사`;
       if (contractInfo) {
@@ -196,194 +191,253 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
   return (
     <div className={`schedule-overlay ${viewOnly ? 'view-only' : ''}`}>
       <style>{`
-          /* [NEW] 보기 전용 모드일 때 사이드바 숨김 및 전체 화면 사용 */
           .schedule-overlay.view-only .sidebar { display: none !important; }
-          .schedule-overlay.view-only .schedule-modal { max-width: 100% !important; width: 95% !important; height: 95vh !important; }
-          .schedule-overlay.view-only .screen-view { width: 100% !important; }
-          .schedule-overlay.view-only .btn-close-modal { right: 30px; top: 20px; z-index: 2000; }
+          .schedule-overlay.view-only .schedule-modal { max-width: 100% !important; width: 95% !important; height: 95vh !important; flex-direction: column; }
+          .schedule-overlay.view-only .screen-view { width: 100% !important; padding: 20px !important; }
+          .schedule-overlay.view-only .btn-close-modal { right: 20px; top: 15px; z-index: 2000; }
       `}</style>
 
       <div className="schedule-modal">
         <button className="btn-close-modal" onClick={onClose}>&times;</button>
         
-        {/* 사이드바 (viewOnly가 아닐 때만 렌더링은 유지하되, CSS로 숨김 처리도 가능) */}
+        {/* 사이드바 (입력/설정) */}
         {!viewOnly && (
             <div className="sidebar">
-                <div className="sidebar-header"><h3>📅 일정 관리</h3></div>
+                <div className="sidebar-header">
+                    <h3>📅 일정 관리</h3>
+                </div>
+                
                 <form onSubmit={handleSave}>
+                   {/* [수정] 태블릿/모바일에서 가로 배치를 위한 control-box 구조 */}
                    <div className="control-box">
-                      <span className="control-label">날짜 설정</span>
-                      <div className="form-row"><label>시작일</label><input type="date" className="input-compact" value={inputDateStart} onChange={e => setInputDateStart(e.target.value)} required /></div>
-                      {!isEditing && (<div className="form-row"><label>종료일</label><input type="date" className="input-compact" value={inputDateEnd} onChange={e => setInputDateEnd(e.target.value)} /></div>)}
+                      <div className="form-group">
+                          <label>공사 기간 / 날짜</label>
+                          <div className="date-row">
+                              <div className="date-col">
+                                  <input type="date" className="input-compact" value={inputDateStart} onChange={e => setInputDateStart(e.target.value)} required />
+                              </div>
+                              {!isEditing && (
+                                  <div className="date-col">
+                                      <input type="date" className="input-compact" value={inputDateEnd} onChange={e => setInputDateEnd(e.target.value)} />
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                      
+                      <div className="form-group">
+                          <label>공정 내용</label>
+                          <input type="text" className="input-compact" value={processesText} onChange={e => setProcessesText(e.target.value)} placeholder="예: 철거, 목공" required />
+                      </div>
+                      
+                      <div className="check-group">
+                          <input type="checkbox" id="noisy" checked={isNoisy} onChange={e => setIsNoisy(e.target.checked)} />
+                          <label htmlFor="noisy">📢 소음 주의</label>
+                      </div>
                    </div>
-                   <div className="control-box">
-                      <span className="control-label">공정 내용</span>
-                      <div className="form-row"><label>내용 입력</label><input type="text" className="input-compact" value={processesText} onChange={e => setProcessesText(e.target.value)} placeholder="예: 철거" required /></div>
-                      <div className="check-group"><input type="checkbox" id="noisy" checked={isNoisy} onChange={e => setIsNoisy(e.target.checked)} /><label htmlFor="noisy">📢 소음 주의</label></div>
-                   </div>
+                   
                    <div className="action-area">
-                       <button type="submit" className="btn btn-primary" disabled={isSubmitting}>{isEditing ? '수정 완료' : '일정 등록'}</button>
-                       {isEditing && (<div style={{display:'flex', gap:'10px', marginTop:'10px'}}><button type="button" className="btn btn-secondary" onClick={handleCancelEdit}>취소</button><button type="button" className="btn btn-danger" onClick={handleDelete}>삭제</button></div>)}
+                       <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                           {isEditing ? '수정 완료' : '+ 등록'}
+                       </button>
+                       {isEditing && (
+                           <>
+                               <button type="button" className="btn btn-secondary" onClick={handleCancelEdit}>취소</button>
+                               <button type="button" className="btn btn-danger" onClick={handleDelete}>삭제</button>
+                           </>
+                       )}
                    </div>
                 </form>
                 
-                <div style={{marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px'}}>
-                   <div className="form-row">
-                       <label>일정표 용지</label>
-                       <select className="input-compact" style={{width:'130px'}} value={schedulePaperSize} onChange={e => setSchedulePaperSize(e.target.value as 'a4' | 'a3')}>
-                          <option value="a4">A4 (5주/장)</option><option value="a3">A3 (6주/장)</option>
-                       </select>
+                <div className="bottom-controls">
+                   <div className="form-group">
+                       <label>출력 설정</label>
+                       <div style={{display:'flex', gap:'5px', marginBottom:'8px'}}>
+                           <button className="btn btn-print" onClick={handlePrintSchedule}>일정표 인쇄</button>
+                           <button className="btn btn-notice-print" onClick={handlePrintNotice}>안내문 인쇄</button>
+                       </div>
+                       <div className="sub-actions">
+                           <button className="btn-setting" onClick={() => setShowNoticeSettings(true)}>안내문 설정</button>
+                           <button className="btn-logo" onClick={() => logoInputRef.current?.click()}>로고 등록</button>
+                       </div>
                    </div>
-                   <button className="btn btn-print" onClick={handlePrintSchedule}>🖨️ 일정표 인쇄</button>
-                </div>
-                <div className="notice-section">
-                   <div className="section-title">📢 공사 안내문</div>
-                   <div className="form-row">
-                       <label>안내문 용지</label>
-                       <select className="input-compact" style={{width:'130px'}} value={noticePaperSize} onChange={e => setNoticePaperSize(e.target.value as 'a4' | 'a3')}>
-                          <option value="a4">A4 (세로)</option><option value="a3">A3 (세로)</option>
-                       </select>
-                   </div>
-                   <button className="btn btn-notice-print" onClick={handlePrintNotice}>안내문 출력</button>
-                   <button className="btn btn-setting" onClick={() => setShowNoticeSettings(true)}>내용 설정</button>
-                   <button className="btn btn-logo" onClick={() => logoInputRef.current?.click()}>{noticeSettings.logoUrl ? '로고 변경' : '로고 등록'}</button>
                    <input type="file" ref={logoInputRef} style={{display:'none'}} accept="image/*" onChange={handleLogoUpload} />
                 </div>
             </div>
         )}
 
-        {/* Screen View Dashboard */}
+        {/* 메인 화면 (달력 / 리스트) */}
         <div className="screen-view">
-            <div style={{marginBottom:'20px', borderBottom:'2px solid #333', paddingBottom:'10px', display:'flex', justifyContent:'space-between', alignItems:'end'}}>
-                <h2 style={{margin:0, fontSize:'24px'}}>{currentSiteName} 전체 일정표</h2>
-                <span style={{color:'#666', fontWeight:500}}>{dateRangeString}</span>
+            <div className="dashboard-header-row">
+                <h2 className="dashboard-title">{currentSiteName}</h2>
+                <span className="dashboard-period">{dateRangeString}</span>
             </div>
-            <table className="dashboard-table">
-                <thead className="dashboard-header">
-                    <tr><th className="sun">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th className="sat">토</th></tr>
-                </thead>
-                <tbody>
-                    {allWeeks.map((week, wIdx) => (
-                        <tr key={wIdx} className="dashboard-row">
-                            {week.map((day, dIdx) => (
-                                <td key={dIdx}>
-                                    <div style={{display:'flex', justifyContent:'space-between'}}>
-                                        <span className={`td-date ${dIdx===0?'sun':dIdx===6?'sat':''}`}>{day.dayNum}</span>
-                                        {day.schedules.some((s:any) => s.isNoisy) && <span className="noisy-badge">민원주의</span>}
-                                    </div>
-                                    {day.schedules.map((sched: any) => (
-                                        <div key={sched.id} onClick={(e) => { e.stopPropagation(); handleEdit(sched); }} style={{cursor: viewOnly ? 'default' : 'pointer'}}>
-                                            {sched.processes.map((proc: string, pIdx: number) => {
-                                                const style = getProcessColor(proc);
-                                                return (<div key={pIdx} className="proc-bar" style={{backgroundColor: style.bg, border:`1px solid ${style.border}`, color:style.text}}>{proc}</div>)
-                                            })}
+            
+            {/* PC/태블릿용 테이블 */}
+            <div className="dashboard-table-wrapper">
+                <table className="dashboard-table">
+                    <thead className="dashboard-header">
+                        <tr><th className="sun">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th className="sat">토</th></tr>
+                    </thead>
+                    <tbody>
+                        {allWeeks.map((week, wIdx) => (
+                            <tr key={wIdx} className="dashboard-row">
+                                {week.map((day, dIdx) => (
+                                    <td key={dIdx}>
+                                        <div style={{display:'flex', justifyContent:'space-between'}}>
+                                            <span className={`td-date ${dIdx===0?'sun':dIdx===6?'sat':''}`}>{day.dayNum}</span>
+                                            {day.schedules.some((s:any) => s.isNoisy) && <span className="noisy-badge">민원</span>}
                                         </div>
-                                    ))}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-
-        {/* ... (Notice Settings & Print View 등 하단 코드 유지) ... */}
-        {showNoticeSettings && (
-            <div className="settings-overlay">
-                <div className="settings-box">
-                    {/* (설정 폼 내용 동일 - 생략) */}
-                    <div className="settings-title">공사 안내문 내용 설정</div>
-                    <label className="settings-label">회사명</label><input name="companyName" value={noticeSettings.companyName} onChange={handleNoticeSettingChange} className="settings-input" />
-                    <label className="settings-label">공사 불편 신고</label><input name="complaintContact" value={noticeSettings.complaintContact} onChange={handleNoticeSettingChange} className="settings-input" />
-                    <label className="settings-label">공사 책임자 연락처</label><input name="managerContact" value={noticeSettings.managerContact} onChange={handleNoticeSettingChange} className="settings-input" />
-                    <div style={{display:'flex', gap:'10px', marginTop:'20px'}}><button className="btn btn-secondary" onClick={()=>setShowNoticeSettings(false)}>취소</button><button className="btn btn-primary" onClick={saveNoticeSettings}>저장</button></div>
-                </div>
-            </div>
-        )}
-        <div className="print-view-container">
-            <div ref={schedulePrintRef}>
-                {/* 일정표 출력 (기존 동일) */}
-                {printPages.map((weeksChunk, pageIndex) => (
-                    <div key={pageIndex} className={`paper-sheet ${schedulePaperSize}`}>
-                        <div className="flex-table">
-                            <div className="flex-thead">
-                                <div style={{textAlign:'center', padding:'15px', borderBottom:'1px solid #000'}}>
-                                    <span style={{fontSize:'24px', fontWeight:'900'}}>{currentSiteName} 공사 일정표</span>
-                                    <span style={{fontSize:'14px', marginLeft:'10px', color:'#555'}}>{pageIndex === 0 ? `(${dateRangeString})` : `(Page ${pageIndex + 1})`}</span>
-                                </div>
-                                <div className="flex-tr-header">
-                                    <div className="flex-th-day sun">일</div><div className="flex-th-day">월</div><div className="flex-th-day">화</div><div className="flex-th-day">수</div><div className="flex-th-day">목</div><div className="flex-th-day">금</div><div className="flex-th-day sat">토</div>
-                                </div>
-                            </div>
-                            <div className="flex-tbody">
-                                {weeksChunk.map((week, wIdx) => (
-                                    <div key={wIdx} className="flex-tr">
-                                        {week === null ? Array(7).fill(null).map((_, i) => <div key={i} className="flex-td"></div>) : week.map((day: any, dIdx: number) => {
-                                            if(!day) return <div key={dIdx} className="flex-td"></div>;
-                                            return (
-                                                <div key={dIdx} className="flex-td">
-                                                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:'5px'}}>
-                                                        <span className={`td-date ${dIdx===0?'sun':dIdx===6?'sat':''}`}>{day.dayNum}</span>
-                                                        {day.schedules.some((s:any) => s.isNoisy) && <span className="noisy-badge">민원주의</span>}
-                                                    </div>
-                                                    {day.schedules.map((sched: any) => (
-                                                        <div key={sched.id}>
-                                                            {sched.processes.map((proc: string, pIdx: number) => {
-                                                                const style = getProcessColor(proc);
-                                                                return (<div key={pIdx} className="proc-bar" style={{backgroundColor: style.bg, border:`1px solid ${style.border}`, color:style.text}}>{proc}</div>);
-                                                            })}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
+                                        {day.schedules.map((sched: any) => (
+                                            <div key={sched.id} onClick={(e) => { e.stopPropagation(); handleEdit(sched); }} style={{cursor: viewOnly ? 'default' : 'pointer'}}>
+                                                {sched.processes.map((proc: string, pIdx: number) => {
+                                                    const style = getProcessColor(proc);
+                                                    return (<div key={pIdx} className="proc-bar" style={{backgroundColor: style.bg, border:`1px solid ${style.border}`, color:style.text}}>{proc}</div>)
+                                                })}
+                                            </div>
+                                        ))}
+                                    </td>
                                 ))}
-                            </div>
-                            <OurProjectFooter />
-                        </div>
-                    </div>
-                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
-            <div ref={noticePrintRef}>
-                {/* 안내문 출력 (기존 동일) */}
-                <div className={`notice-sheet ${noticePaperSize}`}>
-                    <div className="notice-design-layout">
-                        <div className="notice-top-bar"></div>
-                        <div className="notice-header">
-                            <h1 className="notice-title">NOTICE</h1>
-                            {noticeSettings.logoUrl && <img src={noticeSettings.logoUrl} alt="Logo" className="notice-logo" />}
+
+            {/* [NEW] 모바일용 리스트 뷰 (날짜순 정렬) */}
+            <div className="mobile-schedule-list">
+                {schedules.length === 0 ? <p style={{textAlign:'center', color:'#999', marginTop:'30px'}}>등록된 일정이 없습니다.</p> : 
+                 schedules.map((sched) => {
+                    const d = new Date(sched.date);
+                    const dayNum = d.getDay(); // 0:일 ~ 6:토
+                    const dayStr = ['일','월','화','수','목','금','토'][dayNum];
+                    return (
+                        <div key={sched.id} className="mobile-day-card" onClick={() => handleEdit(sched)}>
+                            <div className="mobile-card-header">
+                                <span className={`mobile-date ${dayNum===0?'sun':dayNum===6?'sat':''}`}>
+                                    {sched.date} ({dayStr})
+                                </span>
+                                {sched.isNoisy && <span className="noisy-badge">민원주의</span>}
+                            </div>
+                            <div className="mobile-card-body">
+                                {sched.processes.map((proc, idx) => {
+                                    const style = getProcessColor(proc);
+                                    return (
+                                        <span key={idx} className="proc-bar" style={{backgroundColor: style.bg, border:`1px solid ${style.border}`, color:style.text, fontSize:'13px', padding:'6px 10px'}}>
+                                            {proc}
+                                        </span>
+                                    );
+                                })}
+                            </div>
                         </div>
-                        <div className="notice-body">
-                            <div className="notice-intro">
-                                안녕하세요. <strong>{noticeContent.company}</strong>입니다.<br/><span style={{fontWeight:'400'}}>입주민 여러분의 양해 부탁드립니다.</span>
+                    );
+                 })
+                }
+            </div>
+            
+            <div style={{marginTop:'20px'}}>
+                <OurProjectFooter />
+            </div>
+        </div>
+      </div>
+
+      {/* 설정 모달 및 인쇄 (기존 유지) */}
+      {showNoticeSettings && (
+          <div className="settings-overlay">
+              <div className="settings-box">
+                  <div className="settings-title">공사 안내문 설정</div>
+                  <label className="settings-label">회사명</label><input name="companyName" value={noticeSettings.companyName} onChange={handleNoticeSettingChange} className="settings-input" />
+                  <label className="settings-label">공사 불편 신고</label><input name="complaintContact" value={noticeSettings.complaintContact} onChange={handleNoticeSettingChange} className="settings-input" />
+                  <label className="settings-label">공사 책임자 연락처</label><input name="managerContact" value={noticeSettings.managerContact} onChange={handleNoticeSettingChange} className="settings-input" />
+                  <label className="settings-label">블로그 URL</label><input name="blogUrl" value={noticeSettings.blogUrl} onChange={handleNoticeSettingChange} className="settings-input" />
+                  <label className="settings-label">인스타그램 URL</label><input name="instaUrl" value={noticeSettings.instaUrl} onChange={handleNoticeSettingChange} className="settings-input" />
+                  <label className="settings-label">유튜브 URL</label><input name="youtubeUrl" value={noticeSettings.youtubeUrl} onChange={handleNoticeSettingChange} className="settings-input" />
+                  <div style={{display:'flex', gap:'10px', marginTop:'20px'}}><button className="btn btn-secondary" onClick={()=>setShowNoticeSettings(false)}>취소</button><button className="btn btn-primary" onClick={saveNoticeSettings}>저장</button></div>
+              </div>
+          </div>
+      )}
+      <div className="print-view-container">
+         <div ref={schedulePrintRef}>
+             {/* ... (인쇄용 JSX - 기존 로직 그대로 복사 사용) ... */}
+             {printPages.map((weeksChunk, pageIndex) => (
+                <div key={pageIndex} className={`paper-sheet ${schedulePaperSize}`}>
+                    <div className="flex-table">
+                        <div className="flex-thead">
+                            <div style={{textAlign:'center', padding:'15px', borderBottom:'1px solid #000'}}>
+                                <span style={{fontSize:'24px', fontWeight:'900'}}>{currentSiteName} 공사 일정표</span>
+                                <span style={{fontSize:'14px', marginLeft:'10px', color:'#555'}}>{pageIndex === 0 ? `(${dateRangeString})` : `(Page ${pageIndex + 1})`}</span>
                             </div>
-                            <div className="notice-desc">
-                                <strong>{noticeContent.locationText}</strong>의 내부 인테리어 공사를 진행하게 되었습니다.<br/>공사 기간 동안 소음 및 통행 불편을 최소화하기 위해 최선을 다하겠습니다.<br/>입주민 여러분의 너른 이해와 협조 부탁드립니다.
-                            </div>
-                            <div className="info-grid">
-                                <div className="info-row-label">공 사 명</div><div className="info-row-value">{noticeContent.projectName}</div>
-                                <div className="info-row-label">공사 기간</div><div className="info-row-value">{noticeContent.period}</div>
-                                {noticeSettings.companyName && <><div className="info-row-label">시공 업체</div><div className="info-row-value">{noticeSettings.companyName}</div></>}
-                                {noticeSettings.complaintContact && <><div className="info-row-label">불편 신고</div><div className="info-row-value" style={{fontWeight:'bold'}}>{noticeSettings.complaintContact}</div></>}
-                                {noticeSettings.managerContact && <><div className="info-row-label">현장 책임자</div><div className="info-row-value">{noticeSettings.managerContact}</div></>}
+                            <div className="flex-tr-header">
+                                <div className="flex-th-day sun">일</div><div className="flex-th-day">월</div><div className="flex-th-day">화</div><div className="flex-th-day">수</div><div className="flex-th-day">목</div><div className="flex-th-day">금</div><div className="flex-th-day sat">토</div>
                             </div>
                         </div>
-                        <div className="notice-footer">
-                            <p>입주민 여러분의 가정에 평안과 행복이 가득하시길 기원합니다.</p>
-                            {(noticeSettings.blogUrl || noticeSettings.instaUrl || noticeSettings.youtubeUrl) && (
-                                <div className="qr-wrapper">
-                                    {noticeSettings.blogUrl && <div className="qr-card"><div className="qr-icon-circle"><Icons.NaverBlog /></div><QRCodeCanvas value={noticeSettings.blogUrl} size={90} /><span className="qr-label">BLOG</span></div>}
-                                    {noticeSettings.instaUrl && <div className="qr-card"><div className="qr-icon-circle"><Icons.Instagram /></div><QRCodeCanvas value={noticeSettings.instaUrl} size={90} /><span className="qr-label">INSTAGRAM</span></div>}
-                                    {noticeSettings.youtubeUrl && <div className="qr-card"><div className="qr-icon-circle"><Icons.Youtube /></div><QRCodeCanvas value={noticeSettings.youtubeUrl} size={90} /><span className="qr-label">YOUTUBE</span></div>}
+                        <div className="flex-tbody">
+                            {weeksChunk.map((week, wIdx) => (
+                                <div key={wIdx} className="flex-tr">
+                                    {week === null ? Array(7).fill(null).map((_, i) => <div key={i} className="flex-td"></div>) : week.map((day: any, dIdx: number) => {
+                                        if(!day) return <div key={dIdx} className="flex-td"></div>;
+                                        return (
+                                            <div key={dIdx} className="flex-td">
+                                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'5px'}}>
+                                                    <span className={`td-date ${dIdx===0?'sun':dIdx===6?'sat':''}`}>{day.dayNum}</span>
+                                                    {day.schedules.some((s:any) => s.isNoisy) && <span className="noisy-badge">민원주의</span>}
+                                                </div>
+                                                {day.schedules.map((sched: any) => (
+                                                    <div key={sched.id}>
+                                                        {sched.processes.map((proc: string, pIdx: number) => {
+                                                            const style = getProcessColor(proc);
+                                                            return (<div key={pIdx} className="proc-bar" style={{backgroundColor: style.bg, border:`1px solid ${style.border}`, color:style.text}}>{proc}</div>);
+                                                        })}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    })}
                                 </div>
-                            )}
+                            ))}
                         </div>
                         <OurProjectFooter />
                     </div>
                 </div>
-            </div>
-        </div>
+             ))}
+         </div>
+         <div ref={noticePrintRef}>
+             {/* ... (안내문 인쇄 JSX - 기존 로직 그대로) ... */}
+             <div className={`notice-sheet ${noticePaperSize}`}>
+                <div className="notice-design-layout">
+                    <div className="notice-top-bar"></div>
+                    <div className="notice-header">
+                        <h1 className="notice-title">NOTICE</h1>
+                        {noticeSettings.logoUrl && <img src={noticeSettings.logoUrl} alt="Logo" className="notice-logo" />}
+                    </div>
+                    <div className="notice-body">
+                        <div className="notice-intro">
+                            안녕하세요. <strong>{noticeContent.company}</strong>입니다.<br/><span style={{fontWeight:'400'}}>입주민 여러분의 양해 부탁드립니다.</span>
+                        </div>
+                        <div className="notice-desc">
+                            <strong>{noticeContent.locationText}</strong>의 내부 인테리어 공사를 진행하게 되었습니다.<br/>공사 기간 동안 소음 및 통행 불편을 최소화하기 위해 최선을 다하겠습니다.<br/>입주민 여러분의 너른 이해와 협조 부탁드립니다.
+                        </div>
+                        <div className="info-grid">
+                            <div className="info-row-label">공 사 명</div><div className="info-row-value">{noticeContent.projectName}</div>
+                            <div className="info-row-label">공사 기간</div><div className="info-row-value">{noticeContent.period}</div>
+                            {noticeSettings.companyName && <><div className="info-row-label">시공 업체</div><div className="info-row-value">{noticeSettings.companyName}</div></>}
+                            {noticeSettings.complaintContact && <><div className="info-row-label">불편 신고</div><div className="info-row-value" style={{fontWeight:'bold'}}>{noticeSettings.complaintContact}</div></>}
+                            {noticeSettings.managerContact && <><div className="info-row-label">현장 책임자</div><div className="info-row-value">{noticeSettings.managerContact}</div></>}
+                        </div>
+                    </div>
+                    <div className="notice-footer">
+                        <p>입주민 여러분의 가정에 평안과 행복이 가득하시길 기원합니다.</p>
+                        {(noticeSettings.blogUrl || noticeSettings.instaUrl || noticeSettings.youtubeUrl) && (
+                            <div className="qr-wrapper">
+                                {noticeSettings.blogUrl && <div className="qr-card"><div className="qr-icon-circle"><Icons.NaverBlog /></div><QRCodeCanvas value={noticeSettings.blogUrl} size={90} /><span className="qr-label">BLOG</span></div>}
+                                {noticeSettings.instaUrl && <div className="qr-card"><div className="qr-icon-circle"><Icons.Instagram /></div><QRCodeCanvas value={noticeSettings.instaUrl} size={90} /><span className="qr-label">INSTAGRAM</span></div>}
+                                {noticeSettings.youtubeUrl && <div className="qr-card"><div className="qr-icon-circle"><Icons.Youtube /></div><QRCodeCanvas value={noticeSettings.youtubeUrl} size={90} /><span className="qr-label">YOUTUBE</span></div>}
+                            </div>
+                        )}
+                    </div>
+                    <OurProjectFooter />
+                </div>
+             </div>
+         </div>
       </div>
     </div>
   );

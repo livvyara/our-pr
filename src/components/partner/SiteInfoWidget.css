@@ -1,186 +1,314 @@
-/* SiteInfoWidget.css - Namespaced & Compact */
+/* SiteInfoWidget.css */
 
+/* 1. 위젯 기본 컨테이너 */
 .site-info-widget {
     background-color: #fff;
-    padding: 16px;
     height: 100%;
     box-sizing: border-box;
-    overflow-y: auto;
     font-family: 'Pretendard', sans-serif;
     font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-right: 5px; 
 }
 
-/* 헤더 */
+/* 2. 헤더 영역 (간격 추가 축소: 15px -> 12px) */
 .site-info-widget .widget-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    border-bottom: 2px solid #f1f3f5;
-    padding-bottom: 8px;
+    margin-bottom: 12px; /* 15px -> 12px */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px; /* 10px -> 8px */
 }
-.site-info-widget .widget-header-row h3 { margin: 0; font-size: 15px; font-weight: 700; color: #333; }
 
-.site-info-widget .header-right-group { display: flex; gap: 10px; align-items: center; }
-
-/* 타입 토글 */
-.site-info-widget .site-type-toggle {
-    display: flex;
-    background: #f1f3f5;
-    border-radius: 4px;
-    padding: 2px;
-}
-.site-info-widget .site-type-toggle label {
-    padding: 4px 8px;
-    cursor: pointer;
-    font-size: 11px;
-    color: #888;
-    border-radius: 4px;
-    transition: all 0.2s;
-    /* [중요] 전역 label 스타일 오염 방지를 위해 초기화 후 재설정 */
-    width: auto; 
-    text-align: center;
+.site-info-widget .widget-header-row h3 {
     margin: 0;
-    font-weight: normal;
-}
-.site-info-widget .site-type-toggle label.active {
-    background: white;
-    color: #333;
-    font-weight: 700;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-.site-info-widget .site-type-toggle input { display: none; }
-
-.site-info-widget .status-dropdown {
-    padding: 4px 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 11px;
-    height: 28px;
-    cursor: pointer;
-}
-
-/* 폼 레이아웃 */
-.site-info-widget .info-form-compact {
-    display: flex;
-    flex-direction: column;
-    gap: 12px; 
-}
-
-.site-info-widget .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.site-info-widget .input-f {
-    padding: 0 8px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 12px;
-    height: 32px;
-    box-sizing: border-box;
-    transition: border-color 0.2s;
+    font-size: 18px;
+    font-weight: 800;
     color: #333;
 }
-.site-info-widget .input-f:focus { border-color: #333; outline: none; }
-.site-info-widget .input-f.right { text-align: right; }
 
-/* [중요] 네임스페이싱 적용된 라벨 스타일 */
-.site-info-widget label {
-    width: 45px; 
-    font-weight: 600;
-    color: #555;
-    text-align: right;
-    margin-right: 6px;
-    font-size: 12px;
-    flex-shrink: 0;
-}
-.site-info-widget .label-short { width: auto; margin-left: 10px; margin-right: 6px; }
-
-/* Flex 유틸 */
-.site-info-widget .flex-1 { flex: 1; }
-.site-info-widget .flex-2 { flex: 2; }
-.site-info-widget .flex-3 { flex: 3; }
-
-/* 주소 입력 그룹 */
-.site-info-widget .addr-group {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    flex: 1;
-}
-
-/* 도급인 영역 */
-.site-info-widget .contractor-area {
-    display: flex;
-    align-items: center;
-    background: #f9f9f9;
-    padding: 0 10px;
-    border-radius: 4px;
-    height: 32px;
-    border: 1px dashed #ddd;
-    overflow: hidden;
-}
-.site-info-widget .contractor-list-inline { display: flex; gap: 5px; align-items: center; }
-.site-info-widget .contractor-tag-inline {
-    background: white; border: 1px solid #ddd; padding: 1px 6px; border-radius: 10px;
-    font-size: 11px; display: flex; align-items: center; gap: 4px;
-}
-.site-info-widget .contractor-tag-inline button { border: none; background: none; color: #e74c3c; cursor: pointer; font-weight: bold; }
-.site-info-widget .btn-add-mini-inline {
-    width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc; background: white;
-    cursor: pointer; display: flex; justify-content: center; align-items: center; color: #666; font-size: 14px;
-}
-.site-info-widget .btn-invite-text {
-    border: none; background: none; color: #1976d2; font-size: 12px; font-weight: bold; cursor: pointer;
-}
-
-/* 고객 정보 그리드 */
-.site-info-widget .client-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr 10px auto 1fr 1.2fr;
-    gap: 5px;
-    align-items: center;
-}
-.site-info-widget .client-sep { text-align: center; color: #ccc; }
-
-/* 상세 정보 그리드 */
-.site-info-widget .detail-grid {
+.site-info-widget .header-right-group {
     display: flex;
     gap: 10px;
     align-items: center;
 }
-.site-info-widget .d-item {
+
+/* 타입 토글 */
+.site-info-widget .site-type-toggle {
     display: flex;
-    align-items: center;
-    flex: 1;
-    gap: 5px;
-}
-.site-info-widget .d-item .input-f { width: 100%; }
-.site-info-widget .d-label {
-    font-size: 11px; color: #666; white-space: nowrap; font-weight: 600;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
-/* 하단 버튼 */
-.site-info-widget .footer-actions {
+.site-info-widget .site-type-toggle label {
+    padding: 4px 10px; /* 5px 12px -> 4px 10px */
+    cursor: pointer;
+    font-size: 12px;
+    color: #555;
+    border-right: 1px solid #ddd;
+    background: #fff;
+    transition: all 0.2s;
+    text-align: center;
+    margin: 0;
+    font-weight: 500;
+}
+
+.site-info-widget .site-type-toggle label:last-child { border-right: none; }
+.site-info-widget .site-type-toggle label.active { background: #333; color: #fff; font-weight: bold; }
+.site-info-widget .site-type-toggle input { display: none; }
+
+/* 상태 드롭다운 (높이 축소) */
+.site-info-widget .status-dropdown {
+    padding: 0 8px; /* 0 10px -> 0 8px */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    height: 30px; /* 32px -> 30px */
+    cursor: pointer;
+    background-color: #fff;
+    font-weight: 600;
+}
+
+/* 3. 메인 폼 그리드 (간격 축소 및 왼쪽 정렬 배치) */
+.site-info-grid {
+    display: grid;
+    /* 라벨 너비를 90px -> 85px로 미세 조정 */
+    grid-template-columns: 85px 1fr; 
+    /* 세로 간격 12px -> 10px */
+    gap: 10px 15px; 
+    align-items: center;
+}
+
+/* 라벨 스타일 (왼쪽 정렬) */
+.site-info-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #444;
+    /* 왼쪽 정렬 유지 */
+    text-align: left; 
+    padding-right: 0;
+    align-self: flex-start; 
+    padding-top: 8px; /* 10px -> 8px */
+}
+
+/* 입력 필드 공통 (높이 축소: 36px -> 34px) */
+.site-info-widget .input-f, 
+.site-info-widget select.input-f {
+    padding: 0 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px; 
+    height: 34px; /* 36px -> 34px */
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    color: #333;
+    width: 100%;
+    background-color: #fff;
+}
+
+.site-info-widget .input-f:focus { border-color: #333; outline: none; }
+.site-info-widget .input-f.right { text-align: right; }
+
+/* 4. 섹션별 스타일링 */
+
+.site-name-wrapper { width: 100%; }
+
+/* [도급인 영역] (높이 축소) */
+.contractor-box {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 3px 8px; /* 패딩 축소 */
+    border-radius: 6px;
+    border: 1px solid #eee;
+    min-height: 34px; /* 36px -> 34px */
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.contractor-list-inline { display: flex; gap: 6px; flex-wrap: wrap; }
+.contractor-tag-inline {
+    background: #fff; border: 1px solid #ccc; padding: 1px 6px; border-radius: 20px;
+    font-size: 12px; display: flex; align-items: center; gap: 4px; font-weight: 600; color: #555;
+}
+.contractor-tag-inline button { 
+    border: none; background: none; color: #d32f2f; cursor: pointer; font-weight: bold; padding: 0; font-size: 14px;
+}
+.btn-invite-text {
+    border: none; background: none; color: #1976d2; font-size: 12px; font-weight: bold; cursor: pointer; padding: 4px;
+}
+
+/* [주소 그룹] */
+.addr-row { display: flex; gap: 6px; width: 100%; }
+.addr-select { flex: 0 0 110px; } /* 너비 약간 축소 */
+.addr-detail { flex: 1; }
+
+.apt-info-row { display: flex; gap: 6px; margin-top: 6px; }
+
+/* [고객 정보] (간격 축소) */
+.client-info-container {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr; 
+    gap: 10px; /* 12px -> 10px */
+    align-items: start;
+}
+.client-block { display: flex; flex-direction: column; gap: 5px; /* 6px -> 5px */ }
+.client-sub-label { font-size: 12px; color: #888; margin-bottom: 1px; font-weight: 600; }
+.client-divider { background-color: #eee; width: 1px; height: 100%; }
+
+/* [상세 정보] */
+.details-grid-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px; /* 10px -> 8px */
+    width: 100%;
+}
+.detail-item label {
+    display: block; font-size: 11px; color: #888; margin-bottom: 2px; font-weight: 600;
+}
+
+/* 5. 하단 버튼 (간격 축소) */
+.footer-actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 10px;
+    margin-top: 12px; /* 15px -> 12px */
+    padding-top: 10px; /* 15px -> 10px */
     border-top: 1px solid #eee;
-    padding-top: 10px;
 }
-.site-info-widget .btn-save-compact {
-    padding: 0 20px;
+
+.btn-save-large {
+    padding: 0 30px; /* 35px -> 30px */
     border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 12px;
+    border-radius: 5px; 
+    font-weight: 800;
+    font-size: 13px;
     color: white;
     cursor: pointer;
-    height: 32px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 36px; /* 38px -> 36px */
     transition: opacity 0.2s;
 }
-.site-info-widget .btn-save-compact:hover { opacity: 0.9; }
-.site-info-widget .btn-save-compact:disabled { background-color: #ccc !important; box-shadow: none; }
+.btn-save-large:hover { opacity: 0.9; }
+.btn-save-large:disabled { background-color: #ccc !important; }
+
+
+/* =========================================
+   [Mobile Responsive] 모바일 대응
+   ========================================= */
+@media (max-width: 768px) {
+    .site-info-widget {
+        padding-right: 0; 
+        height: auto;
+        overflow: visible;
+    }
+
+    .widget-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .header-right-group {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* 폼 그리드 해제 -> 세로 스택 */
+    .site-info-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* 12px -> 10px */
+    }
+
+    .site-info-label {
+        text-align: left;
+        padding-bottom: 0;
+        padding-top: 0;
+        margin-bottom: -6px; 
+    }
+
+    .addr-row { flex-wrap: wrap; }
+    .addr-select { flex: 1; min-width: 40%; }
+    .addr-detail { width: 100%; flex: 100%; }
+
+    .client-info-container {
+        grid-template-columns: 1fr 1px 1fr !important;
+        gap: 6px;
+    }
+    
+    .client-divider { display: block !important; }
+
+    .details-grid-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-save-large { width: 100%; }
+}
+
+/* SiteInfoWidget.css 맨 아래에 추가 */
+
+/* 권한 설정 버튼 */
+.btn-perm-lock {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: #666;
+    margin-left: 8px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+.btn-perm-lock:hover {
+    background-color: #f0f0f0;
+}
+
+/* 비활성화된 입력창 스타일 */
+.site-info-widget .input-f:disabled,
+.site-info-widget .status-dropdown:disabled {
+    background-color: #f9f9f9;
+    color: #888;
+    cursor: not-allowed;
+    border-color: #eee;
+}
+
+/* 모달 스타일 (SiteInfoPermissionModal.tsx에서 사용) */
+.site-info-modal-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.site-info-modal-paper {
+    background: #fff; width: 350px; padding: 18px; /* 20px -> 18px */
+    border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex; flex-direction: column;
+}
+
+.site-info-modal-title { margin: 0 0 8px 0; font-size: 16px; text-align: center; color: #333; }
+
+.site-info-modal-list {
+    list-style: none; padding: 0; margin: 0 0 12px 0;
+    max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px;
+}
+
+.site-info-modal-item {
+    padding: 6px; border-bottom: 1px solid #f9f9f9;
+}
+
+.site-info-checkbox-label {
+    display: flex; align-items: center; cursor: pointer; font-size: 13px; width: 100%;
+}
+.site-info-checkbox-label input { margin-right: 6px; transform: scale(1.1); }
+
+.site-info-modal-footer { display: flex; justify-content: flex-end; gap: 6px; }
+
+.site-info-btn-cancel {
+    padding: 5px 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 12px;
+}
+.site-info-btn-save {
+    padding: 5px 10px; border: none; background: #333; color: white; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;
+}

@@ -7,7 +7,6 @@ import LaborCostModal from './LaborCostModal';
 import ExpenseRegistrationModal from './ExpenseRegistrationModal';
 import OrderRequestModal from './OrderRequestModal'; 
 import ChangeOrderModal from './ChangeOrderModal';
-// [NEW] 견적서 모달 임포트
 import EstimateModal from './EstimateModal';
 
 import { auth } from '../../firebase-config'; 
@@ -28,27 +27,20 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isOrderRequestModalOpen, setIsOrderRequestModalOpen] = useState(false);
   const [isChangeOrderModalOpen, setIsChangeOrderModalOpen] = useState(false);
-  
-  // [NEW] 견적서 모달 상태
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
 
   const [userName, setUserName] = useState('사용자');
 
+  // 아이콘 추가하여 시각적 효과 개선
   const actionButtons = [
-    { key: 'construction-schedule', title: '공사 일정 등록', disabled: false },
-    { key: 'work-log', title: '작업 일지 등록', disabled: false },
-    { key: 'contract-info', title: '계약 정보 등록', disabled: false },
-    { 
-        key: 'change-order', 
-        title: '추가/변경 견적', 
-        disabled: !['공사전', '공사중', '공사완료'].includes(status) 
-    },
-    { key: 'order-request', title: '발주 요청', disabled: false }, 
-    { key: 'expense', title: '카드 지출 등록', disabled: false },
-    { key: 'labor', title: '노무 등록', disabled: false },
-    
-    // [NEW] 견적서 작성 버튼 연결
-    { key: 'estimate', title: '견적서 작성', disabled: false },
+    { key: 'construction-schedule', title: '공사 일정', icon: '📅', disabled: false },
+    { key: 'work-log', title: '작업 일지', icon: '📝', disabled: false },
+    { key: 'contract-info', title: '계약 정보', icon: '📄', disabled: false },
+    { key: 'change-order', title: '추가 견적', icon: '🔄', disabled: !['공사전', '공사중', '공사완료'].includes(status) },
+    { key: 'order-request', title: '발주 요청', icon: '🛒', disabled: false }, 
+    { key: 'expense', title: '지출 등록', icon: '💳', disabled: false },
+    { key: 'labor', title: '노무 등록', icon: '👷', disabled: false },
+    { key: 'estimate', title: '견적서', icon: '📊', disabled: false },
   ];
 
   useEffect(() => {
@@ -73,16 +65,16 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
     else if (key === 'contract-info') setIsContractModalOpen(true);
     else if (key === 'labor') setIsLaborModalOpen(true);
     else if (key === 'expense') setIsExpenseModalOpen(true);
-    
-    // [NEW] 견적서 모달 열기
     else if (key === 'estimate') setIsEstimateModalOpen(true);
-    
     else alert(`(TODO) '${key}' 기능은 준비 중입니다.`);
   };
 
   return (
     <div className="actions-widget-container">
-      <h3>기타 등록</h3>
+      <div className="actions-header-row">
+        <h3>기타 등록</h3>
+      </div>
+      
       <div className="actions-grid">
         {actionButtons.map((btn) => (
           <button
@@ -92,7 +84,8 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
             disabled={btn.disabled}
             title={btn.disabled ? "현재 상태에서는 사용할 수 없습니다." : btn.title}
           >
-            {btn.title}
+            <span className="action-icon">{btn.icon}</span>
+            <span>{btn.title}</span>
           </button>
         ))}
       </div>
@@ -116,45 +109,44 @@ const SiteActionsWidget: React.FC<SiteActionsWidgetProps> = ({ siteId, partnerUi
       )}
 
       {isExpenseModalOpen && (
-          <ExpenseRegistrationModal 
-            isOpen={isExpenseModalOpen}
-            onClose={() => setIsExpenseModalOpen(false)}
-            siteId={siteId}
-            siteName={currentSiteName}
-            partnerUid={partnerUid}
-            userName={userName}
-          />
+        <ExpenseRegistrationModal 
+          isOpen={isExpenseModalOpen}
+          onClose={() => setIsExpenseModalOpen(false)}
+          siteId={siteId}
+          siteName={currentSiteName}
+          partnerUid={partnerUid}
+          userName={userName}
+        />
       )}
 
       {isOrderRequestModalOpen && (
-          <OrderRequestModal 
-            isOpen={isOrderRequestModalOpen}
-            onClose={() => setIsOrderRequestModalOpen(false)}
-            siteId={siteId}
-            siteName={currentSiteName}
-            partnerUid={partnerUid}
-            userName={userName}
-          />
+        <OrderRequestModal 
+          isOpen={isOrderRequestModalOpen}
+          onClose={() => setIsOrderRequestModalOpen(false)}
+          siteId={siteId}
+          siteName={currentSiteName}
+          partnerUid={partnerUid}
+          userName={userName}
+        />
       )}
       
       {isChangeOrderModalOpen && (
-          <ChangeOrderModal 
-            siteId={siteId}
-            siteName={currentSiteName}
-            partnerUid={partnerUid}
-            userRole="partner"
-            onClose={() => setIsChangeOrderModalOpen(false)}
-          />
+        <ChangeOrderModal 
+          siteId={siteId}
+          siteName={currentSiteName}
+          partnerUid={partnerUid}
+          userRole="partner"
+          onClose={() => setIsChangeOrderModalOpen(false)}
+        />
       )}
 
-      {/* [NEW] 견적서 모달 렌더링 */}
       {isEstimateModalOpen && (
-          <EstimateModal 
-            siteId={siteId}
-            siteName={currentSiteName}
-            partnerUid={partnerUid}
-            onClose={() => setIsEstimateModalOpen(false)}
-          />
+        <EstimateModal 
+          siteId={siteId}
+          siteName={currentSiteName}
+          partnerUid={partnerUid}
+          onClose={() => setIsEstimateModalOpen(false)}
+        />
       )}
     </div>
   );

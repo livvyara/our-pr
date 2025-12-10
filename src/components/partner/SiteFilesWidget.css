@@ -1,103 +1,194 @@
 /* src/components/partner/SiteFilesWidget.css */
 
+/* 1. 위젯 컨테이너 */
 .file-widget-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* 부모(quadrant-box)의 높이를 100% 채움 */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+    box-sizing: border-box;
+    font-family: 'Pretendard', sans-serif;
+    /* [수정] 부모 영역을 넘어가지 않도록 hidden 처리하여 내부 스크롤 유도 */
+    overflow: hidden; 
 }
 
-/* [⭐ 수정] 2x2 그리드 컨테이너로 변경 */
+/* 2. 헤더 영역 */
+.file-header-row {
+    padding: 0 0 15px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+    flex-shrink: 0; /* 크기 줄어들지 않음 */
+}
+
+.file-header-row h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #333;
+}
+
+/* 3. 파일 카테고리 리스트 */
 .file-category-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-grow: 1; /* 남은 공간을 차지 */
-  overflow-y: auto; /* (필요시 스크롤) */
-
-  /* 2x2 그리드 설정 */
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr; 
-  gap: 15px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    
+    /* Flexbox에서 스크롤 영역 확보를 위한 필수 설정 */
+    flex: 1; 
+    min-height: 0; /* 중요: 자식 콘텐츠가 넘쳐도 부모 높이를 늘리지 않음 */
+    overflow-y: auto;
+    
+    padding-right: 5px; /* 스크롤바 공간 */
+    padding-bottom: 5px; /* 하단 여백 */
+    
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px;
 }
 
-/* [⭐ 수정] 그리드 아이템 스타일 */
+/* 4. 카테고리 카드 아이템 */
 .file-category-item {
-  display: flex;
-  flex-direction: column; /* 썸네일 + 제목/버튼 (세로 배치) */
-  border: 1px solid #eee;
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  overflow: hidden; /* 썸네일이 둥근 모서리를 넘지 않도록 */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background-color: #fff;
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    height: 100%;
+    min-height: auto; 
 }
-/*
-.file-category-item:last-child {
-  (그리드에서는 더 이상 필요 없음)
-}
-*/
 
-/* [⭐ 수정] 1. 썸네일 영역 (가로 100%, 비율 유지) */
+.file-category-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #ddd;
+}
+
+/* 썸네일 영역 */
 .thumbnail-preview {
-  flex-shrink: 0;
-  width: 100%;
-  aspect-ratio: 16 / 10; /* 썸네일 비율 (조정 가능) */
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #eee; /* 하단 제목과 구분선 */
-  /* (기존) border: 1px dashed #ccc; */
-  border-radius: 0; /* (아이템에서 관리) */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #888;
-  cursor: pointer;
-  overflow: hidden; 
+    flex: 1;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #999;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    /* 높이 설정 유지 */
+    min-height: 90px; 
+    max-height: 120px;
 }
+
 .thumbnail-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
 }
 
-.category-title-wrapper {
-  flex-grow: 1;
-  padding: 10px;
-  display: flex;
-  flex-direction: column; /* [⭐ 수정] 세로 배치 */
-  /* [⭐ 수정] 아래 2줄 삭제 또는 flex-start로 변경 */
-  /* align-items: center; */
-  /* justify-content: space-between; */
+.thumbnail-preview:hover img {
+    transform: scale(1.05);
 }
+
+.thumbnail-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.03);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.thumbnail-preview:hover .thumbnail-overlay {
+    opacity: 1;
+}
+
+/* 하단 정보 영역 */
+.category-info-wrapper {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    flex-shrink: 0;
+    height: 40px; 
+}
+
 .category-title {
-  font-weight: bold;
-  font-size: 16px;
-  margin: 0;
-  /* (제목이 길어질 경우 대비) */
-  flex-grow: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-weight: 700;
+    font-size: 13px;
+    color: #333;
+    margin: 0;
 }
-/*
-.category-file-count {
-  (TSX에서 삭제됨)
-}
-*/
 
-/* 3. 자료등록 버튼 */
+/* 자료등록 버튼 */
 .add-file-button {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  background-color: #f0f0f0;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  /* margin-left: 10px; <-- [⭐ 수정] 이 줄 삭제 */
-  margin-top: 8px; /* [⭐ 추가] 제목과의 상단 간격 */
-}
-.add-file-button:hover {
-  background-color: #e5e5e5;
+    padding: 4px 10px;
+    background-color: #fff;
+    color: #555;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
+.add-file-button:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+    color: #333;
+}
+
+.add-file-button:disabled {
+    background-color: #fafafa;
+    color: #aaa;
+    cursor: not-allowed;
+    border-color: #eee;
+}
+
+.uploading-text {
+    font-size: 10px;
+    color: #1976d2;
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+.file-loading { text-align: center; padding: 40px; color: #888; font-style: italic; }
+
+
+/* =========================================
+   [Mobile Responsive] 모바일 대응 스타일
+   ========================================= */
+@media (max-width: 768px) {
+    .file-widget-container {
+        padding-right: 0; 
+        height: auto; 
+        overflow: visible; /* 모바일은 전체 페이지 스크롤 사용 */
+    }
+    
+    .file-category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        overflow: visible;
+        flex: none; /* 모바일에서는 flex-grow 해제 */
+    }
+
+    .thumbnail-preview {
+        min-height: 140px;
+        max-height: 160px;
+    }
+
+    .add-file-button {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+    
+    .category-info-wrapper {
+        height: auto;
+        padding: 12px;
+    }
+}

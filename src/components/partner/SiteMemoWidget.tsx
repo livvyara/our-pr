@@ -1,24 +1,13 @@
-// src/components/partner/SiteMemoWidget.tsx
-
-import React, { useState, useEffect, useCallback, useRef, type FormEvent, type ChangeEvent } from 'react';
+import React, { useState, useEffect, useRef, type FormEvent } from 'react';
 import { 
-  getFirestore, 
-  collection, 
-  doc, 
-  getDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  onSnapshot, 
-  serverTimestamp,
-  Timestamp 
+  getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
+  serverTimestamp, deleteDoc, doc, getDoc, updateDoc, Timestamp 
 } from 'firebase/firestore';
 import { auth } from '../../firebase-config';
-import './SiteMemoWidget.css'; // (CSS 파일 임포트)
+import { K_BRAND_COLOR } from '../../constants';
+import './SiteMemoWidget.css';
 
-// [⭐ 1. SVG 아이콘] (생략 없음)
+// --- 아이콘 컴포넌트 (유지) ---
 const StarIconOutline = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M10 2.882l2.34 6.896 7.33.62-5.45 4.755 1.6 7.15-6.82-3.95-6.82 3.95 1.6-7.15-5.45-4.755 7.33-.62L10 2.882zM10 5.17l-1.88 5.545-5.91.5-4.39 3.83.97 5.75 5.21-3.02L10 17.675l5.21 3.02.97-5.75-4.39-3.83-5.91-.5L10 5.17z" clipRule="evenodd" />
@@ -40,35 +29,32 @@ const AssignmentIcon = () => (
   </svg>
 );
 const DeleteIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
   </svg>
 );
 
 
-// [⭐ 1. 수정] Firestore 'memos' 하위 컬렉션 문서 타입 (캘린더 호환)
 interface MemoData {
-  id: string; // 문서 ID
+  id: string;
   memoContent: string;
   memoType: 'general' | 'meeting';
   createdByUid: string;
-  createdByName: string; // (닉네임/이름)
+  createdByName: string;
   createdAt: Timestamp;
-  meetingDate?: string; // (YYYY-MM-DD)
-  meetingTime?: string; // (HH:MM)
+  meetingDate?: string;
+  meetingTime?: string;
   partnerUid: string;
   siteId: string;
   siteName: string;
 }
 
-// [⭐ 2. 수정] Props (siteName 추가)
 interface SiteMemoWidgetProps {
   siteId: string;
-  partnerUid: string; // (이 현장의 소유자인 파트너의 UID)
-  siteName: string; // (캘린더 표시에 필요)
+  partnerUid: string;
+  siteName: string;
 }
 
-// Timestamp를 'YY-MM-DD HH:MM' (로그 표시용)
 const formatMemoTimestamp = (ts: Timestamp | null | undefined): string => {
   if (!ts) return "날짜 없음";
   const d = ts.toDate();
@@ -80,7 +66,6 @@ const formatMemoTimestamp = (ts: Timestamp | null | undefined): string => {
   return `${Y}-${M}-${D} ${h}:${m}`;
 };
 
-// [⭐ 3. 수정] Timestamp를 'datetime-local' input 형식(YYYY-MM-DDTHH:MM)으로 변환
 const dateToInputString = (ts: Date): string => {
     const Y = ts.getFullYear();
     const M = (ts.getMonth() + 1).toString().padStart(2, '0');
@@ -90,26 +75,21 @@ const dateToInputString = (ts: Date): string => {
     return `${Y}-${M}-${D}T${h}:${m}`;
 };
 
-
 const SiteMemoWidget: React.FC<SiteMemoWidgetProps> = ({ siteId, partnerUid, siteName }) => {
   const [memos, setMemos] = useState<MemoData[]>([]);
   const [pinnedMemoId, setPinnedMemoId] = useState<string | null>(null);
-  const [pinnedMemo, setPinnedMemo] = useState<MemoData | null>(null);
   const [newMemoText, setNewMemoText] = useState('');
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [currentUserName, setCurrentUserName] = useState('');
 
-  // [⭐ 4. 수정] 미팅 약속 state
   const [showMeetingPicker, setShowMeetingPicker] = useState(false);
-  const [meetingDateTime, setMeetingDateTime] = useState<Date | null>(null); // (Date 객체 또는 null)
+  const [meetingDateTime, setMeetingDateTime] = useState<Date | null>(null);
 
   const memoListRef = useRef<HTMLDivElement>(null); 
   const db = getFirestore();
 
-  // 1. (Mount) 현재 로그인한 사용자의 닉네임/이름 가져오기
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
@@ -123,29 +103,21 @@ const SiteMemoWidget: React.FC<SiteMemoWidgetProps> = ({ siteId, partnerUid, sit
     }
   }, [db]);
 
-  // 2. (Realtime) 'sites' 문서 구독 (고정된 메모 ID 가져오기)
   useEffect(() => {
     if (!partnerUid || !siteId) return;
-    
     const siteDocRef = doc(db, 'users', partnerUid, 'sites', siteId);
-    
     const unsubscribeSite = onSnapshot(siteDocRef, (doc) => {
       if (doc.exists()) {
         setPinnedMemoId(doc.data().pinnedMemoId || null);
       }
-    }, (error) => {
-      console.error("고정 메모 ID 구독 오류:", error);
     });
-
     return () => unsubscribeSite();
   }, [db, siteId, partnerUid]);
 
-  // 3. (Realtime) 'memos' 하위 컬렉션 구독 (메모 목록 가져오기)
   useEffect(() => {
     if (!partnerUid || !siteId) return;
-    
     const memosRef = collection(db, 'users', partnerUid, 'sites', siteId, 'memos');
-    const q = query(memosRef, orderBy("createdAt", "asc")); // 오래된 순 -> 최신 순
+    const q = query(memosRef, orderBy("createdAt", "asc"));
 
     setIsLoading(true);
     const unsubscribeMemos = onSnapshot(q, (querySnapshot) => {
@@ -153,73 +125,37 @@ const SiteMemoWidget: React.FC<SiteMemoWidgetProps> = ({ siteId, partnerUid, sit
       querySnapshot.forEach((doc) => {
         memoList.push({ id: doc.id, ...doc.data() } as MemoData);
       });
-      
-      setMemos(memoList); // 전체 메모 목록 설정
-      
-      // 고정된 메모 ID가 있으면, 목록에서 찾아서 PinnedMemo state에 설정
-      if (pinnedMemoId) {
-        setPinnedMemo(memoList.find(m => m.id === pinnedMemoId) || null);
-      } else {
-        setPinnedMemo(null);
-      }
-      setIsLoading(false);
-      
-    }, (error) => {
-      console.error("메모 목록 구독 오류:", error);
+      setMemos(memoList);
       setIsLoading(false);
     });
-
     return () => unsubscribeMemos();
-  }, [db, siteId, partnerUid, pinnedMemoId]); 
+  }, [db, siteId, partnerUid]); 
 
-  // 4. [기능] 새 메모 추가 시 스크롤 하단으로 이동
   useEffect(() => {
     if (memoListRef.current) {
       memoListRef.current.scrollTop = memoListRef.current.scrollHeight;
     }
   }, [memos]); 
 
-  // 5. [기능] 메모 고정/해제 핸들러
   const handlePinMemo = async (memoId: string | null) => {
     if (!partnerUid || !siteId) return;
-    
     const newPinnedId = pinnedMemoId === memoId ? null : memoId;
-    
     const siteDocRef = doc(db, 'users', partnerUid, 'sites', siteId);
     try {
-      await updateDoc(siteDocRef, {
-        pinnedMemoId: newPinnedId
-      });
-    } catch (error) {
-      console.error("메모 고정 오류:", error);
-      alert("메모 고정/해제 중 오류가 발생했습니다.");
-    }
+      await updateDoc(siteDocRef, { pinnedMemoId: newPinnedId });
+    } catch (error) { console.error("메모 고정 오류:", error); }
   };
   
-  // 6. [기능] 메모 삭제 핸들러
   const handleDeleteMemo = async (memoId: string) => {
     if (!partnerUid || !siteId) return;
     if (!window.confirm("이 메모를 삭제하시겠습니까?")) return;
-    
     try {
-      // (만약 고정된 메모를 삭제하는 경우, 고정 해제)
-      if (pinnedMemoId === memoId) {
-        await handlePinMemo(null);
-      }
-      
-      // 'memos' 컬렉션에서 문서 삭제
+      if (pinnedMemoId === memoId) await handlePinMemo(null);
       const memoDocRef = doc(db, 'users', partnerUid, 'sites', siteId, 'memos', memoId);
       await deleteDoc(memoDocRef);
-      // (onSnapshot이 자동으로 목록을 갱신)
-      
-    } catch (error) {
-      console.error("메모 삭제 오류:", error);
-      alert("메모 삭제 중 오류가 발생했습니다.");
-    }
+    } catch (error) { console.error("메모 삭제 오류:", error); }
   };
 
-
-  // [⭐ 7. 수정] 새 메모 등록 핸들러 (캘린더 호환)
   const handleSubmitMemo = async (e: FormEvent) => {
     e.preventDefault();
     if (newMemoText.trim() === '' || !currentUserName || !partnerUid || !siteId) {
@@ -233,23 +169,19 @@ const SiteMemoWidget: React.FC<SiteMemoWidgetProps> = ({ siteId, partnerUid, sit
     try {
       const memosRef = collection(db, 'users', partnerUid, 'sites', siteId, 'memos');
       
-      // [핵심] 캘린더가 쿼리할 데이터
       const memoData: any = {
-        memoContent: newMemoText, // [수정] text -> memoContent
+        memoContent: newMemoText,
         createdByUid: currentUser?.uid || 'unknown',
         createdByName: currentUserName, 
         createdAt: serverTimestamp(),
-        partnerUid: partnerUid, // [추가] 캘린더 쿼리용
-        siteId: siteId,         // [추가] 캘린더 이동용
-        siteName: siteName,     // [추가] 캘린더 표시용
+        partnerUid: partnerUid,
+        siteId: siteId,
+        siteName: siteName,
       };
       
-      // [수정] 미팅 시간이 설정되었으면 캘린더 형식에 맞게 추가
       if (meetingDateTime) {
         memoData.memoType = 'meeting';
-        // 'YYYY-MM-DD'
         memoData.meetingDate = meetingDateTime.toISOString().split('T')[0]; 
-        // 'HH:MM'
         memoData.meetingTime = meetingDateTime.toTimeString().split(' ')[0].substring(0, 5);
       } else {
         memoData.memoType = 'general';
@@ -257,153 +189,105 @@ const SiteMemoWidget: React.FC<SiteMemoWidgetProps> = ({ siteId, partnerUid, sit
       
       await addDoc(memosRef, memoData);
       
-      setNewMemoText(''); // 입력창 비우기
-      setMeetingDateTime(null); // 미팅 시간 리셋
-      setShowMeetingPicker(false); // 피커 닫기
+      setNewMemoText('');
+      setMeetingDateTime(null);
+      setShowMeetingPicker(false);
       
-    } catch (error) {
-      console.error("메모 등록 오류:", error);
-      alert("메모 등록 중 오류가 발생했습니다.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    } catch (error) { console.error("메모 등록 오류:", error); } 
+    finally { setIsSubmitting(false); }
   };
 
-  return (
-    <div className="memo-widget-container">
-      <h3>메모</h3>
-      
-      {/* --- 1. 고정된 메모 --- */}
-      {pinnedMemo && (
-        <div className="pinned-memo-container">
-          <div className="pinned-memo-header">
-            
-            <span className="pinned-memo-title">
-              <StarIconSolid /> {pinnedMemo.createdByName}
-            </span>
-            
-            <span className="pinned-memo-timestamp">
-              {formatMemoTimestamp(pinnedMemo.createdAt)}
-            </span>
-            
-            <button 
-              className="unpin-button"
-              onClick={() => handlePinMemo(null)}
-              title="고정 해제"
-            >
-              (고정 해제)
-            </button>
-            
-          </div>
-          {/* [⭐ 8. 수정] text -> memoContent */}
-          <p className="pinned-memo-content">{pinnedMemo.memoContent}</p>
-          
-          {/* [⭐ 9. 수정] 미팅 시간 표시 (새 형식) */}
-          {pinnedMemo.memoType === 'meeting' && pinnedMemo.meetingDate && (
-            <p className="pinned-memo-meeting">
-              미팅 약속: {pinnedMemo.meetingDate} {pinnedMemo.meetingTime}
-            </p>
-          )}
-        </div>
-      )}
+  // 렌더링용 리스트 정렬 (고정 메모 상단 + 나머지 최신순) -> 채팅형은 보통 최신이 아래로
+  // 요청하신 디자인은 채팅형(카톡)과 유사하므로 고정 메모는 별도 표시하거나 상단에 둘 수 있음.
+  // 여기서는 단순히 리스트를 렌더링하고 고정 스타일을 적용함.
 
-      {/* --- 2. 메모 목록 (스크롤) --- */}
-      <div className="memo-list-wrapper" ref={memoListRef}>
-        {isLoading && <p>메모 로딩 중...</p>}
-        <ul className="memo-list">
-          {memos
-            .filter(memo => memo.id !== pinnedMemoId) // (고정된 메모는 제외)
-            .map(memo => (
-            <li key={memo.id} className="memo-item">
-              
-              {/* [⭐ 10. 수정] 핀/삭제 아이콘 영역 */}
-              <div className="memo-actions">
-                <button 
-                  className={`memo-pin-button ${pinnedMemoId === memo.id ? 'pinned' : ''}`}
-                  onClick={() => handlePinMemo(memo.id)}
-                  title={pinnedMemoId === memo.id ? "고정 해제" : "메모 고정"}
-                >
-                  {pinnedMemoId === memo.id ? <StarIconSolid /> : <StarIconOutline />}
-                </button>
-                <button 
-                  className="memo-delete-button" 
-                  title="메모 삭제"
-                  onClick={() => handleDeleteMemo(memo.id)}
-                >
-                  <DeleteIcon />
-                </button>
-              </div>
-              
-              <div className="memo-body">
-                <div className="memo-header">
-                  {memo.createdByName}
-                  <span className="timestamp">({formatMemoTimestamp(memo.createdAt)})</span>
+  return (
+    <div className="site-memo-widget">
+      <div className="memo-header-row">
+        <h3>현장 메모</h3>
+      </div>
+      
+      {/* 메모 리스트 */}
+      <div className="memo-list-area" ref={memoListRef}>
+        {isLoading ? <p className="memo-empty">로딩 중...</p> : 
+         memos.length === 0 ? <p className="memo-empty">등록된 메모가 없습니다.</p> :
+         memos.map(memo => (
+            <div key={memo.id} className={`memo-card ${pinnedMemoId === memo.id ? 'pinned' : ''}`}>
+                <div className="memo-card-header">
+                    <div className="memo-info">
+                        <span className="memo-author">{memo.createdByName}</span>
+                        <span className="memo-date">{formatMemoTimestamp(memo.createdAt)}</span>
+                    </div>
+                    <div className="memo-actions">
+                        <button 
+                            className={`btn-icon pin ${pinnedMemoId === memo.id ? 'pinned' : ''}`}
+                            onClick={() => handlePinMemo(memo.id)}
+                            title="고정"
+                        >
+                            {pinnedMemoId === memo.id ? <StarIconSolid /> : <StarIconOutline />}
+                        </button>
+                        <button className="btn-icon delete" onClick={() => handleDeleteMemo(memo.id)} title="삭제">
+                            <DeleteIcon />
+                        </button>
+                    </div>
                 </div>
-                {/* [⭐ 11. 수정] text -> memoContent */}
-                <p className="memo-content">{memo.memoContent}</p>
-                {/* [⭐ 12. 수정] 미팅 시간 표시 (새 형식) */}
+                
+                <div className="memo-content">{memo.memoContent}</div>
+                
                 {memo.memoType === 'meeting' && memo.meetingDate && (
-                  <p className="memo-meeting-time">
-                    미팅 약속: {memo.meetingDate} {memo.meetingTime}
-                  </p>
+                    <div className="memo-meeting-info">
+                        <CalendarIcon />
+                        <span>{memo.meetingDate} {memo.meetingTime}</span>
+                    </div>
                 )}
-              </div>
-            </li>
-          ))}
-        </ul>
+            </div>
+         ))
+        }
       </div>
 
-      {/* --- 3. 메모 입력 --- */}
-      <div className="memo-input-area">
-        
-        {/* [⭐ 13. 수정] 하단 아이콘 바 */}
-        <div className="memo-action-bar">
-          <button 
-            className={`memo-icon-button ${showMeetingPicker ? 'active' : ''}`} // [추가] active 클래스
-            title="미팅약속 설정"
-            onClick={() => setShowMeetingPicker(prev => !prev)}
-          >
-            <CalendarIcon />
-          </button>
-          <button 
-            className="memo-icon-button" 
-            title="업무지시 (개발예정)"
-            onClick={() => alert('업무지시 기능은 개발 예정입니다.')}
-          >
-            <AssignmentIcon />
-          </button>
+      {/* 입력 영역 */}
+      <div className="memo-input-container">
+        {/* 툴바 (미팅, 업무지시 버튼) */}
+        <div className="memo-toolbar">
+            <button 
+                className={`toolbar-btn ${showMeetingPicker ? 'active' : ''}`} 
+                onClick={() => setShowMeetingPicker(!showMeetingPicker)}
+                title="미팅 약속"
+            >
+                <CalendarIcon />
+            </button>
+            <button 
+                className="toolbar-btn" 
+                onClick={() => alert('업무지시 기능은 준비 중입니다.')}
+                title="업무 지시"
+            >
+                <AssignmentIcon />
+            </button>
         </div>
 
-        {/* [⭐ 14. 수정] 미팅 날짜 선택 (조건부 렌더링) */}
+        {/* 날짜 선택기 (조건부 노출) */}
         {showMeetingPicker && (
-          <div className="datetime-picker">
-            <input 
-              type="datetime-local"
-              value={meetingDateTime ? dateToInputString(meetingDateTime) : ''}
-              onChange={(e) => setMeetingDateTime(e.target.value ? new Date(e.target.value) : null)}
-            />
-            <button type="button" onClick={() => { setMeetingDateTime(null); setShowMeetingPicker(false); }}>
-              지우기
-            </button>
-          </div>
+            <div className="date-picker-box">
+                <input 
+                    type="datetime-local"
+                    value={meetingDateTime ? dateToInputString(meetingDateTime) : ''}
+                    onChange={(e) => setMeetingDateTime(e.target.value ? new Date(e.target.value) : null)}
+                />
+                <button className="btn-clear" onClick={() => { setMeetingDateTime(null); setShowMeetingPicker(false); }}>취소</button>
+            </div>
         )}
 
-        {/* [⭐ 15. 수정] 폼 태그가 입력창 + 버튼을 감싸도록 변경 */}
-        <form className="memo-input-box" onSubmit={handleSubmitMemo}>
-          <textarea
-            className="memo-textarea"
-            placeholder={meetingDateTime ? "미팅 약속 메모를 입력하세요..." : "여기에 메모를 입력하세요..."}
-            value={newMemoText}
-            onChange={(e) => setNewMemoText(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button 
-            type="submit" 
-            className="memo-submit-button"
-            disabled={isSubmitting || newMemoText.trim() === ''} // [수정] 텍스트 필수
-          >
-            등록
-          </button>
+        <form className="input-wrapper" onSubmit={handleSubmitMemo}>
+            <textarea
+                className="memo-textarea"
+                placeholder={meetingDateTime ? "미팅 내용을 입력하세요..." : "메모를 입력하세요..."}
+                value={newMemoText}
+                onChange={(e) => setNewMemoText(e.target.value)}
+                onKeyPress={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitMemo(e); }}}
+            />
+            <button type="submit" className="btn-send" style={{ backgroundColor: K_BRAND_COLOR }} disabled={isSubmitting}>
+                등록
+            </button>
         </form>
       </div>
     </div>

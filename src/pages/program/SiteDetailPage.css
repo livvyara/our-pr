@@ -11,6 +11,8 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    /* 전체 페이지 스크롤 방지 (내부 스크롤 유도) - 선택 사항 */
+    /* height: 100vh; overflow: hidden; */ 
 }
 
 /* 2. 헤더 영역 */
@@ -55,9 +57,10 @@
 .site-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr; /* 50% 50% */
-    grid-template-rows: minmax(500px, auto) auto; /* 상단 최소 높이 확보 */
+    /* [수정] 상단 행 높이 고정 (스크롤 발생 시 내부 스크롤) */
+    grid-template-rows: 600px 1fr; 
     gap: 20px;
-    flex: 1; /* 남은 공간 차지 */
+    flex: 1; 
     width: 100%;
     
     grid-template-areas: 
@@ -71,13 +74,13 @@
     border-radius: 8px;
     background-color: #ffffff; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    padding: 20px; /* 내부 여백 증가 */
+    padding: 20px; 
     box-sizing: border-box;
 
     /* 자식 위젯이 높이를 100% 채우도록 함 */
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
+    overflow: hidden; /* 자식 요소가 넘치면 숨김 (내부 스크롤은 자식에게 위임) */
     height: 100%;
 }
 
@@ -98,7 +101,9 @@
    ========================================= */
 @media (max-width: 768px) {
     .site-detail-page-container {
-        padding: 15px; /* 패딩 축소 */
+        padding: 15px; 
+        height: auto; 
+        overflow: visible;
     }
 
     /* 그리드 -> 세로 스택(Column) 변환 */
@@ -106,25 +111,42 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
-        height: auto; /* 높이 자동 */
+        height: auto; 
     }
 
-    /* 각 박스 높이 조정 (모바일 최적화) */
+    /* 각 박스 높이 조정 */
     .quadrant-box {
         min-height: auto;
-        height: auto; /* 내용물만큼 늘어남 */
+        height: auto; 
         padding: 15px;
     }
 
-    /* 특정 영역 높이 제한 (선택 사항) */
+    /* 메모 영역만 높이 제한 (스크롤) */
     .quadrant-memo {
-        min-height: 400px; /* 메모는 어느 정도 높이 확보 */
+        height: 500px; 
+        max-height: 60vh; 
+        overflow-y: auto; 
+        display: block; 
     }
     
-    .quadrant-info {
-        order: 1; /* 순서 지정 (정보가 맨 위) */
+    /* [수정] 모바일 배치 순서 변경 */
+    /* 1. 사이트 액션 (기타 등록) */
+    .quadrant-actions { 
+        order: 1; 
     }
-    .quadrant-memo { order: 2; }
-    .quadrant-files { order: 3; }
-    .quadrant-actions { order: 4; }
+    
+    /* 2. 사이트 파일 (자료 등록) */
+    .quadrant-files { 
+        order: 2; 
+    }
+    
+    /* 3. 사이트 메모 */
+    .quadrant-memo { 
+        order: 3; 
+    }
+    
+    /* 4. 사이트 인포 (현장 정보) */
+    .quadrant-info { 
+        order: 4; 
+    }
 }

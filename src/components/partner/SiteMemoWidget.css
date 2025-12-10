@@ -1,256 +1,243 @@
 /* src/components/partner/SiteMemoWidget.css */
 
-.memo-widget-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* 부모(quadrant-box)의 높이를 100% 채움 */
-  overflow: hidden; /* (내부에서 스크롤 관리) */
+/* 1. 위젯 전체 컨테이너 */
+.site-memo-widget {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #fff;
+    box-sizing: border-box;
+    font-family: 'Pretendard', sans-serif;
+    overflow: hidden; 
 }
 
-/* --- 1. 고정된 메모 영역 --- */
-.pinned-memo-container {
-  flex-shrink: 0; 
-  padding: 3px;
-  background-color: #00000000; 
-  border: 0cm solid #fbc02d;
-  border-radius: 5px;
-  margin-bottom: 0px;
-}
-.pinned-memo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2px; /* [⭐ 수정] (px -> 2px) */
-}
-.pinned-memo-title {
-  font-weight: bold;
-  font-size: 14px;
-  display: flex; /* [⭐ 추가] 아이콘/텍스트 정렬 */
-  align-items: center; /* [⭐ 추가] */
-}
-/* [⭐ 추가] 고정된 메모의 별 아이콘 */
-.pinned-memo-title svg {
-  width: 12px;
-  height: 12px;
-  fill: #fbc02d; /* 별 색상 */
-  margin-right: 5px;
+/* 2. 헤더 영역 */
+.memo-header-row {
+    padding: 0 0 15px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0;
+    flex-shrink: 0;
 }
 
-.pinned-memo-timestamp {
-  font-size: 10px;
-  color: #555;
-  white-space: nowrap; /* [⭐ 추가] 줄바꿈 방지 */
-  margin: 0 10px; /* [⭐ 추가] 좌우 여백 */
+.memo-header-row h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #333;
 }
 
-/* [⭐ 추가] 고정 해제 버튼 */
-.unpin-button {
-  background: none;
-  border: none;
-  color: #777;
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: bold;
-  padding: 0;
-}
-.unpin-button:hover {
-  color: #007bff;
+/* 3. 메모 리스트 영역 (스크롤) */
+.memo-list-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 5px 15px 0; 
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; 
 }
 
-.pinned-memo-content {
-  font-size: 14px;
-  font-weight: bold; /* (요청사항: 볼드체) */
-  white-space: pre-wrap; 
-  margin: 0px
-}
-/* [⭐ 추가] 고정된 메모의 미팅 시간 */
-.pinned-memo-meeting {
-  font-size: 12px;
-  font-weight: bold;
-  color: #d84315; /* (강조색) */
-  margin-top: 5px;
+/* 4. 메모 아이템 (카드 스타일) */
+.memo-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    position: relative;
+    transition: all 0.1s;
 }
 
-/* --- 2. 메모 목록 (스크롤) --- */
-.memo-list-wrapper {
-  flex-grow: 1; 
-  overflow-y: auto; 
-  border-radius: 5px;
-  background-color: #00000000;
-  padding: 10px;
+.memo-card:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    background-color: #fff;
+    border-color: #ddd;
 }
 
-.memo-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* 고정된 메모 스타일 */
+.memo-card.pinned {
+    background-color: #fff8e1;
+    border-color: #ffe082;
 }
 
-.memo-item {
-  display: flex;
-  gap: 8px; /* [⭐ 수정] 간격 10px -> 8px */
-  margin-bottom: 0px; /* [⭐ 수정] 간격 10px -> 8px */
+/* 메모 헤더 */
+.memo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #e0e0e0;
 }
 
-/* [⭐ 수정] 핀/삭제 버튼 래퍼 */
+.memo-info {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.memo-author {
+    font-weight: 700;
+    color: #555;
+    background-color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+/* 아이콘 버튼 그룹 */
 .memo-actions {
-  flex-shrink: 0;
-  display: flex;
-  gap: 5px;
-  margin-top: 2px;
+    display: flex;
+    gap: 5px;
 }
 
-.memo-pin-button,
-.memo-delete-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-size: 16px; /* (아이콘 크기) */
-  color: #ccc;
-  transition: color 0.2s;
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px; /* 터치 영역 확보 */
+    color: #bbb;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+.btn-icon svg { width: 14px; height: 14px; }
 
-.memo-pin-button:hover {
-  color: #00000000; /* (노란색) */
-}
-.memo-delete-button:hover {
-  color: #dc3545; /* (빨간색) */
-}
+.btn-icon.pin:hover, .btn-icon.pinned { color: #fbc02d; }
+.btn-icon.delete:hover { color: #e74c3c; }
 
-/* [⭐ 수정] SVG 아이콘 크기 */
-.memo-pin-button svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-.memo-pin-button.pinned {
-  color: #00000000; /* (고정됨) */
-}
-
-.memo-body {
-  flex-grow: 1;
-}
-
-.memo-header {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: -15px; /* [⭐ 수정] 간격 2px -> 0 */
-
-}
-.memo-header .timestamp {
-  font-size: 12px;
-  font-weight: normal;
-  color: #777;
-  margin-left: 8px;
-
-}
+/* 메모 본문 */
 .memo-content {
-  font-size: 14px;
-  white-space: pre-wrap; 
-  word-break: break-word; 
-}
-/* [⭐ 추가] 메모의 미팅 시간 */
-.memo-meeting-time {
-  font-size: 12px;
-  font-weight: bold;
-  color: #d84315; /* (강조색) */
-  margin-top: -10px;
-  margin-bottom: 5px; /* [⭐ 수정] 간격 4px -> 2px */
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
 }
 
-/* --- 3. 메모 입력 영역 --- */
-/* [⭐ 수정] Flexbox 레이아웃으로 변경 */
-.memo-input-area {
-  flex-shrink: 0; 
-  /* 하위 요소들을 가로로 배치하기 위한 flex 설정 */
-  display: flex;
-  flex-wrap: wrap; /* 요소가 많으면 줄바꿈 */
-  align-items: flex-start; /* 상단 정렬 */
-  gap: 8px;
+/* [수정] 미팅 약속 시간 표시 (디자인 개선) */
+.memo-meeting-info {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #1976d2;
+    font-weight: 700;
+    
+    /* 한 줄 배치 강제 */
+    display: inline-flex; 
+    align-items: center;
+    gap: 6px;
+    
+    background-color: #e3f2fd;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #bbdefb;
+    
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-/* [⭐ 추가] 미팅 날짜 선택 */
-.datetime-picker {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 0; /* [⭐ 수정] gap이 간격 관리 */
-  align-items: center;
-  width: 100%; /* [⭐ 추가] 항상 한 줄을 다 차지하도록 */
-  order: 1; /* [⭐ 추가] 순서 1 (가장 위) */
-}
-.datetime-picker input {
-  height: 30px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.datetime-picker button {
-  background: none;
-  border: none;
-  color: #007bff;
-  cursor: pointer;
-  font-size: 12px;
+/* [추가] 미팅 아이콘 크기 제한 */
+.memo-meeting-info svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0; /* 아이콘 찌그러짐 방지 */
+    margin-top: -1px; /* 시각적 정렬 보정 */
 }
 
-/* [⭐ 수정] 하단 아이콘 (입력창 좌측) */
-.memo-action-bar {
-  display: flex;
-  align-items: center; /* 수직 중앙 정렬 */
-  gap: 10px;
-  margin-bottom: 0; /* [⭐ 수정] gap이 간격 관리 */
-  order: 2; /* [⭐ 추가] 순서 2 (아이콘) */
-  flex-shrink: 0;
-  height: 40px; /* [⭐ 추가] 입력창 높이와 맞춤 */
+/* 5. 입력 영역 (하단 고정) */
+.memo-input-container {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    background-color: #fff;
+    flex-shrink: 0;
 }
 
-.memo-icon-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: #555;
-}
-.memo-icon-button svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
-}
-.memo-icon-button:hover {
-  color: #000;
+/* 아이콘 툴바 */
+.memo-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-left: 2px;
 }
 
-/* [⭐ 수정] 입력창 + 버튼 (아이콘 우측) */
-.memo-input-box {
-  display: flex;
-  gap: 10px;
-  order: 3; /* [⭐ 추가] 순서 3 (입력 폼) */
-  flex-grow: 1; /* [⭐ 추가] 남은 공간 모두 차지 */
-  min-width: 200px; /* [⭐ 추가] 좁아질 때 줄바꿈 기준 */
+.toolbar-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    padding: 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.toolbar-btn:hover { background-color: #f1f1f1; color: #555; }
+.toolbar-btn.active { color: #1976d2; background-color: #e3f2fd; }
+.toolbar-btn svg { width: 18px; height: 18px; }
+
+/* 날짜 선택기 */
+.date-picker-box {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+    background-color: #f9f9f9;
+    padding: 8px;
+    border-radius: 4px;
+    align-items: center;
+}
+.date-picker-box input {
+    font-size: 12px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+}
+.btn-clear {
+    font-size: 11px;
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* 입력창 + 전송버튼 */
+.input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
 }
 
 .memo-textarea {
-  flex-grow: 1;
-  height: 40px; /* [⭐ 수정] 높이 고정 (한 줄) */
-  min-height: 40px; /* [⭐ 수정] 최소 높이 */
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
-  resize: vertical; 
-  box-sizing: border-box; /* [⭐ 추가] 패딩 포함 높이 계산 */
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+    resize: none;
+    height: 38px;
+    min-height: 38px;
+    max-height: 80px;
+    font-family: inherit;
+    transition: border-color 0.2s;
 }
+.memo-textarea:focus { outline: none; border-color: #333; }
 
-.memo-submit-button {
-  flex-shrink: 0;
-  height: 40px; /* [⭐ 수정] 높이 50px -> 40px */
-  padding: 0 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
+.btn-send {
+    width: 60px;
+    height: 38px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
 }
-.memo-submit-button:disabled {
-  background-color: #ccc;
-}
+.btn-send:disabled { background-color: #ccc !important; cursor: not-allowed; }
+
+/* 데이터 없음 */
+.memo-empty { text-align: center; color: #999; font-size: 13px; margin-top: 30px; font-style: italic; }

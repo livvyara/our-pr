@@ -109,7 +109,7 @@ const SiteFilesWidget: React.FC<SiteFilesWidgetProps> = ({ siteId, partnerUid })
     for (let i = 0; i < totalFiles; i++) {
       const file = fileList[i];
       const fileIndex = i + 1;
-      setUploadStatusMessage(`(${fileIndex}/${totalFiles}) ${file.name.slice(0, 10)}...`);
+      setUploadStatusMessage(`(${fileIndex}/${totalFiles})`);
 
       try {
         const uploadPromise = new Promise<void>((resolve, reject) => {
@@ -119,8 +119,7 @@ const SiteFilesWidget: React.FC<SiteFilesWidgetProps> = ({ siteId, partnerUid })
 
           uploadTask.on('state_changed',
             (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadStatusMessage(`(${fileIndex}/${totalFiles}) ${progress.toFixed(0)}%`);
+              // const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             },
             (error) => reject(error),
             async () => {
@@ -138,6 +137,7 @@ const SiteFilesWidget: React.FC<SiteFilesWidgetProps> = ({ siteId, partnerUid })
 
     setIsUploading(false);
     setUploadingCategoryKey(null);
+    setUploadStatusMessage('');
     if (e.target) e.target.value = ""; 
   };
 
@@ -146,36 +146,55 @@ const SiteFilesWidget: React.FC<SiteFilesWidgetProps> = ({ siteId, partnerUid })
     await addDoc(filesRef, { name: fileName, url: url, category: category, createdAt: serverTimestamp() });
   };
 
-  if (isLoading) return <p>자료 목록 로딩 중...</p>;
+  if (isLoading) return <p className="file-loading">자료 목록 로딩 중...</p>;
 
   return (
-    <>
-      <div className="file-widget-container">
+    <div className="file-widget-container">
+      <div className="file-header-row">
         <h3>자료 등록</h3>
-        <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} accept="image/*" multiple />
-        <ul className="file-category-list">
-          {FILE_CATEGORIES.map(category => {
-            const files = filesByCategory.get(category.key) || [];
-            const thumbnailFile = files[0];
-            const isThisCategoryUploading = uploadingCategoryKey === category.key;
-            return (
-              <li key={category.key} className="file-category-item">
-                <div className="thumbnail-preview" onClick={() => handleThumbnailClick(files, category.title, category.key)} title={files.length > 0 ? "클릭해서 갤러리 보기" : "클릭해서 자료 등록"}>
-                  {thumbnailFile ? <img src={thumbnailFile.url} alt={thumbnailFile.name} /> : <span>썸네일 없음</span>}
-                </div>
-                <div className="category-title-wrapper">
-                  <h4 className="category-title">{category.title}</h4>
-                  <button className="add-file-button" onClick={() => handleUploadClick(category.key)} disabled={isUploading}>
-                    {isThisCategoryUploading ? `업로드 중... ${uploadStatusMessage}` : "+ 자료등록"}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
       </div>
 
-      {/* [수정] siteId, partnerUid 전달 */}
+      <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} accept="image/*" multiple />
+      
+      <ul className="file-category-list">
+        {FILE_CATEGORIES.map(category => {
+          const files = filesByCategory.get(category.key) || [];
+          const thumbnailFile = files[0];
+          const isThisCategoryUploading = uploadingCategoryKey === category.key;
+          
+          return (
+            <li key={category.key} className="file-category-item">
+              <div 
+                className="thumbnail-preview" 
+                onClick={() => handleThumbnailClick(files, category.title, category.key)} 
+                title={files.length > 0 ? "클릭해서 갤러리 보기" : "클릭해서 자료 등록"}
+              >
+                {thumbnailFile ? (
+                    <>
+                        <img src={thumbnailFile.url} alt={thumbnailFile.name} />
+                        <div className="thumbnail-overlay" />
+                    </>
+                ) : (
+                    <span>No Image</span>
+                )}
+              </div>
+              
+              <div className="category-info-wrapper">
+                <h4 className="category-title">{category.title} <span style={{fontSize:'11px', color:'#999', fontWeight:'normal'}}>({files.length})</span></h4>
+                
+                {isThisCategoryUploading ? (
+                    <span className="uploading-text">업로드 중 {uploadStatusMessage}</span>
+                ) : (
+                    <button className="add-file-button" onClick={() => handleUploadClick(category.key)} disabled={isUploading}>
+                      + 추가
+                    </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      
       {modalFiles && (
         <GalleryModal 
           files={modalFiles} 
@@ -185,7 +204,7 @@ const SiteFilesWidget: React.FC<SiteFilesWidgetProps> = ({ siteId, partnerUid })
           partnerUid={partnerUid}
         />
       )}
-    </>
+    </div>
   );
 };
 
