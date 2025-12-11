@@ -1,30 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import './DashboardSiteListWidget.css';
 
-interface SiteData {
-  id: string;
-  siteName: string;
-  address: string;
-  client1Name: string;
-  status: string;
-}
+// --- [High-End Icons] ---
+const Icons = {
+  Settings: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  More: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  ChevronRight: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
+  Empty: () => <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E5E7EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+};
 
-interface Props {
-  partnerUid: string;
-  currentUserId: string;
-}
+interface SiteData { id: string; siteName: string; address: string; client1Name: string; status: string; }
+interface Props { partnerUid: string; currentUserId: string; }
 
-// 모든 상태값 정의
-const ALL_STATUSES = [
-  '미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'
-];
+const ALL_STATUSES = ['미팅중', '계약대기', '계약완료', '공사전', '공사중', '공사완료', '보류', '취소', 'deleted'];
 
 const DashboardSiteListWidget: React.FC<Props> = ({ partnerUid }) => {
   const [sites, setSites] = useState<SiteData[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // 노출 설정 상태
   const [visibleStatuses, setVisibleStatuses] = useState<string[]>([]);
   const [tempVisible, setTempVisible] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,176 +27,122 @@ const DashboardSiteListWidget: React.FC<Props> = ({ partnerUid }) => {
   const navigate = useNavigate();
   const db = getFirestore();
 
-  // 1. 초기 로드: 로컬 스토리지에서 필터 설정 불러오기
   useEffect(() => {
     const savedFilter = localStorage.getItem(`dashboard_site_filter_${partnerUid}`);
-    if (savedFilter) {
-      setVisibleStatuses(JSON.parse(savedFilter));
-    } else {
-      // 기본값: 삭제됨을 제외한 모든 상태
-      setVisibleStatuses(ALL_STATUSES.filter(s => s !== 'deleted'));
-    }
+    setVisibleStatuses(savedFilter ? JSON.parse(savedFilter) : ALL_STATUSES.filter(s => s !== 'deleted'));
   }, [partnerUid]);
 
-  // 2. 현장 데이터 불러오기 (필터가 변경될 때마다 실행)
   useEffect(() => {
-    if (visibleStatuses.length === 0) return; // 초기화 전이면 대기
-
+    if (visibleStatuses.length === 0) return;
     const fetchSites = async () => {
       setLoading(true);
       try {
-        // 필터링 후 5개를 보여주기 위해 넉넉하게 50개를 가져옴 (클라이언트 필터링)
-        const q = query(
-          collection(db, 'users', partnerUid, 'sites'),
-          orderBy('createdAt', 'desc'),
-          limit(50) 
-        );
+        const q = query(collection(db, 'users', partnerUid, 'sites'), orderBy('createdAt', 'desc'), limit(50));
         const snap = await getDocs(q);
         const list: SiteData[] = [];
-        
         snap.forEach(d => {
           const data = d.data();
           const status = data.status || '미팅중';
-          
-          // 여기서 필터링 적용
           if (visibleStatuses.includes(status)) {
-            list.push({
-              id: d.id,
-              siteName: data.siteName,
-              address: data.address,
-              client1Name: data.client1Name,
-              status: status
-            });
+            list.push({ id: d.id, siteName: data.siteName, address: data.address, client1Name: data.client1Name, status });
           }
         });
-
-        // 상위 5개만 자름
-        setSites(list.slice(0, 10));
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+        setSites(list.slice(0, 5)); // Widget shows top 5
+      } catch (e) { console.error(e); } 
+      finally { setLoading(false); }
     };
-
     fetchSites();
   }, [partnerUid, db, visibleStatuses]);
 
-  // 모달 열기
-  const openModal = () => {
-    setTempVisible([...visibleStatuses]);
-    setIsModalOpen(true);
-  };
-
-  // 체크박스 토글
-  const toggleStatus = (status: string) => {
-    setTempVisible(prev => 
-      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
-    );
-  };
-
-  // 설정 저장
+  const openModal = () => { setTempVisible([...visibleStatuses]); setIsModalOpen(true); };
+  const toggleStatus = (status: string) => setTempVisible(prev => prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]);
   const saveVisibility = () => {
     setVisibleStatuses(tempVisible);
     localStorage.setItem(`dashboard_site_filter_${partnerUid}`, JSON.stringify(tempVisible));
     setIsModalOpen(false);
   };
 
+  const getStatusClass = (status: string) => {
+    if (['공사중', '계약완료', '공사전'].includes(status)) return 'active';
+    if (['공사완료'].includes(status)) return 'done';
+    if (['보류', '취소', 'deleted'].includes(status)) return 'gray';
+    return 'default'; // 미팅중, 계약대기
+  };
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="ds-widget-container">
       
-      {/* 헤더 영역 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>최근 현장 목록</h3>
-        
-        <div className="dashboard-widget-header-actions">
-            {/* 노출 설정 버튼 */}
-            <button className="dashboard-btn-text" onClick={openModal}>
-                👁️ 노출 설정
-            </button>
-            {/* 더보기 버튼 */}
-            <button className="dashboard-btn-text" onClick={() => navigate('/program/site-list')}>
-                더보기 +
-            </button>
+      {/* Header */}
+      <div className="ds-header">
+        <h3 className="ds-title">최근 현장</h3>
+        <div className="ds-actions">
+            <button className="ds-icon-btn" onClick={openModal} title="필터 설정"><Icons.Settings /></button>
+            <button className="ds-icon-btn" onClick={() => navigate('/program/site-list')} title="더보기"><Icons.More /></button>
         </div>
       </div>
 
-      {/* 테이블 영역 */}
-      <div style={{ flex: 1, overflowX: 'auto' }}>
-        <table className="dashboard-site-table">
-          <colgroup>
-            <col style={{ width: '80px' }} /> {/* 상태 */}
-            <col /> {/* 현장명 */}
-            <col style={{ width: '80px' }} /> {/* 고객 */}
-          </colgroup>
-          <thead>
-            <tr>
-              <th>상태</th>
-              <th style={{ textAlign: 'left', paddingLeft: '10px' }}>현장명</th>
-              <th>고객명</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={3} style={{ textAlign: 'center', padding: '20px', color: '#999' }}>로딩 중...</td></tr>
-            ) : sites.length === 0 ? (
-              <tr><td colSpan={3} style={{ textAlign: 'center', padding: '20px', color: '#999' }}>표시할 현장이 없습니다.</td></tr>
-            ) : (
-              sites.map(site => (
-                <tr key={site.id}>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`dashboard-status-badge ${site.status}`}>
-                      {site.status === 'deleted' ? '삭제대기' : site.status}
-                    </span>
-                  </td>
-                  <td style={{ paddingLeft: '10px' }}>
-                    <button 
-                      className="dashboard-link-text"
-                      onClick={() => navigate(`/program/site-detail/${site.id}`)}
-                    >
-                      {site.siteName}
-                    </button>
-                    {site.address && (
-                        <div style={{fontSize:'11px', color:'#888', marginTop:'2px', maxWidth:'150px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
-                            {site.address}
+      {/* Body List */}
+      <div className="ds-body">
+        {loading ? (
+            <div className="ds-loading"><div className="spinner"></div></div>
+        ) : sites.length === 0 ? (
+            <div className="ds-empty">
+                <Icons.Empty />
+                <span>표시할 현장이 없습니다.</span>
+            </div>
+        ) : (
+            <div className="ds-list">
+                {sites.map(site => (
+                    <div key={site.id} className="ds-item" onClick={() => navigate(`/program/site-detail/${site.id}`)}>
+                        <div className="ds-item-left">
+                            <span className={`ds-status-dot ${getStatusClass(site.status)}`} />
+                            <div className="ds-info">
+                                <span className="ds-site-name">{site.siteName}</span>
+                                {site.address && <span className="ds-address">{site.address}</span>}
+                            </div>
                         </div>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'center', fontSize:'12px' }}>{site.client1Name}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                        <div className="ds-item-right">
+                            <span className={`ds-badge ${getStatusClass(site.status)}`}>
+                                {site.status === 'deleted' ? '삭제됨' : site.status}
+                            </span>
+                            {/* [Mobile Optimization] 고객명은 PC에서만 노출 */}
+                            <span className="ds-client desktop-only">{site.client1Name}</span>
+                            <span className="ds-arrow"><Icons.ChevronRight /></span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
       </div>
 
-      {/* 노출 설정 모달 */}
+      {/* Filter Modal */}
       {isModalOpen && (
-        <div className="dashboard-modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="dashboard-modal-paper" onClick={e => e.stopPropagation()}>
-            <h3 className="dashboard-modal-title">현장 노출 설정</h3>
-            <ul className="dashboard-modal-list">
-              {ALL_STATUSES.map((status) => (
-                <li key={status} className="dashboard-modal-item">
-                  <label className="dashboard-checkbox-label">
-                    <input 
-                        type="checkbox" 
-                        checked={tempVisible.includes(status)} 
-                        onChange={() => toggleStatus(status)} 
-                    />
-                    {status === 'deleted' ? '삭제대기' : status}
-                  </label>
-                </li>
-              ))}
-            </ul>
-            <div className="dashboard-modal-footer">
-              <button className="dashboard-btn-cancel" onClick={() => setIsModalOpen(false)}>취소</button>
-              <button className="dashboard-btn-save" onClick={saveVisibility}>저장</button>
+        <div className="ds-modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="ds-modal" onClick={e => e.stopPropagation()}>
+            <div className="ds-modal-header">
+                <h4>노출 현장 필터</h4>
+                <button className="ds-close-btn" onClick={() => setIsModalOpen(false)}>&times;</button>
+            </div>
+            <div className="ds-modal-body">
+                {ALL_STATUSES.map(status => (
+                    <label key={status} className="ds-checkbox-row">
+                        <input 
+                            type="checkbox" 
+                            checked={tempVisible.includes(status)} 
+                            onChange={() => toggleStatus(status)} 
+                        />
+                        <span className="ds-checkbox-text">{status === 'deleted' ? '삭제대기' : status}</span>
+                        <span className="ds-checkbox-custom"></span>
+                    </label>
+                ))}
+            </div>
+            <div className="ds-modal-footer">
+                <button className="ds-btn-cancel" onClick={() => setIsModalOpen(false)}>취소</button>
+                <button className="ds-btn-save" onClick={saveVisibility}>설정 저장</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

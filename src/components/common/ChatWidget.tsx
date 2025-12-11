@@ -8,6 +8,8 @@ import { auth } from '../../firebase-config';
 import imageCompression from 'browser-image-compression'; 
 import { ChatIcons } from './ChatIcons'; 
 import './ChatWidget.css'; 
+import ReactDOM from 'react-dom';
+
 
 interface ChatRoom {
     id: string;
@@ -283,8 +285,12 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         return messages.filter(m => m.type === 'image' && m.imageUrl);
     }, [messages]);
 
-    return (
-        <div className="chat-widget-popup" style={{ left: position.x, top: position.y }}>
+    const widgetContent = (
+        <div 
+            className="chat-widget-popup" 
+            style={window.innerWidth > 768 ? { left: position.x, top: position.y } : {}}
+            // 모바일에서는 style 속성(position)을 무시하도록 조건부 적용
+        >
             {/* Header */}
             <div className="chat-widget-header" onMouseDown={handleMouseDown}>
                 {viewMode === 'room' && (
@@ -504,6 +510,7 @@ const ChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </div>
         </div>
     );
+    return ReactDOM.createPortal(widgetContent, document.body);
 };
 
 export default ChatWidget;

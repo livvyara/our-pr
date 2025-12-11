@@ -5,105 +5,63 @@ import './DashboardCalendarWidget.css';
 
 import { 
   getFirestore, collectionGroup, collection, query, where, onSnapshot,
-  Timestamp, doc, getDoc, setDoc, addDoc, serverTimestamp, orderBy 
+  doc, getDoc, setDoc, addDoc, serverTimestamp, orderBy 
 } from 'firebase/firestore';
 
-// --- [ 1. 타입 정의 ] ---
-type ScheduleItem = {
-  id: string;
-  time: string;
-  title: string;
-  siteId?: string;
-  type: 'meeting' | 'construction' | 'personal'; 
-  isPublic?: boolean;
-  dateKey: string; // 'YYYY-MM-DD'
-  fullTitle?: string; 
-  siteName?: string;
+// --- [Icons] ---
+const Icons = {
+  Meeting: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>,
+  Construction: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>,
+  Personal: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>,
+  Add: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  ArrowDown: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
 };
 
-interface MemoEntry {
-  memoType: 'meeting' | 'general';
-  memoContent: string;
-  meetingDate: string;
-  meetingTime: string;
-  siteName: string; 
-  siteId: string;
-  partnerUid: string;
-  createdAt: Timestamp;
-}
-
-interface SiteWorkEntry {
-  tomorrowProcess: string;
-  date: string;
-  siteName: string;
-  siteId: string;
-  partnerUid: string;
-}
-
-interface SiteScheduleEntry {
-    date: string;
-    processes: string[];
-    isNoisy: boolean;
-    siteId?: string;
-    partnerUid?: string;
-}
+// Types & Helpers
+type ScheduleItem = {
+  id: string; time: string; title: string; siteId?: string;
+  type: 'meeting' | 'construction' | 'personal'; isPublic?: boolean;
+  dateKey: string; fullTitle?: string; siteName?: string;
+};
 
 interface DashboardCalendarWidgetProps {
   partnerUid: string;
   onSiteSelect: (siteId: string) => void; 
 }
 
-// --- [ 2. 헬퍼 함수 ] ---
 const getISODateString = (date: Date): string => {
   const offset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offset).toISOString().split('T')[0];
 };
 
-const getWeekRange = (date: Date): { start: Date, end: Date } => {
+const getWeekRange = (date: Date) => {
   const d = new Date(date);
-  const day = d.getDay(); 
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  
+  const day = d.getDay(); const diffToMonday = day === 0 ? -6 : 1 - day;
   const start = new Date(d); start.setDate(d.getDate() + diffToMonday);
   const end = new Date(start); end.setDate(start.getDate() + 6);
   return { start, end };
 };
 
-
-// --- [ 3. 메인 컴포넌트 ] ---
-const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ 
-  partnerUid, 
-  onSiteSelect 
-}) => {
+const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partnerUid, onSiteSelect }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filterType, setFilterType] = useState<'today' | 'week' | 'month'>('today');
-
   const [allSchedules, setAllSchedules] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const db = getFirestore();
-
+  
   const [filterPrefs, setFilterPrefs] = useState({ showMeetings: true, showConstruction: true, showPersonal: true });
-  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [siteNamesCache, setSiteNamesCache] = useState<Map<string, string>>(new Map()); 
-
-  useEffect(() => {
-    if (!partnerUid) return;
-    getDoc(doc(db, 'users', partnerUid)).then(snap => {
-      if (snap.exists() && snap.data().calendarFilters) {
-        setFilterPrefs(prev => ({ ...prev, ...snap.data().calendarFilters }));
-      }
-    });
-  }, [db, partnerUid]);
+  
+  // [NEW] 더 보기 상태 관리
+  const [visibleCount, setVisibleCount] = useState(5);
+  
+  const db = getFirestore();
 
   useEffect(() => {
     if (!partnerUid) return;
     setIsLoading(true);
 
-    let meetings: ScheduleItem[] = [];
-    let constructionLogs: ScheduleItem[] = [];
-    let constructionSchedules: ScheduleItem[] = [];
-    let personals: ScheduleItem[] = [];
+    let meetings: ScheduleItem[] = [], constructionLogs: ScheduleItem[] = [], constructionSchedules: ScheduleItem[] = [], personals: ScheduleItem[] = [];
 
     const updateAll = () => {
       setAllSchedules([...meetings, ...constructionLogs, ...constructionSchedules, ...personals]);
@@ -114,31 +72,24 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
         if (!siteId || siteNamesCache.has(siteId)) return;
         try {
             const snap = await getDoc(doc(db, 'users', partnerUid, 'sites', siteId));
-            if (snap.exists()) {
-                const name = snap.data().siteName;
-                setSiteNamesCache(prev => new Map(prev).set(siteId, name));
-            }
-        } catch(e) { console.warn('Site name fetch failed', e); }
+            if (snap.exists()) setSiteNamesCache(prev => new Map(prev).set(siteId, snap.data().siteName));
+        } catch(e) {}
     };
 
-    const qMemos = query(collectionGroup(db, 'memos'), where('partnerUid', '==', partnerUid), where('memoType', '==', 'meeting'));
-    const unsubMemos = onSnapshot(qMemos, (snap) => {
+    // (Data Fetching 로직은 기존과 동일하므로 생략 없이 유지)
+    const unsubMemos = onSnapshot(query(collectionGroup(db, 'memos'), where('partnerUid', '==', partnerUid), where('memoType', '==', 'meeting')), (snap) => {
       meetings = snap.docs.map(d => {
-        const data = d.data() as MemoEntry;
+        const data = d.data();
         if(data.siteId) fetchSiteNameIfNeeded(data.siteId);
-        return { 
-            id: d.id, time: data.meetingTime, title: `${data.meetingTime} 미팅: ${data.memoContent}`, 
-            siteId: data.siteId, type: 'meeting', dateKey: data.meetingDate, siteName: data.siteName 
-        };
+        return { id: d.id, time: data.meetingTime, title: `미팅: ${data.memoContent}`, siteId: data.siteId, type: 'meeting', dateKey: data.meetingDate, siteName: data.siteName };
       });
       updateAll();
     });
 
-    const qWork = query(collectionGroup(db, 'workLogs'), where('partnerUid', '==', partnerUid), where('tomorrowProcess', '!=', ''));
-    const unsubWork = onSnapshot(qWork, (snap) => {
+    const unsubWork = onSnapshot(query(collectionGroup(db, 'workLogs'), where('partnerUid', '==', partnerUid), where('tomorrowProcess', '!=', '')), (snap) => {
       constructionLogs = [];
       snap.forEach((d) => {
-        const data = d.data() as SiteWorkEntry;
+        const data = d.data();
         if (data.date) {
           const nextDay = new Date(data.date); nextDay.setDate(nextDay.getDate() + 1);
           if(data.siteId) fetchSiteNameIfNeeded(data.siteId);
@@ -148,248 +99,213 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({
       updateAll();
     });
 
-    const qSchedules = query(collectionGroup(db, 'schedules'));
-    const unsubSchedules = onSnapshot(qSchedules, (snap) => {
+    const unsubSchedules = onSnapshot(query(collectionGroup(db, 'schedules')), (snap) => {
         constructionSchedules = [];
         snap.forEach(d => {
           const pathSegments = d.ref.path.split('/');
           if (pathSegments.length > 1 && pathSegments[1] === partnerUid) { 
-            const data = d.data() as SiteScheduleEntry;
+            const data = d.data();
             const siteId = pathSegments[3]; 
             fetchSiteNameIfNeeded(siteId);
-            constructionSchedules.push({
-                id: d.id, time: '10:00', title: data.processes.join(', '), siteId: siteId, 
-                type: 'construction', dateKey: data.date, siteName: siteNamesCache.get(siteId) 
-            });
+            constructionSchedules.push({ id: d.id, time: '10:00', title: data.processes.join(', '), siteId, type: 'construction', dateKey: data.date, siteName: siteNamesCache.get(siteId) });
           }
         });
         updateAll();
     });
 
-    const qPersonal = query(collection(db, 'users', partnerUid, 'personalSchedules'), orderBy('time', 'asc')); 
-    const unsubPersonal = onSnapshot(qPersonal, (snap) => {
+    const unsubPersonal = onSnapshot(query(collection(db, 'users', partnerUid, 'personalSchedules'), orderBy('time', 'asc')), (snap) => {
       personals = snap.docs.map(d => {
         const data = d.data();
-        return { id: d.id, time: data.time, title: data.title, siteId: undefined, type: 'personal', isPublic: data.isPublic, dateKey: data.date };
+        return { id: d.id, time: data.time, title: data.title, type: 'personal', isPublic: data.isPublic, dateKey: data.date };
       });
       updateAll();
     });
     
     return () => { unsubMemos(); unsubWork(); unsubSchedules(); unsubPersonal(); };
-  }, [db, partnerUid, siteNamesCache]);
+  }, [partnerUid, siteNamesCache]);
 
-
+  // 필터링된 전체 리스트
   const filteredSchedulesList = useMemo(() => {
-    return allSchedules.filter(schedule => {
-      if (schedule.type === 'personal' && filterPrefs.showPersonal) return true; 
-      if (schedule.type === 'meeting' && filterPrefs.showMeetings) return true;
-      if (schedule.type === 'construction' && filterPrefs.showConstruction) return true;
-      return false;
-    });
+    return allSchedules.filter(s => 
+      (s.type === 'personal' && filterPrefs.showPersonal) || 
+      (s.type === 'meeting' && filterPrefs.showMeetings) || 
+      (s.type === 'construction' && filterPrefs.showConstruction)
+    );
   }, [allSchedules, filterPrefs]);
 
+  // 날짜별 맵핑
   const schedulesByDateMap = useMemo(() => {
     const map = new Map<string, ScheduleItem[]>();
-    filteredSchedulesList.forEach(schedule => {
-      const dateKey = schedule.dateKey; 
-      if (!dateKey) return;
-      if (!map.has(dateKey)) map.set(dateKey, []);
-      map.get(dateKey)!.push(schedule);
+    filteredSchedulesList.forEach(s => {
+      if (!s.dateKey) return;
+      if (!map.has(s.dateKey)) map.set(s.dateKey, []);
+      map.get(s.dateKey)!.push(s);
     });
+    return map;
+  }, [filteredSchedulesList]);
 
-    const finalMap = new Map<string, ScheduleItem[]>();
-    map.forEach((dailyItems, dateKey) => {
-        const constructions = dailyItems.filter(s => s.type === 'construction' && s.siteId);
-        const others = dailyItems.filter(s => s.type !== 'construction' || !s.siteId);
-
-        const groupedBySite = new Map<string, ScheduleItem[]>();
-        constructions.forEach(item => {
-            const sId = item.siteId!;
-            if (!groupedBySite.has(sId)) groupedBySite.set(sId, []);
-            groupedBySite.get(sId)!.push(item);
-        });
-
-        const result: ScheduleItem[] = [...others];
-        groupedBySite.forEach((list, siteId) => {
-            const siteName = list[0].siteName || siteNamesCache.get(siteId) || '현장';
-            const isSingleProcess = list.length === 1 && list[0].title.indexOf(',') === -1;
-            result.push({
-                id: list.map(i => i.id).join('-'), 
-                time: list[0].time,
-                title: list.length > 1 || !isSingleProcess ? `[${siteName}] 공사일정 (${list.length}건)` : `[${siteName}] ${list[0].title.split(',')[0].trim()}`,
-                fullTitle: `[${siteName} 공사일정]\n${list.map(i => i.title).join('\n')}`,
-                siteId: list[0].siteId,
-                type: 'construction',
-                dateKey: dateKey,
-                siteName: siteName
-            } as ScheduleItem);
-        });
-        result.sort((a, b) => a.time.localeCompare(b.time));
-        finalMap.set(dateKey, result);
-    });
-    return finalMap;
-  }, [filteredSchedulesList, siteNamesCache]);
-
-
+  // 화면에 표시할 전체 리스트 (필터링 적용됨)
   const displayedSchedules = useMemo(() => {
     const selectedDateKey = getISODateString(selectedDate);
-    const rawList = filteredSchedulesList;
-
-    if (filterType === 'today') {
-      return rawList.filter(s => s.dateKey === selectedDateKey).sort((a, b) => a.time.localeCompare(b.time));
-    }
+    if (filterType === 'today') return (schedulesByDateMap.get(selectedDateKey) || []).sort((a, b) => a.time.localeCompare(b.time));
     if (filterType === 'week') {
-      const { start, end } = getWeekRange(selectedDate); 
-      const weekSchedules = rawList.filter(s => {
+      const { start, end } = getWeekRange(selectedDate);
+      return filteredSchedulesList.filter(s => {
           const itemDate = new Date(s.dateKey);
           return itemDate >= start && itemDate <= end;
-      });
-      return weekSchedules.sort((a, b) => a.dateKey.localeCompare(b.dateKey) || a.time.localeCompare(b.time));
+      }).sort((a, b) => a.dateKey.localeCompare(b.dateKey) || a.time.localeCompare(b.time));
     }
     if (filterType === 'month') {
       const yearMonth = selectedDateKey.substring(0, 7);
-      const monthSchedules = rawList.filter(s => s.dateKey.startsWith(yearMonth));
-      return monthSchedules.sort((a, b) => a.dateKey.localeCompare(b.dateKey) || a.time.localeCompare(b.time));
+      return filteredSchedulesList.filter(s => s.dateKey.startsWith(yearMonth)).sort((a, b) => a.dateKey.localeCompare(b.dateKey) || a.time.localeCompare(b.time));
     }
     return [];
-  }, [filterType, filteredSchedulesList, selectedDate]);
+  }, [filterType, filteredSchedulesList, selectedDate, schedulesByDateMap]);
 
+  // [NEW] 날짜나 필터가 바뀌면 더보기 초기화
+  useEffect(() => {
+    setVisibleCount(5);
+  }, [selectedDate, filterType, filterPrefs]);
 
   const tileContent = ({ date, view }: { date: Date, view: string }) => {
-    if (view === 'month') {
-      const dateKey = getISODateString(date);
-      const dailySchedules = schedulesByDateMap.get(dateKey); 
-      if (dailySchedules && dailySchedules.length > 0) {
-        return (
-          <div className="calendar-tile-content">
-            {dailySchedules.slice(0, 3).map(item => (
-              <div key={item.id} className={`calendar-dot ${item.type}`} title={item.fullTitle || item.title}>
-                {item.title} 
-              </div>
-            ))}
-            {dailySchedules.length > 3 && <div className="calendar-more">+{dailySchedules.length - 3}</div>}
+    if (view !== 'month') return null;
+    const dateKey = getISODateString(date);
+    const dailySchedules = schedulesByDateMap.get(dateKey) || [];
+    if (dailySchedules.length === 0) return null;
+
+    return (
+      <div className="cal-events-box">
+        {dailySchedules.slice(0, 3).map((item, idx) => (
+          <div key={idx} className={`cal-event-bar ${item.type}`} title={item.title}>
+            {item.title}
           </div>
-        );
-      }
-    }
-    return null;
+        ))}
+        {dailySchedules.length > 3 && (
+          <div className="cal-more-count">+{dailySchedules.length - 3}</div>
+        )}
+      </div>
+    );
   };
 
   const handleDateChange = (value: any) => setSelectedDate(value as Date);
   const toggleFilter = (key: 'showMeetings' | 'showConstruction' | 'showPersonal') => setFilterPrefs(prev => ({ ...prev, [key]: !prev[key] }));
-  
-  const handleSaveFilters = async () => {
-    if (!partnerUid) return;
-    setIsSavingPrefs(true);
-    try {
-      await setDoc(doc(db, 'users', partnerUid), { calendarFilters: filterPrefs }, { merge: true });
-    } catch (e) { console.error(e); } finally { setIsSavingPrefs(false); }
-  };
 
-  const scheduleListTitle = useMemo(() => {
-    const formatOptions: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', weekday: 'short' };
-    if (filterType === 'today') return selectedDate.toLocaleDateString('ko-KR', formatOptions);
-    if (filterType === 'week') {
-      const { start, end } = getWeekRange(selectedDate); 
-      const startStr = start.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-      const endStr = end.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-      return `${startStr} ~ ${endStr}`;
-    }
-    if (filterType === 'month') return selectedDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }); 
-    return '';
-  }, [filterType, selectedDate]);
-
-  if (isLoading) return <div className="dc-loading">일정을 불러오는 중입니다...</div>;
+  // --- View Tabs ---
+  const ViewTabs = ({ className }: { className?: string }) => (
+    <div className={`dc-view-tabs ${className || ''}`}>
+        <button className={filterType==='today'?'active':''} onClick={()=>setFilterType('today')}>오늘</button>
+        <button className={filterType==='week'?'active':''} onClick={()=>setFilterType('week')}>이번 주</button>
+        <button className={filterType==='month'?'active':''} onClick={()=>setFilterType('month')}>이번 달</button>
+    </div>
+  );
 
   return (
-    <div className="dashboard-calendar-widget">
+    <div className="dc-widget">
       
-      {/* 헤더 영역 */}
-      <div className="widget-header">
-        <div className="widget-title">
-           <h3>일정 캘린더</h3>
-           <p>일별, 주간별 일정을 확인하고 관리합니다.</p>
+      {/* 1. Header */}
+      <div className="dc-header">
+        <div className="dc-title-area">
+            <h3>일정 캘린더</h3>
+            <div className="dc-filter-group">
+                <button className={`dc-filter-chip meeting ${filterPrefs.showMeetings?'active':''}`} onClick={()=>toggleFilter('showMeetings')}>
+                    <span className="dot meeting" /> 미팅
+                </button>
+                <button className={`dc-filter-chip construction ${filterPrefs.showConstruction?'active':''}`} onClick={()=>toggleFilter('showConstruction')}>
+                    <span className="dot construction" /> 공사
+                </button>
+                <button className={`dc-filter-chip personal ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>
+                    <span className="dot personal" /> 개인
+                </button>
+            </div>
         </div>
+        <button className="dc-add-btn" onClick={() => setIsModalOpen(true)}>
+            <Icons.Add /> <span>일정 추가</span>
+        </button>
       </div>
 
-      {/* 컨트롤 패널 (회색 박스) */}
-      <div className="calendar-control-panel">
-         <div className="filter-chips">
-            <button className={`filter-chip ${filterPrefs.showMeetings?'active':''}`} onClick={()=>toggleFilter('showMeetings')}>미팅</button>
-            <button className={`filter-chip ${filterPrefs.showConstruction?'active':''}`} onClick={()=>toggleFilter('showConstruction')}>공사</button>
-            <button className={`filter-chip ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>개인</button>
-         </div>
-         <div className="header-actions">
-            <button className="btn-text-save" onClick={handleSaveFilters}>{isSavingPrefs?'저장중...':'필터 저장'}</button>
-            <button className="btn-add-schedule" onClick={() => setIsModalOpen(true)}>+ 일정 등록</button>
-         </div>
-      </div>
-
-      {/* 캘린더 (모바일에서는 CSS로 숨김 처리됨) */}
-      <div className="calendar-wrapper">
-        <Calendar
-          onChange={handleDateChange}
-          value={selectedDate}
-          locale="ko-KR"
-          formatDay={(locale, date) => date.getDate().toString()}
-          tileContent={tileContent}
-          next2Label={null}
-          prev2Label={null}
-        />
-      </div>
-
-      {/* 리스트 영역 */}
-      <div className="schedule-list-wrapper">
-        <div className="list-header">
-          <div className="view-tabs">
-             <button className={`view-tab ${filterType==='today'?'active':''}`} onClick={()=>setFilterType('today')}>오늘</button>
-             <button className={`view-tab ${filterType==='week'?'active':''}`} onClick={()=>setFilterType('week')}>주간</button>
-             <button className={`view-tab ${filterType==='month'?'active':''}`} onClick={()=>setFilterType('month')}>월간</button>
-          </div>
-          <span className="list-date-label">{scheduleListTitle}</span>
+      {/* 2. Body */}
+      <div className="dc-body">
+        
+        {/* A. Calendar (PC Only) */}
+        <div className="dc-calendar-container">
+            <Calendar
+                onChange={handleDateChange}
+                value={selectedDate}
+                locale="ko-KR"
+                formatDay={(locale, date) => date.getDate().toString()}
+                tileContent={tileContent}
+                next2Label={null} prev2Label={null}
+                className="dc-react-calendar"
+            />
         </div>
 
-        <div className="list-content">
-            {displayedSchedules.length === 0 ? (
-            <div className="no-data-message">등록된 일정이 없습니다.</div>
+        {/* B. Toolbar (Sticky in Mobile via CSS) */}
+        <div className="dc-toolbar">
+            <div className="dc-view-tabs">
+                <button className={filterType==='today'?'active':''} onClick={()=>setFilterType('today')}>오늘</button>
+                <button className={filterType==='week'?'active':''} onClick={()=>setFilterType('week')}>이번 주</button>
+                <button className={filterType==='month'?'active':''} onClick={()=>setFilterType('month')}>이번 달</button>
+            </div>
+            <span className="dc-current-date">
+                {selectedDate.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+            </span>
+        </div>
+
+        {/* C. List Area */}
+        <div className="dc-list-container">
+            {isLoading ? (
+                <div className="dc-state"><div className="spinner"></div></div>
+            ) : displayedSchedules.length === 0 ? (
+                <div className="dc-state empty">일정이 없습니다.</div>
             ) : (
-            <ul className="schedule-ul">
-                {displayedSchedules.map((item) => {
-                const d = new Date(item.dateKey);
-                const dateStr = `${d.getMonth() + 1}/${d.getDate()} (${d.toLocaleDateString('ko-KR', { weekday: 'short' })})`;
-                const displaySiteName = item.siteName || (item.siteId ? '현장' : null);
-                
-                let cleanTitle = item.title;
-                if (displaySiteName && item.title.includes(`[${displaySiteName}]`)) {
-                    cleanTitle = item.title.replace(`[${displaySiteName}]`, '').trim();
-                }
+                <div className="dc-list-items">
+                    {/* [NEW] 보여줄 개수만큼 slice */}
+                    {displayedSchedules.slice(0, visibleCount).map((item) => {
+                        const d = new Date(item.dateKey);
+                        const dateStr = `${d.getMonth()+1}.${d.getDate()}`;
+                        const displaySiteName = item.siteName || (item.siteId ? '현장' : null);
+                        
+                        return (
+                            <div key={item.id} className="dc-card-item" onClick={() => item.siteId && onSiteSelect(item.siteId)}>
+                                {/* Left: Date & Time */}
+                                <div className="dc-card-left">
+                                    <span className="date">{dateStr}</span>
+                                    <span className="time">{item.time}</span>
+                                </div>
 
-                return (
-                    <li key={item.id} className="schedule-li" onClick={() => item.siteId && onSiteSelect(item.siteId)}>
-                    <div className="li-time-col">
-                        <span className="li-date">{dateStr}</span>
-                        <span className="li-time">{item.time}</span>
-                    </div>
-                    <div className="li-info-col">
-                        <div className="li-tags">
-                            <span className={`badge-type ${item.type}`}>
-                                {item.type==='meeting'?'미팅':item.type==='construction'?'공사':'개인'}
-                            </span>
-                            {displaySiteName && item.type !== 'personal' && (
-                                <span className="badge-site">{displaySiteName}</span>
-                            )}
-                        </div>
-                        <span className="li-title">{cleanTitle}</span>
-                    </div>
-                    </li>
-                );
-                })}
-            </ul>
+                                {/* Right: Content */}
+                                <div className="dc-card-right">
+                                    <div className="dc-meta-row">
+                                        <span className={`dc-type-badge ${item.type}`}>
+                                            {item.type === 'meeting' && <Icons.Meeting />}
+                                            {item.type === 'construction' && <Icons.Construction />}
+                                            {item.type === 'personal' && <Icons.Personal />}
+                                            <span className="type-text">
+                                                {item.type==='meeting'?'미팅':item.type==='construction'?'공사':'개인'}
+                                            </span>
+                                        </span>
+                                        {displaySiteName && (
+                                            <span className="dc-site-name">@{displaySiteName}</span>
+                                        )}
+                                    </div>
+                                    <p className="dc-content-text">{item.title}</p>
+                                </div>
+                            </div>
+                        )
+                    })}
+
+                    {/* [NEW] 더 보기 버튼 */}
+                    {displayedSchedules.length > visibleCount && (
+                        <button className="dc-load-more-btn" onClick={() => setVisibleCount(prev => prev + 5)}>
+                            <Icons.ArrowDown /> 일정 더 보기 ({displayedSchedules.length - visibleCount})
+                        </button>
+                    )}
+                </div>
             )}
         </div>
       </div>
 
-      {/* 개인 일정 추가 모달 */}
+      {/* Modal */}
       {isModalOpen && <PersonalScheduleModal partnerUid={partnerUid} onClose={() => setIsModalOpen(false)} />}
     </div>
   );
@@ -404,41 +320,35 @@ const PersonalScheduleModal: React.FC<{ partnerUid: string, onClose: () => void 
   const db = getFirestore();
 
   const save = async (e: FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+    e.preventDefault(); setSubmitting(true);
     try {
-      await addDoc(collection(db, 'users', partnerUid, 'personalSchedules'), {
-        title, date, time, isPublic, partnerUid, createdAt: serverTimestamp()
-      });
-      alert('일정이 등록되었습니다.');
+      await addDoc(collection(db, 'users', partnerUid, 'personalSchedules'), { title, date, time, isPublic, partnerUid, createdAt: serverTimestamp() });
       onClose();
-    } catch(e) { console.error(e); alert('오류 발생'); } finally { setSubmitting(false); }
+    } catch(e) { console.error(e); } finally { setSubmitting(false); }
   };
 
   return (
-    <div className="cal-modal-overlay">
-      <div className="cal-modal-box">
-        <h3>새로운 일정</h3>
+    <div className="dc-modal-overlay" onClick={onClose}>
+      <div className="dc-modal" onClick={e => e.stopPropagation()}>
+        <h3>새 일정 등록</h3>
         <form onSubmit={save}>
-          <div className="cal-form-group">
-              <label>날짜</label>
-              <input type="date" value={date} onChange={e=>setDate(e.target.value)} required />
-          </div>
-          <div className="cal-form-group">
-              <label>시간</label>
-              <input type="time" value={time} onChange={e=>setTime(e.target.value)} required />
-          </div>
-          <div className="cal-form-group">
-              <label>내용</label>
-              <input type="text" value={title} onChange={e=>setTitle(e.target.value)} placeholder="일정 내용을 입력하세요" required />
-          </div>
-          <div className="cal-form-check">
-              <label><input type="checkbox" checked={isPublic} onChange={e=>setIsPublic(e.target.checked)} /> 직원들과 공유하기</label>
-          </div>
-          <div className="cal-form-actions">
-            <button type="button" className="btn-text" onClick={onClose}>취소</button>
-            <button type="submit" className="btn-submit" disabled={submitting}>등록</button>
-          </div>
+            <div className="dc-form-row">
+                <label>날짜</label><input type="date" value={date} onChange={e=>setDate(e.target.value)} required />
+            </div>
+            <div className="dc-form-row">
+                <label>시간</label><input type="time" value={time} onChange={e=>setTime(e.target.value)} required />
+            </div>
+            <div className="dc-form-row">
+                <label>내용</label><input type="text" value={title} onChange={e=>setTitle(e.target.value)} placeholder="일정 내용을 입력하세요" required />
+            </div>
+            <div className="dc-form-check">
+                <input type="checkbox" id="publicCheck" checked={isPublic} onChange={e=>setIsPublic(e.target.checked)} />
+                <label htmlFor="publicCheck">직원들과 공유하기</label>
+            </div>
+            <div className="dc-modal-actions">
+                <button type="button" className="btn-cancel" onClick={onClose}>취소</button>
+                <button type="submit" className="btn-submit" disabled={submitting}>등록</button>
+            </div>
         </form>
       </div>
     </div>
