@@ -11,7 +11,7 @@ import ChatWidget from './ChatWidget';
 import { ChatIcons } from './ChatIcons'; 
 import { getFirestore, collection, query, where, onSnapshot } from 'firebase/firestore';
 
-// [NEW] 장바구니 아이콘 (SVG)
+// 장바구니 아이콘 (SVG 최적화)
 const CartIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="9" cy="21" r="1"></circle>
@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
   const [isChatOpen, setIsChatOpen] = useState(false);
   
   const [totalUnread, setTotalUnread] = useState(0);
-  const [cartCount, setCartCount] = useState(0); // [NEW] 장바구니 카운트
+  const [cartCount, setCartCount] = useState(0);
   
   const db = getFirestore();
 
@@ -44,11 +44,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
     return () => unsubscribe();
   }, []);
 
-  // [NEW] 채팅 & 장바구니 실시간 카운트
   useEffect(() => {
       if (!currentUser) return;
       
-      // 1. 채팅 안읽음
       const chatQ = query(collection(db, 'chats'), where('participants', 'array-contains', currentUser.uid));
       const unsubChat = onSnapshot(chatQ, (snapshot) => {
           let count = 0;
@@ -61,7 +59,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
           setTotalUnread(count);
       });
 
-      // 2. 장바구니 아이템 수
       const cartQ = query(collection(db, 'users', currentUser.uid, 'cart'));
       const unsubCart = onSnapshot(cartQ, (snapshot) => {
           setCartCount(snapshot.size);
@@ -71,7 +68,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
           unsubChat();
           unsubCart();
       };
-  }, [currentUser]);
+  }, [currentUser, db]); // db 의존성 추가
 
   const handleLogout = async () => {
     try {
@@ -88,29 +85,38 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
     return (
       <header className="mobile-header">
         <div className="mobile-header-inner">
-            <button className="menu-icon-btn" onClick={onHamburgerPressed}>
-                <ChatIcons.Menu />
-            </button>
+            {/* 좌측: 햄버거 메뉴 */}
+            <div className="mobile-left-group">
+                <button className="menu-icon-btn" onClick={onHamburgerPressed} aria-label="메뉴 열기">
+                    <ChatIcons.Menu />
+                </button>
+            </div>
             
+            {/* 중앙: 로고 */}
             <Link to="/" className="mobile-logo-link">
                 <img src={logoSrc} alt="로고" className="mobile-logo-img" />
             </Link>
             
+            {/* 우측: 액션 버튼들 */}
             <div className="mobile-actions">
                 {currentUser ? (
                     <>
-                        {/* [NEW] 모바일 장바구니 */}
-                        <button className="mobile-chat-btn" onClick={() => navigate('/customer/cart')}>
+                        {/* 장바구니 버튼 */}
+                        <button className="mobile-icon-btn" onClick={() => navigate('/customer/cart')} aria-label="장바구니">
                             <CartIcon />
                             {cartCount > 0 && <span className="mobile-badge" style={{backgroundColor:'#333'}}>{cartCount}</span>}
                         </button>
 
-                        <button className="mobile-chat-btn" onClick={() => setIsChatOpen(!isChatOpen)}>
+                        {/* 채팅 버튼 */}
+                        <button className="mobile-icon-btn" onClick={() => setIsChatOpen(!isChatOpen)} aria-label="채팅">
                             <ChatIcons.Chat />
                             {totalUnread > 0 && <span className="mobile-badge">{totalUnread}</span>}
                         </button>
                     </>
-                ) : <div className="spacer-56"></div>}
+                ) : (
+                    // 로그인 전: 공간 확보용 더미 (레이아웃 균형)
+                    <div className="spacer-56"></div>
+                )}
             </div>
         </div>
         {isChatOpen && currentUser && <ChatWidget onClose={() => setIsChatOpen(false)} />}
@@ -151,13 +157,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuSelected, isMobile, onHamburgerPr
 
           {currentUser && (
               <>
-                  {/* [NEW] 장바구니 아이콘 */}
                   <button className="icon-action-btn" onClick={() => navigate('/customer/cart')} title="장바구니">
                       <CartIcon />
                       {cartCount > 0 && <span className="desktop-badge" style={{backgroundColor:'#333'}}>{cartCount}</span>}
                   </button>
 
-                  {/* 채팅 아이콘 */}
                   <button className="icon-action-btn" onClick={() => setIsChatOpen(!isChatOpen)} title="채팅 상담">
                       <ChatIcons.Chat />
                       {totalUnread > 0 && <span className="desktop-badge">{totalUnread}</span>}

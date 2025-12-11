@@ -1,167 +1,231 @@
 /* src/components/common/Footer.css */
 
 :root {
-  --ft-bg: #fcfcfc; /* 아주 연한 회색 배경 */
-  --ft-text-main: #333333;
-  --ft-text-sub: #777777;
-  --ft-border: #e0e0e0;
-  --ft-accent: #333333;
+  --ft-bg: #F9FAFB; /* 아주 미세한 쿨그레이 톤으로 세련미 강조 */
+  --ft-text-primary: #191F28; /* 거의 검정에 가까운 다크 그레이 (Toss Style) */
+  --ft-text-secondary: #4E5968; /* 본문용 그레이 */
+  --ft-text-tertiary: #8B95A1; /* 라벨용 연한 그레이 */
+  --ft-border: rgba(0, 0, 0, 0.04); /* 아주 옅은 경계선 */
+  --ft-accent: #3182F6; /* 포인트 컬러 (링크 등) */
+  
+  --ft-font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
 
 .ft-container {
   width: 100%;
   background-color: var(--ft-bg);
   border-top: 1px solid var(--ft-border);
-  padding: 60px 20px 40px;
+  padding: 60px 0 80px; /* 하단 여백 넉넉하게 */
   margin-top: auto;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-family: var(--ft-font-main);
+  box-sizing: border-box;
 }
 
-.ft-inner {
+.ft-content-wrapper {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 24px;
   display: flex;
   flex-direction: column;
 }
 
-/* --- Top Row: Links --- */
-.ft-top-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-}
-
-.ft-links {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.ft-links a {
-  font-size: 13px;
-  color: var(--ft-text-sub);
-  text-decoration: none;
-  transition: color 0.2s;
-  letter-spacing: -0.3px;
-}
-
-.ft-links a:hover {
-  color: var(--ft-text-main);
-}
-
-.ft-links .ft-highlight {
-  font-weight: 700;
-  color: var(--ft-text-main);
-}
-
-.ft-divider-vertical {
-  font-size: 10px;
-  color: #ddd;
-  margin: 0 5px;
-}
-
-/* Divider Line */
-.ft-divider-horizontal {
-  width: 100%;
-  height: 1px;
-  background-color: #eee;
-  margin-bottom: 30px;
-}
-
-/* --- Bottom Row: Info & Copyright --- */
-.ft-bottom-row {
+/* --- Top Section --- */
+.ft-top-section {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 40px;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
-.ft-company-info {
+/* Slogan Area */
+.ft-slogan-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 8px; /* 간격 조정 */
+  align-items: center;
+  gap: 10px;
+}
+
+.ft-icon-box {
+  color: var(--ft-text-tertiary);
+  display: flex;
+  align-items: center;
 }
 
 .ft-slogan {
-  font-size: 12px;
-  color: var(--ft-text-sub);
-  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ft-text-secondary);
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+/* Policy Links */
+.ft-policy-links {
+  display: flex;
+  gap: 24px;
+}
+
+.ft-link-item {
+  font-size: 13px;
+  color: var(--ft-text-secondary);
+  text-decoration: none;
   font-weight: 500;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.ft-link-item:hover {
+  color: var(--ft-text-primary);
+}
+
+.ft-link-item.highlight {
+  font-weight: 700;
+  color: var(--ft-text-primary);
+}
+
+/* Divider */
+.ft-divider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(0,0,0,0.06);
+  margin-bottom: 32px;
+}
+
+/* --- Bottom Section (Business Info) --- */
+.ft-bottom-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ft-biz-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .ft-company-name {
   font-size: 16px;
   font-weight: 800;
-  color: var(--ft-text-main);
-  margin-bottom: 8px;
+  color: var(--ft-text-primary);
+  margin: 0;
+  letter-spacing: -0.3px;
 }
 
-/* 정보 그리드 */
-.ft-info-grid {
-  display: grid;
-  /* [중요] PC: 라벨 | 값 */
-  grid-template-columns: max-content auto; 
-  column-gap: 12px;
-  row-gap: 6px;
+/* Semantic Definition List Styling */
+.ft-info-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px; /* Row Gap, Column Gap */
+  margin: 0;
+  padding: 0;
+  max-width: 800px;
+}
+
+.ft-info-item {
+  display: flex;
+  align-items: center;
   font-size: 13px;
-  color: var(--ft-text-sub);
+  line-height: 1.6;
 }
 
-.ft-info-grid .ft-label {
-  font-weight: 400;
-  color: #999;
+.ft-info-item dt {
+  color: var(--ft-text-tertiary);
+  font-weight: 500;
+  margin-right: 8px;
 }
-.ft-info-grid .ft-value {
-  color: var(--ft-text-main);
+
+.ft-info-item dt::after {
+  content: ""; /* 콜론(:) 대신 여백과 컬러 차이로 구분하는 것이 트렌드 */
+}
+
+.ft-info-item dd {
+  margin: 0;
+  color: var(--ft-text-secondary);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.ft-contact-value {
+  font-weight: 500;
+  color: var(--ft-text-primary); /* 연락처 등 중요 정보는 더 진하게 */
 }
 
 /* Copyright */
-.ft-copyright {
-  font-size: 12px;
-  color: #bbb;
-  font-family: sans-serif;
-  letter-spacing: 0.5px;
+.ft-copyright-area {
   text-align: right;
+  padding-top: 4px; /* 시각적 정렬 보정 */
 }
 
-/* --- Mobile Responsive --- */
+.ft-copy-text {
+  font-size: 11px;
+  color: #B0B8C1; /* 아주 연한 텍스트로 시각적 노이즈 최소화 */
+  font-family: 'Inter', sans-serif; /* 영문 숫자는 Inter 폰트 추천 */
+  letter-spacing: 0.2px;
+}
+
+
+/* --- Mobile & Tablet Responsive --- */
 @media (max-width: 768px) {
   .ft-container {
-    padding: 40px 20px;
+    padding: 40px 0 60px; /* 모바일 패딩 조정 */
   }
 
-  .ft-top-row {
-    justify-content: flex-start;
-  }
-
-  .ft-bottom-row {
+  .ft-top-section {
     flex-direction: column;
     align-items: flex-start;
-    gap: 30px;
+    gap: 24px;
+    margin-bottom: 24px;
   }
 
-  /* [핵심 수정] 모바일에서도 한 줄(가로) 배치 유지 */
-  .ft-info-grid {
-    /* 라벨 너비만큼만 차지하고, 나머지는 내용이 차지 */
-    grid-template-columns: max-content 1fr; 
-    column-gap: 10px;
-    row-gap: 6px;
+  /* 모바일에서 링크 영역 터치 타겟 확보 */
+  .ft-policy-links {
+    width: 100%;
+    gap: 0; /* Gap 대신 justify-content 사용 */
+    border-bottom: 1px solid var(--ft-border);
+    padding-bottom: 20px;
+  }
+
+  .ft-link-item {
+    font-size: 14px;
+    padding: 8px 0; /* 터치 영역 상하 확보 */
+    margin-right: 20px;
+  }
+
+  .ft-divider {
+    display: none; /* 모바일에서는 구분선 대신 간격과 배경색 등으로 구분 */
+  }
+
+  .ft-bottom-section {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* 정보 리스트 모바일 최적화 */
+  .ft-info-list {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ft-info-item {
+    align-items: flex-start; /* 긴 주소 줄바꿈 대응 */
+  }
+
+  .ft-info-item dt {
+    min-width: 90px; /* 라벨 너비 고정하여 정렬 */
+    display: inline-block;
+  }
+  
+  .ft-info-item dd {
+    flex: 1;
+    word-break: keep-all; /* 단어 단위 줄바꿈 */
+  }
+
+  .ft-copyright-area {
+    text-align: left;
     width: 100%;
   }
   
-  .ft-info-grid .ft-label::after {
-    content: " :"; /* 모바일에서는 구분자 추가 */
-  }
-
-  /* 주소 등 긴 내용이 있을 때 정렬 */
-  .ft-info-grid .ft-value {
-    word-break: keep-all; /* 단어 단위 줄바꿈 */
-    line-height: 1.4;
-  }
-
-  .ft-copyright {
-    text-align: left;
-    margin-top: 10px;
+  .ft-slogan {
+    font-size: 13px;
   }
 }

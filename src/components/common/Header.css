@@ -1,318 +1,193 @@
 :root {
-    --hd-height: 60px;
-    --hd-height-mobile: 56px;
-    --hd-bg: #ffffff;
-    --hd-text: #333333;
-    --hd-text-hover: #000000;
-    --hd-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    --hd-border-bottom: 1px solid #eee;
+  --hd-height: 60px;
+  --hd-height-mobile: 56px;
+  --hd-bg: rgba(255, 255, 255, 0.95); /* 배경 반투명 처리 (고급감) */
+  --hd-text: #333333;
+  --hd-text-hover: #000000;
+  --hd-shadow: 0 1px 2px rgba(0, 0, 0, 0.03); /* 더 은은한 그림자 */
+  --hd-border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* --- 공통 (Reset & Base) --- */
+/* --- 공통 초기화 --- */
 .desktop-header, .mobile-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    background-color: var(--hd-bg);
-    box-shadow: var(--hd-shadow);
-    border-bottom: var(--hd-border-bottom);
-    
-    /* [중요] 박스 모델 초기화가 자식에게 상속되지 않으므로, 
-       여기 설정해도 내부 div에는 적용되지 않을 수 있습니다. 
-       하지만 부모 컨테이너의 크기 계산을 위해 유지합니다. */
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box; 
+  position: fixed;
+  top: 0; left: 0; width: 100%;
+  z-index: 1000;
+  background-color: var(--hd-bg);
+  /* [UX] 스크롤 시 뒤가 살짝 비치게 하여 답답함 해소 (iOS 스타일) */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--hd-shadow);
+  border-bottom: var(--hd-border-bottom);
+  margin: 0; padding: 0;
+  box-sizing: border-box;
 }
 
-/* --- 데스크톱 헤더 --- */
+/* --- 데스크톱 헤더 (기존 유지 + 안정화) --- */
 .desktop-header {
-    height: var(--hd-height);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  height: var(--hd-height);
+  display: flex; justify-content: center; align-items: center;
 }
 
 .desktop-header-inner {
-    width: 100%;
-    max-width: 1200px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    /* [수정 1] 패딩이 너비에 포함되도록 설정 */
-    box-sizing: border-box; 
+  width: 100%; max-width: 1200px; height: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box; /* 필수 */
 }
-/* 로고 */
+
+/* 데스크톱 로고 */
 .desktop-logo-link {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    margin-right: 40px;
+  display: flex; align-items: center; text-decoration: none; margin-right: 40px;
 }
-.desktop-logo-img {
-    height: 50px; /* 로고 크기 조정 */
-    width: auto;
-    display: block;
-}
+.desktop-logo-img { height: 60px; width: auto; display: block; } /* 높이 약간 조절 */
 
-/* 네비게이션 메뉴 */
-.desktop-nav {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex: 1; /* 남은 공간 차지 */
-}
-
+/* 데스크톱 네비게이션 */
+.desktop-nav { display: flex; align-items: center; gap: 24px; flex: 1; }
 .nav-item-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 8px 12px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--hd-text);
-    border-radius: 4px;
-    transition: color 0.2s, background-color 0.2s;
-    white-space: nowrap; /* 줄바꿈 방지 */
+  background: transparent; border: none; cursor: pointer;
+  padding: 8px 12px; font-size: 15px; font-weight: 600;
+  color: var(--hd-text); border-radius: 6px;
+  transition: all 0.2s; white-space: nowrap;
 }
-.nav-item-btn:hover {
-    color: var(--hd-text-hover);
-    background-color: #f5f7fa;
-}
-.nav-loading { font-size: 14px; color: #999; }
+.nav-item-btn:hover { color: var(--hd-text-hover); background-color: rgba(0,0,0,0.04); }
 
-/* 우측 액션 그룹 */
-.desktop-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* 검색바 */
+/* 데스크톱 액션 */
+.desktop-actions { display: flex; align-items: center; gap: 12px; }
 .search-bar-wrapper {
-    position: relative;
-    width: 200px;
-    height: 36px;
-    display: flex;
-    align-items: center;
+  position: relative; width: 220px; height: 38px;
+  display: flex; align-items: center;
 }
 .search-bar-wrapper input {
-    width: 100%;
-    height: 100%;
-    border: 1px solid #ddd;
-    background-color: #f9f9f9;
-    border-radius: 18px; /* 둥근 검색창 */
-    padding: 0 15px 0 35px;
-    font-size: 13px;
-    transition: all 0.2s;
-    box-sizing: border-box;
+  width: 100%; height: 100%;
+  border: 1px solid #e0e0e0; background-color: #f5f5f5;
+  border-radius: 20px; padding: 0 15px 0 36px;
+  font-size: 14px; transition: all 0.2s; box-sizing: border-box;
 }
 .search-bar-wrapper input:focus {
-    outline: none;
-    background-color: #fff;
-    border-color: #bbb;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+  outline: none; background-color: #fff;
+  border-color: #ccc; box-shadow: 0 0 0 2px rgba(0,0,0,0.03);
 }
 .search-icon-placeholder {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #999;
-    pointer-events: none;
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); color: #888; pointer-events: none;
+  display: flex; align-items: center;
 }
 
-/* 아이콘 버튼 (장바구니, 채팅) */
 .icon-action-btn {
-    position: relative;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #555;
-    transition: background 0.2s;
+  position: relative; background: transparent; border: none; cursor: pointer;
+  width: 40px; height: 40px; /* 클릭 영역 확보 */
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #444; transition: background 0.2s;
 }
-.icon-action-btn:hover {
-    background-color: #f0f0f0;
-    color: #333;
-}
-.icon-action-btn svg { width: 20px; height: 20px; }
+.icon-action-btn:hover { background-color: rgba(0,0,0,0.04); color: #000; }
+.icon-action-btn svg { width: 22px; height: 22px; }
 
-/* 알림 뱃지 */
 .desktop-badge {
-    position: absolute;
-    top: 0;
-    right: 0;
-    background-color: #e74c3c;
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    height: 16px;
-    min-width: 16px;
-    padding: 0 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    box-sizing: content-box;
+  position: absolute; top: 2px; right: 2px;
+  background-color: #ef4444; color: white;
+  font-size: 10px; font-weight: 700;
+  height: 16px; min-width: 16px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; border: 2px solid #fff;
+  box-sizing: content-box;
 }
 
-/* 로그인/가입 버튼 그룹 */
-.auth-btn-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: 10px;
-}
+/* 인증 버튼 그룹 */
+.auth-btn-group { width:100%; display: flex; align-items: center; gap: 8px; margin-left: 8px; }
 .btn-text {
-    background: transparent;
-    border: none;
-    font-size: 13px;
-    font-weight: 500;
-    color: #666;
-    cursor: pointer;
-    padding: 6px 10px;
-    transition: color 0.2s;
+  background: transparent; border: none; font-size: 14px; font-weight: 500;
+  color: #666; cursor: pointer; padding: 8px 12px; transition: color 0.2s;
 }
-.btn-text:hover { color: #333; text-decoration: underline; }
-
+.btn-text:hover { color: #111; }
 .btn-primary {
-    border: none;
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff; /* 텍스트 흰색 고정 (배경은 인라인 스타일) */
-    cursor: pointer;
-    padding: 8px 16px;
-    border-radius: 20px;
-    transition: opacity 0.2s, transform 0.1s;
-    white-space: nowrap;
+  border: none; font-size: 14px; font-weight: 700; color: #fff;
+  cursor: pointer; padding: 0 20px; height: 38px;
+  border-radius: 20px; transition: opacity 0.2s; white-space: nowrap;
 }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:hover { opacity: 0.9; }
 
-
-/* --- 모바일 헤더 (768px 이하) --- */
+/* --- [모바일 최적화] (768px 이하) --- */
 .mobile-header {
-    height: var(--hd-height-mobile);
-    display: flex;
-    align-items: center;
-    /* [안전장치] 혹시 모를 overflow 방지 */
-    overflow-x: hidden; 
+  height: var(--hd-height-mobile);
+  display: flex; align-items: center;
+  overflow-x: hidden; /* 가로 스크롤 방지 */
 }
 
 .mobile-header-inner {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 15px;
-    position: relative;
-    
-    /* [핵심 수정] width 100% + padding으로 인한 너비 초과 방지 */
-    box-sizing: border-box; 
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px; /* 좌우 여백 미세 조정 */
+  position: relative;
+  box-sizing: border-box; /* 필수 */
 }
 
-/* 햄버거 메뉴 버튼 */
+/* 1. 햄버거 메뉴 및 좌측 버튼 */
+.mobile-left-group {
+  display: flex; align-items: center; z-index: 10;
+}
 .menu-icon-btn {
-    background: transparent;
-    border: none;
-    padding: 8px;
-    margin-left: -8px;
-    cursor: pointer;
-    color: var(--hd-text);
-    display: flex;
-    align-items: center;
+  background: transparent; border: none;
+  /* [UX] 터치 영역 확대 (44px 이상 권장) */
+  width: 44px; height: 44px;
+  padding: 0; margin-left: -8px; /* 시각적 정렬 보정 */
+  cursor: pointer; color: var(--hd-text);
+  display: flex; align-items: center; justify-content: center;
 }
+.menu-icon-btn svg { width: 24px; height: 24px; }
 
-/* 모바일 로고 (중앙 정렬) */
+/* 2. 모바일 로고 (중앙 정렬 안전장치 강화) */
 .mobile-logo-link {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    /* [안전장치] 로고 링크 자체가 너무 커지지 않도록 제한 */
-    max-width: 60%; 
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; justify-content: center;
+  height: 100%;
+  z-index: 1; /* 버튼보다 아래 */
+  
+  /* [중요] 좌우 버튼과 겹치지 않도록 최대 너비 계산 */
+  max-width: calc(100% - 110px); 
+  overflow: hidden;
 }
-
 .mobile-logo-img {
-    height: 60px; /* 원본 유지 */
-    width: auto;
-    /* [안전장치] 이미지가 부모 영역을 뚫고 나가지 않도록 설정 */
-    max-width: 100%; 
-    object-fit: contain;
+  height: 60px; /* 모바일 높이 적정선 (너무 크면 답답함) */
+  width: auto;
+  max-width: 100%; object-fit: contain;
 }
 
-/* 모바일 우측 액션 */
+/* 3. 모바일 우측 액션 */
 .mobile-actions {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+  display: flex; align-items: center; gap: 0; /* 버튼 자체 패딩으로 간격 조절 */
+  z-index: 10;
 }
 
-.mobile-chat-btn {
-    position: relative;
-    background: transparent;
-    border: none;
-    padding: 8px;
-    cursor: pointer;
-    color: var(--hd-text);
-    display: flex;
-    align-items: center;
+.mobile-icon-btn {
+  position: relative; background: transparent; border: none;
+  /* [UX] 터치 영역 확대 */
+  width: 44px; height: 44px;
+  padding: 0;
+  cursor: pointer; color: var(--hd-text);
+  display: flex; align-items: center; justify-content: center;
 }
+.mobile-icon-btn:active { opacity: 0.7; }
+.mobile-icon-btn svg { width: 24px; height: 24px; }
+
 .mobile-badge {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background-color: #e74c3c;
-    color: white;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 4px;
-    border-radius: 6px;
-    border: 1px solid #fff;
-    min-width: 14px;
-    text-align: center;
+  position: absolute; top: 6px; right: 6px;
+  background-color: #ef4444; color: white;
+  font-size: 9px; font-weight: 700; line-height: 1;
+  padding: 3px 4px; border-radius: 99px;
+  border: 1.5px solid #fff;
+  min-width: 14px; text-align: center;
 }
 
-/* 공백용 (로그인 안 했을 때 레이아웃 유지) */
-.spacer-56 { width: 40px; }
+/* 공간 확보용 */
+.spacer-56 { width: 44px; }
 
-/* 본문 여백용 클래스 (Layout 컴포넌트에서 사용) */
-.header-spacer { width: 100%; }
-.header-spacer.desktop { height: var(--hd-height); }
-.header-spacer.mobile { height: var(--hd-height-mobile); }
-
-
-/* =========================================
-   [Tablet Responsive] 태블릿 대응
-   ========================================= */
+/* 태블릿 반응형 미세 조정 */
 @media (max-width: 1024px) {
-    .desktop-header-inner {
-        padding: 0 15px;
-    }
-    
-    .desktop-nav {
-        gap: 10px; /* 메뉴 간격 축소 */
-    }
-    .nav-item-btn {
-        font-size: 14px;
-        padding: 6px 8px;
-    }
-    
-    .search-bar-wrapper {
-        width: 160px; /* 검색창 축소 */
-    }
+  .desktop-nav { gap: 12px; }
+  .nav-item-btn { font-size: 14px; padding: 6px 8px; }
+  .search-bar-wrapper { width: 160px; }
+  .icon-action-btn { width: 36px; height: 36px; }
 }
