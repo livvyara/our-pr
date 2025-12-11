@@ -1,3 +1,40 @@
+:root {
+    --hd-height: 60px;
+    --hd-height-mobile: 56px;
+    --hd-bg: #ffffff;
+    --hd-text: #333333;
+    --hd-text-hover: #000000;
+    --hd-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --hd-border-bottom: 1px solid #eee;
+}
+
+/* --- 공통 (Reset & Base) --- */
+.desktop-header, .mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--hd-bg);
+    box-shadow: var(--hd-shadow);
+    border-bottom: var(--hd-border-bottom);
+    
+    /* [중요] 박스 모델 초기화가 자식에게 상속되지 않으므로, 
+       여기 설정해도 내부 div에는 적용되지 않을 수 있습니다. 
+       하지만 부모 컨테이너의 크기 계산을 위해 유지합니다. */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; 
+}
+
+/* --- 데스크톱 헤더 --- */
+.desktop-header {
+    height: var(--hd-height);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .desktop-header-inner {
     width: 100%;
     max-width: 1200px;
@@ -9,63 +46,19 @@
     /* [수정 1] 패딩이 너비에 포함되도록 설정 */
     box-sizing: border-box; 
 }
-
-/* ... (데스크톱 관련 기존 코드 생략 - 변경 없음) ... */
-
-/* --- 모바일 헤더 (768px 이하) --- */
-.mobile-header {
-    height: var(--hd-height-mobile);
+/* 로고 */
+.desktop-logo-link {
     display: flex;
     align-items: center;
-    /* [안전장치] 혹시 모를 overflow 방지 */
-    overflow-x: hidden; 
+    text-decoration: none;
+    margin-right: 40px;
 }
-
-.mobile-header-inner {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 15px;
-    position: relative;
-    
-    /* [핵심 수정] width 100% + padding으로 인한 너비 초과 방지 */
-    box-sizing: border-box; 
-}
-
-/* 햄버거 메뉴 버튼 */
-.menu-icon-btn {
-    background: transparent;
-    border: none;
-    padding: 8px;
-    margin-left: -8px;
-    cursor: pointer;
-    color: var(--hd-text);
-    display: flex;
-    align-items: center;
-}
-
-/* 모바일 로고 (중앙 정렬) */
-.mobile-logo-link {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    /* [안전장치] 로고 링크 자체가 너무 커지지 않도록 제한 */
-    max-width: 60%; 
-}
-
-.mobile-logo-img {
-    height: 60px; /* 원본 유지 */
+.desktop-logo-img {
+    height: 50px; /* 로고 크기 조정 */
     width: auto;
-    /* [안전장치] 이미지가 부모 영역을 뚫고 나가지 않도록 설정 */
-    max-width: 100%; 
-    object-fit: contain;
+    display: block;
 }
+
 /* 네비게이션 메뉴 */
 .desktop-nav {
     display: flex;
@@ -212,6 +205,8 @@
     height: var(--hd-height-mobile);
     display: flex;
     align-items: center;
+    /* [안전장치] 혹시 모를 overflow 방지 */
+    overflow-x: hidden; 
 }
 
 .mobile-header-inner {
@@ -219,9 +214,12 @@
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* 좌:메뉴, 중:로고, 우:액션 */
+    justify-content: space-between;
     padding: 0 15px;
     position: relative;
+    
+    /* [핵심 수정] width 100% + padding으로 인한 너비 초과 방지 */
+    box-sizing: border-box; 
 }
 
 /* 햄버거 메뉴 버튼 */
@@ -229,7 +227,7 @@
     background: transparent;
     border: none;
     padding: 8px;
-    margin-left: -8px; /* 터치 영역 확보하되 시각적 위치 보정 */
+    margin-left: -8px;
     cursor: pointer;
     color: var(--hd-text);
     display: flex;
@@ -245,10 +243,16 @@
     align-items: center;
     justify-content: center;
     height: 100%;
+    /* [안전장치] 로고 링크 자체가 너무 커지지 않도록 제한 */
+    max-width: 60%; 
 }
+
 .mobile-logo-img {
-    height: 60px; /* 모바일 로고 크기 */
+    height: 60px; /* 원본 유지 */
     width: auto;
+    /* [안전장치] 이미지가 부모 영역을 뚫고 나가지 않도록 설정 */
+    max-width: 100%; 
+    object-fit: contain;
 }
 
 /* 모바일 우측 액션 */
