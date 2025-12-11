@@ -1,99 +1,191 @@
-/* SignedContractViewerModal.css */
+/* --- Variables & Reset --- */
+:root {
+  --scv-bg-overlay: rgba(0, 0, 0, 0.6);
+  --scv-bg-body: #F2F4F6; /* Toss-like soft gray */
+  --scv-bg-paper: #FFFFFF;
+  --scv-primary: #3182F6;
+  --scv-primary-dark: #1B64DA;
+  --scv-text-main: #191F28;
+  --scv-text-sub: #4E5968;
+  --scv-border: #E5E8EB;
+  --scv-radius: 20px;
+  --scv-shadow: 0 20px 40px -4px rgba(0, 0, 0, 0.2);
+  
+  --font-serif: 'Batang', serif; /* 계약서 본문용 */
+  --font-sans: 'Pretendard', sans-serif; /* UI용 */
+}
 
-.scv-modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6); z-index: 4000;
-    display: flex; justify-content: center; align-items: center;
+/* Modal Overlay */
+.scv-overlay {
+  position: fixed; inset: 0; z-index: 5000;
+  background-color: var(--scv-bg-overlay);
+  backdrop-filter: blur(8px);
+  display: flex; justify-content: center; align-items: center;
+  padding: 20px;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.scv-modal-content {
-    background: #e9ecef; width: 950px; height: 95vh;
-    border-radius: 8px; display: flex; flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+
+/* Modal Container */
+.scv-container {
+  background-color: var(--scv-bg-body);
+  width: 100%; max-width: 1000px; height: 90vh;
+  border-radius: var(--scv-radius);
+  box-shadow: var(--scv-shadow);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Header */
 .scv-header {
-    background: #fff; padding: 15px 20px; border-bottom: 1px solid #ddd;
-    display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;
-}
-.scv-header h3 { margin: 0; font-size: 18px; color: #333; font-weight: 700; }
-.btn-close { border: none; background: none; font-size: 24px; cursor: pointer; color: #666; }
-
-/* 본문 영역 (중앙 정렬 및 스크롤) */
-.scv-body { 
-    flex: 1; 
-    overflow-y: auto; 
-    padding: 40px 0; 
-    
-    /* [수정] Flex Column + Align Center로 내용에 따라 늘어나게 설정 */
-    display: flex; 
-    flex-direction: column;
-    align-items: center;
-    
-    background-color: #525659; /* 문서 구분을 위한 어두운 배경 */
+  background: #fff;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--scv-border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0;
 }
 
-/* A4 Paper (화면용) */
-.paper-a4 {
-    width: 210mm; 
-    min-height: 297mm; /* 최소 A4 한 장 */
-    height: auto;      /* [중요] 내용이 많으면 자동으로 늘어남 */
-    
-    background: white; 
-    padding: 20mm; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
-    box-sizing: border-box;
-    font-family: 'Batang', serif; 
-    color: #000; 
-    line-height: 1.6;
-    margin-bottom: 40px;
-    
-    /* 요소가 넘쳐도 흰 배경 유지 */
-    display: block; 
-    flex-shrink: 0;
-    overflow: visible;
+.scv-header-title { display: flex; align-items: center; gap: 12px; }
+.scv-header-title h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--scv-text-main); font-family: var(--font-sans); }
+
+.scv-status-badge {
+  display: flex; align-items: center; gap: 4px;
+  background-color: #E5F9F1; color: #00Bfa5;
+  font-size: 12px; font-weight: 700;
+  padding: 4px 8px; border-radius: 6px;
 }
 
-/* 문서 내부 스타일 */
-.doc-title { text-align: center; font-size: 22pt; font-weight: bold; margin-bottom: 5px; text-decoration: underline; }
-.doc-subtitle { text-align: center; font-size: 10pt; margin-bottom: 30px; color: #555; }
-.doc-title-sub { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 20px; text-decoration: underline; }
-
-.doc-section { margin-bottom: 20px; font-size: 11pt; }
-.doc-section.content { white-space: pre-wrap; word-break: break-all; }
-.special-terms { border: 1px solid #000; padding: 15px; margin-top: 20px; min-height: 100px; background-color: #fff; }
-
-.info-table table, .payment-table-container table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10pt; }
-.info-table th, .payment-table-container th, .info-table td, .payment-table-container td { border: 1px solid #000; padding: 8px; background-color: transparent; }
-.info-table th, .payment-table-container th { text-align: center; font-weight: bold; width: 120px; }
-.payment-table-container td.center { text-align: center; }
-.payment-table-container td.right { text-align: right; }
-.total-row { font-weight: bold; }
-
-/* 서명란 & 도장 위치 */
-.doc-footer { margin-top: 50px; text-align: center; }
-.date-today { margin: 30px 0; font-size: 12pt; font-weight: bold; }
-.sign-area { display: flex; justify-content: space-between; gap: 30px; margin-top: 20px; }
-.sign-box { flex: 1; text-align: left; position: relative; }
-.sign-role { font-weight: bold; font-size: 12pt; margin-bottom: 10px; text-align: center; }
-.sign-row { margin-bottom: 8px; font-size: 11pt; }
-.sign-row span { font-weight: bold; width: 90px; display: inline-block; }
-
-.signature-display-box {
-    position: absolute; right: 10px; bottom: 0; width: 100px; height: 60px; 
-    border: none; display: flex; align-items: center; justify-content: center;
+.scv-close-btn {
+  background: transparent; border: none; padding: 8px;
+  border-radius: 50%; cursor: pointer; color: var(--scv-text-sub);
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
 }
-.sig-img-final { width: 100%; height: 100%; object-fit: contain; }
-.sig-placeholder { font-size: 9pt; color: #ccc; }
+.scv-close-btn:hover { background-color: rgba(0,0,0,0.05); color: #000; }
 
-.doc-id-card-section { margin-top: 40px; border-top: 2px dashed #ccc; padding-top: 20px; page-break-before: always; }
-.doc-id-card-section h4 { font-size: 14pt; margin-bottom: 15px; font-weight: bold; }
-.id-card-img-doc { max-width: 400px; max-height: 300px; border: 1px solid #ddd; display: block; margin: 0 auto; }
+/* Content Area (Background for Paper) */
+.scv-content-area {
+  flex: 1; overflow-y: auto;
+  padding: 40px 20px;
+justify-content: center;
+}
 
-.doc-appendix-wrapper { margin-top: 50px; padding-top: 50px; border-top: 2px dashed #ccc; page-break-before: always; }
+/* --- The Magic Paper (A4 Mimic) --- */
+.scv-paper {
+  background-color: var(--scv-bg-paper);
+  width: 100%; 
+  max-width: 210mm; /* Desktop: A4 Width */
+  
+  /* [수정 포인트] 높이 관련 속성 강화 */
+  min-height: 297mm; /* 최소 높이는 A4 한 장 */
+  height: auto;      /* 내용이 길어지면 자동으로 늘어남 (중요!) */
+  
+  /* [수정 포인트] 중앙 정렬 방식 변경 (Margin Auto) */
+  margin: 0 auto;    /* 블록 요소 중앙 정렬 */
+  display: inline-block; /* text-align: center의 영향을 받아 중앙에 위치 */
+  
+  padding: 60px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  
+  /* 텍스트 정렬 리셋 (부모의 text-align: center 상속 방지) */
+  text-align: left; 
+  
+  font-family: var(--font-serif);
+  color: #222;
+  line-height: 1.7;
+  box-sizing: border-box;
+  position: relative;
+}
 
+/* Paper Typography */
+.doc-title { text-align: center; font-size: 28px; font-weight: 800; border-bottom: 2px solid #222; padding-bottom: 20px; margin-bottom: 10px; letter-spacing: -0.5px; }
+.doc-subtitle { text-align: center; font-size: 13px; color: #666; margin-bottom: 50px; font-family: var(--font-sans); }
+
+.doc-section { margin-bottom: 40px; word-break: break-all; }
+.doc-section h4 { font-size: 18px; font-weight: 700; margin-bottom: 15px; border-left: 4px solid #222; padding-left: 12px; }
+.content { white-space: pre-wrap; }
+
+/* Data Tables */
+.table-responsive { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 10px; }
+th, td { border: 1px solid #ddd; padding: 12px 10px; }
+th { background-color: #f8f9fa; font-weight: 700; color: #444; font-family: var(--font-sans); }
+td.center { text-align: center; }
+td.right { text-align: right; }
+td.bold { font-weight: 700; }
+.payment-note { font-size: 13px; color: #666; margin-top: 8px; font-family: var(--font-sans); }
+
+.highlight-money { font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+
+/* Signature Grid */
+.doc-footer { text-align: center; margin-top: 60px; }
+.date-today { font-size: 18px; font-weight: 700; margin: 40px 0; letter-spacing: 2px; }
+
+.sign-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  text-align: left;
+}
+.sign-box {
+  border: 1px solid #eee; padding: 24px;
+  border-radius: 8px; position: relative;
+  background-color: #fff;
+}
+.sign-role { font-size: 16px; font-weight: 800; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 16px; }
+.sign-row { font-size: 13px; margin-bottom: 8px; display: flex; }
+.sign-row .label { width: 70px; font-weight: 700; color: #666; flex-shrink: 0; }
+
+.seal-box {
+  position: absolute; right: 20px; bottom: 20px;
+  width: 80px; height: 80px;
+  opacity: 0.9; mix-blend-mode: multiply; /* Realistic Stamp Effect */
+}
+.seal-box img { width: 100%; height: 100%; object-fit: contain; }
+.no-sig { font-size: 12px; color: #ccc; }
+
+/* ID Card */
+.id-card-section {
+  margin-top: 60px; border-top: 2px dashed #ddd; padding-top: 40px; text-align: center;
+}
+.id-card-img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+/* Footer Actions */
 .scv-footer {
-    padding: 15px 20px; background: #fff; border-top: 1px solid #ddd; border-radius: 0 0 8px 8px;
-    display: flex; justify-content: flex-end; gap: 10px;
+  padding: 20px 24px;
+  background: #fff; border-top: 1px solid var(--scv-border);
+  display: flex; justify-content: flex-end; gap: 12px;
+  flex-shrink: 0;
 }
-.btn-print { background: #333; color: white; padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-.btn-rewrite { padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
-.btn-close-bottom { background: #fff; border: 1px solid #ccc; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+
+.scv-btn {
+  height: 52px; padding: 0 24px;
+  border-radius: 12px; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  transition: all 0.2s; font-family: var(--font-sans);
+}
+.scv-btn.primary { background-color: var(--scv-primary); color: #fff; border: none; box-shadow: 0 4px 10px rgba(49, 130, 246, 0.2); }
+.scv-btn.primary:hover { background-color: var(--scv-primary-dark); transform: translateY(-1px); }
+.scv-btn.secondary { background-color: #fff; border: 1px solid var(--scv-border); color: var(--scv-text-main); }
+.scv-btn.secondary:hover { background-color: #f9f9f9; }
+
+/* --- Mobile / Tablet Response --- */
+@media (max-width: 768px) {
+  .scv-overlay { padding: 0; align-items: flex-end; }
+  .scv-container { width: 100%; height: 95vh; border-radius: 20px 20px 0 0; }
+  
+  .scv-content-area { padding: 0; background: #fff; }
+  
+  /* Mobile Paper: Full Width, No Shadow, Native Feel */
+  .scv-paper {
+    width: 100%; max-width: 100%; min-height: auto;
+    padding: 24px; box-shadow: none; border-radius: 0;
+  }
+  
+  .doc-title { font-size: 22px; }
+  .sign-grid { grid-template-columns: 1fr; gap: 20px; }
+  
+  .scv-footer { padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .scv-btn { flex: 1; justify-content: center; }
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

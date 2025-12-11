@@ -2,19 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import './CustomerSiteFilesModal.css';
 
-interface FileEntry {
-  id: string;
-  url: string;
-  name: string;
-  category: string;
-}
+// --- [High-End Icons] ---
+const Icons = {
+  Close: () => <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+  Download: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
+  ZoomIn: () => <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></svg>,
+  Empty: () => <svg width="48" height="48" fill="none" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+};
 
-interface Props {
-  siteId: string;
-  partnerUid: string;
-  onClose: () => void;
-}
-
+interface FileEntry { id: string; url: string; name: string; category: string; }
+interface Props { siteId: string; partnerUid: string; onClose: () => void; }
 interface Point { x: number; y: number; }
 
 const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }) => {
@@ -24,21 +21,17 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // 이미지 뷰어 상태
+  // Viewer State
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   
-  // 터치 및 드래그 상태 관리
+  // Drag & Touch Logic
   const isDragging = useRef(false);
   const startPos = useRef<Point | null>(null);
   const touchDistance = useRef<number | null>(null);
 
-  // 애니메이션 Ref
-  const listRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  // 1. 데이터 로드
+  // --- Fetch Data ---
   useEffect(() => {
     const fetchFiles = async () => {
       setLoading(true);
@@ -49,43 +42,24 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
             orderBy('createdAt', 'desc')
         );
         const snap = await getDocs(q);
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as FileEntry));
-        setFiles(list);
-      } catch (e) { console.error("자료 로딩 실패", e); } 
+        setFiles(snap.docs.map(d => ({ id: d.id, ...d.data() } as FileEntry)));
+      } catch (e) { console.error("Error loading files", e); } 
       finally { setLoading(false); }
     };
     fetchFiles();
-  }, [siteId, partnerUid]);
+  }, [siteId, partnerUid, db]);
 
   const currentFiles = files.filter(f => f.category === activeTab);
 
-  // 2. 애니메이션 실행
-  useEffect(() => {
-    if (!loading) {
-      setTimeout(() => {
-        const headers = document.querySelectorAll('.cf-header-anim');
-        headers.forEach(el => el.classList.add('cf-active'));
-
-        observerRef.current = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('cf-active');
-            }
-          });
-        }, { threshold: 0.1 });
-
-        const targets = document.querySelectorAll('.cf-fade-up');
-        targets.forEach(el => observerRef.current?.observe(el));
-      }, 100);
-    }
-    return () => observerRef.current?.disconnect();
-  }, [loading, activeTab]);
-
-  // --- 뷰어 핸들러 ---
-  const openViewer = (url: string) => { setViewingImage(url); setScale(1); setPosition({ x: 0, y: 0 }); };
+  // --- Viewer Handlers ---
+  const openViewer = (url: string) => { 
+      setViewingImage(url); setScale(1); setPosition({ x: 0, y: 0 }); 
+      document.body.style.overflow = 'hidden'; // Lock Body Scroll
+  };
   
-  const closeViewer = () => {
-      setViewingImage(null);
+  const closeViewer = () => { 
+      setViewingImage(null); 
+      document.body.style.overflow = ''; // Unlock Body Scroll
   };
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -94,44 +68,34 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
       setScale(prev => Math.min(Math.max(0.5, prev + delta), 5));
   }, []);
   
-  const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = useCallback((e) => {
-      e.preventDefault();
-      e.stopPropagation(); // 드래그 시작 시 전파 방지
+  const handleMouseDown: React.MouseEventHandler = useCallback((e) => {
+      e.preventDefault(); e.stopPropagation();
       isDragging.current = true;
       startPos.current = { x: e.clientX - position.x, y: e.clientY - position.y };
-  }, [position.x, position.y]);
+  }, [position]);
   
-  const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = useCallback((e) => {
-      if (!isDragging.current || startPos.current === null) return;
-      e.stopPropagation(); // 드래그 중 전파 방지
+  const handleMouseMove: React.MouseEventHandler = useCallback((e) => {
+      if (!isDragging.current || !startPos.current) return;
+      e.stopPropagation();
       setPosition({ x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y });
   }, []);
   
-  const handleMouseUp = useCallback((e: React.MouseEvent) => { 
-      e.stopPropagation();
-      isDragging.current = false; 
-  }, []);
+  const handleMouseUp = useCallback((e: React.MouseEvent) => { e.stopPropagation(); isDragging.current = false; }, []);
   
-  // 터치 핸들러
-  const getDistance = (touches: React.TouchList) => {
-      return Math.hypot(
-          touches[0].pageX - touches[1].pageX, 
-          touches[0].pageY - touches[1].pageY
-      );
-  };
+  // Touch Handlers (Pinch Zoom & Pan)
+  const getDistance = (touches: React.TouchList) => Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
       e.stopPropagation();
       if (e.touches.length === 2) {
           touchDistance.current = getDistance(e.touches);
-          isDragging.current = false; 
-          startPos.current = null;
+          isDragging.current = false; startPos.current = null;
       } else if (e.touches.length === 1) {
           isDragging.current = true;
           startPos.current = { x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y };
           touchDistance.current = null;
       }
-  }, [position.x, position.y]);
+  }, [position]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
       e.stopPropagation();
@@ -140,134 +104,105 @@ const CustomerSiteFilesModal: React.FC<Props> = ({ siteId, partnerUid, onClose }
           const scaleFactor = newDistance / touchDistance.current;
           setScale(prev => Math.min(Math.max(0.5, prev * scaleFactor), 5));
           touchDistance.current = newDistance;
-      } else if (isDragging.current && e.touches.length === 1 && startPos.current !== null) {
+      } else if (isDragging.current && e.touches.length === 1 && startPos.current) {
           setPosition({ x: e.touches[0].clientX - startPos.current.x, y: e.touches[0].clientY - startPos.current.y });
       }
   }, []);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-      e.stopPropagation();
-      isDragging.current = false;
-      touchDistance.current = null;
-      startPos.current = null;
+      e.stopPropagation(); isDragging.current = false; touchDistance.current = null; startPos.current = null;
   }, []);
   
   const handleDownload = async (fileUrl: string, fileName: string) => {
       try {
         const response = await fetch(fileUrl, { method: 'GET' });
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error('Network error');
         const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
-      } catch (error) {
-          console.error("다운로드 실패:", error);
-          window.open(fileUrl, '_blank');
-      }
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) { window.open(fileUrl, '_blank'); }
   };
 
   return (
-    <div className="cf-modal-overlay" onClick={onClose}>
-      <div className="cf-modal-container wide" onClick={e => e.stopPropagation()}>
+    <div className="cf-overlay" onClick={onClose}>
+      <div className="cf-container" onClick={e => e.stopPropagation()}>
         
-        {/* 헤더 */}
-        <div className="cf-modal-header">
-          <div className="cf-reveal-mask">
-             <h2 className="cf-modal-title cf-header-anim">공사 자료실</h2>
+        {/* Header */}
+        <div className="cf-header">
+          <div className="cf-title-group">
+             <h2 className="cf-title">Project Gallery</h2>
+             <span className="cf-subtitle">평면도 및 3D 시안 확인</span>
           </div>
-          <button className="btn-close" onClick={onClose}>&times;</button>
+          <button className="cf-close-btn" onClick={onClose} aria-label="닫기"><Icons.Close /></button>
         </div>
 
-        {/* 바디 */}
-        <div className="cf-modal-body" ref={listRef}>
-            
-            {/* 탭 */}
-            <div className="cf-tabs cf-fade-up">
-                <button 
-                    className={`cf-tab ${activeTab === 'floor-plan' ? 'active' : ''}`} 
-                    onClick={() => setActiveTab('floor-plan')}
-                >
+        {/* Tab Navigation */}
+        <div className="cf-tabs-wrapper">
+            <div className="cf-tabs">
+                <button className={`cf-tab ${activeTab === 'floor-plan' ? 'active' : ''}`} onClick={() => setActiveTab('floor-plan')}>
                     평면도 (Floor Plan)
                 </button>
-                <button 
-                    className={`cf-tab ${activeTab === '3d-render' ? 'active' : ''}`} 
-                    onClick={() => setActiveTab('3d-render')}
-                >
-                    3D 렌더링 (Perspective)
+                <button className={`cf-tab ${activeTab === '3d-render' ? 'active' : ''}`} onClick={() => setActiveTab('3d-render')}>
+                    3D 렌더링 (Render)
                 </button>
+                <div className="cf-tab-indicator" style={{ transform: activeTab === 'floor-plan' ? 'translateX(0)' : 'translateX(100%)' }} />
             </div>
+        </div>
 
-            {/* 그리드 */}
-            <div className="cf-grid-container">
-                {loading ? <div className="cf-loading">자료를 불러오는 중...</div> : 
-                 currentFiles.length === 0 ? <div className="cf-empty cf-fade-up">등록된 {activeTab === 'floor-plan' ? '평면도' : '3D 렌더링'} 자료가 없습니다.</div> : 
-                 <div className="cf-file-grid">
-                     {currentFiles.map((file, index) => (
-                         <div 
-                            key={file.id} 
-                            className="cf-file-card cf-fade-up"
-                            style={{ transitionDelay: `${index * 0.05}s` }}
-                         >
-                             <div className="cf-thumb-wrap" onClick={(e) => { e.stopPropagation(); openViewer(file.url); }}>
-                                 <img src={file.url} alt={file.name} />
-                                 <div className="cf-thumb-overlay">
-                                     <span className="icon-zoom">🔍</span>
-                                 </div>
-                             </div>
-                             <div className="cf-file-info">
-                                 <span className="cf-file-name" title={file.name}>{file.name}</span>
-                                 <button 
-                                     onClick={(e) => { e.stopPropagation(); handleDownload(file.url, file.name); }} 
-                                     className="btn-download"
-                                 >
-                                     Download
-                                 </button>
-                             </div>
-                         </div>
-                     ))}
-                 </div>
-                }
-            </div>
+        {/* Content Body */}
+        <div className="cf-body">
+            {loading ? (
+                <div className="cf-loader"><div className="spinner"></div></div>
+            ) : currentFiles.length === 0 ? (
+                <div className="cf-empty-state">
+                    <div className="icon-box"><Icons.Empty /></div>
+                    <p>등록된 {activeTab === 'floor-plan' ? '평면도' : '3D 렌더링'} 이미지가 없습니다.</p>
+                </div>
+            ) : (
+                <div className="cf-masonry-grid">
+                    {currentFiles.map((file, idx) => (
+                        <div key={file.id} className="cf-card" style={{ animationDelay: `${idx * 50}ms` }} onClick={() => openViewer(file.url)}>
+                            <div className="cf-image-wrap">
+                                <img src={file.url} alt={file.name} loading="lazy" />
+                                <div className="cf-hover-overlay">
+                                    <div className="cf-zoom-icon"><Icons.ZoomIn /></div>
+                                </div>
+                            </div>
+                            <div className="cf-card-footer">
+                                <span className="cf-file-name">{file.name}</span>
+                                <button className="cf-download-btn" onClick={(e) => { e.stopPropagation(); handleDownload(file.url, file.name); }}>
+                                    <Icons.Download />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
       </div>
 
-      {/* [수정] 이미지 뷰어 오버레이 클릭 시 부모(팝업)로 이벤트 전파 방지 */}
+      {/* Fullscreen Image Viewer */}
       {viewingImage && (
           <div 
-                className="image-viewer-overlay" 
-                onClick={(e) => {
-                    e.stopPropagation(); // [핵심] 여기서 전파를 막아야 팝업이 안 닫힙니다.
-                    closeViewer();
-                }}
-                onTouchStart={handleTouchStart} 
-                onTouchMove={handleTouchMove} 
-                onTouchEnd={handleTouchEnd}
+                className="cf-viewer-overlay" 
+                onClick={(e) => { e.stopPropagation(); closeViewer(); }}
+                onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
             >
-              <div className="image-viewer-controls" onClick={e => e.stopPropagation()}>
-                  <button onClick={(e) => {
-                      e.stopPropagation(); // 버튼 클릭 시에도 전파 방지
-                      closeViewer();
-                  }}>닫기</button>
+              <div className="cf-viewer-toolbar" onClick={e => e.stopPropagation()}>
+                  <span className="cf-viewer-info">Pinch to Zoom</span>
+                  <button className="cf-viewer-close" onClick={closeViewer}><Icons.Close /></button>
               </div>
               
               <div 
-                className="image-viewer-content" 
-                onWheel={handleWheel}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onClick={e => e.stopPropagation()} // 이미지 클릭 시 닫히지 않도록
-                style={{
-                    transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-                    cursor: isDragging.current ? 'grabbing' : 'grab'
-                }}
+                className="cf-viewer-canvas" 
+                onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}
+                onClick={e => e.stopPropagation()}
+                style={{ transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`, cursor: isDragging.current ? 'grabbing' : 'grab' }}
               >
-                  <img src={viewingImage} alt="상세보기" draggable={false} />
+                  <img src={viewingImage} alt="Fullscreen View" draggable={false} />
               </div>
           </div>
       )}

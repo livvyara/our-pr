@@ -1,229 +1,228 @@
-/* src/components/customer/CustomerChangeOrderModal.css */
-
+/* --- Variables & Reset --- */
 :root {
-  --co-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --co-text-main: #333;
-  --co-text-sub: #666;
-  --co-border: #e0e0e0;
-  --co-accent: #111;
+  --co-bg-overlay: rgba(0, 0, 0, 0.65);
+  --co-bg-modal: #F9FAFB;
+  --co-bg-card: #FFFFFF;
+  --co-primary: #3182F6;
+  --co-primary-dark: #1B64DA;
+  --co-text-main: #191F28;
+  --co-text-sub: #8B95A1;
+  --co-border: #E5E8EB;
+  --co-radius: 20px;
+  --co-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  
+  --co-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* --- 애니메이션 --- */
-.co-reveal-mask { overflow: hidden; display: block; }
-.co-header-anim {
-  transform: translateY(110%);
-  transition: transform 1.2s var(--co-ease);
-  display: block;
-}
-.co-header-anim.co-active { transform: translateY(0); }
-
-.co-fade-up {
-  opacity: 0; transform: translateY(30px);
-  transition: opacity 0.6s var(--co-ease), transform 0.6s var(--co-ease);
-}
-.co-fade-up.co-active { opacity: 1; transform: translateY(0); }
-
-/* 모달 레이아웃 */
-.co-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-  z-index: 3000; display: flex; align-items: center; justify-content: center;
-  animation: coFadeIn 0.3s ease;
-}
-@keyframes coFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.co-modal-container {
-  background: #f7f7f7; 
-  width: 95%; 
-  height: 85vh; /* PC 높이 고정 */
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
-  display: flex; 
-  flex-direction: column;
-  overflow: hidden; /* [핵심] 컨테이너 자체 스크롤 방지 */
-  animation: coSlideUp 0.4s var(--co-ease);
-}
-.co-modal-container.wide { max-width: 1000px; }
-
-@keyframes coSlideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-/* 헤더 (고정 영역) */
-.co-modal-header {
-  padding: 25px 40px; 
-  border-bottom: 1px solid #ddd;
-  display: flex; justify-content: space-between; align-items: flex-start; 
-  background: #fff;
-  flex-shrink: 0; /* [핵심] 스크롤 시 줄어들지 않음 */
-}
-.co-modal-title { margin: 0; font-size: 22px; font-weight: 800; color: #111; letter-spacing: -0.5px; }
-.btn-close {
-  background: none; border: none; font-size: 30px; color: #999; cursor: pointer;
-  line-height: 1; padding: 0; margin-left: 20px; transition: color 0.2s;
-}
-.btn-close:hover { color: #333; }
-
-/* 바디 (스크롤 영역) */
-.co-modal-body {
-  flex: 1; 
-  overflow-y: auto; /* [핵심] 여기만 스크롤 생성 */
-  padding: 40px;
-  display: flex; 
-  flex-direction: column; 
-  align-items: center;
-  overscroll-behavior: contain; /* 스크롤 전파 방지 */
-}
-.co-loading, .co-empty { text-align: center; padding: 80px 0; color: #888; font-size: 16px; width: 100%; }
-
-/* --- 리스트 스타일 --- */
-.co-list-container { 
-  display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 800px;
-}
-
-.co-list-card {
-  background: #fff; 
-  border: 1px solid #e0e0e0;
-  border-radius: 10px; 
-  cursor: pointer; 
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-  display: flex; flex-direction: column;
+.co-overlay {
+  position: fixed; inset: 0; z-index: 4000;
+  background-color: var(--co-bg-overlay);
+  backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: center;
   padding: 20px;
-}
-.co-list-card:hover {
-  border-color: #333; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+  animation: fadeIn 0.3s ease;
 }
 
-.co-card-header-row {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+.co-container {
+  width: 100%; max-width: 800px; height: 90vh;
+  background-color: var(--co-bg-modal);
+  border-radius: var(--co-radius);
+  box-shadow: var(--co-shadow);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.4s var(--co-ease);
 }
-.co-card-date { font-size: 13px; color: #888; font-weight: 500; }
-.co-card-title { margin: 0; font-size: 18px; font-weight: 700; color: #333; word-break: keep-all; }
 
-.co-card-divider { height: 1px; background: #f0f0f0; margin: 15px 0; }
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.co-card-footer { display: flex; justify-content: space-between; align-items: center; }
-.co-card-footer span:first-child { font-size: 13px; color: #666; }
-.co-card-amount { font-size: 18px; font-weight: 800; color: #111; }
-
-/* 뱃지 */
-.co-status {
-  font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+/* Header */
+.co-header {
+  padding: 20px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--co-border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; z-index: 10;
 }
-.co-status.pending { background: #f5f5f5; color: #999; border: 1px solid #ddd; }
-.co-status.waiting { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-.co-status.approved { background: #333; color: #fff; border: 1px solid #333; }
 
-/* --- 상세 보기 --- */
-.co-detail-wrapper { width: 100%; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; }
-.btn-back {
-  align-self: flex-start; background: none; border: none; color: #666; font-size: 15px;
-  cursor: pointer; padding: 0; margin-bottom: 20px; font-weight: 600; transition: color 0.2s;
-}
-.btn-back:hover { color: #111; }
+.co-title-group { display: flex; flex-direction: column; }
+.co-title { font-size: 20px; font-weight: 800; margin: 0; color: var(--co-text-main); }
+.co-subtitle { font-size: 13px; color: var(--co-text-sub); }
 
-.invoice-paper {
-  background: #fff; border: 1px solid #ddd; border-radius: 0;
-  padding: 50px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box;
+.co-back-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: none; font-size: 16px; font-weight: 700; color: var(--co-text-main);
+  cursor: pointer; padding: 8px; border-radius: 8px; transition: background 0.2s;
 }
-.invoice-header { border-bottom: 2px solid #333; padding-bottom: 25px; margin-bottom: 30px; }
-.invoice-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.invoice-title-row h3 { font-size: 26px; font-weight: 800; margin: 0; word-break: keep-all; }
-.invoice-meta { font-size: 13px; color: #888; display: flex; gap: 20px; }
+.co-back-btn:hover { background-color: #f0f0f0; }
 
-/* 테이블 */
-.invoice-table-wrapper { overflow-x: auto; margin-bottom: 30px; }
-.invoice-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-.invoice-table th {
-  text-align: left; padding: 12px; border-bottom: 1px solid #999;
-  font-size: 13px; color: #555; font-weight: 600; background: #f9f9f9;
+.co-close-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: transparent; border: none; color: var(--co-text-sub);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
 }
-.invoice-table td {
-  padding: 16px 12px; border-bottom: 1px solid #eee; font-size: 15px; color: #333;
-}
-.th-center, .td-center { text-align: center; }
-.th-right, .td-right { text-align: right; }
-.font-bold { font-weight: 700; }
-.item-name { font-weight: 600; }
-.item-note { font-size: 12px; color: #999; margin-top: 4px; }
+.co-close-btn:hover { background-color: #f2f2f2; color: #333; }
 
-/* 합계 */
-.invoice-footer {
-  display: flex; flex-direction: column; align-items: flex-end; 
-  padding-top: 20px; border-top: 1px solid #333; gap: 10px;
+/* Body (Scroll) */
+.co-body {
+  flex: 1; overflow-y: auto;
+  padding: 24px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
-.invoice-summary-row { display: flex; gap: 40px; font-size: 14px; color: #666; width: 300px; justify-content: space-between; }
-.invoice-summary-row strong { color: #333; }
-.invoice-total-row { 
-  display: flex; gap: 40px; font-size: 18px; color: #111; 
-  width: 300px; justify-content: space-between; margin-top: 10px; padding-top: 15px; border-top: 1px dashed #ddd;
-}
-.total-amount { font-size: 24px; font-weight: 800; color: #1a237e; }
 
-/* 승인 액션 */
+.co-loading, .co-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 0; color: var(--co-text-sub); gap: 16px;
+}
+.spinner {
+  width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--co-primary);
+  border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Badge System */
+.co-badge {
+  font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+  text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;
+}
+.co-badge.pending { background: #F3F4F6; color: #6B7280; }
+.co-badge.waiting { background: #DBEAFE; color: #1D4ED8; }
+.co-badge.approved { background: #DCFCE7; color: #15803D; }
+
+/* --- List View --- */
+.co-list-view {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.co-card {
+  background: var(--co-bg-card);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 24px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s var(--co-ease);
+  animation: fadeUp 0.5s var(--co-ease) forwards;
+  opacity: 0; transform: translateY(20px);
+}
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+.co-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-color: var(--co-primary);
+}
+
+.co-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.co-date { font-size: 13px; color: var(--co-text-sub); font-weight: 500; }
+
+.co-card-title { font-size: 18px; font-weight: 800; color: var(--co-text-main); margin: 0 0 20px 0; }
+
+.co-card-bottom { 
+  display: flex; justify-content: space-between; align-items: center; 
+  border-top: 1px solid var(--co-border); padding-top: 16px; 
+}
+.co-label { font-size: 13px; color: var(--co-text-sub); }
+.co-amount { font-size: 18px; font-weight: 800; color: var(--co-text-main); }
+
+/* --- Detail View (Invoice Style) --- */
+.co-detail-view {
+  animation: fadeIn 0.3s ease;
+  display: flex; justify-content: center;
+}
+
+.invoice-card {
+  background: #fff; width: 100%; max-width: 700px;
+  border-radius: 16px; padding: 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.invoice-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 40px; border-bottom: 2px solid #111; padding-bottom: 24px;
+}
+.head-info { display: flex; flex-direction: column; gap: 4px; }
+.invoice-date { font-size: 13px; color: var(--co-text-sub); }
+.invoice-title { font-size: 24px; font-weight: 800; color: var(--co-text-main); margin: 4px 0; }
+.invoice-author { font-size: 13px; color: var(--co-text-main); font-weight: 500; }
+
+/* Table */
+.invoice-table-wrap { margin-bottom: 40px; }
+.invoice-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.invoice-table th { 
+  text-align: left; padding: 12px; border-bottom: 1px solid #ddd; 
+  color: var(--co-text-sub); font-weight: 600;
+}
+.invoice-table td { padding: 16px 12px; border-bottom: 1px solid #f0f0f0; color: var(--co-text-main); }
+.th-price, .th-total, .td-price, .td-total { text-align: right; }
+.td-item { font-weight: 600; }
+.item-note { font-size: 12px; color: var(--co-text-sub); font-weight: 400; margin-top: 4px; }
+
+/* Summary */
+.invoice-summary {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+  border-top: 1px dashed #ddd; padding-top: 24px;
+}
+.summary-row { display: flex; justify-content: space-between; width: 100%; max-width: 300px; font-size: 14px; color: var(--co-text-sub); }
+.summary-row strong { color: var(--co-text-main); font-weight: 600; }
+.summary-row.total { 
+  margin-top: 12px; padding-top: 16px; border-top: 2px solid #111;
+  font-size: 16px; color: var(--co-text-main); 
+}
+.total-text { font-size: 22px; font-weight: 800; color: var(--co-primary); }
+
+/* Actions */
 .invoice-actions {
-  margin-top: 50px; text-align: center; background: #f5f7fa; padding: 30px; border-radius: 8px; width: 100%; box-sizing: border-box;
+  margin-top: 40px; text-align: center;
+  background: #F9FAFB; padding: 24px; border-radius: 12px;
 }
-.btn-approve {
-  background: #1a237e; color: #fff; border: none; padding: 15px 50px;
-  font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: background 0.2s;
+.action-guide { font-size: 13px; color: var(--co-text-sub); margin-bottom: 16px; }
+.co-btn-approve {
+  background: var(--co-primary); color: #fff; border: none;
+  padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(49, 130, 246, 0.3);
 }
-.btn-approve:hover { background: #0d1560; }
+.co-btn-approve:hover { background: var(--co-primary-dark); transform: translateY(-2px); }
 
-/* ------------------------------------------------------------------ */
-/* 📱 모바일 완벽 호환 (768px 이하) */
-/* ------------------------------------------------------------------ */
+/* --- Mobile Responsive (Card View) --- */
 @media (max-width: 768px) {
-  /* 1. 모바일 전체 레이아웃: 꽉 찬 화면 */
-  .co-modal-container.wide { 
-    width: 100%; height: 100%; border-radius: 0; 
-  }
-  .co-modal-header { padding: 20px; }
-  .co-modal-body { padding: 20px 16px; background: #f0f0f0; }
-
-  /* 2. 상세 내역 종이 스타일 */
-  .invoice-paper { padding: 20px; box-shadow: none; border: none; }
-
-  .invoice-header { padding-bottom: 20px; margin-bottom: 20px; }
-  .invoice-title-row { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .invoice-meta { flex-direction: column; gap: 5px; font-size: 12px; }
-
-  /* 3. [핵심] 테이블 -> 카드 변환 (가로 스크롤 제거) */
-  .invoice-table-wrapper { overflow: visible; }
-  .invoice-table { display: block; width: 100%; min-width: auto; }
-  .invoice-table thead { display: none; } /* 헤더 숨김 */
-  .invoice-table tbody { display: block; }
+  .co-overlay { padding: 0; align-items: flex-end; }
+  .co-container { height: 95vh; border-radius: 20px 20px 0 0; }
+  
+  .co-list-view { grid-template-columns: 1fr; }
+  
+  .invoice-card { padding: 24px; border-radius: 12px; }
+  .invoice-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  
+  /* [Magic] Table to Card Transformation */
+  .invoice-table thead { display: none; }
+  .invoice-table tbody, .invoice-table tr, .invoice-table td { display: block; width: 100%; box-sizing: border-box; }
   
   .invoice-table tr {
-    display: block; background: #fff; 
-    border: 1px solid #eee; border-radius: 8px;
-    margin-bottom: 15px; padding: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    background: #fff; border: 1px solid #eee; border-radius: 12px;
+    margin-bottom: 16px; padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   }
-
   .invoice-table td {
     display: flex; justify-content: space-between; align-items: center;
     padding: 8px 0; border: none; font-size: 14px; text-align: right;
   }
-  
-  /* 라벨 표시 (data-label 활용) */
   .invoice-table td::before {
-    content: attr(data-label);
-    font-weight: 600; color: #999; font-size: 12px; margin-right: 10px;
+    content: attr(data-label); font-weight: 600; color: #999; font-size: 12px; margin-right: 12px;
   }
-
-  /* 품명(첫번째 셀) 강조 */
-  .invoice-table td:first-child {
+  
+  /* 품명(Title) Special Styling */
+  .invoice-table td.td-item {
     display: block; text-align: left; border-bottom: 1px dashed #eee;
-    padding-bottom: 10px; margin-bottom: 10px;
+    padding-bottom: 12px; margin-bottom: 12px;
   }
-  .invoice-table td:first-child::before { display: none; }
-  .item-name { font-size: 16px; color: #111; }
-
-  /* 4. 합계 영역 모바일 */
-  .invoice-footer { width: 100%; align-items: stretch; }
-  .invoice-summary-row, .invoice-total-row { width: 100%; gap: 0; }
-  .total-amount { font-size: 22px; }
-
-  .invoice-actions { padding: 20px; margin-top: 30px; }
-  .btn-approve { width: 100%; }
+  .invoice-table td.td-item::before { display: none; }
+  .item-name { font-size: 16px; font-weight: 700; color: #111; }
+  
+  .invoice-summary { width: 100%; align-items: stretch; }
+  .summary-row { max-width: none; }
+  .co-btn-approve { width: 100%; }
 }

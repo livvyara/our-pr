@@ -166,7 +166,7 @@ const MyProjectPage: React.FC = () => {
         return { label: '계약 체결 완료', className: 'status-success', iconClass: 'icon-success', action: 'view' };
     }
     if (site.contractStatus === 'requested') {
-        return { label: '서명 필요', className: 'status-warn', iconClass: 'icon-warn', action: 'sign' };
+        return { label: '전자계약서 작성', className: 'status-warn', iconClass: 'icon-warn', action: 'sign' };
     }
     return { label: '전자계약서', className: 'status-neutral', iconClass: '', action: 'none', disabled: true };
   };
@@ -208,7 +208,7 @@ const MyProjectPage: React.FC = () => {
         {/* Header Section */}
         <header className="mp-header">
             <div className={`mp-title-wrap ${isPageLoaded ? 'in-view' : ''}`}>
-                <h2 className="mp-title">MY LOUNGE</h2>
+                <h2 className="mp-title">마이 프로젝트</h2>
                 <div className="mp-title-underline"></div>
             </div>
             <p className={`mp-subtitle ${isPageLoaded ? 'in-view' : ''}`}>

@@ -1,233 +1,188 @@
-/* src/components/customer/CustomerConstructionScheduleModal.css */
-
+/* --- Variables & Reset --- */
 :root {
-  --cs-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --cs-bg-overlay: rgba(0, 0, 0, 0.65);
+  --cs-bg-base: #F9FAFB;
+  --cs-primary: #3182F6;
+  --cs-text-main: #191F28;
+  --cs-text-sub: #8B95A1;
+  --cs-border: #E5E8EB;
+  --cs-radius: 24px;
+  
+  --cs-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* --- [핵심] 동적 애니메이션 클래스 --- */
-
-/* 1. Mask Reveal (텍스트) */
-.cs-reveal-mask {
-  overflow: hidden; 
-  display: block;
-}
-
-.cs-reveal-text {
-  transform: translateY(110%);
-  transition: transform 1s var(--cs-ease);
-  display: block;
-}
-
-.cs-reveal-text.cs-active {
-  transform: translateY(0);
-}
-
-/* 2. Fade Up (리스트 아이템) */
-.cs-fade-up {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s var(--cs-ease), transform 0.6s var(--cs-ease);
-}
-
-.cs-fade-up.cs-active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* 모달 오버레이 */
-.cs-modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: csFadeIn 0.3s ease;
-}
-
-@keyframes csFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* 모달 컨테이너 */
-.cs-modal-container {
-  background-color: #fff;
-  width: 100%;
-  max-width: 500px;
-  height: 80vh;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: csSlideUp 0.3s ease;
-}
-
-@keyframes csSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-/* 헤더 */
-.cs-modal-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background-color: #fff;
-}
-
-.header-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.cs-site-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.cs-modal-title {
-  font-size: 14px;
-  color: #666;
-  margin-top: 4px;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: #999;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0;
-  margin-left: 10px;
-}
-
-/* 바디 (스크롤 영역) */
-.cs-modal-body {
-  flex: 1;
-  overflow-y: auto;
+.cs-overlay {
+  position: fixed; inset: 0; z-index: 3000;
+  background-color: var(--cs-bg-overlay);
+  backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: center;
   padding: 20px;
-  background-color: #f9f9f9;
+  animation: fadeIn 0.3s ease;
 }
 
-/* 로딩 & 빈 상태 */
-.cs-loading, .cs-empty {
-  text-align: center;
-  padding: 60px 0;
-  color: #888;
-  font-size: 15px;
-}
-
-/* 타임라인 리스트 */
-.schedule-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.schedule-item {
+.cs-container {
+  width: 100%; max-width: 480px; height: 85vh;
   background-color: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  gap: 20px;
-  /* opacity 기본값 제거 */
+  border-radius: var(--cs-radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.4s var(--cs-ease);
 }
 
-/* 오늘 날짜 강조 */
-.schedule-item.today {
-  border: 2px solid #333;
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Header */
+.cs-header {
+  padding: 24px 28px;
   background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-bottom: 1px solid var(--cs-border);
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-shrink: 0; z-index: 10;
 }
 
-.date-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-  border-right: 1px solid #f0f0f0;
-  padding-right: 16px;
-}
+.cs-title-group { display: flex; flex-direction: column; gap: 4px; }
+.cs-site-name { font-size: 20px; font-weight: 800; color: var(--cs-text-main); margin: 0; line-height: 1.3; }
+.cs-subtitle { font-size: 13px; color: var(--cs-text-sub); font-weight: 500; }
 
-.date-text {
-  font-size: 15px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 4px;
+.cs-close-btn {
+  background: transparent; border: none; color: var(--cs-text-sub);
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+  margin-top: -4px; margin-right: -8px;
 }
+.cs-close-btn:hover { background-color: #f2f2f2; color: #333; }
 
-.today-badge {
-  font-size: 10px;
-  font-weight: 800;
-  color: #fff;
-  background-color: #ff5252;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.content-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-}
-
-.process-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.process-tag {
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.noisy-alert {
-  font-size: 12px;
-  color: #d32f2f;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 푸터 */
-.cs-modal-footer {
-  padding: 15px 24px;
-  border-top: 1px solid #eee;
+/* Body (Timeline) */
+.cs-body {
+  flex: 1; overflow-y: auto;
+  padding: 32px 24px;
   background-color: #fff;
-  text-align: center;
+  position: relative;
+  /* Hide Scrollbar */
+  scrollbar-width: none; 
+}
+.cs-body::-webkit-scrollbar { display: none; }
+
+.cs-loader, .cs-empty {
+  display: flex; justify-content: center; padding: 60px 0; color: var(--cs-text-sub); font-size: 14px;
+}
+.spinner {
+  width: 24px; height: 24px; border: 3px solid #eee; border-top-color: var(--cs-primary);
+  border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Timeline Structure */
+.cs-timeline {
+  position: relative;
+  padding-left: 10px;
 }
 
-.cs-modal-footer p {
-  margin: 0;
-  font-size: 13px;
-  color: #888;
+/* Vertical Line */
+.cs-line {
+  position: absolute; top: 10px; bottom: 10px; left: 84px; /* Adjust based on date width */
+  width: 2px; background-color: #F2F4F6;
+  z-index: 0;
 }
 
-/* 모바일 대응 */
+.timeline-item {
+  display: flex; gap: 20px; margin-bottom: 24px;
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.6s var(--cs-ease);
+}
+.timeline-item.active { opacity: 1; transform: translateY(0); }
+
+/* 1. Date Column */
+.time-date {
+  width: 60px; text-align: right;
+  display: flex; flex-direction: column; align-items: flex-end;
+  color: var(--cs-text-sub); flex-shrink: 0;
+}
+.time-date .month { font-size: 11px; font-weight: 500; margin-bottom: 2px; }
+.time-date .day { font-size: 20px; font-weight: 800; color: var(--cs-text-main); line-height: 1; }
+.time-date .weekday { font-size: 12px; font-weight: 500; margin-top: 2px; }
+.time-date .weekday.sun { color: #EF4444; }
+.time-date .weekday.sat { color: #3B82F6; }
+
+/* 2. Marker Column */
+.time-marker {
+  position: relative; z-index: 1;
+  display: flex; justify-content: center;
+  padding-top: 4px;
+}
+.marker-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background-color: #E5E8EB; border: 3px solid #fff;
+  box-shadow: 0 0 0 1px #E5E8EB;
+  transition: all 0.3s;
+}
+
+/* 3. Content Column */
+.time-content {
+  flex: 1; background-color: #F9FAFB;
+  border-radius: 16px; padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+/* Past Style */
+.timeline-item.past .marker-dot {
+  background-color: var(--cs-text-sub); box-shadow: none; border-color: transparent;
+  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; color: #fff;
+}
+.timeline-item.past .time-date { opacity: 0.5; }
+.timeline-item.past .time-content { background-color: #FAFAFA; opacity: 0.7; }
+
+/* Today Style (Highlight) */
+.timeline-item.today .time-date { color: var(--cs-primary); }
+.timeline-item.today .time-date .day { color: var(--cs-primary); }
+.timeline-item.today .marker-dot {
+  background-color: var(--cs-primary);
+  width: 14px; height: 14px;
+  box-shadow: 0 0 0 4px rgba(49, 130, 246, 0.2);
+  animation: pulse 2s infinite;
+}
+.timeline-item.today .time-content {
+  background-color: #fff; border-color: #BFDBFE;
+  box-shadow: 0 4px 15px rgba(49, 130, 246, 0.1);
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(49, 130, 246, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(49, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(49, 130, 246, 0); }
+}
+
+/* Tags & Alerts */
+.proc-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.proc-tag {
+  font-size: 13px; font-weight: 600; padding: 4px 10px;
+  border-radius: 8px; border: 1px solid transparent;
+  line-height: 1.4;
+}
+
+.noisy-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; color: #EF4444;
+  background-color: #FEF2F2; padding: 2px 8px; border-radius: 100px;
+  width: fit-content; margin-bottom: 4px;
+}
+
+/* Footer */
+.cs-footer {
+  padding: 16px; text-align: center;
+  background-color: #fff; border-top: 1px solid var(--cs-border);
+}
+.cs-footer p { margin: 0; font-size: 12px; color: #9CA3AF; }
+
+/* Mobile Only Tweaks */
 @media (max-width: 480px) {
-  .cs-modal-container {
-    height: 100%;
-    border-radius: 0;
-  }
-  .schedule-item {
-    gap: 15px;
-    padding: 14px;
-  }
-  .date-col {
-    min-width: 70px;
-    padding-right: 12px;
-  }
+  .cs-container { height: 100%; max-height: 100%; border-radius: 0; }
+  .cs-body { padding: 24px 20px; }
+  .cs-line { left: 74px; }
+  .time-date { width: 54px; }
 }

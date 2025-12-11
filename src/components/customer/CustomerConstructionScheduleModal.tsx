@@ -1,204 +1,157 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  getFirestore, collection, query, orderBy, onSnapshot, getDoc, doc 
-} from 'firebase/firestore';
+import { getFirestore, collection, query, orderBy, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import './CustomerConstructionScheduleModal.css';
 
-interface ScheduleEntry {
-  id: string;
-  date: string;
-  processes: string[];
-  isNoisy: boolean;
-}
+// --- [High-End Icons] ---
+const Icons = {
+  Close: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+  Alert: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+  Check: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+};
 
-interface ModalProps {
-  siteId: string;
-  partnerUid: string;
-  onClose: () => void;
-}
+interface ScheduleEntry { id: string; date: string; processes: string[]; isNoisy: boolean; }
+interface ModalProps { siteId: string; partnerUid: string; onClose: () => void; }
 
 const getProcessColor = (str: string) => {
   const palettes = [
-    { bg: '#e3f2fd', border: '#90caf9', text: '#1565c0' }, 
-    { bg: '#e8f5e9', border: '#a5d6a7', text: '#2e7d32' }, 
-    { bg: '#fff3e0', border: '#ffcc80', text: '#ef6c00' }, 
-    { bg: '#f3e5f5', border: '#ce93d8', text: '#7b1fa2' }, 
-    { bg: '#e0f7fa', border: '#80deea', text: '#006064' }, 
-    { bg: '#ffebee', border: '#ef9a9a', text: '#c62828' }
+    { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
+    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D' },
+    { bg: '#FFF7ED', border: '#FED7AA', text: '#C2410C' },
+    { bg: '#FAF5FF', border: '#E9D5FF', text: '#7E22CE' },
+    { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C' }
   ];
-  let hash = 0; 
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return palettes[Math.abs(hash % palettes.length)];
 };
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
   const days = ['일', '월', '화', '수', '목', '금', '토'];
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const dayName = days[date.getDay()];
-  return `${mm}.${dd} (${dayName})`;
+  return {
+    month: String(date.getMonth() + 1).padStart(2, '0'),
+    day: String(date.getDate()).padStart(2, '0'),
+    dayName: days[date.getDay()]
+  };
 };
 
-const isToday = (dateStr: string) => {
-  const today = new Date();
-  const target = new Date(dateStr);
-  return today.toDateString() === target.toDateString();
-};
+const isToday = (dateStr: string) => new Date().toDateString() === new Date(dateStr).toDateString();
+const isPast = (dateStr: string) => new Date(dateStr) < new Date(new Date().toDateString());
 
 const CustomerConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, onClose }) => {
   const db = getFirestore();
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [siteName, setSiteName] = useState('공사 현장');
   const [loading, setLoading] = useState(true);
-  
-  // [수정] 애니메이션 강제 실행을 위한 상태 변수
   const [showContent, setShowContent] = useState(false);
-  
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!siteId || !partnerUid) return;
-
     const fetchSiteInfo = async () => {
       try {
         const siteDoc = await getDoc(doc(db, 'users', partnerUid, 'sites', siteId));
-        if (siteDoc.exists()) {
-          setSiteName(siteDoc.data().siteName || '공사 현장');
-        }
-      } catch (e) {
-        console.error("현장 정보 로드 실패", e);
-      }
+        if (siteDoc.exists()) setSiteName(siteDoc.data().siteName || '공사 현장');
+      } catch (e) { console.error(e); }
     };
     fetchSiteInfo();
 
-    const q = query(
-      collection(db, 'users', partnerUid, 'sites', siteId, 'schedules'), 
-      orderBy('date', 'asc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const q = query(collection(db, 'users', partnerUid, 'sites', siteId, 'schedules'), orderBy('date', 'asc'));
+    const unsubscribe = onSnapshot(q, (snap) => {
       const list: ScheduleEntry[] = [];
-      snapshot.forEach(doc => {
-        list.push({ id: doc.id, ...doc.data() } as ScheduleEntry);
-      });
+      snap.forEach(d => list.push({ id: d.id, ...d.data() } as ScheduleEntry));
       setSchedules(list);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, [siteId, partnerUid, db]);
 
-  // [수정] 로딩 완료 후 애니메이션 강제 실행 (0.1초 딜레이)
   useEffect(() => {
     if (!loading) {
-      // 오늘 날짜로 스크롤 이동
       if (listRef.current) {
-        const todayEl = listRef.current.querySelector('.schedule-item.today');
-        if (todayEl) {
-          todayEl.scrollIntoView({ behavior: 'auto', block: 'center' });
-        }
+        const todayEl = listRef.current.querySelector('.timeline-item.today');
+        if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      
-      // 애니메이션 클래스 활성화
-      const timer = setTimeout(() => {
-        setShowContent(true);
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      setTimeout(() => setShowContent(true), 100);
     }
   }, [loading]);
 
   return (
-    <div className="cs-modal-overlay" onClick={onClose}>
-      <div className="cs-modal-container" onClick={e => e.stopPropagation()}>
+    <div className="cs-overlay" onClick={onClose}>
+      <div className="cs-container" onClick={e => e.stopPropagation()}>
         
-        {/* 헤더 */}
-        <div className="cs-modal-header">
-          <div className="header-content">
-            {/* [수정] showContent 상태에 따라 즉시 cs-active 적용 */}
-            <div className="cs-reveal-mask">
-              <h2 className={`cs-site-name cs-reveal-text ${showContent ? 'cs-active' : ''}`}>
-                {siteName}
-              </h2>
-            </div>
-            <div className="cs-reveal-mask">
-              <span 
-                className={`cs-modal-title cs-reveal-text ${showContent ? 'cs-active' : ''}`} 
-                style={{transitionDelay: '0.1s'}}
-              >
-                전체 공사 일정표
-              </span>
-            </div>
+        {/* Header */}
+        <div className="cs-header">
+          <div className="cs-title-group">
+            <h2 className="cs-site-name">{siteName}</h2>
+            <span className="cs-subtitle">전체 공사 일정표</span>
           </div>
-          <button className="btn-close" onClick={onClose}>&times;</button>
+          <button className="cs-close-btn" onClick={onClose}><Icons.Close /></button>
         </div>
 
-        {/* 리스트 영역 */}
-        <div className="cs-modal-body" ref={listRef}>
+        {/* Timeline Body */}
+        <div className="cs-body" ref={listRef}>
           {loading ? (
-            <div className="cs-loading">일정을 불러오는 중입니다...</div>
+            <div className="cs-loading"><div className="spinner"></div></div>
           ) : schedules.length === 0 ? (
-            <div className={`cs-empty cs-fade-up ${showContent ? 'cs-active' : ''}`}>
-                등록된 공사 일정이 없습니다.
-            </div>
+            <div className="cs-empty">등록된 일정이 없습니다.</div>
           ) : (
-            <div className="schedule-timeline">
-              {schedules.map((schedule, index) => {
-                const isTodayItem = isToday(schedule.date);
+            <div className="cs-timeline">
+              {/* Timeline Line (Vertical) */}
+              <div className="cs-line"></div>
+
+              {schedules.map((item, idx) => {
+                const today = isToday(item.date);
+                const past = isPast(item.date);
+                const { month, day, dayName } = formatDate(item.date);
+                
                 return (
                   <div 
-                    key={schedule.id} 
-                    // [수정] showContent가 true면 무조건 cs-active 적용
-                    className={`schedule-item ${isTodayItem ? 'today' : ''} cs-fade-up ${showContent ? 'cs-active' : ''}`}
-                    // 렌더링 최적화를 위해 처음 로드될 때만 딜레이 적용
-                    style={{ transitionDelay: `${Math.min(index * 0.05, 1)}s` }} 
+                    key={item.id} 
+                    className={`timeline-item ${today ? 'today' : ''} ${past ? 'past' : ''} ${showContent ? 'active' : ''}`}
+                    style={{ transitionDelay: `${Math.min(idx * 0.05, 0.5)}s` }}
                   >
-                    {/* 날짜 컬럼 */}
-                    <div className="date-col">
-                      <span className="date-text">{formatDate(schedule.date)}</span>
-                      {isTodayItem && <span className="today-badge">TODAY</span>}
+                    {/* Left: Date */}
+                    <div className="time-date">
+                        <span className="month">{month}월</span>
+                        <span className="day">{day}</span>
+                        <span className={`weekday ${dayName === '일' ? 'sun' : dayName === '토' ? 'sat' : ''}`}>{dayName}</span>
                     </div>
 
-                    {/* 내용 컬럼 */}
-                    <div className="content-col">
-                      {schedule.isNoisy && (
-                        <div className="noisy-alert">
-                          <span className="noisy-icon">📢</span> 소음 주의
+                    {/* Center: Marker */}
+                    <div className="time-marker">
+                        <div className="marker-dot">
+                            {past && <Icons.Check />}
                         </div>
-                      )}
-                      
-                      <div className="process-list">
-                        {schedule.processes.map((proc, idx) => {
-                          const style = getProcessColor(proc);
-                          return (
-                            <span 
-                              key={idx} 
-                              className="process-tag"
-                              style={{ 
-                                backgroundColor: style.bg, 
-                                color: style.text, 
-                                border: `1px solid ${style.border}` 
-                              }}
-                            >
-                              {proc}
-                            </span>
-                          );
-                        })}
-                      </div>
+                    </div>
+
+                    {/* Right: Content Card */}
+                    <div className="time-content">
+                        {item.isNoisy && (
+                            <div className="noisy-badge">
+                                <Icons.Alert /> 소음 주의
+                            </div>
+                        )}
+                        <div className="proc-list">
+                            {item.processes.map((proc, pIdx) => {
+                                const style = getProcessColor(proc);
+                                return (
+                                    <span key={pIdx} className="proc-tag" style={{backgroundColor:style.bg, color:style.text, borderColor:style.border}}>
+                                        {proc}
+                                    </span>
+                                )
+                            })}
+                        </div>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           )}
         </div>
 
-        {/* 푸터 */}
-        <div className="cs-modal-footer">
-          <p className={`cs-fade-up ${showContent ? 'cs-active' : ''}`} style={{transitionDelay: '0.5s'}}>
-            ※ 현장 상황에 따라 일정이 변동될 수 있습니다.
-          </p>
+        {/* Footer */}
+        <div className="cs-footer">
+            <p>※ 현장 상황에 따라 일정이 변동될 수 있습니다.</p>
         </div>
       </div>
     </div>
