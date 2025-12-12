@@ -1,208 +1,125 @@
-/* AccountingBankingExcelPage.css */
-
-/* 1. 페이지 레이아웃 */
-.banking-excel-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    width: 100%;
-    box-sizing: border-box;
+/* --- Variables --- */
+:root {
+  --bk-bg: #F9FAFB;
+  --bk-card-bg: #FFFFFF;
+  --bk-text-main: #191F28;
+  --bk-text-sub: #8B95A1;
+  --bk-border: #E5E8EB;
+  --bk-primary: #3182F6;
+  --bk-danger: #EF4444;
+  --bk-success: #10B981;
+  --bk-radius: 16px;
+  --bk-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-/* 2. 헤더 영역 */
-.banking-excel-header-wrapper {
-    background: #fff;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+.bk-page {
+  padding: 40px 24px; min-height: 100vh; background-color: var(--bk-bg);
+  box-sizing: border-box; font-family: 'Pretendard', sans-serif;
 }
+.bk-container { max-width: 1000px; margin: 0 auto; }
 
-.banking-excel-title h2 {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #333;
-}
+/* Header */
+.bk-header { display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px; }
+.bk-title-group h2 { font-size: 28px; font-weight: 800; color: var(--bk-text-main); margin: 0; letter-spacing: -0.5px; }
+.bk-title-group p { font-size: 14px; color: var(--bk-text-sub); margin-top: 6px; }
 
-.banking-excel-title p {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+/* Tabs */
+.bk-controls { display: flex; justify-content: flex-start; }
+.bk-tabs { 
+  display: flex; background: #E5E8EB; padding: 4px; border-radius: 12px; gap: 4px;
 }
+.bk-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 8px; border: none; background: transparent;
+  font-size: 14px; font-weight: 600; color: var(--bk-text-sub); cursor: pointer; transition: all 0.2s;
+}
+.bk-tab.active { background: #fff; color: var(--bk-text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.bk-tab svg { width: 18px; }
 
-/* 3. 컨트롤 패널 (회색 박스) */
-.banking-excel-control-panel {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    flex-wrap: wrap;
+/* Upload Card (Dropzone) */
+.bk-upload-card {
+  background: #fff; border-radius: var(--bk-radius); padding: 24px;
+  box-shadow: var(--bk-shadow); margin-bottom: 32px;
+  display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
 }
+.bk-upload-info { flex: 1; min-width: 280px; }
+.bk-upload-info h4 { font-size: 18px; font-weight: 700; margin: 0 0 8px 0; color: var(--bk-text-main); }
+.bk-upload-info p { font-size: 14px; color: var(--bk-text-sub); margin-bottom: 16px; }
 
-.banking-excel-filter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
+.btn-text {
+  background: none; border: 1px solid var(--bk-border); padding: 8px 16px; border-radius: 8px;
+  color: var(--bk-text-main); font-weight: 600; font-size: 13px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;
 }
+.btn-text:hover { background: #F8FAFC; }
 
-/* 모드 버튼 (은행/카드 전환) - 통합 페이지 스타일 차용 */
-.banking-excel-mode-buttons {
-    display: flex;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-right: 15px;
+.bk-dropzone {
+  flex: 1; min-width: 280px; height: 140px;
+  border: 2px dashed #E5E8EB; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; background: #F8FAFC;
 }
+.bk-dropzone:hover { border-color: var(--bk-primary); background: #EFF6FF; }
+.dropzone-content { text-align: center; }
+.icon-circle { 
+  width: 48px; height: 48px; background: #fff; border-radius: 50%; 
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); color: var(--bk-primary);
+}
+.drop-title { display: block; font-size: 15px; font-weight: 700; color: var(--bk-text-main); margin-bottom: 4px; }
+.drop-desc { font-size: 12px; color: var(--bk-text-sub); }
 
-.banking-excel-mode-btn {
-    padding: 6px 16px;
-    border: none;
-    background: #fff;
-    font-size: 13px;
-    cursor: pointer;
-    border-right: 1px solid #ddd;
-    color: #555;
-    transition: all 0.2s;
-    font-weight: 500;
+/* Table Area */
+.bk-table-wrapper { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: var(--bk-shadow); border: 1px solid var(--bk-border); }
+.bk-table { width: 100%; border-collapse: collapse; }
+.bk-table th { 
+  text-align: left; padding: 16px; font-size: 13px; color: var(--bk-text-sub); font-weight: 600;
+  border-bottom: 1px solid var(--bk-border); background: #fff; white-space: nowrap;
 }
+.bk-table td {
+  padding: 16px; font-size: 14px; color: var(--bk-text-main); border-bottom: 1px solid #f0f0f0; vertical-align: middle;
+}
+.bk-table tr:hover { background-color: #F8FAFC; }
 
-.banking-excel-mode-btn:last-child {
-    border-right: none;
-}
+.bk-empty { text-align: center; padding: 60px; color: var(--bk-text-sub); }
 
-.banking-excel-mode-btn.active {
-    background-color: #333;
-    color: #fff;
-    font-weight: bold;
-}
+/* Utils */
+.tar { text-align: right; }
+.tac { text-align: center; }
+.fw-bold { font-weight: 700; }
+.text-sub { font-size: 13px; color: var(--bk-text-sub); }
+.text-blue { color: var(--bk-primary); font-weight: 600; }
+.text-red { color: var(--bk-danger); font-weight: 600; }
 
-.banking-excel-info-text {
-    font-size: 13px;
-    color: #666;
-    background-color: #fff;
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    margin-right: auto; /* 우측 버튼 밀어내기 */
+.btn-icon-del {
+  width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--bk-text-sub);
 }
+.btn-icon-del:hover { background: #FEF2F2; color: var(--bk-danger); }
 
-/* 우측 액션 버튼들 */
-.banking-excel-btn-manual {
-    padding: 0 16px;
-    height: 38px;
-    background-color: #fff;
-    color: #333;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+/* Mobile Card List (Hidden on PC) */
+.bk-mobile-list { display: none; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.bk-card {
+  background: #fff; padding: 20px; border-radius: 16px;
+  border: 1px solid var(--bk-border); box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 }
-.banking-excel-btn-manual:hover {
-    background-color: #f5f5f5;
-    border-color: #bbb;
-}
+.card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.card-date { font-size: 12px; color: var(--bk-text-sub); }
+.card-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.card-title { font-size: 16px; font-weight: 700; color: var(--bk-text-main); }
+.card-amount { font-size: 16px; font-weight: 700; }
+.card-amount.in { color: var(--bk-primary); }
+.card-amount.out { color: var(--bk-danger); }
+.card-sub { display: flex; justify-content: space-between; font-size: 13px; color: var(--bk-text-sub); }
 
-.banking-excel-btn-primary {
-    padding: 0 20px;
-    height: 38px;
-    background-color: #333; /* 브랜드 컬러 대신 깔끔한 다크 테마 */
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.banking-excel-btn-primary:hover {
-    background-color: #555;
-}
-.banking-excel-btn-primary:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-
-/* 4. 테이블 영역 */
-.banking-excel-result-section {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.banking-excel-table-wrapper {
-    overflow-x: auto;
-    width: 100%;
-}
-
-.banking-excel-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.banking-excel-table th {
-    background-color: #f1f3f5;
-    color: #333;
-    font-weight: 700;
-    padding: 12px 8px;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.banking-excel-table td {
-    padding: 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-    color: #444;
-}
-
-.banking-excel-table tr:hover {
-    background-color: #fafafa !important;
-}
-
-/* 금액 색상 */
-.banking-excel-amt-in { color: #1976d2; font-weight: 500; }
-.banking-excel-amt-out { color: #d32f2f; font-weight: 500; }
-.banking-excel-amt-neutral { color: #333; font-weight: bold; }
-
-/* 관리 버튼 (삭제) */
-.banking-excel-btn-mini {
-    padding: 4px 8px;
-    font-size: 11px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    background: #fff;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-    color: #d32f2f;
-}
-.banking-excel-btn-mini:hover {
-    background: #fff5f5;
-    border-color: #ffcdd2;
-}
-
-/* 로딩 및 데이터 없음 */
-.banking-excel-no-data {
-    text-align: center; padding: 60px; color: #999; font-size: 14px;
+/* Responsive */
+@media (max-width: 1024px) {
+  .bk-page { padding: 20px 16px; }
+  .bk-upload-card { padding: 20px; flex-direction: column; align-items: stretch; gap: 20px; }
+  .bk-dropzone { min-width: auto; height: 120px; }
+  
+  /* Table -> Card */
+  .bk-table { display: none; }
+  .bk-mobile-list { display: flex; } /* Show Cards */
+  .bk-table-wrapper { background: transparent; border: none; box-shadow: none; }
 }

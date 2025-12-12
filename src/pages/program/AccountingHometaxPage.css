@@ -1,216 +1,208 @@
-/* src/pages/program/AccountingHometaxPage.css */
-
-.hometax-page-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+/* --- Variables --- */
+:root {
+  --ht-bg: #F9FAFB;
+  --ht-card-bg: #FFFFFF;
+  --ht-text-main: #191F28;
+  --ht-text-sub: #8B95A1;
+  --ht-border: #E5E8EB;
+  --ht-primary: #3182F6;
+  --ht-radius: 16px;
+  --ht-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-.hometax-header {
-  margin-bottom: 30px;
-  border-bottom: 2px solid #333;
-  padding-bottom: 15px;
+.ht-page {
+  padding: 40px 24px; min-height: 100vh; background-color: var(--ht-bg);
+  box-sizing: border-box; font-family: 'Pretendard', sans-serif;
 }
-.hometax-header h2 { margin: 0 0 10px 0; }
-.hometax-header p { margin: 0; color: #666; }
+.ht-container { max-width: 1000px; margin: 0 auto; }
 
-/* 상단 그리드 (카드 2개) */
-.hometax-top-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 30px;
+/* Header */
+.ht-header { margin-bottom: 40px; }
+.ht-title-group { display: flex; align-items: center; gap: 16px; }
+.ht-icon-box { 
+  width: 56px; height: 56px; background: #E8F3FF; border-radius: 16px; 
+  display: flex; align-items: center; justify-content: center; color: var(--ht-primary);
 }
+.ht-title-group h2 { margin: 0 0 6px 0; font-size: 24px; color: var(--ht-text-main); }
+.ht-title-group p { margin: 0; font-size: 15px; color: var(--ht-text-sub); }
 
-.hometax-card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 25px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-}
+/* Grid Layout */
+.ht-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-.card-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Card Style */
+.ht-card {
+  background: var(--ht-card-bg); border-radius: var(--ht-radius);
+  padding: 32px; box-shadow: var(--ht-shadow); border: 1px solid transparent;
+  display: flex; flex-direction: column; transition: all 0.2s;
 }
+.ht-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+.ht-card.active { border-color: var(--ht-primary); }
 
-/* 인증서 카드 */
-.cert-status-box {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 5px;
-  text-align: center;
-  margin-bottom: 15px;
-  font-weight: bold;
-  color: #555;
+.card-head { margin-bottom: 24px; }
+.card-label { 
+  font-size: 12px; font-weight: 800; color: var(--ht-primary); 
+  background: #E8F3FF; padding: 4px 8px; border-radius: 6px; margin-bottom: 8px; display: inline-block;
 }
-.status-badge {
-  display: inline-block;
-  margin-left: 10px;
-  padding: 4px 10px;
-  border-radius: 15px;
-  font-size: 13px;
-  color: #fff;
-}
-.status-badge.registered { background-color: #28a745; }
-.status-badge.unregistered { background-color: #dc3545; }
+.card-head h3 { margin: 0; font-size: 20px; color: var(--ht-text-main); }
 
-.cert-desc {
-  font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; text-align: center;
+/* Cert Card Content */
+.cert-status-area { flex: 1; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+.cert-empty-state { text-align: center; color: var(--ht-text-sub); }
+.lock-icon { 
+  width: 60px; height: 60px; background: #F2F4F6; border-radius: 50%; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center; color: #999;
 }
-.btn-manage-cert {
-  margin-top: auto;
-  padding: 12px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  color: #555;
-}
-.btn-manage-cert:hover { background: #f5f5f5; }
-
-/* 수집 설정 카드 */
-.date-range-picker {
-  display: flex; align-items: flex-end; gap: 10px; margin-bottom: 20px;
-}
-.date-input-group { flex: 1; }
-.date-input-group label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
-.date-input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-.tilde { padding-bottom: 10px; font-weight: bold; }
-
-.btn-start-scrape {
-  width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; color: #333; cursor: pointer; margin-top: auto;
-}
-.btn-start-scrape:hover { opacity: 0.9; }
-.btn-start-scrape:disabled { background-color: #ccc !important; cursor: not-allowed; }
-.warning-text { color: #dc3545; font-size: 12px; margin-top: 10px; text-align: center; }
-
-/* 진행 상태 바 */
-.scraping-progress-bar {
-  background: #fff3e0; border: 1px solid #ffe0b2; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 30px;
-}
-.spinner {
-  display: inline-block; width: 30px; height: 30px; border: 4px solid #ddd; border-top: 4px solid #f57c00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.step-text { font-weight: bold; color: #f57c00; font-size: 18px; margin: 0 0 5px 0; }
-.sub-text { font-size: 13px; color: #888; margin: 0; }
-
-/* 결과 테이블 */
-.hometax-result-section h3 { margin-bottom: 15px; font-size: 18px; }
-.result-table-wrapper { overflow-x: auto; border-top: 1px solid #333; }
-.hometax-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.hometax-table th { background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ddd; font-weight: bold; color: #333; }
-.hometax-table td { padding: 12px; border-bottom: 1px solid #eee; color: #555; }
-.no-data { padding: 50px; text-align: center; color: #999; }
-
-.type-badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-.type-badge.sales { background: #e3f2fd; color: #1976d2; } /* 매출: 파랑 */
-.type-badge.purchase { background: #ffebee; color: #c62828; } /* 매입: 빨강 */
-
-/* 모달 */
-.cert-modal-backdrop {
-  position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; justify-content: center; align-items: center;
-}
-.cert-modal-content {
-  background: white; padding: 30px; border-radius: 10px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.cert-modal-content h3 { margin-top: 0; text-align: center; }
-.cert-notice { background: #f1f3f5; padding: 10px; font-size: 13px; color: #555; border-radius: 5px; margin-bottom: 20px; line-height: 1.5; }
-.cert-form-group { margin-bottom: 15px; }
-.cert-form-group label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 5px; }
-.cert-form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-.cert-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-.cert-modal-footer button { padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; border: none; }
-.cert-modal-footer .btn-cancel { background: #eee; color: #555; }
-.cert-modal-footer .btn-save { background: #333; color: #fff; }
-
-/* 1. 깜빡임 애니메이션 (필수) */
-@keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
+.cert-info-box { width: 100%; background: #F8FAFC; padding: 20px; border-radius: 12px; }
+.cert-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
+.cert-row .lbl { color: var(--ht-text-sub); }
+.cert-row .val { font-weight: 600; color: var(--ht-text-main); }
+.cert-row .val.highlight { color: #E11D48; }
+.cert-badge { 
+  margin-top: 16px; text-align: center; background: #DCFCE7; color: #166534; 
+  padding: 8px; border-radius: 8px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 
-/* 2. 키패드 이미지 컨테이너 */
-.keypad-container {
-  position: relative;
-  display: inline-block;
-  border: 4px solid #333;
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  background-color: #eee; /* 이미지 로딩 전 배경색 */
+/* Scrape Card Content */
+.scrape-options { flex: 1; display: flex; flex-direction: column; gap: 20px; margin-bottom: 24px; }
+.radio-group { display: flex; background: #F2F4F6; padding: 4px; border-radius: 12px; }
+.radio-btn { 
+  flex: 1; text-align: center; padding: 10px; font-size: 14px; font-weight: 600; color: var(--ht-text-sub);
+  cursor: pointer; border-radius: 10px; transition: all 0.2s; position: relative;
+}
+.radio-btn input { position: absolute; opacity: 0; }
+.radio-btn.selected { background: #fff; color: var(--ht-text-main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+.date-picker-row { display: flex; align-items: flex-end; gap: 10px; }
+.date-field { flex: 1; }
+.date-field label, .year-select-row label { display: block; font-size: 12px; font-weight: 700; color: var(--ht-text-sub); margin-bottom: 6px; }
+.date-field input, .year-select-row select {
+  width: 100%; padding: 12px; border: 1px solid var(--ht-border); border-radius: 10px;
+  font-size: 15px; outline: none; background: #fff; box-sizing: border-box;
+}
+.tilde { padding-bottom: 12px; color: var(--ht-text-sub); font-weight: 700; }
+
+/* Buttons */
+.ht-btn {
+  width: 100%; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; border: none;
+}
+.ht-btn.primary { 
+  background-color: #3182F6; /* PPM Blue */
+  color: #fff; 
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.25); /* PPM Shadow */
+}
+.ht-btn.primary:hover { 
+  background-color: #1B64DA; 
+  transform: translateY(-2px); 
+  filter: brightness(1.05); 
+}
+.ht-btn.primary:disabled { 
+  background-color: #E2E8EB !important; 
+  color: #94A3B8; 
+  cursor: not-allowed; 
+  transform: none; 
+  box-shadow: none; 
 }
 
-/* 3. 키패드 이미지 */
-.keypad-image {
-  max-width: 100%;
-  max-height: 60vh; /* 모달이 너무 길어지지 않도록 제한 */
-  cursor: crosshair; /* 십자 커서 (정밀 클릭 유도) */
-  display: block;
-  user-select: none; /* 드래그 방지 */
+.ht-btn.secondary { background: #fff; border: 1px solid var(--ht-border); color: var(--ht-text-main); }
+.ht-btn.secondary:hover { background: #F8FAFC; }
+
+/* Loading & Overlay */
+.scraping-overlay {
+  position: fixed; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(4px);
+  z-index: 2000; display: flex; justify-content: center; align-items: center;
+}
+.loading-box { text-align: center; }
+.spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: var(--ht-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+.loading-text { font-size: 18px; font-weight: 700; color: var(--ht-text-main); }
+.keypad-alert { display: block; margin-top: 10px; color: #E11D48; font-weight: 700; animation: blink 1s infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes blink { 50% { opacity: 0.5; } }
+
+/* Success Banner */
+.success-banner {
+  margin-top: 24px; background: #191F28; color: #fff; padding: 20px 30px; border-radius: 16px;
+  display: flex; align-items: center; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: slideUp 0.5s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { opacity: 1; transform: translateY(0); } }
+.success-banner .icon { font-size: 24px; color: #4ADE80; }
+.success-banner .msg { flex: 1; font-size: 15px; font-weight: 500; white-space: pre-line; }
+.success-banner button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+
+/* Modals */
+.ht-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.ht-modal { background: #fff; width: 100%; max-width: 420px; padding: 32px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.ht-modal h3 { margin: 0 0 24px 0; text-align: center; font-size: 20px; }
+.cert-drop-area { 
+  border: 2px dashed #E5E8EB; border-radius: 12px; padding: 24px; text-align: center; 
+  cursor: pointer; margin-bottom: 16px; transition: all 0.2s; color: var(--ht-text-sub);
+}
+.cert-drop-area:hover { border-color: var(--ht-primary); background: #F0F7FF; color: var(--ht-primary); }
+.ht-input { width: 100%; padding: 14px; border: 1px solid var(--ht-border); border-radius: 12px; margin-bottom: 24px; font-size: 15px; box-sizing: border-box; }
+.modal-actions { display: flex; gap: 12px; }
+.modal-actions button { flex: 1; }
+
+/* [Fix 2] Keypad Modal Styling */
+.ht-modal.keypad {
+    max-width: 700px; /* PC Width Increased */
+    width: auto;
+    text-align: center;
+}
+.keypad-desc { color: #666; font-size: 14px; margin-bottom: 16px; }
+
+.keypad-img-wrap { 
+    border: 4px solid #333; border-radius: 8px; overflow: hidden; margin: 20px auto; 
+    position: relative; /* Context for overlay */
+    display: inline-block;
+}
+.keypad-img-wrap img { width: 100%; display: block; max-width: 100%; height: auto; }
+.keypad-img-wrap img.blur-effect { filter: blur(2px); transition: filter 0.2s; }
+
+/* [Fix 3] Loading Overlay */
+.keypad-loading-overlay {
+    position: absolute; inset: 0; 
+    background-color: rgba(0,0,0,0.6); 
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 16px;
+    z-index: 20;
+    backdrop-filter: blur(2px);
+}
+.spinner-white {
+    width: 32px; height: 32px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px;
 }
 
-/* 4. 클릭 지점 표시 (빨간 점) */
-.click-marker {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background-color: #ff0000;
-  border-radius: 50%;
-  box-shadow: 0 0 4px #fff, 0 0 8px rgba(255,0,0,0.5);
-  pointer-events: none; /* 점 위를 또 클릭할 수 있게 통과 */
-  z-index: 10;
-  transform: translate(-50%, -50%); /* 정확한 클릭 지점이 중심이 되도록 보정 */
-  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+/* Password Display */
+.password-display-box {
+    background-color: #F3F4F6; padding: 16px; border-radius: 12px;
+    font-size: 24px; font-weight: 800; letter-spacing: 4px; color: var(--ht-text-main);
+    margin-bottom: 20px; border: 1px solid var(--ht-border); min-height: 24px;
+    display: flex; align-items: center; justify-content: center;
+}
+.placeholder { font-size: 14px; color: #B0B8C1; font-weight: 500; letter-spacing: normal; }
+
+/* Click Effect */
+.click-effect {
+    position: absolute; width: 20px; height: 20px; border-radius: 50%;
+    background-color: rgba(255,0,0,0.5); border: 2px solid white;
+    transform: translate(-50%, -50%); pointer-events: none;
+    animation: ping 0.4s ease-out forwards;
+}
+@keyframes ping {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
 }
 
-/* 점이 생길 때 톡 튀어나오는 효과 */
-@keyframes popIn {
-  from { transform: translate(-50%, -50%) scale(0); }
-  to { transform: translate(-50%, -50%) scale(1); }
-}
+.ht-btn.full { width: 100%; }
 
-/* 5. 클릭 순서 번호 (점 위의 숫자) */
-.click-marker-num {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #ff0000;
-  font-weight: 800;
-  font-size: 14px;
-  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; /* 글자 테두리 효과 */
-  white-space: nowrap;
-}
-
-/* 6. 키패드 상태 텍스트 */
-.keypad-status {
-  margin: 15px 0;
-  font-size: 16px;
-  background: #f8f9fa;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #eee;
-}
-
-/* 7. 모달 크기 반응형 대응 */
+/* Mobile */
 @media (max-width: 768px) {
-  .cert-modal-content {
-    width: 95% !important;
-    padding: 20px !important;
-  }
-  .keypad-image {
-    max-height: 50vh;
-  }
+  .ht-page { padding: 20px 16px; }
+  .ht-grid { grid-template-columns: 1fr; }
+  .date-picker-row { flex-direction: column; align-items: stretch; }
+  .tilde { text-align: center; padding: 0; }
+  
+  .ht-modal.keypad { max-width: 95vw; }
+  .keypad-img-wrap img { max-height: 50vh; width: auto; }
 }

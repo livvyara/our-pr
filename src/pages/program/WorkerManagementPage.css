@@ -1,327 +1,161 @@
-/* WorkerManagementPage.css */
-
-/* 1. 페이지 레이아웃 */
-.worker-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    width: 100%;
-    box-sizing: border-box;
+/* --- Variables & Reset --- */
+:root {
+  --wp-bg: #F9FAFB;
+  --wp-card-bg: #FFFFFF;
+  --wp-text-main: #191F28;
+  --wp-text-sub: #8B95A1;
+  --wp-border: #E5E8EB;
+  --wp-primary: #3182F6;
+  --wp-danger: #EF4444;
+  --wp-radius: 16px;
+  --wp-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-/* 2. 헤더 영역 */
-.worker-header-wrapper {
-    background: #fff;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+.worker-page {
+  background-color: var(--wp-bg);
+  min-height: 100vh;
+  padding: 40px 24px;
+  box-sizing: border-box;
+  font-family: 'Pretendard', sans-serif;
 }
 
-.worker-title h2 {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #333;
+.worker-container {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.worker-title p {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+/* Header */
+.worker-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 32px;
+}
+.worker-title-group h2 { font-size: 28px; font-weight: 800; color: var(--wp-text-main); margin: 0; letter-spacing: -0.5px; }
+.worker-subtitle { font-size: 14px; color: var(--wp-text-sub); margin-top: 6px; display: block; }
+
+.worker-add-btn {
+  display: flex; align-items: center; gap: 8px;
+  background-color: var(--wp-primary); color: #fff;
+  border: none; padding: 12px 24px; border-radius: 12px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.3);
+}
+.worker-add-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(49, 130, 246, 0.4); }
+
+/* Controls */
+.worker-controls {
+  background-color: #fff; padding: 16px 24px; border-radius: 16px;
+  box-shadow: var(--wp-shadow); margin-bottom: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
 }
 
-/* 3. 컨트롤 패널 (회색 박스) */
-.worker-control-panel {
-    margin-top: 20px;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: center;
-    justify-content: space-between;
+.worker-search-group { display: flex; align-items: center; gap: 12px; flex: 1; }
+.search-input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background-color: var(--wp-bg); padding: 10px 16px; border-radius: 12px;
+  flex: 1; max-width: 300px; border: 1px solid transparent;
+  transition: all 0.2s;
 }
+.search-input-wrap:focus-within { border-color: var(--wp-primary); background-color: #fff; }
+.search-input-wrap svg { color: var(--wp-text-sub); }
+.search-input-wrap input { border: none; background: transparent; outline: none; font-size: 14px; width: 100%; }
 
-.worker-filter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 280px;
+.select-wrap { position: relative; }
+.select-wrap select {
+  appearance: none; background-color: var(--wp-bg); border: none;
+  padding: 10px 36px 10px 16px; border-radius: 12px; font-size: 14px; color: var(--wp-text-main); font-weight: 600; cursor: pointer;
 }
+.select-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; width: 14px; color: var(--wp-text-sub); }
 
-/* 검색 박스 */
-.worker-search-input {
-    padding: 0 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 13px;
-    height: 38px;
-    width: 100%;
-    max-width: 300px;
-    box-sizing: border-box;
-    transition: all 0.2s;
+.worker-actions-group { display: flex; gap: 8px; }
+.worker-action-btn {
+  width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--wp-border);
+  background: #fff; color: var(--wp-text-sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
 }
-.worker-search-input:focus { border-color: #333; outline: none; }
+.worker-action-btn:hover { border-color: var(--wp-text-main); color: var(--wp-text-main); }
+.worker-action-btn.text { width: auto; padding: 0 16px; font-size: 13px; font-weight: 600; }
 
-/* 셀렉트 박스 */
-.worker-select {
-    height: 38px;
-    padding: 0 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 13px;
-    min-width: 120px;
-    cursor: pointer;
+/* List Area */
+.worker-list-area { min-height: 400px; }
+.worker-loading, .worker-empty {
+  text-align: center; padding: 100px 0; color: var(--wp-text-sub); font-size: 15px;
 }
+.spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--wp-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* 버튼 그룹 */
-.worker-action-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.worker-btn-manual {
-    padding: 0 14px;
-    height: 38px;
-    background-color: #fff;
-    color: #555;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-.worker-btn-manual:hover { background-color: #f5f5f5; border-color: #bbb; }
-
-.worker-btn-primary {
-    padding: 0 20px;
-    height: 38px;
-    background-color: #1976d2;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-.worker-btn-primary:hover { background-color: #1565c0; }
-
-
-/* 4. 테이블 영역 */
-.worker-result-section {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.worker-table-wrapper {
-    width: 100%;
-}
-
-.worker-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    white-space: nowrap;
-}
-
+/* PC Table */
+.worker-table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .worker-table th {
-    background-color: #f1f3f5;
-    color: #333;
-    font-weight: 700;
-    padding: 12px 8px;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  text-align: left; padding: 16px; font-size: 13px; color: var(--wp-text-sub); font-weight: 600;
+  border-bottom: 1px solid var(--wp-border); cursor: pointer; user-select: none;
 }
-
 .worker-table td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-    color: #444;
+  padding: 16px; font-size: 14px; color: var(--wp-text-main); border-bottom: 1px solid var(--wp-border);
+  background-color: #fff; transition: background 0.2s;
 }
+.worker-table tr:hover td { background-color: #F8FAFC; }
+.worker-table tr.selected td { background-color: #F0F7FF; }
 
-.worker-table tr:hover { background-color: #fafafa; }
-.worker-table tr.selected-row { background-color: #e3f2fd !important; }
-
-/* 정렬 아이콘 */
-.sort-icon { font-size: 10px; margin-left: 4px; color: #999; }
-.sort-icon.active { color: #333; }
-.sortable-th { cursor: pointer; user-select: none; }
-.sortable-th:hover { background-color: #e9ecef; }
-
-/* 뱃지 */
-.worker-badge {
-    display: inline-block; padding: 2px 8px; border-radius: 4px; 
-    font-size: 11px; font-weight: bold; 
-    background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;
+.td-check input { width: 16px; height: 16px; cursor: pointer; }
+.td-name { font-weight: 700; color: var(--wp-text-main); cursor: pointer; }
+.td-name:hover { text-decoration: underline; color: var(--wp-primary); }
+.trade-badge {
+  background-color: #F3F4F6; color: #4B5563; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
 }
+.td-bank { font-size: 13px; color: var(--wp-text-sub); }
 
-/* 관리 버튼 */
-.worker-btn-mini {
-    padding: 3px 8px;
-    font-size: 11px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    background: #fff;
-    cursor: pointer;
-    margin: 0 2px;
+.btn-icon {
+  width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--wp-text-sub);
 }
-.worker-btn-mini:hover { background: #f5f5f5; }
-.worker-btn-mini.del { color: #d32f2f; border-color: #ffcdd2; }
-.worker-btn-mini.del:hover { background: #fff5f5; }
+.btn-icon:hover { background-color: #f1f1f1; color: var(--wp-text-main); }
+.btn-icon.del:hover { background-color: #FEF2F2; color: var(--wp-danger); }
 
-/* 로딩/데이터 없음 */
-.worker-loading { text-align: center; padding: 50px; color: #888; font-style: italic; }
-.worker-no-data { text-align: center; padding: 60px; color: #999; font-size: 14px; }
+/* Mobile Card List (Hidden on PC) */
+.worker-mobile-list { display: none; }
 
+/* Responsive */
+@media (max-width: 1024px) {
+  .worker-page { padding: 20px 16px; }
+  
+  .worker-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .worker-add-btn { width: 100%; justify-content: center; }
+  
+  .worker-controls { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; }
+  .search-input-wrap { max-width: none; }
+  
+  /* Table Hide -> Card Show */
+  .worker-table { display: none; }
+  .worker-mobile-list { display: flex; flex-direction: column; gap: 12px; }
 
-/* =========================================
-   [Mobile Responsive] 모바일 카드뷰 변환
-   ========================================= */
-@media (max-width: 768px) {
-    .worker-page-container {
-        padding: 15px;
-    }
-
-    /* 컨트롤 패널 세로 정렬 */
-    .worker-control-panel {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 15px;
-    }
-
-    .worker-filter-row {
-        flex-direction: column;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .worker-search-input, .worker-select {
-        width: 100%;
-        max-width: none;
-    }
-
-    .worker-action-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 2열 그리드 */
-        gap: 8px;
-        width: 100%;
-    }
-    
-    .worker-btn-primary {
-        grid-column: 1 / -1; /* 등록 버튼은 전체 너비 */
-        justify-content: center;
-    }
-    
-    .worker-btn-manual {
-        justify-content: center;
-        padding: 0 5px;
-    }
-
-    /* --- 테이블 -> 카드 변환 --- */
-    .worker-table, .worker-table tbody, .worker-table tr, .worker-table td {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .worker-table thead { display: none; } /* 헤더 숨김 */
-
-    .worker-table tr {
-        margin-bottom: 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        padding: 15px;
-        position: relative; /* 체크박스 배치를 위해 */
-    }
-
-    .worker-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 8px 0;
-        border-bottom: 1px solid #f5f5f5;
-        font-size: 13px;
-        white-space: normal;
-        word-break: break-all;
-    }
-
-    .worker-table td:last-child { border-bottom: none; }
-
-    /* 체크박스 셀 특수 처리 */
-    .worker-table td:first-child {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        border: none;
-        padding: 0;
-        width: auto;
-        z-index: 10;
-    }
-    
-    /* 체크박스 크기 확대 */
-    .worker-table input[type="checkbox"] {
-        transform: scale(1.5); 
-    }
-
-    /* 이름(두번째 셀)을 헤더로 강조 */
-    .worker-table td:nth-child(2) {
-        background-color: #f8f9fa;
-        margin: -15px -15px 10px -15px;
-        padding: 12px 15px 12px 40px; /* 체크박스 공간 확보 */
-        border-bottom: 1px solid #eee;
-        border-radius: 8px 8px 0 0;
-        font-weight: 800;
-        color: #333;
-        font-size: 15px;
-        justify-content: flex-start;
-    }
-
-    /* data-label 표시 */
-    .worker-table td::before {
-        content: attr(data-label);
-        float: left;
-        font-weight: bold;
-        color: #888;
-        margin-right: 10px;
-        font-size: 12px;
-        min-width: 60px;
-        text-align: left;
-    }
-
-    /* 이름 셀에는 라벨 숨김 */
-    .worker-table td:nth-child(1)::before,
-    .worker-table td:nth-child(2)::before {
-        display: none;
-    }
-    
-    /* 관리 버튼 확장 */
-    .worker-btn-mini {
-        padding: 6px 12px;
-        font-size: 12px;
-    }
+  /* Card Style */
+  .worker-card {
+    background-color: #fff; border-radius: 16px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid transparent;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .worker-card.selected { border-color: var(--wp-primary); background-color: #F0F7FF; }
+  
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .card-check input { width: 20px; height: 20px; }
+  .card-info { flex: 1; margin-left: 12px; display: flex; flex-direction: column; }
+  .card-name { font-size: 16px; font-weight: 700; color: var(--wp-text-main); }
+  .card-company { font-size: 12px; color: var(--wp-text-sub); }
+  
+  .card-body { 
+    display: flex; flex-direction: column; gap: 8px; 
+    border-top: 1px dashed var(--wp-border); padding-top: 16px; margin-bottom: 16px;
+  }
+  .card-row { display: flex; justify-content: space-between; font-size: 14px; }
+  .card-row span { color: var(--wp-text-sub); font-size: 12px; }
+  
+  .card-footer { display: flex; gap: 8px; }
+  .btn-card-action {
+    flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--wp-border); background-color: #fff; color: var(--wp-text-sub);
+  }
+  .btn-card-action.edit { color: var(--wp-primary); border-color: var(--wp-primary); background-color: #F0F7FF; }
+  .btn-card-action.del { color: var(--wp-danger); }
 }

@@ -1,107 +1,383 @@
-/* GiroReceiptExpensePage.css - Namespaced */
+/* GiroReceiptExpensePage.css */
 
-/* 최상위 컨테이너로 범위 한정 */
+:root {
+  /* Color Palette */
+  --gre-bg-page: #f2f4f6;
+  --gre-bg-white: #ffffff;
+  --gre-primary: #3182f6; 
+  --gre-primary-dark: #1b64da;
+  --gre-text-primary: #191f28;
+  --gre-text-secondary: #8b95a1;
+  --gre-text-tertiary: #b0b8c1;
+  --gre-border: #e5e8eb;
+  --gre-danger: #f04452;
+  --gre-success: #219653;
+  
+  /* Dimensions */
+  --gre-radius-card: 20px;
+  --gre-radius-btn: 5px;
+  --gre-radius-input: 12px;
+  --gre-mobile-btn-height: 52px;
+}
+
+/* --- Layout Container --- */
 .giro-expense-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
+  padding: 40px;
+  background-color: var(--gre-bg-page);
+  min-height: 100vh;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  color: var(--gre-text-primary);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.giro-expense-page-container .gr-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #333;
-    padding-bottom: 15px;
+@media (max-width: 768px) {
+  .giro-expense-page-container {
+    padding: 20px;
+    padding-bottom: 100px; /* FAB/Bottom spacing */
+  }
 }
 
-.giro-expense-page-container .gr-title { 
-    font-size: 24px; font-weight: 800; color: #333; margin: 0; 
+/* --- Header Section --- */
+.gre-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
 }
 
-.giro-expense-page-container .gr-desc { 
-    font-size: 14px; color: #666; margin-top: 5px; 
+.gre-title-group h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--gre-text-primary);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
 }
 
-.giro-expense-page-container .btn-register {
-    padding: 10px 20px; background-color: #1976d2; color: white; border: none; 
-    border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px;
+.gre-title-group p {
+  font-size: 16px;
+  color: var(--gre-text-secondary);
+  margin: 0;
 }
 
-.giro-expense-page-container .btn-refresh {
-    padding: 10px 15px; background-color: #fff; border: 1px solid #ccc; 
-    border-radius: 4px; cursor: pointer; color: #555;
+.gre-header-actions {
+  display: flex;
+  gap: 12px;
 }
 
-/* 테이블 스타일 네임스페이싱 */
-.giro-expense-page-container .gr-table { 
-    width: 100%; border-collapse: collapse; font-size: 13px; 
+/* Mobile Header */
+@media (max-width: 768px) {
+  .gre-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .gre-header-actions {
+    width: 100%;
+  }
 }
 
-.giro-expense-page-container .gr-table th { 
-    background: #f8f9fa; padding: 12px; border-bottom: 1px solid #ccc; font-weight: bold; color: #333;
+/* --- Buttons --- */
+.gre-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--gre-radius-btn);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  white-space: nowrap;
 }
 
-.giro-expense-page-container .gr-table td { 
-    padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; color: #444;
+.gre-btn:active {
+  transform: scale(0.96);
 }
 
-.giro-expense-page-container .gr-table tr:hover { 
-    background: #fdfdfd; 
+.gre-btn-primary {
+  background-color: var(--gre-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.2);
+}
+.gre-btn-primary:hover {
+  background-color: var(--gre-primary-dark);
 }
 
-/* 유틸리티 클래스도 내부에서만 동작하도록 수정 */
-.giro-expense-page-container .center { text-align: center; }
-.giro-expense-page-container .right { text-align: right; }
-.giro-expense-page-container .bold { font-weight: bold; }
-.giro-expense-page-container .text-gray { color: #aaa; }
-
-.giro-expense-page-container .gr-site-info { display: flex; flex-direction: column; }
-.giro-expense-page-container .gr-site-info strong { font-size: 14px; color: #333; }
-.giro-expense-page-container .gr-site-info span { font-size: 12px; color: #666; }
-
-.giro-expense-page-container .gr-bank-info { display: flex; flex-direction: column; font-size: 12px; color: #555; }
-.giro-expense-page-container .gr-bank-info .owner { color: #888; }
-
-/* 뱃지 스타일 */
-.giro-expense-page-container .gr-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-.giro-expense-page-container .gr-badge.pending { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
-.giro-expense-page-container .gr-badge.approved { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-.giro-expense-page-container .gr-badge.completed { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-
-/* 버튼 및 액션 */
-.giro-expense-page-container .btn-view-img { 
-    padding: 4px 8px; font-size: 11px; background: #fff; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; 
+.gre-btn-secondary {
+  background-color: var(--gre-bg-white);
+  color: var(--gre-text-primary);
+  border: 1px solid var(--gre-border);
+}
+.gre-btn-secondary:hover {
+  background-color: #f9fafb;
 }
 
-.giro-expense-page-container .gr-actions {
-    display: flex; flex-direction: column; align-items: center; gap: 5px;
+.gre-btn-danger {
+  background-color: #fff0f0;
+  color: var(--gre-danger);
 }
 
-.giro-expense-page-container .warning-text {
-    font-size: 11px; color: #e74c3c; font-weight: bold; background-color: #fff5f5;
-    padding: 4px 8px; border-radius: 4px; margin-bottom: 5px; border: 1px solid #ffcdd2;
+@media (max-width: 768px) {
+  .gre-btn {
+    flex: 1;
+    height: var(--gre-mobile-btn-height); /* 52px Standard */
+    font-size: 16px;
+  }
 }
 
-.giro-expense-page-container .btn-action { 
-    padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%;
-}
-.giro-expense-page-container .btn-action.approve { background-color: #2e7d32; }
-.giro-expense-page-container .btn-action.complete { background-color: #1976d2; }
-
-.giro-expense-page-container .btn-icon-del { 
-    background: none; border: none; cursor: pointer; font-size: 16px; margin-top: 5px;
+/* --- Drop Zone Visual (Register Button) --- */
+.gre-upload-trigger {
+  background: linear-gradient(135deg, #3182f6 0%, #1b64da 100%);
+  color: white;
+  padding: 0 24px;
 }
 
-/* 이미지 뷰어 (전체 화면이므로 z-index 높게) */
-.giro-expense-page-container .gr-img-viewer {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); z-index: 5000;
-    display: flex; justify-content: center; align-items: center;
+/* --- Desktop Table View --- */
+.gre-desktop-view {
+  background: var(--gre-bg-white);
+  border-radius: var(--gre-radius-card);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.03);
 }
-.giro-expense-page-container .gr-img-viewer img { max-width: 90%; max-height: 90%; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-.giro-expense-page-container .gr-img-viewer button {
-    position: absolute; top: 20px; right: 20px; font-size: 40px; color: white; background: none; border: none; cursor: pointer;
+
+.gre-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.gre-table th {
+  background-color: #f9fafb;
+  color: var(--gre-text-secondary);
+  font-weight: 600;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--gre-border);
+  white-space: nowrap;
+}
+
+.gre-table td {
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--gre-border);
+  vertical-align: middle;
+  color: var(--gre-text-primary);
+}
+
+.gre-table tr:hover td {
+  background-color: #fcfcfd;
+}
+
+.gre-table-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Table Column Widths */
+.col-status { width: 90px; }
+.col-date { width: 110px; }
+.col-req { width: 100px; }
+.col-site { width: 18%; }
+.col-img { width: 90px; }
+.col-amount { width: 15%; text-align: right !important; }
+.col-bank { width: 18%; }
+.col-manage { width: 160px; }
+
+/* Status Badges */
+.gre-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gre-badge.pending { background-color: #fff8e1; color: #f57f17; }
+.gre-badge.approved { background-color: #e8f5e9; color: #2e7d32; }
+.gre-badge.completed { background-color: #e8f3ff; color: #3182f6; }
+
+/* --- Mobile Card View --- */
+.gre-mobile-view {
+  display: none; /* Default hidden on desktop */
+}
+
+@media (max-width: 1024px) {
+  .gre-desktop-view { display: none; }
+  .gre-mobile-view { display: flex; flex-direction: column; gap: 16px; }
+}
+
+.gre-card {
+  background: var(--gre-bg-white);
+  border-radius: var(--gre-radius-card);
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Status Indicator Bar */
+.gre-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 6px; height: 100%;
+}
+.gre-card.status-pending::before { background-color: #ffb300; }
+.gre-card.status-approved::before { background-color: #43a047; }
+.gre-card.status-completed::before { background-color: #3182f6; }
+
+.gre-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f2f4f6;
+  padding-bottom: 12px;
+}
+.gre-card-date { font-size: 13px; color: var(--gre-text-secondary); font-weight: 500; }
+
+.gre-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gre-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gre-text-primary);
+  margin-bottom: 4px;
+}
+
+.gre-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 15px;
+}
+.gre-label { color: var(--gre-text-secondary); width: 70px; flex-shrink: 0; }
+.gre-value { color: var(--gre-text-primary); font-weight: 500; text-align: right; flex: 1; word-break: break-all; }
+.gre-value.amount { font-size: 20px; font-weight: 800; color: var(--gre-primary); }
+
+.gre-card-footer {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* --- Utility Components --- */
+.gre-btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gre-border);
+  background: #fff;
+  color: var(--gre-text-primary);
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.gre-btn-sm:hover { background-color: #f9fafb; }
+
+.gre-bank-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--gre-text-secondary);
+}
+.gre-bank-info strong { color: var(--gre-text-primary); font-weight: 600; }
+
+.gre-loading, .gre-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--gre-text-tertiary);
+  font-size: 15px;
+}
+
+/* Image Viewer Modal */
+.gre-viewer-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.9); /* 배경 더 어둡게 */
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease-out;
+  overflow: hidden;
+}
+
+.gre-viewer-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 닫기 버튼 (우측 상단 고정) */
+.gre-viewer-close {
+  position: absolute;
+  top: 20px; right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  color: white; 
+  cursor: pointer;
+  z-index: 10001; /* 컨트롤보다 위에 */
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.gre-viewer-close:hover { background: rgba(0, 0, 0, 0.8); }
+
+/* 확대/축소 컨트롤러 (하단 중앙) */
+.gre-viewer-controls {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  z-index: 10001;
+}
+
+.gre-control-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.gre-control-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* 이미지 스타일 (라이브러리 내부용) */
+.gre-viewer-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border-radius: 4px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
 }

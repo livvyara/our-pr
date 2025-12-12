@@ -1,324 +1,178 @@
-/* LaborCostManagementPage.css */
-
-/* 1. 페이지 레이아웃 */
-.labor-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    width: 100%;
-    box-sizing: border-box;
+/* --- Variables & Reset --- */
+:root {
+  --lb-bg: #F9FAFB;
+  --lb-card-bg: #FFFFFF;
+  --lb-text-main: #191F28;
+  --lb-text-sub: #8B95A1;
+  --lb-border: #E5E8EB;
+  --lb-primary: #3182F6;
+  --lb-danger: #EF4444;
+  --lb-success: #10B981;
+  --lb-radius: 16px;
+  --lb-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
-/* 2. 헤더 영역 */
-.labor-header-wrapper {
-    background: #fff;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+.labor-page {
+  background-color: var(--lb-bg);
+  min-height: 100vh;
+  padding: 40px 24px;
+  box-sizing: border-box;
+  font-family: 'Pretendard', sans-serif;
 }
 
-.labor-title h2 {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #333;
+.labor-container {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.labor-title p {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+/* Header */
+.labor-header {
+  display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px;
+}
+.title-group h2 { font-size: 28px; font-weight: 800; color: var(--lb-text-main); margin: 0; letter-spacing: -0.5px; }
+.subtitle { font-size: 14px; color: var(--lb-text-sub); margin-top: 6px; display: block; }
+
+/* Controls */
+.control-bar {
+  background-color: #fff; padding: 16px 24px; border-radius: 16px;
+  box-shadow: var(--lb-shadow); display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
 }
 
-/* 3. 컨트롤 패널 (회색 박스) */
-.labor-control-panel {
-    margin-top: 20px;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: center;
-    justify-content: space-between;
+.filter-group { display: flex; gap: 12px; align-items: center; flex: 1; }
+.input-month {
+  padding: 10px 14px; border: 1px solid var(--lb-border); border-radius: 10px;
+  font-size: 14px; background-color: var(--lb-bg); cursor: pointer;
 }
 
-.labor-filter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 280px;
+.select-wrap { position: relative; }
+.select-wrap select {
+  appearance: none; background-color: var(--lb-bg); border: 1px solid var(--lb-border);
+  padding: 10px 36px 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--lb-text-main); cursor: pointer;
 }
+.select-wrap svg { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--lb-text-sub); pointer-events: none; }
 
-/* 입력 필드 스타일 */
-.labor-select, .labor-input-month {
-    height: 38px;
-    padding: 0 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 13px;
-    background-color: #fff;
-    box-sizing: border-box;
+.action-group { display: flex; gap: 10px; }
+.btn-manual {
+  display: flex; align-items: center; gap: 6px;
+  background: #fff; border: 1px solid var(--lb-border); color: var(--lb-text-main);
+  padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
+.btn-manual:hover { background-color: #F8FAFC; border-color: #CBD5E1; }
 
-/* 버튼 그룹 */
-.labor-action-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+.btn-primary {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--lb-primary); color: #fff; border: none;
+  padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 10px rgba(49, 130, 246, 0.25); transition: all 0.2s;
 }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(49, 130, 246, 0.35); }
 
-.labor-btn-manual {
-    padding: 0 14px;
-    height: 38px;
-    background-color: #fff;
-    color: #27ae60;
-    border: 1px solid #27ae60;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-.labor-btn-manual:hover { background-color: #eafaf1; }
+/* List Area */
+.labor-list-area { min-height: 400px; }
+.labor-loading, .labor-empty { text-align: center; padding: 100px 0; color: var(--lb-text-sub); font-size: 15px; }
+.spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--lb-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.labor-btn-primary {
-    padding: 0 20px;
-    height: 38px;
-    background-color: #1976d2;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-.labor-btn-primary:hover { background-color: #1565c0; }
-
-
-/* 4. 테이블 영역 */
-.labor-result-section {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.labor-table-wrapper {
-    width: 100%;
-}
-
-.labor-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    white-space: nowrap;
-}
-
+/* PC Table */
+.labor-table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .labor-table th {
-    background-color: #f1f3f5;
-    color: #333;
-    font-weight: 700;
-    padding: 12px 8px;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  text-align: left; padding: 16px; font-size: 13px; color: var(--lb-text-sub); font-weight: 600;
+  border-bottom: 1px solid var(--lb-border); background-color: #fff; position: sticky; top: 0; z-index: 10;
 }
-
 .labor-table td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-    color: #444;
+  padding: 16px; font-size: 14px; color: var(--lb-text-main); border-bottom: 1px solid var(--lb-border);
+  background-color: #fff; vertical-align: middle; transition: background 0.2s;
 }
+.labor-table tr:hover td { background-color: #F8FAFC; }
+.row-paid td { background-color: #FAFAFA; opacity: 0.9; }
 
-.labor-table tr:hover { background-color: #fafafa; }
+.worker-info { display: flex; align-items: center; gap: 8px; }
+.type-badge {
+  font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700;
+  text-transform: uppercase;
+}
+.type-badge.agency { background-color: #E0E7FF; color: #4338CA; }
+.type-badge.freelance { background-color: #DCFCE7; color: #15803D; }
 
-/* 텍스트 정렬 */
+.status-chip {
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; appearance: none;
+  text-align: center; width: 80px;
+}
+.status-chip.paid { background-color: #E5E7EB; color: #6B7280; }
+.status-chip.unpaid { background-color: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; }
+
+.btn-group { display: flex; justify-content: center; gap: 4px; }
+.btn-icon {
+  width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--lb-text-sub);
+}
+.btn-icon:hover { background-color: #f1f1f1; color: var(--lb-text-main); }
+.btn-icon.del:hover { background-color: #FEF2F2; color: var(--lb-danger); }
+
+/* Utility Classes */
 .tar { text-align: right; }
 .tac { text-align: center; }
-.tal { text-align: left; }
-.bold { font-weight: bold; color: #333; }
-.text-red { color: #e74c3c; font-weight: 500; }
+.bold { font-weight: 700; }
+.text-red { color: var(--lb-danger); font-size: 13px; }
+.text-sub { font-size: 13px; color: var(--lb-text-sub); }
+.highlight { color: var(--lb-primary); font-size: 15px; }
 
-/* 뱃지 */
-.type-badge {
-    font-size: 10px; padding: 2px 6px; border-radius: 4px;
-    background: #f1f3f5; color: #666; border: 1px solid #ddd;
-    margin-left: 5px; display: inline-block; vertical-align: middle;
+/* Mobile Card List (Hidden on PC) */
+.labor-mobile-list { display: none; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .labor-page { padding: 20px 16px; }
+  
+  .control-bar { flex-direction: column; align-items: stretch; gap: 16px; padding: 20px; }
+  .filter-group, .action-group { width: 100%; }
+  .input-month, .select-wrap select, .btn-manual, .btn-primary { width: 100%; justify-content: center; height: 48px; }
+  
+  /* Table -> Card Transformation */
+  .labor-table { display: none; }
+  .labor-mobile-list { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Card Style */
+  .labor-card {
+    background-color: #fff; border-radius: 16px; padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .labor-card.paid { opacity: 0.8; background-color: #FAFAFA; border-color: #E5E7EB; }
+
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .worker-profile { display: flex; align-items: center; gap: 8px; }
+  .worker-profile .name { font-size: 17px; font-weight: 800; color: var(--lb-text-main); }
+  
+  .status-chip.small { width: auto; padding: 4px 12px; font-size: 12px; }
+
+  .card-body { 
+    display: flex; flex-direction: column; gap: 10px; 
+    border-top: 1px dashed var(--lb-border); padding-top: 16px; margin-bottom: 16px;
+  }
+  
+  .info-row { display: flex; justify-content: space-between; align-items: center; }
+  .info-row.site .value { font-weight: 600; color: var(--lb-text-main); font-size: 14px; }
+  
+  .info-grid { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 8px 0; 
+    background-color: #F8FAFC; padding: 12px; border-radius: 8px;
+  }
+  .grid-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .grid-item .label { font-size: 11px; color: var(--lb-text-sub); }
+  .grid-item .value { font-size: 13px; font-weight: 600; color: var(--lb-text-main); }
+
+  .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .total-row .total { font-size: 18px; font-weight: 800; color: var(--lb-primary); }
+  
+  .date-row { font-size: 12px; color: var(--lb-text-sub); text-align: right; }
+
+  .card-footer { display: flex; gap: 8px; }
+  .card-btn {
+    flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--lb-border); background-color: #fff; color: var(--lb-text-sub);
+  }
+  .card-btn.edit { color: var(--lb-primary); border-color: #BFDBFE; background-color: #EFF6FF; }
+  .card-btn.del { color: var(--lb-danger); }
 }
-
-/* 상태 셀렉트 */
-.status-select {
-    padding: 3px 6px; border-radius: 4px; border: 1px solid #ddd; font-size: 11px; cursor: pointer;
-}
-.status-select.paid { color: #1976d2; font-weight: bold; border-color: #bbdefb; background: #e3f2fd; }
-.status-select.unpaid { color: #d32f2f; font-weight: bold; border-color: #ffcdd2; background: #ffebee; }
-
-/* 관리 버튼 */
-.btn-mini-edit {
-    padding: 3px 8px; font-size: 11px; border-radius: 4px; border: 1px solid #ddd;
-    background: #fff; cursor: pointer; margin-right: 4px; color: #555;
-}
-.btn-mini-edit:hover { background: #f5f5f5; }
-
-.btn-mini-del {
-    padding: 3px 8px; font-size: 11px; border-radius: 4px; border: 1px solid #ffcdd2;
-    background: #fff; cursor: pointer; color: #d32f2f;
-}
-.btn-mini-del:hover { background: #ffebee; }
-
-/* 로딩/데이터 없음 */
-.labor-loading { text-align: center; padding: 50px; color: #888; font-style: italic; }
-.labor-no-data { text-align: center; padding: 60px; color: #999; font-size: 14px; }
-
-
-/* =========================================
-   [Mobile Responsive] 모바일 카드뷰 변환
-   ========================================= */
-@media (max-width: 768px) {
-    .labor-page-container {
-        padding: 15px;
-    }
-
-    /* 컨트롤 패널 세로 정렬 */
-    .labor-control-panel {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 15px;
-    }
-
-    .labor-filter-row {
-        flex-direction: column;
-        width: 100%;
-        gap: 10px;
-    }
-
-    .labor-select, .labor-input-month {
-        width: 100%;
-    }
-
-    .labor-action-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-    }
-    
-    .labor-btn-manual, .labor-btn-primary {
-        justify-content: center;
-        width: 100%;
-    }
-
-    /* --- 테이블 -> 카드 변환 --- */
-    .labor-table, .labor-table tbody, .labor-table tr, .labor-table td {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .labor-table thead { display: none; }
-
-    .labor-table tr {
-        margin-bottom: 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        padding: 15px;
-    }
-
-    .labor-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 8px 0;
-        border-bottom: 1px solid #f5f5f5;
-        font-size: 13px;
-    }
-
-    .labor-table td:last-child { border-bottom: none; }
-
-    /* 성명(첫번째 셀) 강조 */
-    .labor-table td:first-child {
-        background-color: #f8f9fa;
-        margin: -15px -15px 10px -15px;
-        padding: 12px 15px;
-        border-bottom: 1px solid #eee;
-        border-radius: 8px 8px 0 0;
-        font-weight: 800;
-        color: #333;
-        font-size: 15px;
-        justify-content: flex-start;
-    }
-
-    /* data-label 표시 */
-    .labor-table td::before {
-        content: attr(data-label);
-        float: left;
-        font-weight: bold;
-        color: #888;
-        margin-right: 10px;
-        font-size: 12px;
-        min-width: 60px;
-        text-align: left;
-    }
-
-    /* 이름 셀에는 라벨 숨김 */
-    .labor-table td:first-child::before {
-        display: none;
-    }
-    
-    /* 관리 버튼 확장 */
-    .btn-mini-edit, .btn-mini-del {
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-}
-
-/* 모달 스타일 (네임스페이스: lm-) - 기존 유지하되 반응형 보완 */
-.labor-modal-wrapper .lm-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:2000; padding: 20px; box-sizing: border-box; }
-.labor-modal-wrapper .lm-content { background: white; width: 500px; max-width: 100%; max-height: 90vh; border-radius: 8px; display:flex; flex-direction:column; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-.lm-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-.lm-header h3 { margin: 0; font-size: 18px; color: #333; }
-.lm-close-btn { border: none; background: none; font-size: 24px; cursor: pointer; color: #666; }
-.lm-body { padding: 20px; overflow-y: auto; }
-.lm-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-.lm-group { margin-bottom: 15px; width: 100%; }
-.lm-group.half { flex: 1; min-width: 140px; }
-.lm-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555; }
-.lm-group select, .lm-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
-.lm-day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-.lm-day-chip { padding: 10px 0; text-align: center; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 13px; background: #fff; }
-.lm-day-chip.selected { background: #3498db; color: white; border-color: #3498db; font-weight: bold; }
-.lm-group.bg-box { background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #eee; }
-.lm-row.baseline { align-items: baseline; }
-.lm-group.grow { flex: 1; }
-.lm-input-amount { font-size: 16px; font-weight: bold; text-align: right; color: #333; }
-.lm-check-label { margin-left: 10px; font-size: 13px; display: flex; align-items: center; gap: 4px; }
-.lm-tax-detail { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 13px; color: #666; }
-.lm-tax-detail p { display: flex; justify-content: space-between; margin: 4px 0; }
-.lm-tax-detail hr { border: 0; border-top: 1px solid #ddd; margin: 8px 0; }
-.lm-tax-detail .total { font-weight: bold; color: #e74c3c; }
-.lm-result-bar { background: #333; color: white; padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.lm-result-bar strong { font-size: 20px; color: #f1c40f; }
-.lm-check-row { display: flex; gap: 20px; }
-.lm-footer { padding: 15px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
-.lm-btn-cancel { padding: 10px 20px; background: #f1f3f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-weight: bold; color: #555; }
-.lm-btn-save { padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }

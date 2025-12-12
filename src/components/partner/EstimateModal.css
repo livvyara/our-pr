@@ -1,0 +1,268 @@
+/* EstimateModal.css */
+
+.EstimateModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 3000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Pretendard', sans-serif;
+  box-sizing: border-box;
+}
+
+.EstimateModal * {
+  box-sizing: border-box;
+}
+
+.EstimateModal .est-modal-content {
+  background: #f5f6f8;
+  width: 1600px; /* 가로 모드라 모달 폭을 더 넓게 잡음 */
+  max-width: 98vw;
+  height: 95vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+.EstimateModal .est-header {
+  background: #ffffff;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.EstimateModal .est-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #333;
+}
+
+.EstimateModal .est-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.EstimateModal .est-btn {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 5px; /* [Rule: Radius 5] */
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+.EstimateModal .est-btn:hover {
+  background: #f0f0f0;
+}
+
+.EstimateModal .est-btn.primary {
+  background: #1976d2; /* Brand Color */
+  color: white;
+  border: none;
+}
+.EstimateModal .est-btn.primary:hover {
+  background: #1565c0;
+}
+
+.EstimateModal .est-btn.close {
+  background: #d32f2f;
+  color: white;
+  border: none;
+}
+
+.EstimateModal .est-btn.small {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.EstimateModal .est-btn-del {
+  background: #ff5252;
+  color: white;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+/* --- Body Layout --- */
+.EstimateModal .est-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background-color: #555; /* 배경 어둡게 */
+  padding: 20px;
+  gap: 20px;
+}
+
+.EstimateModal .est-page-nav {
+  width: 200px;
+  background: white;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.EstimateModal .est-nav-item {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+}
+.EstimateModal .est-nav-item.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: bold;
+  border-left: 4px solid #1976d2;
+}
+
+.EstimateModal .est-nav-item-add {
+  padding: 10px;
+  text-align: center;
+  color: #1976d2;
+  cursor: pointer;
+  font-weight: bold;
+  border-top: 1px solid #eee;
+}
+
+/* --- Preview Area (Landscape A4) --- */
+.EstimateModal .est-preview-area {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+/* [수정] A4 가로 사이즈 적용 */
+.EstimateModal .est-sheet {
+  width: 297mm;  /* 가로 297mm */
+  min-height: 210mm; /* 세로 210mm */
+  background: white;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  padding: 15mm;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* 표지 */
+.EstimateModal .cover-sheet {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.EstimateModal .cover-logo-wrapper {
+  margin-bottom: 30px;
+}
+.EstimateModal .cover-logo {
+  max-width: 400px; max-height: 150px; object-fit: contain;
+}
+.EstimateModal .cover-title-box {
+  margin-bottom: 50px; width: 100%;
+}
+.EstimateModal .cover-bottom {
+  width: 100%; display: flex; justify-content: center;
+}
+.EstimateModal .cover-info-box {
+  border: 2px solid #333; padding: 30px; width: 60%;
+  display: flex; flex-direction: column; gap: 10px; text-align: left;
+}
+.EstimateModal .info-row { display: flex; font-size: 16px; align-items: center; }
+.EstimateModal .info-row .label { width: 100px; font-weight: bold; text-align-last: justify; margin-right: 15px; }
+
+/* 테이블 */
+.EstimateModal .doc-title {
+  text-align: center; margin-bottom: 15px; text-decoration: underline;
+}
+.EstimateModal .doc-table {
+  width: 100%; border-collapse: collapse; table-layout: fixed;
+}
+.EstimateModal .doc-table th, .EstimateModal .doc-table td {
+  border: 1px solid #444; padding: 5px; vertical-align: middle; overflow: hidden;
+}
+.EstimateModal .doc-table th { background: #eee; text-align: center; font-weight: bold; height: 30px; }
+
+/* 입력창 스타일 */
+.EstimateModal input {
+  width: 100%; border: 1px solid transparent; background: transparent;
+  font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit;
+  transition: 0.2s;
+}
+/* 포커스 시 수정 중임을 명확히 표시 */
+.EstimateModal input:focus {
+  outline: 2px solid #1976d2;
+  background: rgba(25, 118, 210, 0.05);
+}
+.EstimateModal .right { text-align: right; }
+.EstimateModal .center { text-align: center; }
+
+/* 스타일 툴바 */
+.EstimateModal .est-style-toolbar {
+  background: #f1f1f1;
+  border-bottom: 1px solid #ddd;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.EstimateModal .style-group {
+  display: flex; align-items: center; gap: 5px; font-size: 13px;
+}
+.EstimateModal .style-group .current-target-label {
+  font-weight: bold; color: #1976d2; padding-right: 10px; border-right: 1px solid #ccc; margin-right: 5px;
+}
+
+/* 설정 패널 */
+.EstimateModal .est-config-panel {
+  position: absolute; top: 60px; right: 30px; width: 300px;
+  background: white; border: 1px solid #ccc; border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 100; padding: 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.EstimateModal .est-panel-title { font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; }
+.EstimateModal .est-field label { font-size: 12px; font-weight: bold; display: block; }
+.EstimateModal .est-field input { width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+.EstimateModal .est-list-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: 13px; }
+
+/* [수정] 인쇄 설정: 가로 방향 */
+@media print {
+  @page { size: A4 landscape; margin: 0; } /* Landscape 설정 */
+  body { -webkit-print-color-adjust: exact; background: white; }
+  
+  .EstimateModal .no-print,
+  .EstimateModal .est-header,
+  .EstimateModal .est-page-nav,
+  .EstimateModal .est-config-panel,
+  .EstimateModal .est-style-toolbar,
+  .EstimateModal .est-nav-item-add { display: none !important; }
+
+  .EstimateModal { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: white; display: block; overflow: visible; }
+  .EstimateModal .est-modal-content { width: 100%; max-width: none; height: auto; box-shadow: none; overflow: visible; }
+  .EstimateModal .est-body { padding: 0; background: white; display: block; }
+  .EstimateModal .est-preview-area { display: block; overflow: visible; padding: 0; }
+  .EstimateModal .est-sheet {
+    width: 100%; height: 100%; margin: 0; box-shadow: none; page-break-after: always;
+    padding: 10mm; /* 인쇄 여백 */
+  }
+  .EstimateModal .doc-table th, .EstimateModal .doc-table td { border: 1px solid #000 !important; }
+}
