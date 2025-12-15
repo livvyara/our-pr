@@ -31,7 +31,7 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     subMenus: [
       { key: 'hr-add-worker', title: '작업자 관리', path: '/program/worker-management' },
       { key: 'hr-add-log', title: '노무 등록', path: '/program/hr-labor-cost' },
-      { key: 'hr-export-excel', title: '엑셀다운로드(신고용)', path: '/program/hr-export-excel' },
+
     ]
   },
   { 

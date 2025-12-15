@@ -91,7 +91,7 @@ const LaborCostManagementPage: React.FC = () => {
       } catch (e) { console.error(e); alert("오류가 발생했습니다."); }
   };
 
-  // [엑셀 다운로드 핸들러 - 소액부징수 로직 반영]
+  // [엑셀 다운로드 핸들러 - 유지]
   const handleExcelDownload = async () => {
       if (filteredList.length === 0) return alert("데이터가 없습니다.");
       if (!currentUid) return;
@@ -130,7 +130,6 @@ const LaborCostManagementPage: React.FC = () => {
           const wData = workerMap[d.workerId] || {};
           const residentNumber = wData.rrn || wData.residentNumber || d.rrn || '';
 
-          // 1. 근무일수 및 날짜 매핑
           const dayCells = Array(31).fill('');
           let totalDays = 0;
           if (Array.isArray(d.workedDays)) {
@@ -148,58 +147,27 @@ const LaborCostManagementPage: React.FC = () => {
               });
           }
 
-          // 2. 세금 계산
-          let incomeTax = 0;      // 52열 소득세
-          let localTax = 0;       // 53열 지방소득세
-          let empInsurance = 0;   // 54열 고용보험료
-          let freelancerTax = 0;  // 55열 3.3%
-          let finalAgency = 0;    // 56열 인력소 지급액
-          let finalFreelancer = 0;// 57열 프리랜서 지급액
+          let incomeTax = 0;
+          let localTax = 0;
+          let empInsurance = 0;
+          let freelancerTax = 0;
+          let finalAgency = 0;
+          let finalFreelancer = 0;
 
           if (d.workerType === 'agency') {
-              // --- 인력(일용직) 계산 로직 ---
-              
-              // A. 일당 계산 (보수총액 / 근무일수)
               const dailyWage = totalDays > 0 ? Math.floor(d.preTaxAmount / totalDays) : 0;
-              
-              // B. 소득세: (일당 - 15만) * 2.7%
               const taxableDaily = Math.max(0, dailyWage - 150000);
-              let dailyTax = Math.floor(taxableDaily * 0.027); // 원단위 절사
-              
-              // [수정] 소액부징수: 일별 세액이 1,000원 미만이면 0원
-              if (dailyTax < 1000) {
-                  dailyTax = 0;
-              }
+              let dailyTax = Math.floor(taxableDaily * 0.027);
+              if (dailyTax < 1000) dailyTax = 0;
 
-              // 총 소득세 = 일별 세액 * 근무일수
               incomeTax = dailyTax * totalDays; 
-
-              // C. 지방소득세: 소득세의 10% (소득세가 0이면 지방세도 0)
               localTax = Math.floor(incomeTax * 0.1);
-
-              // D. 고용보험료: 보수총액 * 0.9%
               empInsurance = Math.floor(d.preTaxAmount * 0.009);
-
-              // E. 인력소 지급액 = 보수총액 - (소득세 + 지방세 + 고용보험)
               finalAgency = d.preTaxAmount - incomeTax - localTax - empInsurance;
-
           } else {
-              // --- 프리랜서 계산 로직 ---
-              
-              // 프리랜서 3.3% 세금 (공제용)
               freelancerTax = Math.floor(d.preTaxAmount * 0.033);
-              
-              // 프리랜서 지급액 = 보수총액 - 3.3%
               finalFreelancer = d.preTaxAmount - freelancerTax;
-
-              // *참고: 프리랜서도 소득세/지방세/고용보험료 칸은 agency와 같은 기준으로 계산해서 '표기'만 할지,
-              // 아니면 프리랜서는 해당 칸을 비워둘지는 기획에 따라 다릅니다.
-              // 현재는 인력소 로직과 섞이지 않게 프리랜서는 해당 칸을 비워두거나 0으로 처리하는 것이 안전합니다.
-              // (요청사항에 "프리랜서도 소득세... 계산되어야 합니다"라고 하셨는데, 
-              //  프리랜서는 보통 3.3%(사업소득세)로 퉁치기 때문에, 52~54열(일용근로소득 기준)을 채우는 건 맞지 않을 수 있습니다.
-              //  하지만 요청대로 계산은 해서 보여주되, 공제는 안 하는 방식으로 구현합니다.)
               
-              // 프리랜서용 소득세/지방세/고용보험 단순 참고용 계산 (일용직 기준 공식 대입)
               const dailyWage = totalDays > 0 ? Math.floor(d.preTaxAmount / totalDays) : 0;
               const taxableDaily = Math.max(0, dailyWage - 150000);
               let dailyTax = Math.floor(taxableDaily * 0.027);
@@ -212,22 +180,17 @@ const LaborCostManagementPage: React.FC = () => {
           const payMonthStr = currentMonth.replace('-', '');
 
           excelRows.push([
-              '3', 
-              d.workerName, 
-              residentNumber, 
-              '', '', 
-              '', '', '', '706', 
+              '3', d.workerName, residentNumber, '', '', '', '', '', '706', 
               ...dayCells, 
               totalDays, '8', totalDays, d.preTaxAmount, d.preTaxAmount, 
               '1', '', '', 'Y', payMonthStr, 
-              incomeTax > 0 ? incomeTax : '',     // 52: 소득세
-              localTax > 0 ? localTax : '',       // 53: 지방소득세
-              empInsurance > 0 ? empInsurance : '', // 54: 고용보험료
-              d.workerType !== 'agency' ? freelancerTax : '', // 55: 3.3% (프리랜서만)
-              d.workerType === 'agency' ? finalAgency : '',   // 56: 인력소 지급액
-              d.workerType !== 'agency' ? finalFreelancer : '', // 57: 프리랜서 지급액
-              d.bankName, 
-              d.accountNumber
+              incomeTax > 0 ? incomeTax : '',
+              localTax > 0 ? localTax : '',
+              empInsurance > 0 ? empInsurance : '',
+              d.workerType !== 'agency' ? freelancerTax : '',
+              d.workerType === 'agency' ? finalAgency : '',
+              d.workerType !== 'agency' ? finalFreelancer : '',
+              d.bankName, d.accountNumber
           ]);
       });
 
@@ -252,14 +215,11 @@ const LaborCostManagementPage: React.FC = () => {
   return (
     <div className="labor-page">
       <div className="labor-container">
-        
-        {/* Header */}
         <div className="labor-header">
           <div className="title-group">
             <h2>노무 관리</h2>
             <span className="subtitle">현장별 인건비 지급 내역 관리</span>
           </div>
-          
           <div className="control-bar">
              <div className="filter-group">
                  <input type="month" className="input-month" value={currentMonth} onChange={e => setCurrentMonth(e.target.value)} />
@@ -272,7 +232,6 @@ const LaborCostManagementPage: React.FC = () => {
                      <Icons.Filter />
                  </div>
              </div>
-             
              <div className="action-group">
                  <button className="btn-manual" onClick={handleExcelDownload}><Icons.Download /> 엑셀 다운로드</button>
                  <button className="btn-primary" onClick={() => { setEditTarget(null); setIsModalOpen(true); }}><Icons.Plus /> 노무 등록</button>
@@ -280,7 +239,6 @@ const LaborCostManagementPage: React.FC = () => {
           </div>
         </div>
 
-        {/* List Section */}
         <div className="labor-list-area">
             {loading ? (
                 <div className="labor-loading"><div className="spinner"></div></div>
@@ -288,7 +246,7 @@ const LaborCostManagementPage: React.FC = () => {
                 <div className="labor-empty">등록된 노무 내역이 없습니다.</div>
             ) : (
                 <div className="labor-content-wrapper">
-                    {/* PC Table */}
+                    {/* PC Table 수정: 은행, 계좌번호 열 추가 */}
                     <table className="labor-table">
                         <thead>
                             <tr>
@@ -298,6 +256,9 @@ const LaborCostManagementPage: React.FC = () => {
                                 <th className="tar">세전금액</th>
                                 <th className="tar">공제액</th>
                                 <th className="tar">실지급액</th>
+                                {/* [추가] 은행 및 계좌번호 헤더 */}
+                                <th>은행</th>
+                                <th>계좌번호</th>
                                 <th>지급일</th>
                                 <th className="tac">상태</th>
                                 <th className="tac">관리</th>
@@ -317,6 +278,9 @@ const LaborCostManagementPage: React.FC = () => {
                                     <td className="tar">{item.preTaxAmount.toLocaleString()}</td>
                                     <td className="tar text-red">-{item.deductionAmount.toLocaleString()}</td>
                                     <td className="tar bold highlight">{item.finalAmount.toLocaleString()}</td>
+                                    {/* [추가] 은행 및 계좌번호 데이터 표시 */}
+                                    <td>{item.bankName}</td>
+                                    <td>{item.accountNumber}</td>
                                     <td className="text-sub">{item.paymentCycle?.join(', ')}</td>
                                     <td className="tac">
                                         <select 
@@ -339,7 +303,7 @@ const LaborCostManagementPage: React.FC = () => {
                         </tbody>
                     </table>
 
-                    {/* Mobile Card List */}
+                    {/* Mobile Card List 수정: 계좌 정보 추가 */}
                     <div className="labor-mobile-list">
                          {filteredList.map(item => (
                              <div key={item.id} className={`labor-card ${item.isPaid ? 'paid' : ''}`}>
@@ -380,6 +344,10 @@ const LaborCostManagementPage: React.FC = () => {
                                      <div className="total-row">
                                          <span className="label">실지급액</span>
                                          <span className="value total">{item.finalAmount.toLocaleString()} 원</span>
+                                     </div>
+                                     {/* [추가] 모바일 뷰 계좌정보 */}
+                                     <div className="bank-info-row" style={{marginTop:'8px', fontSize:'13px', color:'#555', textAlign:'right'}}>
+                                         {item.bankName} {item.accountNumber}
                                      </div>
                                      <div className="date-row">
                                          지급일: {item.paymentCycle?.join(', ')}

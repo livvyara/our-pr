@@ -213,7 +213,6 @@ const PartnerProgramPage: React.FC = () => {
             <Route path="hr-add-worker" element={<ProtectedContent requiredPerm="hr-add-worker"><h2>작업자 등록</h2></ProtectedContent>} />
             <Route path="worker-management" element={<ProtectedContent requiredPerm="hr-add-worker"><WorkerManagementPage /></ProtectedContent>} />
             <Route path="hr-labor-cost" element={<ProtectedContent requiredPerm="hr-add-log"><LaborCostManagementPage /></ProtectedContent>} />
-            <Route path="hr-export-excel" element={<ProtectedContent requiredPerm="hr-export-excel"><h2>엑셀다운로드(신고용)</h2></ProtectedContent>} />
             <Route path="accounting-integrated" element={<ProtectedContent requiredPerm="accounting"><AccountingIntegratedPage /></ProtectedContent>} />
             <Route path="accounting-hometax" element={<ProtectedContent requiredPerm="accounting"><AccountingHometaxPage partnerUid={currentPartnerUid} /></ProtectedContent>} />
             
