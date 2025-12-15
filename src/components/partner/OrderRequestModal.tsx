@@ -96,7 +96,7 @@ const OrderRequestModal: React.FC<Props> = ({ isOpen, onClose, siteId, siteName,
             requesterName: userName,
             type: requestType,
             // [중요] 최초 등록 시 상태는 'pending_partner' (대표 승인 대기)
-            status: 'pending_partner', 
+            status: 'pending', 
             category1, category2,
             createdAt: serverTimestamp(),
             isPaid: false
@@ -121,7 +121,6 @@ const OrderRequestModal: React.FC<Props> = ({ isOpen, onClose, siteId, siteName,
   // [핵심 수정] 상세한 상태 배지 반환 함수
   const getStatusBadge = (status: string) => {
       switch(status) {
-          case 'pending_partner':
           case 'pending': 
               return <span className="ppm-status pending">대표 승인 대기</span>;
           case 'pending_payment':

@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react'; // [수정] useEffect 추가
 import { Routes, Route } from 'react-router-dom';
 
 // [수정] 경로를 '../'로 변경
@@ -35,6 +36,39 @@ import JoinSitePage from '../pages/JoinSitePage';
 import MyProjectPage from '../pages/customer/MyProjectPage';
 
 function App() {
+
+  // [추가] React Native 앱과의 통신을 위한 Bridge 리스너
+  useEffect(() => {
+    const handleAppMessage = (event: any) => {
+      try {
+        // 앱에서 보내는 데이터는 주로 문자열(JSON) 형태입니다.
+        if (typeof event.data === 'string') {
+          const data = JSON.parse(event.data);
+          
+          // 1. FCM 토큰 수신 처리
+          if (data.type === 'FCM_TOKEN') {
+            console.log('App으로부터 토큰 수신:', data.token);
+            // 로컬 스토리지에 저장해두고, 로그인/회원가입 시 API로 서버에 전송합니다.
+            localStorage.setItem('fcm_token', data.token);
+          }
+        }
+      } catch (error) {
+        // JSON 파싱 에러 등은 무시 (앱 관련 메시지가 아닐 수 있음)
+      }
+    };
+
+    // 안드로이드/iOS WebView 메시지 리스너 등록
+    // window 객체와 document 객체 모두에 리스너를 걸어 호환성을 높입니다.
+    window.addEventListener('message', handleAppMessage);
+    document.addEventListener('message', handleAppMessage);
+
+    return () => {
+      // 컴포넌트 언마운트 시 리스너 제거
+      window.removeEventListener('message', handleAppMessage);
+      document.removeEventListener('message', handleAppMessage);
+    };
+  }, []);
+
   return (
     <MenuProvider>
       <Routes>

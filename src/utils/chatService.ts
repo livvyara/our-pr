@@ -1,7 +1,7 @@
 import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
 
 /**
- * 현장 채팅방 생성 또는 업데이트 함수
+ * 현장 채팅방 생성 또는 업데이트 함수 (기존 로직 유지)
  */
 export const createOrUpdateSiteChat = async (
     siteId: string, 
@@ -14,6 +14,7 @@ export const createOrUpdateSiteChat = async (
     try {
         let participants = [partnerUid];
 
+        // 직원(Sub-partner) 추가 로직
         try {
             const q = query(
                 collection(db, 'users'), 
@@ -34,6 +35,7 @@ export const createOrUpdateSiteChat = async (
 
         participants = Array.from(new Set(participants));
 
+        // [중요] 기존 'chats' 컬렉션 사용
         const chatRef = doc(db, 'chats', siteId);
         const chatSnap = await getDoc(chatRef);
 
@@ -63,7 +65,8 @@ export const createOrUpdateSiteChat = async (
 };
 
 /**
- * 시스템 메시지 전송
+ * [수정] 시스템 메시지 전송 (날짜 시간 포함)
+ * 컬렉션: 'chats/{siteId}/messages'
  */
 export const sendSystemMessage = async (siteId: string, message: string) => {
     const db = getFirestore();
@@ -72,17 +75,32 @@ export const sendSystemMessage = async (siteId: string, message: string) => {
         const chatSnap = await getDoc(chatRef);
         
         if (chatSnap.exists()) {
+            // 날짜 포맷팅 (YYYY. MM. DD. 오전/오후 HH:mm)
+            const now = new Date();
+            const timeString = now.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            const fullMessage = `${message}\n(${timeString})`;
+
             await addDoc(collection(db, 'chats', siteId, 'messages'), {
-                text: message,
+                text: fullMessage,
                 senderId: 'system',
                 type: 'system',
                 createdAt: serverTimestamp()
             });
 
             await updateDoc(chatRef, {
-                lastMessage: message,
+                lastMessage: fullMessage,
                 updatedAt: serverTimestamp()
             });
+        } else {
+            console.warn(`[Chat] 채팅방을 찾을 수 없습니다. (ID: ${siteId})`);
         }
     } catch (e) {
         console.error("시스템 메시지 전송 실패:", e);
@@ -90,7 +108,7 @@ export const sendSystemMessage = async (siteId: string, message: string) => {
 };
 
 /**
- * 공사 완료 시 채팅방 마감 처리
+ * 공사 완료 시 채팅방 마감 처리 (기존 로직 유지)
  */
 export const closeSiteChat = async (siteId: string) => {
     const db = getFirestore();
@@ -118,14 +136,13 @@ export const closeSiteChat = async (siteId: string) => {
 };
 
 /**
- * [NEW] 채팅방 다시 활성화 (공사중 등 상태 변경 시)
+ * 채팅방 다시 활성화 (기존 로직 유지)
  */
 export const openSiteChat = async (siteId: string) => {
     const db = getFirestore();
     try {
         const chatRef = doc(db, 'chats', siteId);
         
-        // 알림 메시지
         await addDoc(collection(db, 'chats', siteId, 'messages'), {
             text: '[알림] 현장 상태가 변경되어 채팅방이 다시 활성화되었습니다.',
             senderId: 'system',
@@ -133,7 +150,6 @@ export const openSiteChat = async (siteId: string) => {
             createdAt: serverTimestamp()
         });
 
-        // 상태 변경 (active)
         await updateDoc(chatRef, {
             status: 'active',
             lastMessage: '채팅방이 다시 활성화되었습니다.',
