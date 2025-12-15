@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- [High-End Icons] ---
+// --- [Icons] ---
 const Icons = {
   Download: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
   Plus: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
@@ -28,7 +28,7 @@ const LaborCostManagementPage: React.FC = () => {
   const [laborList, setLaborList] = useState<any[]>([]);
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
-  
+   
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); 
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
 
@@ -91,11 +91,11 @@ const LaborCostManagementPage: React.FC = () => {
       } catch (e) { console.error(e); alert("오류가 발생했습니다."); }
   };
 
+  // [엑셀 다운로드 핸들러 - 소액부징수 로직 반영]
   const handleExcelDownload = async () => {
       if (filteredList.length === 0) return alert("데이터가 없습니다.");
       if (!currentUid) return;
       
-      // Excel logic (Original maintained but summarized for brevity)
       const workersSnap = await getDocs(collection(db, 'users', currentUid, 'workers'));
       const workerMap: {[key: string]: any} = {};
       workersSnap.forEach(doc => { workerMap[doc.id] = doc.data(); });
@@ -106,41 +106,147 @@ const LaborCostManagementPage: React.FC = () => {
           if (consolidatedMap[wId]) {
               consolidatedMap[wId].preTaxAmount += (item.preTaxAmount || 0);
               const days = new Set([...consolidatedMap[wId].workedDays, ...(item.workedDays || [])]);
-              consolidatedMap[wId].workedDays = Array.from(days).sort((a:any, b:any) => a - b);
-          } else consolidatedMap[wId] = { ...item };
+              consolidatedMap[wId].workedDays = Array.from(days).sort();
+          } else {
+              consolidatedMap[wId] = { ...item };
+          }
       });
 
       const excelRows: any[] = [];
-      excelRows.push(['성명', '주민번호', '연락처', '현장', '총지급액', '공제액', '실지급액', '은행', '계좌']);
+      const dayHeaders = Array.from({length: 31}, (_, i) => `${i + 1}일`);
+      
+      const headers = [
+        '보험구분', '이름', '주민등록번호', '국적코드', '체류자격코드', 
+        '전화(지역)', '전화(국번)', '전화(뒷번호)', '직종코드', 
+        ...dayHeaders, 
+        '근로일수', '일평균근로시간', '보수지급기초일수', '보수총액', '임금총액', 
+        '이직사유코드', '보험료부과구분부호', '보험료부과구분사유', '국세청신고여부', '지급월', 
+        '소득세', '지방소득세', '고용보험료', '3.3%공제', 
+        '인력소지급액', '프리랜서지급액', '은행명', '계좌번호'
+      ];
+      excelRows.push(headers);
       
       Object.values(consolidatedMap).forEach((d: any) => {
           const wData = workerMap[d.workerId] || {};
-          let incomeTax = 0, local = 0, emp = 0, freeDed = 0, realPay = 0;
-          
-          if (d.workerType === 'agency') {
-            const base = d.preTaxAmount - (d.workedDays.length * 150000);
-            incomeTax = base > 0 ? Math.floor(base * 0.027) : 0;
-            if (incomeTax < 1000) incomeTax = 0;
-            local = Math.floor(incomeTax * 0.1);
-            emp = Math.floor(d.preTaxAmount * 0.009);
-            realPay = d.preTaxAmount - incomeTax - local - emp;
-          } else {
-            freeDed = Math.floor(d.preTaxAmount * 0.033);
-            realPay = d.preTaxAmount - freeDed;
+          const residentNumber = wData.rrn || wData.residentNumber || d.rrn || '';
+
+          // 1. 근무일수 및 날짜 매핑
+          const dayCells = Array(31).fill('');
+          let totalDays = 0;
+          if (Array.isArray(d.workedDays)) {
+              totalDays = d.workedDays.length;
+              d.workedDays.forEach((dayVal: any) => {
+                  let dayNum = -1;
+                  if (typeof dayVal === 'string' && dayVal.includes('-')) {
+                      dayNum = parseInt(dayVal.split('-')[2], 10);
+                  } else {
+                      dayNum = Number(dayVal);
+                  }
+                  if (dayNum >= 1 && dayNum <= 31) {
+                      dayCells[dayNum - 1] = '1';
+                  }
+              });
           }
 
+          // 2. 세금 계산
+          let incomeTax = 0;      // 52열 소득세
+          let localTax = 0;       // 53열 지방소득세
+          let empInsurance = 0;   // 54열 고용보험료
+          let freelancerTax = 0;  // 55열 3.3%
+          let finalAgency = 0;    // 56열 인력소 지급액
+          let finalFreelancer = 0;// 57열 프리랜서 지급액
+
+          if (d.workerType === 'agency') {
+              // --- 인력(일용직) 계산 로직 ---
+              
+              // A. 일당 계산 (보수총액 / 근무일수)
+              const dailyWage = totalDays > 0 ? Math.floor(d.preTaxAmount / totalDays) : 0;
+              
+              // B. 소득세: (일당 - 15만) * 2.7%
+              const taxableDaily = Math.max(0, dailyWage - 150000);
+              let dailyTax = Math.floor(taxableDaily * 0.027); // 원단위 절사
+              
+              // [수정] 소액부징수: 일별 세액이 1,000원 미만이면 0원
+              if (dailyTax < 1000) {
+                  dailyTax = 0;
+              }
+
+              // 총 소득세 = 일별 세액 * 근무일수
+              incomeTax = dailyTax * totalDays; 
+
+              // C. 지방소득세: 소득세의 10% (소득세가 0이면 지방세도 0)
+              localTax = Math.floor(incomeTax * 0.1);
+
+              // D. 고용보험료: 보수총액 * 0.9%
+              empInsurance = Math.floor(d.preTaxAmount * 0.009);
+
+              // E. 인력소 지급액 = 보수총액 - (소득세 + 지방세 + 고용보험)
+              finalAgency = d.preTaxAmount - incomeTax - localTax - empInsurance;
+
+          } else {
+              // --- 프리랜서 계산 로직 ---
+              
+              // 프리랜서 3.3% 세금 (공제용)
+              freelancerTax = Math.floor(d.preTaxAmount * 0.033);
+              
+              // 프리랜서 지급액 = 보수총액 - 3.3%
+              finalFreelancer = d.preTaxAmount - freelancerTax;
+
+              // *참고: 프리랜서도 소득세/지방세/고용보험료 칸은 agency와 같은 기준으로 계산해서 '표기'만 할지,
+              // 아니면 프리랜서는 해당 칸을 비워둘지는 기획에 따라 다릅니다.
+              // 현재는 인력소 로직과 섞이지 않게 프리랜서는 해당 칸을 비워두거나 0으로 처리하는 것이 안전합니다.
+              // (요청사항에 "프리랜서도 소득세... 계산되어야 합니다"라고 하셨는데, 
+              //  프리랜서는 보통 3.3%(사업소득세)로 퉁치기 때문에, 52~54열(일용근로소득 기준)을 채우는 건 맞지 않을 수 있습니다.
+              //  하지만 요청대로 계산은 해서 보여주되, 공제는 안 하는 방식으로 구현합니다.)
+              
+              // 프리랜서용 소득세/지방세/고용보험 단순 참고용 계산 (일용직 기준 공식 대입)
+              const dailyWage = totalDays > 0 ? Math.floor(d.preTaxAmount / totalDays) : 0;
+              const taxableDaily = Math.max(0, dailyWage - 150000);
+              let dailyTax = Math.floor(taxableDaily * 0.027);
+              if (dailyTax < 1000) dailyTax = 0;
+              incomeTax = dailyTax * totalDays;
+              localTax = Math.floor(incomeTax * 0.1);
+              empInsurance = Math.floor(d.preTaxAmount * 0.009);
+          }
+
+          const payMonthStr = currentMonth.replace('-', '');
+
           excelRows.push([
-              d.workerName, wData.residentNumber || '', wData.phoneNumber || '', d.siteName,
-              d.preTaxAmount, (incomeTax + local + emp + freeDed), realPay,
-              d.bankName, d.accountNumber
+              '3', 
+              d.workerName, 
+              residentNumber, 
+              '', '', 
+              '', '', '', '706', 
+              ...dayCells, 
+              totalDays, '8', totalDays, d.preTaxAmount, d.preTaxAmount, 
+              '1', '', '', 'Y', payMonthStr, 
+              incomeTax > 0 ? incomeTax : '',     // 52: 소득세
+              localTax > 0 ? localTax : '',       // 53: 지방소득세
+              empInsurance > 0 ? empInsurance : '', // 54: 고용보험료
+              d.workerType !== 'agency' ? freelancerTax : '', // 55: 3.3% (프리랜서만)
+              d.workerType === 'agency' ? finalAgency : '',   // 56: 인력소 지급액
+              d.workerType !== 'agency' ? finalFreelancer : '', // 57: 프리랜서 지급액
+              d.bankName, 
+              d.accountNumber
           ]);
       });
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(excelRows);
-      XLSX.utils.book_append_sheet(wb, ws, "노무비내역");
+      
+      ws['!cols'] = [
+          {wch: 5}, {wch: 10}, {wch: 15}, {wch: 5}, {wch: 5}, 
+          {wch: 5}, {wch: 5}, {wch: 5}, {wch: 8}, 
+          ...Array(31).fill({wch: 3}), 
+          {wch: 8}, {wch: 8}, {wch: 8}, {wch: 12}, {wch: 12}, 
+          {wch: 5}, {wch: 5}, {wch: 5}, {wch: 5}, {wch: 10}, 
+          {wch: 10}, {wch: 10}, {wch: 10}, {wch: 10}, 
+          {wch: 12}, {wch: 12}, {wch: 10}, {wch: 15}
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "노무비신고");
       const blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' });
-      saveAs(blob, `${currentMonth}_노무비내역.xlsx`);
+      saveAs(blob, `${currentMonth}_노무비신고용.xlsx`);
   };
 
   return (
