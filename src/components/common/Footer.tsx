@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
         {/* Bottom Section: Business Info */}
         <div className="ft-bottom-section">
           <div className="ft-biz-info">
-            <h3 className="ft-company-name">(주) 730디자인그룹</h3>
+            <h3 className="ft-company-name">(주)아워프로젝트</h3>
             
             {/* Semantic Definition List for Info */}
             <dl className="ft-info-list">
