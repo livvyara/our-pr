@@ -104,8 +104,21 @@ const AccountingOrderRequestPage: React.FC = () => {
       const reason = prompt("부결 사유를 입력해주세요 (필수):");
       if (!reason) return;
       try {
+          // [수정] 연결된 세금계산서가 있다면 초기화 (현장 귀속 해제)
+          if (req.linkedInvoiceId) {
+              const invoiceRef = doc(db, 'users', currentUid!, 'TAX_PURCHASE', req.linkedInvoiceId);
+              await updateDoc(invoiceRef, {
+                  siteId: null,
+                  category1: null,
+                  category2: null
+              });
+          }
+
+          // [수정] 상태 업데이트 및 연결 ID 제거
           await updateDoc(doc(db, 'users', currentUid!, 'ORDER_REQUESTS', req.id), {
-              status: 'rejected', rejectReason: reason
+              status: 'rejected', 
+              rejectReason: reason,
+              linkedInvoiceId: null // 연결 정보 삭제
           });
           alert("부결 처리되었습니다.");
           fetchRequests(currentUid!);
@@ -116,8 +129,21 @@ const AccountingOrderRequestPage: React.FC = () => {
       if (!isOwner) return alert("대표자만 상태를 초기화할 수 있습니다.");
       if (!confirm("상태를 '승인대기'로 초기화하시겠습니까?")) return;
       try {
+          // [수정] 연결된 세금계산서가 있다면 초기화 (현장 귀속 해제)
+          if (req.linkedInvoiceId) {
+              const invoiceRef = doc(db, 'users', currentUid!, 'TAX_PURCHASE', req.linkedInvoiceId);
+              await updateDoc(invoiceRef, {
+                  siteId: null,
+                  category1: null,
+                  category2: null
+              });
+          }
+
+          // [수정] 상태 업데이트 및 연결 ID 제거
           await updateDoc(doc(db, 'users', currentUid!, 'ORDER_REQUESTS', req.id), {
-              status: 'pending', rejectReason: null 
+              status: 'pending', 
+              rejectReason: null,
+              linkedInvoiceId: null // 연결 정보 삭제
           });
           alert("초기화되었습니다.");
           fetchRequests(currentUid!);
@@ -274,7 +300,7 @@ const AccountingOrderRequestPage: React.FC = () => {
                                  <td style={{textAlign:'center'}}>{req.requesterName}</td>
                                  <td style={{textAlign:'center'}}>
                                      <span className={`order-request-type-tag ${req.type === 'tax_invoice' ? 'tax' : 'online'}`}>
-                                        {req.type === 'tax_invoice' ? '세금계산서' : '인터넷구매'}
+                                         {req.type === 'tax_invoice' ? '세금계산서' : '인터넷구매'}
                                      </span>
                                  </td>
                                  <td>
@@ -323,9 +349,15 @@ const AccountingOrderRequestPage: React.FC = () => {
                                          {req.status === 'pending_payment' && (
                                              <>
                                                  {req.type === 'tax_invoice' && (
-                                                     <button className={`order-request-btn-mini link ${req.linkedInvoiceId ? 'active' : ''}`} onClick={() => setLinkTargetRequest(req)}>
-                                                         {req.linkedInvoiceId ? '연결됨' : '연결'}
-                                                     </button>
+                                                     <>
+                                                         {/* [수정] 연결되지 않은 상태에서도 부결 가능하도록 버튼 추가 */}
+                                                         {!req.linkedInvoiceId && (
+                                                             <button className="order-request-btn-mini reject" onClick={() => handleReject(req)}>부결</button>
+                                                         )}
+                                                         <button className={`order-request-btn-mini link ${req.linkedInvoiceId ? 'active' : ''}`} onClick={() => setLinkTargetRequest(req)}>
+                                                             {req.linkedInvoiceId ? '연결됨' : '연결'}
+                                                         </button>
+                                                     </>
                                                  )}
                                                  <button className="order-request-btn-mini complete" onClick={() => handleApprove(req)}>최종 완료</button>
                                              </>

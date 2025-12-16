@@ -50,19 +50,19 @@ const Footer: React.FC = () => {
             <dl className="ft-info-list">
               <div className="ft-info-item">
                 <dt>대표이사</dt>
-                <dd>백진교</dd>
+                <dd>홍길동</dd>
               </div>
               <div className="ft-info-item">
                 <dt>사업자등록번호</dt>
-                <dd>250-86-03528</dd>
+                <dd>000-00-00000</dd>
               </div>
               <div className="ft-info-item full-width">
                 <dt>주소</dt>
-                <dd>광주광역시 광산구 장덕동 1639번지 센터빌딩 4층</dd>
+                <dd>서울특별시 강남구 00000000</dd>
               </div>
               <div className="ft-info-item full-width">
                 <dt>Beta 개발 담당</dt>
-                <dd className="ft-contact-value">백진교 이사 (010-8173-0730)</dd>
+                <dd className="ft-contact-value">000-0000-0000</dd>
               </div>
             </dl>
           </div>
