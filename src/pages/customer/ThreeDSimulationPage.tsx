@@ -1,486 +1,472 @@
-import React, { useState, useEffect, Suspense, useRef } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { 
     OrbitControls, Grid, ContactShadows, Environment, Sky, 
-    TransformControls, Html, useCursor, Text 
+    TransformControls, Line 
 } from '@react-three/drei';
 import * as THREE from 'three';
 
-import Header from '../../components/common/Header';
-import SubNav from '../../components/common/SubNav';
-import MobileMenu from '../../components/common/MobileMenu'; 
-import Footer from '../../components/common/Footer';
-import RoleHeader from '../../components/common/RoleHeader';
+// 필요한 아이콘 및 컴포넌트
+import MobileMenu from '../../components/common/MobileMenu';
 import { useMenu } from '../../contexts/MenuContext';
 
+// 마이프로젝트 페이지와 동일한 스타일 사용 (CSS 클래스명 mp-header 등 활용)
 import './ThreeDSimulationPage.css'; 
 
-type ItemType = 'floor' | 'wall' | 'window' | 'furniture' | 'text';
+// --- [SVG Icons] ---
+const Icons = {
+    Select: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>,
+    Line: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="20" x2="20" y2="4"/><circle cx="4" cy="20" r="2"/><circle cx="20" cy="4" r="2"/></svg>,
+    Rect: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>,
+    Circle: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /></svg>,
+    PushPull: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M4 15h16v6H4z"/></svg>,
+    Eraser: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2l4 4-10 10H7v-5L18 2z"/><path d="M3 22h18"/></svg>,
+    Paint: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 12l10 10 10-10L12 2zm0 4v12"/></svg>,
+    Tape: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h20"/><path d="M2 8v8"/><path d="M22 8v8"/></svg>,
+    Rotate: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>,
+    Group: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>,
+    FullScreen: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>,
+    ExitFull: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3H5m11 0h3V3m0 18v-3h3M5 21v-3h3"/></svg>
+};
+
+type ToolType = 'select' | 'line' | 'rect' | 'circle' | 'pushpull' | 'eraser' | 'paint' | 'tape' | 'rotate' | 'group';
 
 interface SceneItem {
     id: string;
-    type: ItemType;
-    subType?: string;
-    name: string;
-    position: [number, number, number];
-    rotation: [number, number, number];
-    scale: [number, number, number];
-    size: [number, number, number]; 
+    type: 'face' | 'edge' | 'group' | 'guide';
+    name?: string;
+    geometryType?: 'plane' | 'box' | 'cylinder'; 
+    points?: THREE.Vector3[]; 
+    position?: [number, number, number];
+    rotation?: [number, number, number];
+    scale?: [number, number, number];
     color: string;
-    textData?: string;
+    selected?: boolean;
+    edgeIds?: string[]; 
+    faceIds?: string[]; 
+    groupIds?: string[]; 
+    parentId?: string | null;
 }
 
-const ObjectDimensions = ({ scale, type }: { scale: [number, number, number], type: ItemType }) => {
-    const [w, h, d] = scale; 
-    const safeW = w || 0.001;
-    const safeH = h || 0.001;
-    const safeD = d || 0.001;
+// 1. VCB Component
+const ValueControlBox = ({ value, label }: { value: string, label: string }) => (
+    <div className={`td-vcb ${value ? 'active' : ''}`}>
+        <div className="td-vcb-label">{label}</div>
+        <div className="td-vcb-input">{value}</div>
+    </div>
+);
 
-    // 스케일 역보정 (물체 크기가 변해도 텍스트 크기 유지)
-    const invScale: [number, number, number] = [1/safeW, 1/safeH, 1/safeD];
-    
-    const fontSize = 0.25; 
-    const color = "black";
-    const outlineColor = "white";
-    const outlineWidth = 0.03;
-    const offset = 0.3; // 텍스트와 물체 간격
+// 2. Toolbar Component
+const Toolbar = ({ activeTool, setTool, onGroup }: { activeTool: ToolType, setTool: (t: ToolType) => void, onGroup: ()=>void }) => (
+    <div className="td-toolbar-pc">
+        <div className="td-tool-section">
+            <button className={activeTool==='select'?'active':''} onClick={()=>setTool('select')} title="선택 (Space)"><Icons.Select/></button>
+            <button className={activeTool==='eraser'?'active':''} onClick={()=>setTool('eraser')} title="지우개 (E)"><Icons.Eraser/></button>
+            <button className={activeTool==='paint'?'active':''} onClick={()=>setTool('paint')} title="페인트 (B)"><Icons.Paint/></button>
+        </div>
+        <div className="td-divider-h" />
+        <div className="td-tool-section">
+            <button className={activeTool==='line'?'active':''} onClick={()=>setTool('line')} title="선 (L)"><Icons.Line/></button>
+            <button className={activeTool==='rect'?'active':''} onClick={()=>setTool('rect')} title="직사각형 (R)"><Icons.Rect/></button>
+            <button className={activeTool==='circle'?'active':''} onClick={()=>setTool('circle')} title="원 (C)"><Icons.Circle/></button>
+        </div>
+        <div className="td-divider-h" />
+        <div className="td-tool-section">
+            <button className={activeTool==='pushpull'?'active':''} onClick={()=>setTool('pushpull')} title="밀기/끌기 (P)"><Icons.PushPull/></button>
+            <button className={activeTool==='rotate'?'active':''} onClick={()=>setTool('rotate')} title="회전 (Q)"><Icons.Rotate/></button>
+            <button onClick={onGroup} title="그룹 만들기 (G)"><Icons.Group/></button>
+        </div>
+    </div>
+);
 
-    // 1. 바닥 (Floor) - 눕혀진 상태
-    // 로컬 좌표계: X=가로, Y=세로(깊이), Z=두께
-    if (type === 'floor') {
-        const floorInvScale: [number, number, number] = [1/safeW, 1/safeD, 1/safeH];
-        return (
-            <group>
-                     {/* 가로 길이 (위쪽 변 바깥) */}
-                     <Text 
-                        position={[0, (safeD/2)/safeD + offset*floorInvScale[1], 0.2*floorInvScale[2]]} 
-                        rotation={[-Math.PI/2, 0, 0]}
-                        scale={floorInvScale}
-                        fontSize={fontSize} color={color} 
-                        outlineColor={outlineColor} outlineWidth={outlineWidth}
-                        anchorY="bottom"
-                    >
-                        {w.toFixed(1)}m
-                    </Text>
-                    {/* 세로 길이 (오른쪽 변 바깥) */}
-                    <Text 
-                        position={[(safeW/2)/safeW + offset*floorInvScale[0], 0, 0.2*floorInvScale[2]]} 
-                        rotation={[-Math.PI/2, 0, -Math.PI/2]} 
-                        scale={floorInvScale}
-                        fontSize={fontSize} color={color} 
-                        outlineColor={outlineColor} outlineWidth={outlineWidth}
-                        anchorY="bottom"
-                    >
-                        {d.toFixed(1)}m
-                    </Text>
-            </group>
-        );
-    }
-
-    // 2. 벽/가구 (Wall/Furniture)
-    // 로컬 좌표계: X=가로, Y=높이, Z=깊이
-    return (
-        <group>
-            {/* 가로 (Width) - 물체의 뒤쪽 가장자리 위로 이동 */}
-            <Text 
-                position={[0, (safeH/2)/safeH + offset*invScale[1], -(safeD/2)/safeD]} 
-                scale={invScale}
-                fontSize={fontSize} color={color} outlineColor={outlineColor} outlineWidth={outlineWidth}
-                anchorY="bottom"
-            >
-                W: {w.toFixed(1)}m
-            </Text>
-            
-            {/* 높이 (Height) - 물체의 오른쪽 가장자리 옆 */}
-            <Text 
-                position={[(safeW/2)/safeW + offset*invScale[0], 0, 0]} 
-                scale={invScale}
-                fontSize={fontSize} color={color} outlineColor={outlineColor} outlineWidth={outlineWidth}
-                anchorX="left"
-            >
-                H: {h.toFixed(1)}m
-            </Text>
-            
-            {/* 깊이 (Depth) - 물체의 앞쪽 바닥 (기존 유지) */}
-            {type !== 'window' && (
-                <Text 
-                    position={[0, -(safeH/2)/safeH, (safeD/2)/safeD + offset*invScale[2]]} 
-                    rotation={[-Math.PI/2, 0, 0]}
-                    scale={invScale}
-                    fontSize={fontSize * 0.8} color={color} outlineColor={outlineColor} outlineWidth={outlineWidth}
-                    anchorY="top"
-                >
-                    D: {d.toFixed(1)}m
-                </Text>
-            )}
-        </group>
-    );
-};
-
-const DraggableItem = ({ 
-    item, isSelected, onSelect, onTransform, controlMode, showWallDims, showFloorDims 
+// 3. Scene Controller
+const SceneController = ({ 
+    tool, items, setItems, vcbInput, setVcbValue, setVcbLabel, onCommit, isFullScreen
 }: { 
-    item: SceneItem, isSelected: boolean, onSelect: () => void, onTransform: (newProps: any) => void,
-    controlMode: 'translate' | 'rotate' | 'scale', showWallDims: boolean, showFloorDims: boolean
+    tool: ToolType, items: SceneItem[], setItems: React.Dispatch<React.SetStateAction<SceneItem[]>>,
+    vcbInput: string, setVcbValue: (v: string) => void, setVcbLabel: (l: string) => void, onCommit: boolean,
+    isFullScreen: boolean 
 }) => {
-    const [sceneObject, setSceneObject] = useState<THREE.Group | null>(null);
-    const [hovered, setHover] = useState(false);
-    useCursor(hovered);
+    const { camera, raycaster, pointer, gl, scene } = useThree();
+    const [drawingState, setDrawingState] = useState<'idle' | 'drawing' | 'pushing'>('idle');
+    const [startPoint, setStartPoint] = useState<THREE.Vector3 | null>(null);
+    const [tempPoints, setTempPoints] = useState<THREE.Vector3[] | null>(null);
+    const [pushTarget, setPushTarget] = useState<SceneItem | null>(null);
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-    const shouldShowDim = isSelected || (item.type === 'wall' && showWallDims) || (item.type === 'floor' && showFloorDims);
+    const planeIntersect = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-    const handleTransformEnd = () => {
-        if (sceneObject) {
-            const o = sceneObject;
-            onTransform({
-                position: [o.position.x, o.position.y, o.position.z],
-                rotation: [o.rotation.x, o.rotation.y, o.rotation.z],
-                scale: [o.scale.x, o.scale.y, o.scale.z]
-            });
+    useEffect(() => {
+        const canvas = gl.domElement;
+        if (tool === 'select') canvas.style.cursor = 'default';
+        else if (tool === 'pushpull') canvas.style.cursor = hoveredId ? 'ns-resize' : 'default';
+        else if (tool === 'rotate') canvas.style.cursor = 'alias';
+        else if (tool === 'eraser') canvas.style.cursor = 'not-allowed';
+        else canvas.style.cursor = 'crosshair';
+    }, [tool, hoveredId, gl]);
+
+    useEffect(() => {
+        const labels: Record<string, string> = {
+            select: '선택', rect: '치수 (가로, 세로)', circle: '반경', 
+            pushpull: '거리 (+/-)', eraser: '삭제', line: '길이', 
+            paint: '색상', rotate: '각도', group: '그룹'
+        };
+        setVcbLabel(labels[tool] || '');
+    }, [tool, setVcbLabel]);
+
+    const getSnapPoint = useCallback((targetPlane: THREE.Plane = planeIntersect) => {
+        raycaster.setFromCamera(pointer, camera);
+        const target = new THREE.Vector3();
+        raycaster.ray.intersectPlane(targetPlane, target);
+        if (target) {
+            target.x = Math.round(target.x * 10) / 10;
+            target.z = Math.round(target.z * 10) / 10;
+            if(Math.abs(targetPlane.normal.y) > 0.9) target.y = Math.round(target.y * 10) / 10;
+        }
+        return target;
+    }, [pointer, camera, raycaster]);
+
+    const createRect = (p1: THREE.Vector3, p2: THREE.Vector3) => {
+        const idBase = Date.now().toString();
+        const c1 = new THREE.Vector3(Math.min(p1.x, p2.x), 0, Math.min(p1.z, p2.z));
+        const c2 = new THREE.Vector3(Math.max(p1.x, p2.x), 0, Math.min(p1.z, p2.z));
+        const c3 = new THREE.Vector3(Math.max(p1.x, p2.x), 0, Math.max(p1.z, p2.z));
+        const c4 = new THREE.Vector3(Math.min(p1.x, p2.x), 0, Math.max(p1.z, p2.z));
+
+        const edge1: SceneItem = { id: idBase + '_e1', type: 'edge', points: [c1, c2], color: 'black' };
+        const edge2: SceneItem = { id: idBase + '_e2', type: 'edge', points: [c2, c3], color: 'black' };
+        const edge3: SceneItem = { id: idBase + '_e3', type: 'edge', points: [c3, c4], color: 'black' };
+        const edge4: SceneItem = { id: idBase + '_e4', type: 'edge', points: [c4, c1], color: 'black' };
+
+        const center = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+        const width = Math.abs(p1.x - p2.x);
+        const depth = Math.abs(p1.z - p2.z);
+
+        const face: SceneItem = {
+            id: idBase + '_f', type: 'face', geometryType: 'plane',
+            position: [center.x, 0, center.z], rotation: [-Math.PI/2, 0, 0], scale: [width, depth, 1],
+            color: 'white', edgeIds: [edge1.id, edge2.id, edge3.id, edge4.id]
+        };
+
+        return [edge1, edge2, edge3, edge4, face];
+    };
+
+    const updatePreview = useCallback(() => {
+        if (drawingState === 'idle' || !startPoint) return;
+        const currentPoint = getSnapPoint();
+        if (!currentPoint) return;
+
+        if (tool === 'rect') {
+            let p2 = currentPoint;
+            if (vcbInput) {
+                const parts = vcbInput.split(',').map(s => parseFloat(s.trim()));
+                if (!isNaN(parts[0])) {
+                    const w = parts[0]/1000;
+                    const h = parts.length > 1 ? parts[1]/1000 : w;
+                    p2 = new THREE.Vector3(startPoint.x + w, 0, startPoint.z + h);
+                }
+            }
+            const w = p2.x - startPoint.x;
+            const d = p2.z - startPoint.z;
+            setVcbValue(`${(Math.abs(w)*1000).toFixed(0)}, ${(Math.abs(d)*1000).toFixed(0)}`);
+            setTempPoints([
+                startPoint, new THREE.Vector3(startPoint.x + w, 0, startPoint.z),
+                p2, new THREE.Vector3(startPoint.x, 0, startPoint.z + d), startPoint
+            ]);
+        }
+        else if (tool === 'line') {
+            let p2 = currentPoint;
+            if(vcbInput && !isNaN(parseFloat(vcbInput))) {
+                const dist = parseFloat(vcbInput) / 1000;
+                const dir = new THREE.Vector3().subVectors(currentPoint, startPoint).normalize();
+                p2 = new THREE.Vector3().copy(startPoint).add(dir.multiplyScalar(dist));
+            }
+            setVcbValue(`${(startPoint.distanceTo(p2)*1000).toFixed(0)}`);
+            setTempPoints([startPoint, p2]);
+        }
+    }, [drawingState, startPoint, tool, vcbInput, getSnapPoint, setVcbValue]);
+
+    const commitAction = useCallback(() => {
+        if (drawingState === 'drawing' && startPoint && tempPoints) {
+            if (tool === 'rect') {
+                const newItems = createRect(startPoint, tempPoints[2]);
+                setItems(prev => [...prev, ...newItems]);
+            } else if (tool === 'line') {
+                const newItem: SceneItem = {
+                    id: Date.now().toString(), type: 'edge', points: [startPoint, tempPoints[1]], color: 'black'
+                };
+                setItems(prev => [...prev, newItem]);
+            }
+            setTempPoints(null);
+            setStartPoint(null);
+            setDrawingState('idle');
+            setVcbValue('');
+        }
+        
+        if (tool === 'pushpull' && vcbInput && pushTarget) {
+            const dist = parseFloat(vcbInput) / 1000;
+            if (pushTarget.geometryType === 'plane') {
+                const newPos: [number, number, number] = [pushTarget.position![0], dist/2, pushTarget.position![2]];
+                const newScale: [number, number, number] = [pushTarget.scale![0], dist, pushTarget.scale![1]];
+                const newItem: SceneItem = {
+                    ...pushTarget, geometryType: 'box', type: 'face',
+                    position: newPos,
+                    scale: newScale,
+                    rotation: [0,0,0], color: '#eeeeee'
+                };
+                setItems(prev => prev.map(i => i.id === pushTarget.id ? newItem : i));
+            } else if (pushTarget.geometryType === 'box') {
+                const newH = pushTarget.scale![1] + dist;
+                const newPos: [number, number, number] = [pushTarget.position![0], newH/2, pushTarget.position![2]];
+                const newScale: [number, number, number] = [pushTarget.scale![0], newH, pushTarget.scale![2]];
+                const newItem: SceneItem = { ...pushTarget, scale: newScale, position: newPos }; 
+                setItems(prev => prev.map(i => i.id === pushTarget.id ? newItem : i));
+            }
+            setVcbValue('');
+        }
+    }, [drawingState, startPoint, tempPoints, tool, setItems, vcbInput, pushTarget]);
+
+    useEffect(() => {
+        if (drawingState === 'drawing') updatePreview();
+    }, [pointer, drawingState, updatePreview]);
+
+    useEffect(() => {
+        if (onCommit) commitAction();
+    }, [onCommit, commitAction]);
+
+    const handlePointerDown = (e: any) => {
+        if (tool === 'select' || tool === 'eraser' || tool === 'paint' || tool === 'rotate') return;
+        e.stopPropagation();
+        
+        if (drawingState === 'idle') {
+            const point = getSnapPoint();
+            if (point) {
+                setStartPoint(point);
+                setDrawingState('drawing');
+            }
+        } else if (drawingState === 'drawing') {
+            commitAction();
         }
     };
 
-    if (item.type === 'text') {
-        return (
-            <>
-                {isSelected && sceneObject && (
-                    <TransformControls object={sceneObject} mode={controlMode} onMouseUp={handleTransformEnd} translationSnap={0.1} />
-                )}
-                <group 
-                    ref={setSceneObject}
-                    position={item.position} rotation={new THREE.Euler(...item.rotation)} scale={item.scale}
-                    onClick={(e) => { e.stopPropagation(); onSelect(); }}
-                    onPointerOver={() => setHover(true)} onPointerOut={() => setHover(false)}
-                >
-                    <Text color={item.color} fontSize={0.5} anchorX="center" anchorY="middle" outlineWidth={0.02} outlineColor="white">
-                        {item.textData || "텍스트"}
-                    </Text>
-                    <mesh visible={false}><planeGeometry args={[item.name.length * 0.5, 0.5]} /></mesh>
-                </group>
-            </>
-        );
-    }
-
-    let geometry;
-    let materialProps: any = { color: item.color };
-
-    if (item.type === 'floor') {
-        geometry = <boxGeometry args={[1, 0.05, 1]} />; 
-        materialProps = { color: item.color, roughness: 0.8 };
-    } else if (item.type === 'window') {
-        geometry = <boxGeometry args={[1, 1, 0.2]} />;
-        materialProps = { color: '#aaddff', transparent: true, opacity: 0.5, roughness: 0, metalness: 0.2 };
-    } else {
-        geometry = <boxGeometry args={[1, 1, 1]} />;
-        materialProps = { color: item.color };
-    }
+    const handleObjectClick = (e: any, item: SceneItem) => {
+        e.stopPropagation();
+        if (tool === 'select') {
+            const multi = e.shiftKey;
+            setItems(prev => prev.map(i => {
+                if (i.id === item.id) return { ...i, selected: !i.selected }; 
+                return multi ? i : { ...i, selected: false }; 
+            }));
+        } else if (tool === 'eraser') {
+            setItems(prev => {
+                let toDelete = [item.id];
+                if (item.type === 'edge') {
+                    const connectedFaces = prev.filter(f => f.type === 'face' && f.edgeIds?.includes(item.id));
+                    toDelete.push(...connectedFaces.map(f => f.id));
+                }
+                return prev.filter(i => !toDelete.includes(i.id));
+            });
+        } else if (tool === 'pushpull') {
+            setPushTarget(item);
+            if (vcbInput) commitAction();
+        } else if (tool === 'paint') {
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, color: '#e57373' } : i)); 
+        }
+    };
 
     return (
         <>
-            {isSelected && sceneObject && (
-                <TransformControls 
-                    object={sceneObject}
-                    mode={controlMode}
-                    translationSnap={0.1}
-                    rotationSnap={Math.PI / 24}
-                    onMouseUp={handleTransformEnd} 
-                />
+            <mesh visible={false} onPointerDown={handlePointerDown} position={[0, -0.01, 0]} rotation={[-Math.PI/2, 0, 0]}>
+                <planeGeometry args={[100, 100]} />
+            </mesh>
+
+            {items.map(item => (
+                <group key={item.id}>
+                    {item.type === 'face' && item.geometryType === 'plane' && item.position && item.rotation && item.scale && (
+                        <mesh position={new THREE.Vector3(...item.position)} rotation={new THREE.Euler(...item.rotation)} scale={new THREE.Vector3(...item.scale)}
+                            onClick={(e) => handleObjectClick(e, item)} onPointerOver={()=>setHoveredId(item.id)} onPointerOut={()=>setHoveredId(null)}>
+                            <planeGeometry />
+                            <meshStandardMaterial color={item.selected ? '#81d4fa' : item.color} side={THREE.DoubleSide} />
+                        </mesh>
+                    )}
+                    {item.type === 'face' && item.geometryType === 'box' && item.position && item.rotation && item.scale && (
+                        <mesh position={new THREE.Vector3(...item.position)} rotation={new THREE.Euler(...item.rotation)} scale={new THREE.Vector3(...item.scale)} castShadow receiveShadow
+                            onClick={(e) => handleObjectClick(e, item)} onPointerOver={()=>setHoveredId(item.id)} onPointerOut={()=>setHoveredId(null)}>
+                            <boxGeometry />
+                            <meshStandardMaterial color={item.selected ? '#81d4fa' : item.color} />
+                        </mesh>
+                    )}
+                    {item.type === 'edge' && item.points && (
+                        <Line points={item.points} color={item.selected ? 'blue' : 'black'} lineWidth={3} onClick={(e: any) => handleObjectClick(e, item)} onPointerOver={()=>setHoveredId(item.id)} onPointerOut={()=>setHoveredId(null)} />
+                    )}
+                </group>
+            ))}
+
+            {tempPoints && <Line points={tempPoints} color="red" lineWidth={2} dashed />}
+            
+            {tool === 'rotate' && items.find(i => i.selected) && (
+                <TransformControls object={scene.getObjectByProperty('uuid', items.find(i => i.selected)?.id)} mode="rotate" />
             )}
-
-            <group 
-                ref={setSceneObject} 
-                position={item.position} 
-                rotation={new THREE.Euler(...item.rotation)} 
-                scale={item.scale}
-                onClick={(e) => { e.stopPropagation(); onSelect(); }}
-                onPointerOver={() => setHover(true)}
-                onPointerOut={() => setHover(false)}
-            >
-                <mesh castShadow={item.type !== 'window'} receiveShadow>
-                    {geometry}
-                    <meshStandardMaterial {...materialProps} />
-                </mesh>
-
-                {['furniture'].includes(item.type) && (isSelected || hovered) && (
-                    <Html position={[0, 0.8, 0]} center distanceFactor={10} style={{pointerEvents:'none'}}>
-                        <div className={`td-page-item-label ${isSelected ? 'selected' : ''}`}>{item.name}</div>
-                    </Html>
-                )}
-
-                {shouldShowDim && (
-                    <ObjectDimensions scale={item.scale} type={item.type} />
-                )}
-            </group>
         </>
     );
 };
 
 const ThreeDSimulationPage: React.FC = () => {
     const navigate = useNavigate();
-    const { mainMenus, isLoading: isMenuLoading } = useMenu();
-    const [selectedMenu, setSelectedMenu] = useState('lounge');
+    const { mainMenus } = useMenu();
     
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [isFullScreen, setIsFullScreen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
+    const [isPageLoaded, setIsPageLoaded] = useState(false); // 마이프로젝트 페이지의 로딩 효과 적용
+    
+    const [activeTool, setActiveTool] = useState<ToolType>('select');
+    const [vcbInput, setVcbInput] = useState('');
+    const [vcbLabel, setVcbLabel] = useState('Select');
+    const [commitTrigger, setCommitTrigger] = useState(false);
 
     const [items, setItems] = useState<SceneItem[]>([]);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [controlMode, setControlMode] = useState<'translate' | 'rotate' | 'scale'>('translate');
-
-    const [showWallDims, setShowWallDims] = useState(true);
-    const [showFloorDims, setShowFloorDims] = useState(true); 
     
-    const [newText, setNewText] = useState('Hello');
-    const [textColor, setTextColor] = useState('#000000');
-    
-    // 모바일 전용: 어떤 사이드바가 열려 있는지 (left: 구조물/추가, right: 편집/속성)
-    const [mobileSidebarOpen, setMobileSidebarOpen] = useState<'left' | 'right' | null>(null);
+    const toggleFullScreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            setIsFullScreen(true);
+        } else {
+            document.exitFullscreen();
+            setIsFullScreen(false);
+        }
+    };
 
     useEffect(() => {
-      if (!isMenuLoading && mainMenus.length > 0) {
-          const hasLounge = mainMenus.find(m => m.key === 'lounge');
-          if (hasLounge) setSelectedMenu('lounge');
-      }
-    }, [isMenuLoading, mainMenus]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            const isCurrentlyMobile = window.innerWidth < 768;
-            setIsMobile(isCurrentlyMobile);
-            // 모바일에서 PC로 전환 시, 사이드바 닫기
-            if (!isCurrentlyMobile) setMobileSidebarOpen(null); 
-        };
+        requestAnimationFrame(() => setIsPageLoaded(true));
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
         window.addEventListener('resize', handleResize);
         
-        setItems(prev => {
-            if (prev.length === 0) {
-               const floorId = Date.now().toString();
-               return [{
-                   id: floorId, type: 'floor', subType: 'default', name: '기본 바닥',
-                   position: [0, -0.025, 0], rotation: [0,0,0], scale: [5, 1, 5], size: [1,1,1], color: '#eeeeee'
-               }];
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key.toLowerCase() === 'g' && !vcbInput) {
+                handleGroup();
+                return;
             }
-            return prev;
-        });
-        
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
-    const addItem = (type: ItemType, subType: string = 'default') => {
-        const id = Date.now().toString();
-        let newItem: SceneItem = {
-            id, type, subType, name: '', 
-            position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1], size: [1, 1, 1], color: '#ffffff'
+            if (!vcbInput && !/[0-9\-]/.test(e.key)) {
+                switch(e.key.toLowerCase()) {
+                    case ' ': setActiveTool('select'); break;
+                    case 'r': setActiveTool('rect'); break;
+                    case 'l': setActiveTool('line'); break;
+                    case 'c': setActiveTool('circle'); break;
+                    case 'p': setActiveTool('pushpull'); break;
+                    case 'e': setActiveTool('eraser'); break;
+                    case 'b': setActiveTool('paint'); break;
+                    case 't': setActiveTool('tape'); break;
+                    case 'q': setActiveTool('rotate'); break;
+                }
+            }
+
+            if (/^[0-9.,\-]$/.test(e.key)) setVcbInput(prev => prev + e.key);
+            if (e.key === 'Backspace') setVcbInput(prev => prev.slice(0, -1));
+            if (e.key === 'Enter') {
+                setCommitTrigger(prev => !prev);
+                setTimeout(() => setVcbInput(''), 100);
+            }
+            if (e.key === 'Escape') {
+                setVcbInput('');
+                setActiveTool('select');
+            }
         };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [vcbInput, items]);
 
-        if (type === 'floor') {
-            newItem = { ...newItem, name: '추가 바닥', position: [2, -0.02, 2], scale: [3, 1, 3], color: '#e0e0e0' };
-        } else if (type === 'wall') {
-            newItem = { ...newItem, name: '벽', position: [0, 1.2, 0], scale: [3, 2.4, 0.2], color: '#cfd8dc' };
-        } else if (type === 'window') {
-            newItem = { ...newItem, name: '창문', position: [0, 1.5, 0], scale: [1.2, 1.2, 0.3], color: '#aaddff' };
-        } else if (type === 'text') {
-            newItem = { ...newItem, name: '텍스트', textData: newText, position: [0, 1.5, 0], scale: [1, 1, 1], color: textColor };
-        } else if (type === 'furniture') {
-            switch(subType) {
-                case 'bed': newItem = { ...newItem, name: '침대', position:[0, 0.25, 0], scale:[1.6, 0.5, 2.0], color:'#5c6bc0' }; break;
-                case 'sofa': newItem = { ...newItem, name: '소파', position:[0, 0.4, 0], scale:[2.0, 0.8, 0.8], color:'#8d6e63' }; break;
-                case 'table': newItem = { ...newItem, name: '식탁', position:[0, 0.4, 0], scale:[1.4, 0.8, 0.8], color:'#ffcc80' }; break;
-                case 'wardrobe': newItem = { ...newItem, name: '옷장', position:[0, 1.0, 0], scale:[1.0, 2.0, 0.6], color:'#81c784' }; break;
-            }
-        }
-        setItems(prev => [...prev, newItem]);
-        setSelectedId(id);
-        setControlMode('translate'); 
-        if (isMobile) setMobileSidebarOpen(null); // 모바일에서 아이템 추가 후 사이드바 닫기
+    const handleGroup = () => {
+        const selected = items.filter(i => i.selected);
+        if (selected.length < 2) return;
+        
+        const groupId = Date.now().toString() + '_grp';
+        const groupItem: SceneItem = {
+            id: groupId, type: 'group', name: 'Group', color: '',
+            groupIds: selected.map(i => i.id)
+        };
+        
+        const newItems = items.map(i => selected.find(s => s.id === i.id) ? { ...i, selected: false, parentId: groupId } : i);
+        setItems([...newItems, groupItem]); 
     };
-
-    const handleTransform = (newProps: any) => {
-        if (!selectedId) return;
-        setItems(prev => prev.map(item => item.id === selectedId ? { ...item, ...newProps } : item));
-    };
-
-    const updateSelectedItem = (key: string, value: any) => {
-        if(!selectedId) return;
-        setItems(prev => prev.map(item => {
-            if(item.id !== selectedId) return item;
-            if (key === 'color') return { ...item, color: value };
-            if (key === 'textData') return { ...item, textData: value };
-            if (['sx','sy','sz'].includes(key)) {
-                const newScale = [...item.scale] as [number, number, number];
-                if(key==='sx') newScale[0] = value;
-                if(key==='sy') newScale[1] = value;
-                if(key==='sz') newScale[2] = value;
-                return { ...item, scale: newScale };
-            }
-            if (key === 'rotY') {
-                return { ...item, rotation: [item.rotation[0], value * (Math.PI/180), item.rotation[2]] };
-            }
-            return item;
-        }));
-    };
-
-    const deleteSelected = () => {
-        if(!selectedId) return;
-        if(window.confirm("선택한 항목을 삭제하시겠습니까?")) {
-            setItems(prev => prev.filter(f => f.id !== selectedId));
-            setSelectedId(null);
-            if (isMobile) setMobileSidebarOpen(null); // 모바일에서 삭제 후 사이드바 닫기
-        }
-    };
-
-    const handleModeChange = (mode: 'translate' | 'rotate' | 'scale') => {
-        setControlMode(mode);
-    };
-
-    const handleScreenshot = () => {
-        const canvas = document.querySelector('canvas');
-        if (canvas) {
-            const link = document.createElement('a');
-            link.download = 'my-interior-design.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-    };
-
-    const selectedItem = items.find(f => f.id === selectedId);
 
     return (
-      <div className="page-container">
-        <main className="td-page-main">
-          <div className="td-page-container">
-              <div className="td-page-header">
-                  <h2>3D 셀프 인테리어</h2>
-                  <p>바닥과 벽을 세우고 가구를 배치하여 나만의 공간을 만들어보세요.</p>
-              </div>
-
-              <div className="td-page-editor-wrapper">
-                
-                {/* 모바일 툴바 (추가/편집 토글) */}
-                {isMobile && (
-                    <div className="td-page-mobile-toolbar">
-                        <button 
-                            className={`td-page-btn-mobile-open ${mobileSidebarOpen === 'left' ? 'active' : ''}`}
-                            onClick={() => setMobileSidebarOpen(mobileSidebarOpen === 'left' ? null : 'left')}
-                        >
-                            🏗️ 추가/배치
-                        </button>
-                        <button 
-                            className={`td-page-btn-mobile-open ${mobileSidebarOpen === 'right' ? 'active' : ''}`}
-                            onClick={() => setMobileSidebarOpen(mobileSidebarOpen === 'right' ? null : 'right')}
-                        >
-                            ⚙️ 편집/속성
+        // [중요] mp-page, mp-header 등 마이프로젝트 페이지의 클래스를 그대로 차용하여 레이아웃 구성
+        <div className={`mp-page ${isFullScreen ? 'fullscreen' : ''}`} style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+            
+            {/* 전체화면이 아닐 때만 헤더 표시 */}
+            {!isFullScreen && (
+                <header className="mp-header" style={{ flexShrink: 0 }}>
+                    <div className={`mp-title-wrap ${isPageLoaded ? 'in-view' : ''}`}>
+                        <h2 className="mp-title">3D 시뮬레이터</h2>
+                        <div className="mp-title-underline"></div>
+                    </div>
+                    <p className={`mp-subtitle ${isPageLoaded ? 'in-view' : ''}`}>
+                        상상하는 공간을 직접 설계하고 체험해보세요.
+                    </p>
+                </header>
+            )}
+            
+            {/* 3D 툴 영역 (꽉 차게 설정) */}
+            <div className="td-container" style={{ flex: 1, padding: isFullScreen ? 0 : '0 20px', marginBottom: isFullScreen ? 0 : '20px', marginTop: 0 }}>
+                <div className="td-workspace" style={{ height: '100%' }}>
+                    <div className="td-canvas-header">
+                        <button className="td-fs-btn" onClick={toggleFullScreen}>
+                            {isFullScreen ? <Icons.ExitFull /> : <Icons.FullScreen />}
                         </button>
                     </div>
-                )}
 
+                    {(!isMobile || (isMobile && isFullScreen)) && (
+                        <Toolbar activeTool={activeTool} setTool={setActiveTool} onGroup={handleGroup} />
+                    )}
 
-                  {/* 좌측 사이드바 (구조물/가구 추가) */}
-                  <div className={`td-page-sidebar left ${isMobile && mobileSidebarOpen !== 'left' ? 'hidden' : ''}`}>
-                      <div className="td-page-panel-section">
-                          <h4>🏗️ 구조물 (방 만들기)</h4>
-                          <div className="td-page-btn-grid col-2">
-                              <button onClick={() => addItem('floor')}>🟫 바닥 추가</button>
-                              <button onClick={() => addItem('wall')}>🧱 벽 세우기</button>
-                              <button onClick={() => addItem('window')}>🪟 창문</button>
-                          </div>
-                      </div>
-                      <div className="td-page-panel-section">
-                          <h4>🪑 가구 배치</h4>
-                          <div className="td-page-btn-grid col-2">
-                              <button onClick={() => addItem('furniture', 'bed')}>🛏️ 침대</button>
-                              <button onClick={() => addItem('furniture', 'sofa')}>🛋️ 소파</button>
-                              <button onClick={() => addItem('furniture', 'table')}>🍽️ 식탁</button>
-                              <button onClick={() => addItem('furniture', 'wardrobe')}>🚪 옷장</button>
-                          </div>
-                      </div>
-                      <div className="td-page-panel-section">
-                          <h4>🔤 텍스트 넣기</h4>
-                          <div className="td-page-text-input-row">
-                              <input type="text" value={newText} onChange={e => setNewText(e.target.value)} placeholder="내용 입력" />
-                              <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} style={{width:'30px', padding:0, border:'none'}} />
-                          </div>
-                          <button className="td-page-btn-add" onClick={() => addItem('text')}>글자 추가</button>
-                      </div>
-                      <div className="td-page-footer-btn"><button onClick={handleScreenshot}>📷 화면 캡처</button></div>
-                  </div>
+                    <div className="td-canvas-container">
+                        <Canvas shadows camera={{ position: [5, 8, 8], fov: 50 }}>
+                            <color attach="background" args={['#f4f5f7']} />
+                            <Sky sunPosition={[100, 20, 100]} />
+                            <ambientLight intensity={0.7} />
+                            <directionalLight position={[10, 20, 5]} intensity={1} castShadow />
+                            <Environment preset="city" />
+                            
+                            <Suspense fallback={null}>
+                                <Grid args={[50, 50]} sectionColor="#999" cellColor="#ddd" fadeDistance={50} position={[0,-0.01,0]} />
+                                <SceneController 
+                                    tool={activeTool} 
+                                    items={items} 
+                                    setItems={setItems}
+                                    vcbInput={vcbInput}
+                                    setVcbValue={() => {}} 
+                                    setVcbLabel={setVcbLabel}
+                                    onCommit={commitTrigger}
+                                    isFullScreen={isFullScreen}
+                                />
+                                <ContactShadows opacity={0.4} scale={50} blur={2} far={4} />
+                            </Suspense>
+                            <OrbitControls makeDefault enabled={activeTool === 'select' || activeTool === 'rotate' || activeTool === 'paint' || activeTool === 'eraser'} />
+                        </Canvas>
 
-                  {/* 중앙 캔버스 영역 */}
-                  <div className="td-page-canvas-area">
-                      <Canvas 
-                          shadows 
-                          camera={{ position: [8, 12, 12], fov: 45 }} 
-                          gl={{ preserveDrawingBuffer: true }}
-                          onPointerMissed={(e) => { if (e.type === 'click') setSelectedId(null); }}
-                      >
-                          <color attach="background" args={['#f5f7fa']} />
-                          <Sky sunPosition={[100, 20, 100]} />
-                          <ambientLight intensity={0.5} />
-                          <directionalLight position={[10, 20, 5]} intensity={1} castShadow shadow-mapSize={[1024, 1024]} />
-                          <Environment preset="city" />
-                          <Suspense fallback={null}>
-                              <group>
-                                  <Grid position={[0, -0.05, 0]} args={[30, 30]} cellSize={1} sectionSize={1} sectionColor="#ddd" cellColor="#eee" fadeDistance={50} />
-                                  
-                                  {items.map(item => (
-                                      <DraggableItem 
-                                          key={item.id} 
-                                          item={item} 
-                                          isSelected={selectedId === item.id} 
-                                          controlMode={controlMode}
-                                          onSelect={() => setSelectedId(item.id)}
-                                          onTransform={handleTransform}
-                                          showWallDims={showWallDims}
-                                          showFloorDims={showFloorDims}
-                                      />
-                                  ))}
-                                  <ContactShadows position={[0, -0.04, 0]} opacity={0.4} scale={50} blur={2} far={4} />
-                              </group>
-                          </Suspense>
-                          <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2.1} />
-                      </Canvas>
-                  </div>
+                        <div className="td-vcb-container">
+                            <ValueControlBox value={vcbInput} label={vcbLabel} />
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                  {/* 우측 사이드바 (조작/속성 편집) */}
-                  <div className={`td-page-sidebar right ${isMobile && mobileSidebarOpen !== 'right' ? 'hidden' : ''}`}>
-                      <div className="td-page-panel-section">
-                          <h4>🛠️ 조작 모드</h4>
-                          <div className="td-page-tools-row">
-                              <button onClick={() => handleModeChange('translate')} className={controlMode === 'translate' ? 'active' : ''}>이동</button>
-                              <button onClick={() => handleModeChange('rotate')} className={controlMode === 'rotate' ? 'active' : ''}>회전</button>
-                              <button onClick={() => handleModeChange('scale')} className={controlMode === 'scale' ? 'active' : ''}>크기</button>
-                          </div>
-                      </div>
+            {isMobile && !isFullScreen && (
+                <div className="td-mobile-bar" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+                    <button onClick={()=>setActiveTool('select')} className={activeTool==='select'?'active':''}><Icons.Select/></button>
+                    <button onClick={()=>setActiveTool('pushpull')} className={activeTool==='pushpull'?'active':''}><Icons.PushPull/></button>
+                    <button onClick={toggleFullScreen}><Icons.FullScreen/></button>
+                </div>
+            )}
 
-                      <div className="td-page-panel-section">
-                          <h4>👁️ 보기 설정</h4>
-                          <div className="td-page-chk-row"><label><input type="checkbox" checked={showWallDims} onChange={e => setShowWallDims(e.target.checked)} /> 벽체 사이즈 표시</label></div>
-                          <div className="td-page-chk-row"><label><input type="checkbox" checked={showFloorDims} onChange={e => setShowFloorDims(e.target.checked)} /> 바닥 사이즈 표시</label></div>
-                      </div>
-                      
-                      {selectedItem ? (
-                          <div className="td-page-panel-section highlight">
-                              <h4>⚙️ 속성 편집</h4>
-                              <div className="td-page-item-name-tag">{selectedItem.name}</div>
-                              {selectedItem.type === 'text' && (<div className="td-page-control-row"><label>내용</label><input type="text" value={selectedItem.textData || ''} onChange={e => updateSelectedItem('textData', e.target.value)} /></div>)}
-                              <div className="td-page-control-row"><label>가로(W)</label><input type="number" step="0.1" value={selectedItem.scale[0].toFixed(2)} onChange={e => updateSelectedItem('sx', Number(e.target.value))} /></div>
-                              <div className="td-page-control-row"><label>높이(H)</label><input type="number" step="0.1" value={selectedItem.scale[1].toFixed(2)} onChange={e => updateSelectedItem('sy', Number(e.target.value))} /></div>
-                              <div className="td-page-control-row"><label>깊이(D)</label><input type="number" step="0.1" value={selectedItem.scale[2].toFixed(2)} onChange={e => updateSelectedItem('sz', Number(e.target.value))} /></div>
-                              <div className="td-page-control-row"><label>회전(°)</label><input type="range" min="0" max="360" step="15" value={(selectedItem.rotation[1] * 180 / Math.PI).toFixed(0)} onChange={e => updateSelectedItem('rotY', Number(e.target.value))} /></div>
-                              <div className="td-page-control-row"><label>색상</label><input type="color" value={selectedItem.color} onChange={e => updateSelectedItem('color', e.target.value)} /></div>
-                              <button className="td-page-btn-delete" onClick={deleteSelected}>🗑️ 삭제</button>
-                          </div>
-                      ) : (
-                          <div className="td-page-empty-msg">물체를 선택하면<br/>속성을 수정할 수 있습니다.</div>
-                      )}
-                  </div>
-              </div>
-          </div>
-        </main>
-        <Footer /> 
-        {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
-      </div>
+            {isMobileMenuOpen && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
+        </div>
     );
 };
 

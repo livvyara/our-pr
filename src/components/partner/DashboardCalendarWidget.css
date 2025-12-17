@@ -352,3 +352,40 @@
   .dc-modal-actions { flex-direction: column-reverse; gap: 12px; }
   .btn-cancel, .btn-submit { width: 100%; height: 52px; font-size: 16px; }
 }
+
+/* 필터 저장 버튼 */
+.dc-filter-save-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.dc-filter-save-btn:hover {
+  background: #F2F4F6;
+  color: var(--dc-text-main);
+  border-color: #ccc;
+}
+
+/* 개인 일정 삭제 버튼 */
+.dc-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #999;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* 우측 끝으로 밀기 */
+  transition: all 0.2s;
+}
+.dc-delete-btn:hover {
+  background-color: #FFF0F0;
+  color: #FF4D4F;
+}

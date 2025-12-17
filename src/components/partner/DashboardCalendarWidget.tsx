@@ -5,7 +5,7 @@ import './DashboardCalendarWidget.css';
 
 import { 
   getFirestore, collectionGroup, collection, query, where, onSnapshot,
-  doc, getDoc, setDoc, addDoc, serverTimestamp, orderBy 
+  doc, getDoc, setDoc, addDoc, deleteDoc, serverTimestamp, orderBy 
 } from 'firebase/firestore';
 
 // --- [Icons] ---
@@ -14,8 +14,17 @@ const Icons = {
   Construction: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>,
   Personal: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>,
   Add: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  ArrowDown: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+  ArrowDown: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>,
+  Trash: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
+  Save: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
 };
+
+// [수정 1] 필터 설정 타입 정의 추가
+interface FilterPrefs {
+  showMeetings: boolean;
+  showConstruction: boolean;
+  showPersonal: boolean;
+}
 
 // Types & Helpers
 type ScheduleItem = {
@@ -48,14 +57,34 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
   const [allSchedules, setAllSchedules] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  const [filterPrefs, setFilterPrefs] = useState({ showMeetings: true, showConstruction: true, showPersonal: true });
+  // [수정 2] useState에 제네릭 타입 <FilterPrefs> 명시
+  const [filterPrefs, setFilterPrefs] = useState<FilterPrefs>(() => {
+    const saved = localStorage.getItem('dashboardFilterPrefs');
+    return saved ? JSON.parse(saved) : { showMeetings: true, showConstruction: true, showPersonal: true };
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [siteNamesCache, setSiteNamesCache] = useState<Map<string, string>>(new Map()); 
-  
-  // [NEW] 더 보기 상태 관리
   const [visibleCount, setVisibleCount] = useState(5);
   
   const db = getFirestore();
+
+  const handleSaveFilter = () => {
+    localStorage.setItem('dashboardFilterPrefs', JSON.stringify(filterPrefs));
+    alert('필터 설정이 저장되었습니다.');
+  };
+
+  const handleDeletePersonal = async (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation(); 
+    if (!window.confirm('정말 이 일정을 삭제하시겠습니까?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'users', partnerUid, 'personalSchedules', itemId));
+    } catch (err) {
+      console.error("삭제 실패:", err);
+      alert("일정 삭제 중 오류가 발생했습니다.");
+    }
+  };
 
   useEffect(() => {
     if (!partnerUid) return;
@@ -76,7 +105,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
         } catch(e) {}
     };
 
-    // (Data Fetching 로직은 기존과 동일하므로 생략 없이 유지)
     const unsubMemos = onSnapshot(query(collectionGroup(db, 'memos'), where('partnerUid', '==', partnerUid), where('memoType', '==', 'meeting')), (snap) => {
       meetings = snap.docs.map(d => {
         const data = d.data();
@@ -124,7 +152,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
     return () => { unsubMemos(); unsubWork(); unsubSchedules(); unsubPersonal(); };
   }, [partnerUid, siteNamesCache]);
 
-  // 필터링된 전체 리스트
   const filteredSchedulesList = useMemo(() => {
     return allSchedules.filter(s => 
       (s.type === 'personal' && filterPrefs.showPersonal) || 
@@ -133,7 +160,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
     );
   }, [allSchedules, filterPrefs]);
 
-  // 날짜별 맵핑
   const schedulesByDateMap = useMemo(() => {
     const map = new Map<string, ScheduleItem[]>();
     filteredSchedulesList.forEach(s => {
@@ -144,7 +170,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
     return map;
   }, [filteredSchedulesList]);
 
-  // 화면에 표시할 전체 리스트 (필터링 적용됨)
   const displayedSchedules = useMemo(() => {
     const selectedDateKey = getISODateString(selectedDate);
     if (filterType === 'today') return (schedulesByDateMap.get(selectedDateKey) || []).sort((a, b) => a.time.localeCompare(b.time));
@@ -162,7 +187,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
     return [];
   }, [filterType, filteredSchedulesList, selectedDate, schedulesByDateMap]);
 
-  // [NEW] 날짜나 필터가 바뀌면 더보기 초기화
   useEffect(() => {
     setVisibleCount(5);
   }, [selectedDate, filterType, filterPrefs]);
@@ -188,9 +212,12 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
   };
 
   const handleDateChange = (value: any) => setSelectedDate(value as Date);
-  const toggleFilter = (key: 'showMeetings' | 'showConstruction' | 'showPersonal') => setFilterPrefs(prev => ({ ...prev, [key]: !prev[key] }));
+  
+  // [수정 3] key 인자의 타입을 keyof FilterPrefs로 명시
+  const toggleFilter = (key: keyof FilterPrefs) => {
+    setFilterPrefs(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
-  // --- View Tabs ---
   const ViewTabs = ({ className }: { className?: string }) => (
     <div className={`dc-view-tabs ${className || ''}`}>
         <button className={filterType==='today'?'active':''} onClick={()=>setFilterType('today')}>오늘</button>
@@ -215,6 +242,10 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                 </button>
                 <button className={`dc-filter-chip personal ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>
                     <span className="dot personal" /> 개인
+                </button>
+                {/* [NEW] 필터 저장 버튼 */}
+                <button className="dc-filter-save-btn" onClick={handleSaveFilter} title="필터 설정 저장">
+                    <Icons.Save />
                 </button>
             </div>
         </div>
@@ -259,7 +290,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                 <div className="dc-state empty">일정이 없습니다.</div>
             ) : (
                 <div className="dc-list-items">
-                    {/* [NEW] 보여줄 개수만큼 slice */}
                     {displayedSchedules.slice(0, visibleCount).map((item) => {
                         const d = new Date(item.dateKey);
                         const dateStr = `${d.getMonth()+1}.${d.getDate()}`;
@@ -287,6 +317,16 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                                         {displaySiteName && (
                                             <span className="dc-site-name">@{displaySiteName}</span>
                                         )}
+                                        {/* [NEW] 개인 일정 삭제 버튼 */}
+                                        {item.type === 'personal' && (
+                                            <button 
+                                                className="dc-delete-btn" 
+                                                onClick={(e) => handleDeletePersonal(e, item.id)}
+                                                title="일정 삭제"
+                                            >
+                                                <Icons.Trash />
+                                            </button>
+                                        )}
                                     </div>
                                     <p className="dc-content-text">{item.title}</p>
                                 </div>
@@ -294,7 +334,6 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                         )
                     })}
 
-                    {/* [NEW] 더 보기 버튼 */}
                     {displayedSchedules.length > visibleCount && (
                         <button className="dc-load-more-btn" onClick={() => setVisibleCount(prev => prev + 5)}>
                             <Icons.ArrowDown /> 일정 더 보기 ({displayedSchedules.length - visibleCount})

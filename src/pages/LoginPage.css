@@ -1,245 +1,325 @@
 /* src/pages/LoginPage.css */
 
+/* --- Design Tokens --- */
 :root {
-  --lp-black: #111111;
-  --lp-white: #ffffff;
-  --lp-gray: #888888;
-  --lp-border: #e0e0e0;
-  --lp-accent: #d4a373;
+    /* Color Palette */
+    --lp-bg-page: #F2F4F6;       /* 토스 스타일 배경색 */
+    --lp-bg-card: #FFFFFF;
+    --lp-primary: #3182F6;       /* Brand Blue */
+    --lp-primary-hover: #1B64DA;
+    --lp-text-main: #191F28;     /* Black */
+    --lp-text-sub: #4E5968;      /* Dark Gray */
+    --lp-text-hint: #8B95A1;     /* Light Gray */
+    --lp-border: #E5E8EB;
+    --lp-border-focus: #3182F6;
+    
+    /* Spacing & Layout */
+    --lp-radius-card: 24px;
+    --lp-radius-input: 12px;
+    --lp-input-height: 52px;     /* 모바일 터치 표준 높이 */
+    
+    /* Shadows (Depth) */
+    --lp-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --lp-shadow-focus: 0 0 0 3px rgba(49, 130, 246, 0.1);
 }
 
+/* --- Reset & Layout --- */
+* { box-sizing: border-box; }
+
 .lp-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #fafafa;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-  padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--lp-bg-page);
+    padding: 20px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    color: var(--lp-text-main);
 }
 
 .lp-wrapper {
-  width: 100%;
-  max-width: 440px;
-  background-color: var(--lp-white);
-  padding: 60px 40px;
-  border: 1px solid var(--lp-border);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.03); /* 아주 은은한 그림자 */
+    width: 100%;
+    max-width: 440px;
+    background-color: var(--lp-bg-card);
+    padding: 48px 40px;
+    border-radius: var(--lp-radius-card);
+    box-shadow: var(--lp-shadow-card);
+    /* 부드러운 등장 애니메이션 */
+    animation: lpFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Header */
-.lp-header {
-  text-align: center;
-  margin-bottom: 50px;
+@keyframes lpFadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- Header --- */
+.lp-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.lp-logo-link {
+    display: inline-block;
+    transition: transform 0.2s;
+}
+.lp-logo-link:active { transform: scale(0.96); }
 
 .lp-logo {
-  height: 120px;
-  margin-bottom: 30px;
-  opacity: 0.8;
+    height: 60px; /* 로고 사이즈 최적화 */
+    margin-bottom: 24px;
+    object-fit: contain;
 }
 
 .lp-title {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  letter-spacing: -0.5px;
-  color: var(--lp-black);
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    color: var(--lp-text-main);
+    letter-spacing: -0.02em;
 }
 
 .lp-subtitle {
-  font-size: 15px;
-  color: var(--lp-gray);
+    font-size: 15px;
+    color: var(--lp-text-sub);
+    margin: 0;
+    font-weight: 500;
 }
 
-/* Form Inputs */
+/* --- Inputs --- */
 .lp-input-group {
-  margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .lp-input-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--lp-black);
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--lp-text-sub);
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
+.lp-input-field {
+    position: relative;
+    transition: all 0.2s;
 }
 
 .lp-input {
-  width: 100%;
-  height: 50px;
-  padding: 0 16px;
-  border: 1px solid var(--lp-border);
-  border-radius: 0; /* 각진 모서리 (Magazine Style) */
-  font-size: 15px;
-  box-sizing: border-box;
-  transition: border-color 0.2s, background-color 0.2s;
-  background-color: transparent;
+    width: 100%;
+    height: var(--lp-input-height);
+    padding: 0 16px;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-input);
+    font-size: 16px; /* 모바일 줌 방지 */
+    color: var(--lp-text-main);
+    background-color: #fff;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    appearance: none;
 }
+
+.lp-input::placeholder { color: var(--lp-text-hint); }
 
 .lp-input:focus {
-  outline: none;
-  border-color: var(--lp-black);
-  background-color: #fcfcfc;
+    border-color: var(--lp-border-focus);
+    box-shadow: var(--lp-shadow-focus);
 }
 
-/* Checkbox */
+/* --- Checkbox (Custom Design) --- */
 .lp-options {
-  margin-bottom: 30px;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 16px;
 }
 
-.lp-checkbox-group {
-  display: flex;
-  justify-content: space-between;
+.lp-checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
 }
 
-.lp-checkbox {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-  user-select: none;
+.lp-checkbox-container input {
+    display: none; /* 기본 체크박스 숨김 */
 }
 
-.lp-checkbox input {
-  display: none;
+.lp-checkmark {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #D1D6DB;
+    border-radius: 6px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background-color: #fff;
+    color: #fff; /* 아이콘 색상 */
 }
 
-.checkmark {
-  width: 16px;
-  height: 16px;
-  border: 1px solid #ccc;
-  margin-right: 8px;
-  position: relative;
-  transition: all 0.2s;
+.lp-checkbox-container:hover .lp-checkmark {
+    border-color: #B0B8C1;
 }
 
-.lp-checkbox input:checked + .checkmark {
-  background-color: var(--lp-black);
-  border-color: var(--lp-black);
+.lp-checkbox-container input:checked + .lp-checkmark {
+    background-color: var(--lp-primary);
+    border-color: var(--lp-primary);
 }
 
-.lp-checkbox input:checked + .checkmark::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 1px;
-  width: 4px;
-  height: 9px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+.lp-checkbox-label {
+    font-size: 14px;
+    color: var(--lp-text-sub);
+    font-weight: 500;
 }
 
-/* Button */
+/* --- Button --- */
 .lp-submit-btn {
-  width: 100%;
-  height: 54px;
-  background-color: var(--lp-black);
-  color: var(--lp-white);
-  border: none;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  border-radius: 0; /* 각진 버튼 */
+    width: 100%;
+    height: var(--lp-input-height);
+    background-color: var(--lp-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--lp-radius-input);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(49, 130, 246, 0.25); /* 버튼에 입체감 */
 }
 
 .lp-submit-btn:hover {
-  opacity: 0.9;
+    background-color: var(--lp-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(49, 130, 246, 0.3);
+}
+
+.lp-submit-btn:active {
+    transform: translateY(0);
 }
 
 .lp-submit-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+    background-color: #D1D6DB;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
 }
 
-/* Links */
+/* --- Links --- */
 .lp-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 24px;
-  margin-bottom: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+    margin-bottom: 40px;
 }
 
 .lp-links button {
-  background: none;
-  border: none;
-  font-size: 13px;
-  color: #888;
-  cursor: pointer;
-  padding: 0 10px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: var(--lp-text-hint);
+    cursor: pointer;
+    padding: 8px 12px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.lp-links button:hover {
+    color: var(--lp-text-sub);
 }
 
 .lp-links .divider {
-  font-size: 10px;
-  color: #ddd;
+    width: 1px;
+    height: 12px;
+    background-color: var(--lp-border);
 }
 
 .lp-links .highlight {
-  color: var(--lp-black);
-  font-weight: 600;
-  text-decoration: underline;
+    color: var(--lp-primary);
+    font-weight: 600;
 }
 
-/* SNS */
+/* --- SNS Section --- */
 .lp-sns-section {
-  text-align: center;
-  border-top: 1px solid var(--lp-border);
-  padding-top: 30px;
+    text-align: center;
 }
 
-.lp-sns-label {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 20px;
-  letter-spacing: 0.5px;
+.lp-sns-divider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.lp-sns-divider::before,
+.lp-sns-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--lp-border);
+}
+
+.lp-sns-divider span {
+    padding: 0 16px;
+    font-size: 12px;
+    color: var(--lp-text-hint);
+    font-weight: 500;
 }
 
 .lp-sns-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
 }
 
 .lp-sns-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%; /* SNS 아이콘은 원형 유지하거나 사각형으로 변경 가능. 여기선 원형 유지 */
-  border: none;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Soft Shadow for buttons */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .lp-sns-btn:hover {
-  transform: translateY(-2px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+/* --- Footer --- */
 .lp-footer {
-  margin-top: 40px;
-  font-size: 11px;
-  color: #ccc;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+    margin-top: 40px;
+    font-size: 12px;
+    color: #B0B8C1;
+    text-align: center;
+    font-weight: 500;
 }
 
-/* Mobile */
+/* --- Mobile Responsiveness --- */
 @media (max-width: 480px) {
-  .lp-wrapper {
-    border: none;
-    background-color: transparent;
-    padding: 20px 0;
-    box-shadow: none;
-  }
-  .lp-container {
-    background-color: #fff;
-  }
+    .lp-container {
+        padding: 0;
+        background-color: #fff;
+    }
+    
+    .lp-wrapper {
+        border: none;
+        box-shadow: none;
+        padding: 40px 24px;
+        border-radius: 0;
+        min-height: 100vh; /* 모바일에서는 전체 화면 사용 */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .lp-header { margin-bottom: 32px; }
+    .lp-title { font-size: 24px; }
+    .lp-logo { height: 50px; }
 }

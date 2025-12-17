@@ -374,6 +374,7 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
                 <h3 className="ppm-section-title">현장 기본 정보</h3>
             </div>
             
+            {/* [수정] 첫 번째 줄: 현장 구분 */}
             <div className="ppm-grid-row">
                 <div className="ppm-col full-width">
                     <label className="ppm-label">현장 구분 <span className="ppm-req">*</span></label>
@@ -390,7 +391,10 @@ const ContractInfoModal: React.FC<ContractInfoModalProps> = ({ siteId, partnerUi
                         ))}
                     </div>
                 </div>
+            </div>
 
+            {/* [수정] 두 번째 줄: 주소 입력 (별도의 Row로 분리하여 아래로 내림) */}
+            <div className="ppm-grid-row" style={{marginTop:'16px'}}>
                 <div className="ppm-col full-width">
                     <label className="ppm-label">현장 주소 <span className="ppm-req">*</span></label>
                     <input type="text" value={baseAddress} onChange={e => setBaseAddress(e.target.value)} placeholder="기본 주소를 입력하세요" className="ppm-input" required />
