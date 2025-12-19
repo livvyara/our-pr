@@ -389,3 +389,20 @@
   background-color: #FFF0F0;
   color: #FF4D4F;
 }
+
+.dc-filter-chip.leave .dot.leave { background-color: #FF5722; }
+.dc-filter-chip.leave.active { background-color: #FBE9E7; color: #D84315; border-color: #D84315; }
+
+.dc-type-badge.leave { background-color: #FBE9E7; color: #D84315; }
+
+/* 캘린더 내부 바 스타일 */
+.cal-event-bar.leave {
+  background-color: #FF5722;
+  color: white;
+}
+
+/* 리스트 아이템 강조 (선택사항) */
+.dc-card-item.leave-highlight {
+  background-color: #FFF8F6; /* 아주 연한 주황색 배경으로 휴가 강조 */
+  border-left: 3px solid #FF5722;
+}

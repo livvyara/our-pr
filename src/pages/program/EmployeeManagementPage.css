@@ -1,0 +1,368 @@
+:root {
+  --emp-bg: #FFFFFF;
+  --emp-bg-sub: #F9FAFB;
+  --emp-border: #E5E8EB;
+  --emp-primary: #3182F6;
+  --emp-primary-hover: #1B64DA;
+  --emp-text-main: #191F28;
+  --emp-text-sub: #8B95A1;
+  --emp-danger: #FF4D4D;
+  --emp-radius: 16px;
+  --emp-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.emp-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--emp-bg-sub);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  color: var(--emp-text-main);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.emp-header {
+  background-color: var(--emp-bg);
+  border-bottom: 1px solid var(--emp-border);
+  padding: 40px 24px;
+}
+.emp-header-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.emp-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+}
+.emp-subtitle {
+  font-size: 16px;
+  color: var(--emp-text-sub);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Container */
+.emp-container {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  box-sizing: border-box;
+}
+
+/* Section Common */
+.emp-card {
+  background: var(--emp-bg);
+  border-radius: var(--emp-radius);
+  border: 1px solid var(--emp-border);
+  box-shadow: var(--emp-shadow);
+  overflow: hidden;
+}
+
+/* 1. Invite Section */
+.invite-section {
+  width: 100%;
+}
+.invite-content {
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.invite-text h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.invite-text p {
+  font-size: 14px;
+  color: var(--emp-text-sub);
+  margin: 0;
+}
+
+.btn-generate {
+  height: 52px;
+  padding: 0 24px;
+  background-color: var(--emp-primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.2);
+}
+.btn-generate:hover:not(:disabled) {
+  background-color: var(--emp-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(49, 130, 246, 0.3);
+}
+.btn-generate:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Invite Link Result */
+.invite-result {
+  background-color: #F0F7FF; /* Light Blue tint */
+  border-top: 1px solid #D1E9FF;
+  padding: 24px 32px;
+  display: none; /* Hidden by default */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+.invite-result.visible {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.link-box {
+  display: flex;
+  align-items: center;
+  background: var(--emp-bg);
+  border: 1px solid var(--emp-primary);
+  border-radius: 10px;
+  padding: 4px 4px 4px 16px;
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.1);
+}
+.link-icon {
+  color: var(--emp-primary);
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+}
+.link-box input {
+  flex: 1;
+  border: none;
+  font-size: 15px;
+  color: var(--emp-text-main);
+  background: transparent;
+  outline: none;
+  font-family: monospace; /* For better URL readability */
+}
+.btn-copy {
+  height: 44px;
+  padding: 0 20px;
+  background-color: var(--emp-bg-sub);
+  border: none;
+  border-radius: 8px;
+  color: var(--emp-text-main);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-copy:hover {
+  background-color: #EAECEF;
+}
+.link-caption {
+  font-size: 13px;
+  color: var(--emp-primary);
+  margin: 12px 0 0;
+  font-weight: 500;
+}
+
+/* 2. List Section */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.list-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+.count {
+  color: var(--emp-primary);
+  margin-left: 4px;
+}
+
+.search-bar {
+  position: relative;
+  width: 280px;
+}
+.search-bar svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--emp-text-sub);
+  pointer-events: none;
+}
+.search-bar input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px 0 40px;
+  border: 1px solid var(--emp-border);
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.search-bar input:focus {
+  border-color: var(--emp-primary);
+  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.1);
+}
+
+/* Table Style List */
+.emp-table-wrapper {
+  background: var(--emp-bg);
+  border: 1px solid var(--emp-border);
+  border-radius: var(--emp-radius);
+  overflow: hidden;
+  box-shadow: var(--emp-shadow);
+}
+
+.emp-list-header {
+  display: flex;
+  padding: 16px 24px;
+  background-color: var(--emp-bg-sub);
+  border-bottom: 1px solid var(--emp-border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--emp-text-sub);
+}
+
+.emp-item {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--emp-border);
+  transition: background 0.1s;
+}
+.emp-item:last-child {
+  border-bottom: none;
+}
+.emp-item:hover {
+  background-color: #FAFBFC;
+}
+
+/* Columns */
+.col { display: flex; align-items: center; }
+.col.name { flex: 1.2; font-weight: 600; color: var(--emp-text-main); font-size: 16px; }
+
+/* [추가] 직급 컬럼 스타일 */
+.col.rank { flex: 0.8; color: var(--emp-text-main); font-size: 14px; font-weight: 500; }
+.rank-text {
+  background-color: #f0f2f5;
+  color: #555;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.col.email { flex: 1.5; color: var(--emp-text-sub); font-size: 14px; }
+.col.phone { flex: 1; color: var(--emp-text-sub); font-size: 14px; }
+.col.action { flex: 0.5; justify-content: flex-end; }
+
+.nickname-badge {
+  display: inline-block;
+  background-color: var(--emp-bg-sub);
+  border: 1px solid var(--emp-border);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: var(--emp-text-sub);
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.btn-delete {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--emp-text-sub);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+.btn-delete:hover {
+  background-color: #FFF0F0;
+  color: var(--emp-danger);
+  border-color: #FFD6D6;
+}
+
+/* Empty & Loading */
+.emp-loading-state, .emp-empty-state {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--emp-text-sub);
+  font-size: 15px;
+}
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+.spinner.large {
+  border-color: var(--emp-border);
+  border-top-color: var(--emp-primary);
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+  .emp-header, .emp-container { padding: 24px 20px; }
+  
+  .invite-content { flex-direction: column; align-items: stretch; text-align: center; gap: 20px; }
+  .btn-generate { width: 100%; justify-content: center; }
+  
+  .link-box { flex-direction: column; align-items: stretch; padding: 12px; gap: 12px; }
+  .link-icon { display: none; }
+  .link-box input { text-align: center; border-bottom: 1px solid var(--emp-border); padding-bottom: 8px; }
+  .btn-copy { width: 100%; justify-content: center; }
+  .col.rank { margin-bottom: 4px; font-size: 13px; color: var(--emp-text-sub); } /* 모바일에서 직급 위치 조정 */
+
+  /* List Card View */
+  .emp-list-header { display: none; }
+  .emp-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+  }
+  .col { width: 100%; }
+  .col.action { 
+    position: absolute; 
+    top: 16px; 
+    right: 16px; 
+    width: auto; 
+  }
+  .col.name { font-size: 18px; margin-bottom: 4px; }
+  
+  .search-bar { width: 100%; }
+}

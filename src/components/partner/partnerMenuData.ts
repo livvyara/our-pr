@@ -8,11 +8,16 @@ export interface PartnerMenu {
   }[];
 }
 
-/**
- * 파트너 프로그램에서 사용될 모든 메뉴의 "원본" 목록입니다.
- * (권한관리 탭과 사이드바가 이 데이터를 공유합니다.)
- */
 export const PARTNER_MENUS_DATA: PartnerMenu[] = [
+  // [NEW] 사내공통기능 (현장관리 위에 배치)
+  { 
+    key: 'common', 
+    title: '사내공통기능', 
+    subMenus: [
+      { key: 'company-notice', title: '사내 공지사항', path: '/program/company-notice' },
+      { key: 'company-approval', title: '전자결재', path: '/program/company-approval' },
+    ]
+  },
   { 
     key: 'sites', 
     title: '현장관리', 
@@ -22,7 +27,6 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'site-list', title: '현장 목록', path: '/program/site-list' },
       { key: 'site-log', title: '작업 일지', path: '/program/site-log' },
       { key: 'site-schedule', title: '공사 일정', path: '/program/site-schedule' },
-
     ]
   },
   { 
@@ -31,7 +35,6 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     subMenus: [
       { key: 'hr-add-worker', title: '작업자 관리', path: '/program/worker-management' },
       { key: 'hr-add-log', title: '노무 등록', path: '/program/hr-labor-cost' },
-
     ]
   },
   { 
@@ -41,13 +44,8 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
       { key: 'accounting-hometax', title: '홈택스 수집', path: '/program/accounting-hometax' },
       { key: 'accounting-banking-excel', title: '계좌/카드내역 등록', path: '/program/accounting-banking-excel' },
       { key: 'accounting-integrated', title: '세금/현금 계산서내역', path: '/program/accounting-integrated' },
-    
-      // [NEW] 지로/영수증 지출등록 (현장별 발주요청 위에 배치)
       { key: 'accounting-giro-receipt', title: '지로/영수증 지출등록', path: '/program/accounting-giro-receipt' },
-
       { key: 'accounting-order-request', title: '현장별 발주요청', path: '/program/accounting-order-request' },
-
-
       { key: 'site-settlement', title: '현장 결산', path: '/program/site-settlement' },
       { key: 'accounting-expense-category', title: '지출품목 설정', path: '/program/accounting-expense-category' },
     ]
@@ -56,11 +54,9 @@ export const PARTNER_MENUS_DATA: PartnerMenu[] = [
     key: 'employees', 
     title: '직원관리', 
     subMenus: [
-      { key: 'emp-add', title: '직원 등록', path: '/program/emp-add' },
-      { key: 'emp-list', title: '직원 목록', path: '/program/emp-list' },
-      
-      { key: 'emp-management', title: '직원 급여', path: '/program/emp-management' },
-      
+      { key: 'emp-integrated', title: '직원등록/목록', path: '/program/emp-integrated' },
+      { key: 'org-management', title: '직급/조직관리', path: '/program/org-management' },
+      { key: 'emp-management', title: '급여/상여/정보관리', path: '/program/emp-management' },
       { key: 'emp-permission', title: '권한관리', path: '/program/emp-permission' },
     ]
   },

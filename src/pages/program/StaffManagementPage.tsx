@@ -5,10 +5,12 @@ import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import RoleHeader from '../../components/common/RoleHeader';
 import StaffDetailModal from '../../components/partner/StaffDetailModal';
-import PayrollExecutionModal from '../../components/partner/PayrollExecutionModal'; // [NEW]
-import PayrollDateSettingModal from '../../components/partner/PayrollDateSettingModal'; // [NEW]
+import PayrollExecutionModal from '../../components/partner/PayrollExecutionModal'; 
+import PayrollDateSettingModal from '../../components/partner/PayrollDateSettingModal';
+import BonusManagementModal from '../../components/partner/BonusManagementModal'; // [NEW] 추가됨
 import './StaffManagementPage.css';
 
+// [수정] StaffData 인터페이스 전체 정의 (payDate 포함)
 interface StaffData {
   uid: string;
   name: string;
@@ -20,7 +22,10 @@ interface StaffData {
   bankName?: string;
   accountNum?: string;
   accountHolder?: string;
-  payDate?: string;
+  
+  // [중요] 이 부분이 누락되어 오류가 발생했습니다.
+  payDate?: string; 
+  
   incentiveBank?: string;
   incentiveAccount?: string;
   incentiveHolder?: string;
@@ -49,19 +54,18 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
   const [loading, setLoading] = useState(true);
   const [selectedStaff, setSelectedStaff] = useState<StaffData | null>(null);
 
-  // [NEW] 모달 상태
+  // 모달 상태
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
   const [isDateSettingModalOpen, setIsDateSettingModalOpen] = useState(false);
-  
-  // [NEW] 급여 기준일 (기본 1일)
+  const [isBonusModalOpen, setIsBonusModalOpen] = useState(false); // [NEW] 상여 모달 상태
+
   const [payrollBaseDate, setPayrollBaseDate] = useState(1);
 
   useEffect(() => {
+    // ... (기존 useEffect 데이터 로딩 로직 동일)
     const fetchStaff = async () => {
       if (!partnerUid) return;
-
       try {
-        // 1. 직원 목록
         const q = query(
             collection(db, 'users'), 
             where('partnerInfo.ownerUid', '==', partnerUid),
@@ -80,13 +84,11 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
         });
         setStaffList(list);
 
-        // 2. 급여 기준일 설정 불러오기
         const configRef = doc(db, 'users', partnerUid, 'config', 'payroll');
         const configSnap = await getDoc(configRef);
         if (configSnap.exists()) {
             setPayrollBaseDate(configSnap.data().baseDate || 1);
         }
-
       } catch (e) {
         console.error("데이터 로딩 실패", e);
       } finally {
@@ -96,6 +98,7 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
     fetchStaff();
   }, [partnerUid]);
 
+  // ... (핸들러 함수들 동일)
   const handleUpdateStaff = (updatedData: StaffData) => {
       setStaffList(prev => prev.map(s => s.uid === updatedData.uid ? updatedData : s));
   };
@@ -112,9 +115,9 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
       
       <main className="main-content" style={{padding: '40px 20px', maxWidth:'1200px', margin:'0 auto'}}>
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
-            <h2 style={{fontSize:'24px', fontWeight:'bold', margin:0}}>직원 급여/정보 관리</h2>
+            <h2 style={{fontSize:'24px', fontWeight:'bold', margin:0}}>급여/상여/정보관리</h2>
             
-            {/* [NEW] 상단 액션 버튼 */}
+            {/* 상단 액션 버튼 영역 */}
             <div style={{display:'flex', gap:'10px'}}>
                 <button 
                     className="btn-payroll-date"
@@ -123,6 +126,16 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
                 >
                     📅 급여계산일 설정 (현재: {payrollBaseDate}일)
                 </button>
+
+                {/* [NEW] 상여 관리 버튼 추가 */}
+                <button 
+                    className="btn-bonus-manage"
+                    onClick={() => setIsBonusModalOpen(true)}
+                    style={{padding:'10px 16px', background:'#ff9800', color:'white', border:'none', borderRadius:'4px', cursor:'pointer', fontWeight:'bold'}}
+                >
+                    🎁 상여 등록/관리
+                </button>
+
                 <button 
                     className="btn-payroll-exec"
                     onClick={() => setIsPayrollModalOpen(true)}
@@ -162,7 +175,6 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
         )}
       </main>
       
-      <Footer />
 
       {selectedStaff && (
           <StaffDetailModal 
@@ -172,7 +184,6 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
           />
       )}
 
-      {/* [NEW] 급여 집행 모달 */}
       {isPayrollModalOpen && (
           <PayrollExecutionModal 
             partnerUid={partnerUid}
@@ -182,13 +193,21 @@ const StaffManagementPage: React.FC<Props> = ({ partnerUid }) => {
           />
       )}
 
-      {/* [NEW] 급여 기준일 설정 모달 */}
       {isDateSettingModalOpen && (
           <PayrollDateSettingModal 
             partnerUid={partnerUid}
             currentBaseDate={payrollBaseDate}
             onSave={handleDateSettingSave}
             onClose={() => setIsDateSettingModalOpen(false)}
+          />
+      )}
+
+      {/* [NEW] 상여 관리 모달 연결 */}
+      {isBonusModalOpen && (
+          <BonusManagementModal
+            partnerUid={partnerUid}
+            staffList={staffList}
+            onClose={() => setIsBonusModalOpen(false)}
           />
       )}
     </div>

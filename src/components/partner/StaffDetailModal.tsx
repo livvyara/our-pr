@@ -18,7 +18,7 @@ interface StaffData {
   accountNum?: string;
   accountHolder?: string;
   
-  // [NEW] 급여일 및 인센티브 계좌
+  // [급여일 및 인센티브 계좌]
   payDate?: string; 
   incentiveBank?: string;
   incentiveAccount?: string;
@@ -29,8 +29,8 @@ interface StaffData {
   qualAllowance?: number; 
   longServiceAllowance?: number; 
   
-  totalLeave?: number;
-  usedLeave?: number;
+  totalLeave?: number; // 총 연차 (자동 계산됨)
+  usedLeave?: number;  // 사용 연차 (전자결재 연동됨)
   
   dependentCount?: number; 
   childCount?: number;     
@@ -62,7 +62,6 @@ const DEFAULT_RATES: DeductionRates = {
     employmentInsurance: 0.9,
 };
 
-// 간이세액표 주요 구간 데이터 (250만원 구간 등 정확도 보장용)
 const TAX_TABLE_250: Record<number, number> = {
     1: 35600, 2: 28600, 3: 16530, 4: 13150, 5: 9780, 6: 6400, 7: 3030
 };
@@ -74,23 +73,64 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
   const [formData, setFormData] = useState<StaffData>({
       ...staff,
       dependentCount: staff.dependentCount ?? 1,
-      childCount: staff.childCount ?? 0
+      childCount: staff.childCount ?? 0,
+      totalLeave: staff.totalLeave ?? 0,
+      usedLeave: staff.usedLeave ?? 0
   });
   const [rates, setRates] = useState<DeductionRates>(DEFAULT_RATES);
   const [activeTab, setActiveTab] = useState<'info' | 'salary' | 'docs'>('info');
   const [isSaving, setIsSaving] = useState(false);
 
-  // 이미지 뷰어
+  const [tenureText, setTenureText] = useState<string>('');
+
+  // 이미지 뷰어 상태
   const [viewImage, setViewImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
 
+  // [수정] 연차 자동 계산 및 '자동 반영' 로직
+  useEffect(() => {
+    if (formData.joinDate) {
+        const join = new Date(formData.joinDate);
+        const now = new Date();
+        
+        // 근속 기간 계산 (월 단위)
+        let months = (now.getFullYear() - join.getFullYear()) * 12 + (now.getMonth() - join.getMonth());
+        if (now.getDate() < join.getDate()) {
+            months--;
+        }
+
+        const years = Math.floor(months / 12);
+        const remainingMonths = months % 12;
+        
+        setTenureText(`${years}년 ${remainingMonths}개월`);
+
+        let leave = 0;
+        if (years < 1) {
+            // 1년 미만: 1개월 개근 시 1일 (최대 11일)
+            leave = Math.min(months, 11); 
+        } else {
+            // 1년 이상: 기본 15일 + (3년차부터 2년마다 1일 가산, 최대 25일)
+            const bonus = Math.floor((years - 1) / 2);
+            leave = Math.min(15 + bonus, 25);
+        }
+        
+        // [핵심] 계산된 연차를 즉시 formData에 반영 (State Update)
+        // 무한 루프 방지를 위해 값이 다를 때만 업데이트
+        setFormData(prev => {
+            if (prev.totalLeave !== leave) {
+                return { ...prev, totalLeave: leave };
+            }
+            return prev;
+        });
+    }
+  }, [formData.joinDate]); // 입사일이 변경될 때마다 재계산
+
   const handleChange = (field: keyof StaffData, value: any) => {
       let finalValue = value;
       
-      // 주민번호: 숫자만 + 하이픈
       if (field === 'residentNum') {
           const num = value.replace(/[^0-9]/g, '');
           if (num.length < 7) finalValue = num;
@@ -98,7 +138,6 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
           if (finalValue.length > 14) finalValue = finalValue.slice(0, 14);
       }
       
-      // 계좌번호(기본/인센티브): 숫자만 입력
       if (field === 'accountNum' || field === 'incentiveAccount') {
           finalValue = value.replace(/[^0-9]/g, '');
       }
@@ -106,7 +145,6 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
       setFormData(prev => {
           const newData = { ...prev, [field]: finalValue };
           
-          // 자녀 수 입력 제한
           if (field === 'dependentCount' || field === 'childCount') {
               const deps = Number(newData.dependentCount || 1);
               const maxChildren = Math.max(0, deps - 1);
@@ -161,7 +199,6 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
   const totalInsurance = np + hi + ltc + ei;
 
   const calculateIncomeTax = () => {
-      // 250만원 구간 정밀 처리
       if (taxablePay >= 2500000 && taxablePay < 2510000) {
           const exactTax = TAX_TABLE_250[dependents] || 0;
           let childCredit = 0;
@@ -171,9 +208,9 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
           return Math.max(exactTax - childCredit, 0);
       }
 
-      // 일반 공식 (간이세액표 근사)
       const annualPay = taxablePay * 12;
       let incomeDed = 0;
+      // ... (기존 세금 계산 로직 생략 - 동일) ...
       if (annualPay <= 5000000) incomeDed = annualPay * 0.7;
       else if (annualPay <= 15000000) incomeDed = 3500000 + (annualPay - 5000000) * 0.4;
       else if (annualPay <= 45000000) incomeDed = 7500000 + (annualPay - 15000000) * 0.15;
@@ -227,6 +264,9 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
   const totalDeduction = np + hi + ltc + ei + it + lit;
   const netPay = totalPay - totalDeduction;
 
+  const remainingLeave = (formData.totalLeave || 0) - (formData.usedLeave || 0);
+
+  // --- 이미지 뷰어 로직 ---
   const onWheel = (e: React.WheelEvent) => {
       const d = e.deltaY > 0 ? -0.1 : 0.1;
       setScale(s => Math.min(Math.max(0.5, s + d), 4));
@@ -270,15 +310,9 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
                             <label>사번</label><input value={formData.employeeId || ''} onChange={e=>handleChange('employeeId', e.target.value)} />
                         </div>
                         <div className="row">
-                            {/* [NEW] 급여일 입력 */}
                             <label>급여일</label><input value={formData.payDate || ''} onChange={e=>handleChange('payDate', e.target.value)} placeholder="예: 매월 10일" />
                             <label>주민번호</label>
-                            <input 
-                                value={formData.residentNum || ''} 
-                                onChange={e=>handleChange('residentNum', e.target.value)} 
-                                placeholder="숫자만 입력" 
-                                maxLength={14}
-                            />
+                            <input value={formData.residentNum || ''} onChange={e=>handleChange('residentNum', e.target.value)} placeholder="숫자만 입력" maxLength={14} />
                         </div>
                         
                         <div className="row">
@@ -287,15 +321,9 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
                         </div>
                         <div className="row">
                             <label>계좌번호</label>
-                            <input 
-                                value={formData.accountNum || ''} 
-                                onChange={e=>handleChange('accountNum', e.target.value)} 
-                                placeholder="숫자만 입력"
-                                style={{flex:3}} 
-                            />
+                            <input value={formData.accountNum || ''} onChange={e=>handleChange('accountNum', e.target.value)} placeholder="숫자만 입력" style={{flex:3}} />
                         </div>
 
-                        {/* [NEW] 인센티브 계좌 섹션 */}
                         <div style={{marginTop:'20px', borderTop:'1px dashed #eee', paddingTop:'15px'}}>
                             <h4 style={{fontSize:'14px', color:'#333', marginBottom:'10px'}}>인센티브 계좌 (선택)</h4>
                             <div className="row">
@@ -304,12 +332,7 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
                             </div>
                             <div className="row">
                                 <label>계좌번호</label>
-                                <input 
-                                    value={formData.incentiveAccount || ''} 
-                                    onChange={e=>handleChange('incentiveAccount', e.target.value)} 
-                                    placeholder="숫자만 입력"
-                                    style={{flex:3}} 
-                                />
+                                <input value={formData.incentiveAccount || ''} onChange={e=>handleChange('incentiveAccount', e.target.value)} placeholder="숫자만 입력" style={{flex:3}} />
                             </div>
                         </div>
                     </div>
@@ -324,40 +347,73 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
                             <div className="row"><label>자격수당</label><input type="number" value={formData.qualAllowance||0} onChange={e=>handleChange('qualAllowance', Number(e.target.value))} /></div>
                             <div className="row"><label>근속수당</label><input type="number" value={formData.longServiceAllowance||0} onChange={e=>handleChange('longServiceAllowance', Number(e.target.value))} /></div>
                             
-                            <h4 style={{marginTop:'15px', borderBottom:'1px solid #eee', paddingBottom:'5px'}}>공제 대상 (간이세액표)</h4>
+                            <h4 style={{marginTop:'15px', borderBottom:'1px solid #eee', paddingTop:'15px', paddingBottom:'5px'}}>공제 대상</h4>
                             <div className="row">
-                                <label>가족 수 (본인포함)</label>
+                                <label>가족 수</label>
                                 <input type="number" value={formData.dependentCount} onChange={e=>handleChange('dependentCount', Number(e.target.value))} min={1} />
                             </div>
                             {dependents >= 2 && (
                                 <div className="row">
-                                    <label>8세~20세 자녀 수</label>
+                                    <label>자녀 수</label>
                                     <input type="number" value={formData.childCount} onChange={e=>handleChange('childCount', Number(e.target.value))} min={0} />
                                 </div>
                             )}
-
-                            <div className="row total-row"><label>지급 총액 (세전)</label><span className="amount">{totalPay.toLocaleString()} 원</span></div>
+                            <div className="row total-row"><label>지급 총액</label><span className="amount">{totalPay.toLocaleString()} 원</span></div>
                             
-                            <h4 style={{marginTop:'20px'}}>연차 관리</h4>
-                            <div className="row">
-                                <label>총 연차</label><input type="number" value={formData.totalLeave||0} onChange={e=>handleChange('totalLeave', Number(e.target.value))} />
-                                <label>사용 연차</label><input type="number" value={formData.usedLeave||0} onChange={e=>handleChange('usedLeave', Number(e.target.value))} />
+                            {/* [수정] 연차 관리 UI 변경 */}
+                            <h4 style={{marginTop:'25px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                                연차 관리
+                                <span style={{fontSize:'11px', color:'#666', fontWeight:'normal'}}>입사: {formData.joinDate || '-'} ({tenureText})</span>
+                            </h4>
+                            
+                            <div style={{background:'#f9f9f9', padding:'10px', borderRadius:'6px', marginBottom:'10px', fontSize:'13px'}}>
+                                <p style={{margin:0, color:'#555', fontSize:'12px'}}>
+                                    * 법정 기준에 따라 <strong>자동 계산되어 반영</strong>됩니다.<br/>
+                                    (1년 미만: 1개월 만근 시 1일, 1년 이상: 15일 + 근속가산)
+                                </p>
                             </div>
-                            <div className="row total-row"><label>잔여 연차</label><span className="amount">{(formData.totalLeave||0) - (formData.usedLeave||0)} 일</span></div>
+
+                            <div className="row">
+                                <label>총 연차</label>
+                                <input 
+                                    type="number" 
+                                    value={formData.totalLeave||0} 
+                                    disabled 
+                                    className="readonly"
+                                    style={{backgroundColor: '#e9ecef', color: '#495057'}}
+                                />
+                                <label>사용 연차</label>
+                                <input 
+                                    type="number" 
+                                    value={formData.usedLeave||0} 
+                                    disabled 
+                                    className="readonly"
+                                    style={{backgroundColor: '#e9ecef', color: '#495057'}}
+                                    placeholder="전자결재 연동" 
+                                />
+                            </div>
+                            <div className="row total-row">
+                                <label>잔여 연차</label>
+                                <span className={`amount ${remainingLeave < 0 ? 'red' : ''}`} style={{color: remainingLeave < 0 ? '#d32f2f' : 'inherit'}}>
+                                    {remainingLeave} 일
+                                </span>
+                            </div>
+                            <p style={{fontSize:'11px', color:'#666', marginTop:'5px'}}>* 전자결재에서 휴가가 승인되면 '사용 연차'가 자동으로 증가합니다.</p>
                         </div>
 
+                        {/* ... (급여 공제 내역 UI - 기존 동일) ... */}
                         <div className="salary-calcs">
                             <div className="calc-header">
                                 <h4>공제 항목 (예상)</h4>
-                                <span className="rate-info">* 2025 간이세액표 적용</span>
+                                <span className="rate-info">* 2025 간이세액표</span>
                             </div>
                             
                             <div className="calc-row"><span>국민연금 ({rates.nationalPension}%)</span><span>-{np.toLocaleString()}</span></div>
                             <div className="calc-row"><span>건강보험 ({rates.healthInsurance}%)</span><span>-{hi.toLocaleString()}</span></div>
                             <div className="calc-row"><span>장기요양 ({rates.longTermCare}%)</span><span>-{ltc.toLocaleString()}</span></div>
                             <div className="calc-row"><span>고용보험 ({rates.employmentInsurance}%)</span><span>-{ei.toLocaleString()}</span></div>
-                            <div className="calc-row"><span>소득세 (가족 {dependents}명)</span><span>-{it.toLocaleString()}</span></div>
-                            <div className="calc-row"><span>지방소득세 (10%)</span><span>-{lit.toLocaleString()}</span></div>
+                            <div className="calc-row"><span>소득세</span><span>-{it.toLocaleString()}</span></div>
+                            <div className="calc-row"><span>지방소득세</span><span>-{lit.toLocaleString()}</span></div>
                             
                             <div className="calc-divider"></div>
                             <div className="calc-row total">
@@ -374,10 +430,10 @@ const StaffDetailModal: React.FC<Props> = ({ staff, onClose, onSave }) => {
                                 <details>
                                     <summary>4대보험 요율 설정</summary>
                                     <div className="rate-grid">
-                                        <label>국민연금(%)</label><input type="number" value={rates.nationalPension} onChange={e=>setRates({...rates, nationalPension: Number(e.target.value)})} />
-                                        <label>건강보험(%)</label><input type="number" value={rates.healthInsurance} onChange={e=>setRates({...rates, healthInsurance: Number(e.target.value)})} />
-                                        <label>장기요양(%)</label><input type="number" value={rates.longTermCare} onChange={e=>setRates({...rates, longTermCare: Number(e.target.value)})} />
-                                        <label>고용보험(%)</label><input type="number" value={rates.employmentInsurance} onChange={e=>setRates({...rates, employmentInsurance: Number(e.target.value)})} />
+                                        <label>국민연금</label><input type="number" value={rates.nationalPension} onChange={e=>setRates({...rates, nationalPension: Number(e.target.value)})} />
+                                        <label>건강보험</label><input type="number" value={rates.healthInsurance} onChange={e=>setRates({...rates, healthInsurance: Number(e.target.value)})} />
+                                        <label>장기요양</label><input type="number" value={rates.longTermCare} onChange={e=>setRates({...rates, longTermCare: Number(e.target.value)})} />
+                                        <label>고용보험</label><input type="number" value={rates.employmentInsurance} onChange={e=>setRates({...rates, employmentInsurance: Number(e.target.value)})} />
                                     </div>
                                 </details>
                             </div>

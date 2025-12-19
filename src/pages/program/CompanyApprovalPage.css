@@ -1,0 +1,280 @@
+/* --- [Variables] --- */
+:root {
+  --ap-primary: #3182F6;
+  --ap-primary-dark: #1B64DA;
+  --ap-bg: #F9FAFB;
+  --ap-surface: #FFFFFF;
+  --ap-text-main: #191F28;
+  --ap-text-sub: #8B95A1;
+  --ap-border: #E5E8EB;
+  --ap-success: #2E8B57;
+  --ap-danger: #E02020;
+  --ap-pending: #FF8F00;
+  --ap-radius: 16px;
+  --ap-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.ap-page {
+  width: 100%; min-height: 100vh; background-color: var(--ap-bg);
+  padding: 40px 24px; font-family: 'Pretendard', sans-serif; box-sizing: border-box;
+}
+
+/* --- [Header] --- */
+.ap-header {
+  max-width: 1000px; margin: 0 auto 24px; display: flex; justify-content: space-between; align-items: flex-end;
+}
+.page-title { font-size: 28px; font-weight: 800; color: var(--ap-text-main); margin: 0 0 8px; letter-spacing: -0.5px; }
+.page-desc { font-size: 16px; color: var(--ap-text-sub); margin: 0; }
+
+.btn-new-app {
+  height: 52px; padding: 0 24px; background-color: var(--ap-primary); color: white;
+  border: none; border-radius: 12px; font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.25); transition: all 0.2s;
+}
+.btn-new-app:hover { transform: translateY(-2px); background-color: var(--ap-primary-dark); }
+
+/* --- [Tabs] --- */
+.ap-tabs {
+  max-width: 1000px; margin: 0 auto 32px; display: flex; gap: 8px;
+  border-bottom: 1px solid var(--ap-border); padding-bottom: 12px;
+}
+.ap-tab {
+  background: none; border: none; font-size: 16px; font-weight: 600; color: var(--ap-text-sub);
+  padding: 8px 16px; cursor: pointer; border-radius: 8px; transition: all 0.2s; position: relative;
+}
+.ap-tab:hover { background-color: rgba(0,0,0,0.03); color: var(--ap-text-main); }
+.ap-tab.active { background-color: #E8F3FF; color: var(--ap-primary); }
+.ap-tab .dot {
+  position: absolute; top: 6px; right: 6px; width: 6px; height: 6px;
+  background-color: var(--ap-danger); border-radius: 50%;
+}
+
+/* --- [List Grid] --- */
+.ap-list-container { max-width: 1000px; margin: 0 auto; }
+.ap-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+}
+
+.ap-card {
+  background: var(--ap-surface); border: 1px solid var(--ap-border); border-radius: var(--ap-radius);
+  padding: 24px; cursor: pointer; transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  display: flex; flex-direction: column; position: relative;
+}
+.ap-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); border-color: transparent; }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.doc-type {
+  font-size: 12px; font-weight: 700; color: var(--ap-text-sub); text-transform: uppercase;
+  background: #F2F4F6; padding: 4px 8px; border-radius: 6px;
+}
+
+.status-badge {
+  display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700;
+}
+.status-badge svg { width: 14px; height: 14px; stroke-width: 3px; }
+.status-badge.pending { color: var(--ap-pending); }
+.status-badge.approved { color: var(--ap-success); }
+.status-badge.rejected { color: var(--ap-danger); }
+
+.doc-title {
+  font-size: 18px; font-weight: 700; color: var(--ap-text-main); margin: 0 0 20px;
+  line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.card-meta { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.meta-row { display: flex; justify-content: space-between; }
+.meta-row .label { color: var(--ap-text-sub); }
+.meta-row .value { color: var(--ap-text-main); font-weight: 500; }
+.meta-row.date { margin-top: 8px; padding-top: 12px; border-top: 1px solid #F2F4F6; color: var(--ap-text-sub); justify-content: flex-end; }
+
+/* --- [Empty State] --- */
+.empty-state { text-align: center; padding: 80px 0; color: var(--ap-text-sub); }
+.empty-icon {
+  width: 64px; height: 64px; background: var(--ap-border); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: white;
+}
+
+/* --- [Modals] --- */
+.ap-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: center; z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.ap-modal-content {
+  background: white; width: 90%; border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+  overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ap-modal-content.write-mode { max-width: 600px; height: 85vh; }
+.ap-modal-content.detail-mode { max-width: 700px; max-height: 90vh; height: auto; }
+
+.ap-modal-header {
+  padding: 20px 28px; border-bottom: 1px solid var(--ap-border);
+  display: flex; justify-content: space-between; align-items: center; background: white;
+}
+.ap-modal-header h3 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ap-text-main); }
+.ap-close-btn {
+  background: none; border: none; font-size: 24px; color: #B0B8C1; cursor: pointer;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  transition: all 0.2s;
+}
+.ap-close-btn:hover { background: var(--ap-bg); color: var(--ap-text-main); }
+
+.ap-modal-body { padding: 32px; overflow-y: auto; flex: 1; }
+
+/* Form Styles */
+.ap-input-group { margin-bottom: 24px; display: flex; flex-direction: column; }
+.ap-input-group.flex-grow { flex: 1; }
+.ap-input-group label { font-size: 14px; font-weight: 700; color: #4E5968; margin-bottom: 8px; display: block; }
+
+.type-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.type-btn {
+  padding: 10px 16px; border: 1px solid var(--ap-border); background: white;
+  border-radius: 20px; font-size: 14px; color: var(--ap-text-sub); cursor: pointer; white-space: nowrap; transition: all 0.2s;
+}
+.type-btn.selected {
+  background: #E8F3FF; color: var(--ap-primary); border-color: var(--ap-primary); font-weight: 700;
+}
+
+.ap-input-group input, .ap-input-group select, .ap-input-group textarea {
+  width: 100%; border: 1px solid var(--ap-border); border-radius: 12px;
+  padding: 0 16px; font-size: 16px; outline: none; transition: all 0.2s;
+  box-sizing: border-box; background: var(--ap-bg);
+}
+.ap-input-group input, .ap-input-group select { height: 52px; }
+.ap-input-group textarea { padding: 16px; min-height: 200px; resize: none; line-height: 1.6; }
+.ap-input-group input:focus, .ap-input-group select:focus, .ap-input-group textarea:focus {
+  background: white; border-color: var(--ap-primary); box-shadow: 0 0 0 4px rgba(49, 130, 246, 0.1);
+}
+
+/* Detail View Styles */
+.header-badges { display: flex; align-items: center; gap: 12px; }
+.type-badge {
+  background: var(--ap-text-main); color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+}
+
+.detail-title { font-size: 24px; font-weight: 800; margin: 0 0 24px; line-height: 1.3; }
+.detail-info-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: var(--ap-bg);
+  padding: 20px; border-radius: 16px;
+}
+.info-item { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.info-item .label { color: var(--ap-text-sub); font-size: 12px; font-weight: 600; }
+.user-box { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.user-box svg { color: var(--ap-text-sub); width: 14px; height: 14px; }
+
+.detail-divider { height: 1px; background: var(--ap-border); margin: 32px 0; }
+.detail-content { font-size: 16px; line-height: 1.8; color: #333; white-space: pre-wrap; }
+
+/* Modal Footer */
+.ap-modal-footer {
+  padding: 24px 32px; border-top: 1px solid var(--ap-border); background: white;
+  display: flex; justify-content: flex-end; gap: 12px;
+}
+.btn-cancel {
+  height: 52px; padding: 0 24px; border: 1px solid var(--ap-border); background: white;
+  border-radius: 12px; font-size: 16px; font-weight: 600; color: var(--ap-text-sub); cursor: pointer;
+}
+.btn-submit {
+  height: 52px; padding: 0 32px; background: var(--ap-primary); color: white;
+  border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.btn-submit:hover { background: var(--ap-primary-dark); }
+
+.btn-reject {
+  height: 52px; flex: 1; border: 1px solid var(--ap-danger); background: white; color: var(--ap-danger);
+  border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.btn-reject:hover { background: #FFF0F0; }
+
+.btn-approve {
+  height: 52px; flex: 2; border: none; background: var(--ap-primary); color: white;
+  border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.btn-approve:hover { background: var(--ap-primary-dark); }
+
+/* Animation */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(40px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .ap-page { padding: 20px 16px; }
+  .ap-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .btn-new-app { width: 100%; justify-content: center; }
+  .ap-grid { grid-template-columns: 1fr; }
+  .detail-info-grid { grid-template-columns: 1fr; gap: 12px; }
+  .ap-modal-content { width: 100%; height: 100%; border-radius: 0; max-width: 100%; max-height: 100%; }
+}
+
+/* =========================================
+   [긴급 스타일 보정] 
+   날짜 선택 UI 가로 정렬 및 아이콘 겹침 해결
+   ========================================= */
+
+/* 1. 휴가 날짜 선택 영역: 가로 정렬 강제 */
+.ap-modal-content .leave-date-row {
+  display: flex !important;
+  flex-direction: row !important; /* 무조건 가로 배치 */
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-bottom: 24px !important;
+}
+
+/* 2. 날짜 입력 필드 래퍼 */
+.ap-modal-content .date-field {
+  position: relative !important;
+  flex: 1 !important; /* 공간 균등 분할 */
+  display: flex !important;
+  align-items: center !important;
+  width: auto !important; /* 가로 100% 차지 방지 */
+}
+
+/* 3. 달력 아이콘 위치 고정 */
+.ap-modal-content .date-field svg {
+  position: absolute !important;
+  left: 16px !important; /* 왼쪽 여백 확보 */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #8B95A1 !important;
+  pointer-events: none !important; /* 아이콘 클릭 시 입력창 활성화되도록 */
+  z-index: 10 !important;
+}
+
+/* 4. [핵심] 날짜 입력창 텍스트 겹침 해결 */
+.ap-modal-content .date-field input[type="date"] {
+  width: 100% !important;
+  height: 52px !important;
+  
+  /* 아이콘 크기(약 20px) + 여백 고려하여 왼쪽 패딩 넉넉히 설정 */
+  padding-left: 48px !important; 
+  padding-right: 16px !important;
+  
+  border: 1px solid #E5E8EB !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  background-color: #F9FAFB !important;
+  color: #333 !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  
+  /* 브라우저 기본 달력 아이콘 제거 (선택사항, 깔끔한 디자인 위해 추천) */
+  /* -webkit-appearance: none; */
+}
+
+.ap-modal-content .date-field input[type="date"]:focus {
+  background-color: #fff !important;
+  border-color: #3182F6 !important;
+  box-shadow: 0 0 0 4px rgba(49, 130, 246, 0.1) !important;
+}
+
+/* 물결표(~) 정렬 */
+.ap-modal-content .leave-date-row span {
+  flex-shrink: 0 !important;
+  font-weight: 700 !important;
+  color: #8B95A1 !important;
+}

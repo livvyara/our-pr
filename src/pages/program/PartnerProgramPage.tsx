@@ -9,8 +9,6 @@ import SiteList from '../../components/partner/SiteList';
 import SiteDetailPage from '../../pages/program/SiteDetailPage';
 import DashboardCalendarWidget from '../../components/partner/DashboardCalendarWidget'; 
 import PartnerPermissionTab from '../../components/partner/PartnerPermissionTab'; 
-import EmployeeAddTab from '../../components/partner/EmployeeAddTab';
-import EmployeeListTab from '../../components/partner/EmployeeListTab';
 import PartnerActivityLogPage from './PartnerActivityLogPage';
 import DashboardSiteListWidget from '../../components/partner/DashboardSiteListWidget';
 import AccountingHometaxPage from './AccountingHometaxPage';
@@ -26,6 +24,10 @@ import SiteDeleteList from '../../components/partner/SiteDeleteList';
 import WorkerManagementPage from './WorkerManagementPage';
 import LaborCostManagementPage from './LaborCostManagementPage';
 import StaffManagementPage from './StaffManagementPage';
+import OrgManagementPage from './OrgManagementPage'; // [NEW] 직급/조직관리 페이지 임포트
+import EmployeeManagementPage from './EmployeeManagementPage';
+import CompanyNoticePage from './CompanyNoticePage';
+import CompanyApprovalPage from './CompanyApprovalPage';
 
 // Firebase
 import { auth } from '../../firebase-config';
@@ -200,7 +202,16 @@ const PartnerProgramPage: React.FC = () => {
                 </div>
               </ProtectedContent>
             } />
-            
+            <Route path="company-notice" element={
+                <ProtectedContent requiredPerm="dashboard"> {/* 누구나 볼 수 있게 dashboard 권한 사용 */}
+                    <CompanyNoticePage partnerUid={currentPartnerUid} />
+                </ProtectedContent>
+            } />
+            <Route path="company-approval" element={
+                <ProtectedContent requiredPerm="dashboard">
+                    <CompanyApprovalPage partnerUid={currentPartnerUid} />
+                </ProtectedContent>
+            } />
             <Route path="site-add" element={<ProtectedContent requiredPerm="site-add"><SiteAdd partnerUid={currentPartnerUid} /></ProtectedContent>} />
             <Route path="site-list" element={<ProtectedContent requiredPerm="site-list"><SiteList onSiteSelect={handleSiteSelect} partnerUid={currentPartnerUid} /></ProtectedContent>} />
             <Route path="site-delete" element={<ProtectedContent requiredPerm="site-delete"><SiteDeleteList partnerUid={currentPartnerUid} /></ProtectedContent>} />
@@ -223,14 +234,28 @@ const PartnerProgramPage: React.FC = () => {
             <Route path="accounting-expense-category" element={<ProtectedContent requiredPerm="accounting"><AccountingExpenseCategory /></ProtectedContent>} />
             <Route path="accounting-banking-excel" element={<ProtectedContent requiredPerm="accounting"><AccountingBankingExcelPage/></ProtectedContent>} />
             <Route path="accounting-purchase-manual" element={<ProtectedContent requiredPerm="accounting-purchase"><AccountingManualPurchasePage /></ProtectedContent>} />
-            
-            <Route path="emp-add" element={<ProtectedContent requiredPerm="emp-add"><EmployeeAddTab /></ProtectedContent>} />
-            <Route path="emp-list" element={<ProtectedContent requiredPerm="emp-list"><EmployeeListTab partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
-            <Route path="emp-permission" element={<ProtectedContent requiredPerm="emp-permission"><PartnerPermissionTab partnerUid={currentPartnerUid} partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
+            <Route path="emp-integrated" element={
+                <ProtectedContent requiredPerm="emp-list">
+                    <EmployeeManagementPage 
+                        partnerBusinessNumber={partnerInfo?.businessNumber || ''} 
+                        partnerUid={currentPartnerUid} 
+                    />
+                </ProtectedContent>
+            } />
+           <Route path="emp-permission" element={<ProtectedContent requiredPerm="emp-permission"><PartnerPermissionTab partnerUid={currentPartnerUid} partnerBusinessNumber={partnerInfo?.businessNumber || ''} /></ProtectedContent>} />
             
             <Route path="emp-management" element={
                 <ProtectedContent requiredPerm="hr"> 
                     <StaffManagementPage partnerUid={currentPartnerUid} />
+                </ProtectedContent>
+            } />
+
+            {/* [NEW] 직급/조직관리 라우트 추가 */}
+            <Route path="org-management" element={
+                <ProtectedContent requiredPerm="emp-permission"> 
+                    <OrgManagementPage partnerUid={currentPartnerUid} 
+                        partnerBusinessNumber={partnerInfo?.businessNumber} 
+                    />
                 </ProtectedContent>
             } />
 

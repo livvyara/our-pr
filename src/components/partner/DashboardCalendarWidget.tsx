@@ -13,24 +13,29 @@ const Icons = {
   Meeting: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>,
   Construction: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>,
   Personal: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>,
+  // [NEW] 휴가 아이콘 (비행기)
+  Leave: () => <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>,
   Add: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   ArrowDown: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>,
   Trash: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
   Save: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
 };
 
-// [수정 1] 필터 설정 타입 정의 추가
+// [수정] FilterPrefs 타입 확장
 interface FilterPrefs {
   showMeetings: boolean;
   showConstruction: boolean;
   showPersonal: boolean;
+  showLeave: boolean; // [NEW] 휴가 필터
 }
 
-// Types & Helpers
+// [수정] ScheduleItem 타입 확장
 type ScheduleItem = {
   id: string; time: string; title: string; siteId?: string;
-  type: 'meeting' | 'construction' | 'personal'; isPublic?: boolean;
+  type: 'meeting' | 'construction' | 'personal' | 'leave'; // [NEW] leave 타입 추가
+  isPublic?: boolean;
   dateKey: string; fullTitle?: string; siteName?: string;
+  endDate?: string; // [NEW] 휴가 종료일 (기간 표시용)
 };
 
 interface DashboardCalendarWidgetProps {
@@ -57,10 +62,10 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
   const [allSchedules, setAllSchedules] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // [수정 2] useState에 제네릭 타입 <FilterPrefs> 명시
+  // [수정] 필터 초기값에 showLeave 추가
   const [filterPrefs, setFilterPrefs] = useState<FilterPrefs>(() => {
     const saved = localStorage.getItem('dashboardFilterPrefs');
-    return saved ? JSON.parse(saved) : { showMeetings: true, showConstruction: true, showPersonal: true };
+    return saved ? JSON.parse(saved) : { showMeetings: true, showConstruction: true, showPersonal: true, showLeave: true };
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,13 +95,14 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
     if (!partnerUid) return;
     setIsLoading(true);
 
-    let meetings: ScheduleItem[] = [], constructionLogs: ScheduleItem[] = [], constructionSchedules: ScheduleItem[] = [], personals: ScheduleItem[] = [];
+    let meetings: ScheduleItem[] = [], constructionLogs: ScheduleItem[] = [], constructionSchedules: ScheduleItem[] = [], personals: ScheduleItem[] = [], leaves: ScheduleItem[] = [];
 
     const updateAll = () => {
-      setAllSchedules([...meetings, ...constructionLogs, ...constructionSchedules, ...personals]);
+      setAllSchedules([...leaves, ...meetings, ...constructionLogs, ...constructionSchedules, ...personals]); // leaves를 맨 앞에 배치 (우선순위)
       setIsLoading(false);
     };
 
+    // ... (fetchSiteNameIfNeeded, unsubMemos, unsubWork, unsubSchedules 기존 유지) ...
     const fetchSiteNameIfNeeded = async (siteId: string) => {
         if (!siteId || siteNamesCache.has(siteId)) return;
         try {
@@ -148,15 +154,50 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
       });
       updateAll();
     });
+
+    // [NEW] 휴가 일정 (전자결재 승인 건) 리스닝
+    const unsubLeaves = onSnapshot(query(
+        collection(db, 'users', partnerUid, 'approvals'), 
+        where('type', '==', 'leave'), 
+        where('status', '==', 'approved')
+    ), (snap) => {
+        leaves = [];
+        snap.forEach(d => {
+            const data = d.data();
+            if (data.leaveStartDate && data.leaveEndDate) {
+                // 기간 내의 모든 날짜에 대해 일정 생성 (또는 시작일에만 표시하고 기간 명시)
+                // 여기서는 시작일 기준으로 표시하고 기간을 명시하는 방식을 채택 (깔끔함을 위해)
+                // 만약 캘린더에 연속된 바로 표시하려면 날짜별로 쪼개야 함. 
+                // -> 여기서는 편의상 "해당 날짜에 휴가인 사람"을 모두 보여주기 위해 날짜별 전개 로직 적용
+                
+                const start = new Date(data.leaveStartDate);
+                const end = new Date(data.leaveEndDate);
+                
+                // 날짜 순회
+                for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+                    leaves.push({
+                        id: `${d.id}_${dt.getTime()}`, // unique id
+                        time: '00:00', // 하루 종일
+                        title: `휴가 : ${data.requesterName}`, // 요청사항: "휴가 : 직원이름"
+                        type: 'leave',
+                        dateKey: getISODateString(dt),
+                        isPublic: true // 전사 공개
+                    });
+                }
+            }
+        });
+        updateAll();
+    });
     
-    return () => { unsubMemos(); unsubWork(); unsubSchedules(); unsubPersonal(); };
+    return () => { unsubMemos(); unsubWork(); unsubSchedules(); unsubPersonal(); unsubLeaves(); };
   }, [partnerUid, siteNamesCache]);
 
   const filteredSchedulesList = useMemo(() => {
     return allSchedules.filter(s => 
       (s.type === 'personal' && filterPrefs.showPersonal) || 
       (s.type === 'meeting' && filterPrefs.showMeetings) || 
-      (s.type === 'construction' && filterPrefs.showConstruction)
+      (s.type === 'construction' && filterPrefs.showConstruction) ||
+      (s.type === 'leave' && filterPrefs.showLeave) // [NEW]
     );
   }, [allSchedules, filterPrefs]);
 
@@ -172,17 +213,24 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
 
   const displayedSchedules = useMemo(() => {
     const selectedDateKey = getISODateString(selectedDate);
-    if (filterType === 'today') return (schedulesByDateMap.get(selectedDateKey) || []).sort((a, b) => a.time.localeCompare(b.time));
+    const sortByPriority = (a: ScheduleItem, b: ScheduleItem) => {
+        // [NEW] 휴가(leave) 우선 정렬
+        if (a.type === 'leave' && b.type !== 'leave') return -1;
+        if (a.type !== 'leave' && b.type === 'leave') return 1;
+        return a.time.localeCompare(b.time);
+    };
+
+    if (filterType === 'today') return (schedulesByDateMap.get(selectedDateKey) || []).sort(sortByPriority);
     if (filterType === 'week') {
       const { start, end } = getWeekRange(selectedDate);
       return filteredSchedulesList.filter(s => {
           const itemDate = new Date(s.dateKey);
           return itemDate >= start && itemDate <= end;
-      }).sort((a, b) => a.dateKey.localeCompare(b.dateKey) || a.time.localeCompare(b.time));
+      }).sort((a, b) => a.dateKey.localeCompare(b.dateKey) || sortByPriority(a, b));
     }
     if (filterType === 'month') {
       const yearMonth = selectedDateKey.substring(0, 7);
-      return filteredSchedulesList.filter(s => s.dateKey.startsWith(yearMonth)).sort((a, b) => a.dateKey.localeCompare(b.dateKey) || a.time.localeCompare(b.time));
+      return filteredSchedulesList.filter(s => s.dateKey.startsWith(yearMonth)).sort((a, b) => a.dateKey.localeCompare(b.dateKey) || sortByPriority(a, b));
     }
     return [];
   }, [filterType, filteredSchedulesList, selectedDate, schedulesByDateMap]);
@@ -213,22 +261,12 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
 
   const handleDateChange = (value: any) => setSelectedDate(value as Date);
   
-  // [수정 3] key 인자의 타입을 keyof FilterPrefs로 명시
   const toggleFilter = (key: keyof FilterPrefs) => {
     setFilterPrefs(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const ViewTabs = ({ className }: { className?: string }) => (
-    <div className={`dc-view-tabs ${className || ''}`}>
-        <button className={filterType==='today'?'active':''} onClick={()=>setFilterType('today')}>오늘</button>
-        <button className={filterType==='week'?'active':''} onClick={()=>setFilterType('week')}>이번 주</button>
-        <button className={filterType==='month'?'active':''} onClick={()=>setFilterType('month')}>이번 달</button>
-    </div>
-  );
-
   return (
     <div className="dc-widget">
-      
       {/* 1. Header */}
       <div className="dc-header">
         <div className="dc-title-area">
@@ -243,7 +281,11 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                 <button className={`dc-filter-chip personal ${filterPrefs.showPersonal?'active':''}`} onClick={()=>toggleFilter('showPersonal')}>
                     <span className="dot personal" /> 개인
                 </button>
-                {/* [NEW] 필터 저장 버튼 */}
+                {/* [NEW] 휴가 필터 버튼 */}
+                <button className={`dc-filter-chip leave ${filterPrefs.showLeave?'active':''}`} onClick={()=>toggleFilter('showLeave')}>
+                    <span className="dot leave" /> 휴가
+                </button>
+                
                 <button className="dc-filter-save-btn" onClick={handleSaveFilter} title="필터 설정 저장">
                     <Icons.Save />
                 </button>
@@ -256,8 +298,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
 
       {/* 2. Body */}
       <div className="dc-body">
-        
-        {/* A. Calendar (PC Only) */}
+        {/* A. Calendar */}
         <div className="dc-calendar-container">
             <Calendar
                 onChange={handleDateChange}
@@ -270,7 +311,7 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
             />
         </div>
 
-        {/* B. Toolbar (Sticky in Mobile via CSS) */}
+        {/* B. Toolbar */}
         <div className="dc-toolbar">
             <div className="dc-view-tabs">
                 <button className={filterType==='today'?'active':''} onClick={()=>setFilterType('today')}>오늘</button>
@@ -296,11 +337,11 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                         const displaySiteName = item.siteName || (item.siteId ? '현장' : null);
                         
                         return (
-                            <div key={item.id} className="dc-card-item" onClick={() => item.siteId && onSiteSelect(item.siteId)}>
+                            <div key={item.id} className={`dc-card-item ${item.type === 'leave' ? 'leave-highlight' : ''}`} onClick={() => item.siteId && onSiteSelect(item.siteId)}>
                                 {/* Left: Date & Time */}
                                 <div className="dc-card-left">
                                     <span className="date">{dateStr}</span>
-                                    <span className="time">{item.time}</span>
+                                    <span className="time">{item.type === 'leave' ? '종일' : item.time}</span>
                                 </div>
 
                                 {/* Right: Content */}
@@ -310,25 +351,23 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
                                             {item.type === 'meeting' && <Icons.Meeting />}
                                             {item.type === 'construction' && <Icons.Construction />}
                                             {item.type === 'personal' && <Icons.Personal />}
+                                            {item.type === 'leave' && <Icons.Leave />}
                                             <span className="type-text">
-                                                {item.type==='meeting'?'미팅':item.type==='construction'?'공사':'개인'}
+                                                {item.type==='meeting'?'미팅':item.type==='construction'?'공사':item.type==='personal'?'개인':'휴가'}
                                             </span>
                                         </span>
                                         {displaySiteName && (
                                             <span className="dc-site-name">@{displaySiteName}</span>
                                         )}
-                                        {/* [NEW] 개인 일정 삭제 버튼 */}
                                         {item.type === 'personal' && (
-                                            <button 
-                                                className="dc-delete-btn" 
-                                                onClick={(e) => handleDeletePersonal(e, item.id)}
-                                                title="일정 삭제"
-                                            >
+                                            <button className="dc-delete-btn" onClick={(e) => handleDeletePersonal(e, item.id)} title="일정 삭제">
                                                 <Icons.Trash />
                                             </button>
                                         )}
                                     </div>
-                                    <p className="dc-content-text">{item.title}</p>
+                                    <p className="dc-content-text" style={{ fontWeight: item.type === 'leave' ? 700 : 400 }}>
+                                        {item.title}
+                                    </p>
                                 </div>
                             </div>
                         )
@@ -344,13 +383,14 @@ const DashboardCalendarWidget: React.FC<DashboardCalendarWidgetProps> = ({ partn
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal (기존 동일) */}
       {isModalOpen && <PersonalScheduleModal partnerUid={partnerUid} onClose={() => setIsModalOpen(false)} />}
     </div>
   );
 };
 
 const PersonalScheduleModal: React.FC<{ partnerUid: string, onClose: () => void }> = ({ partnerUid, onClose }) => {
+  // ... (기존과 동일하므로 생략 가능하나 전체 코드 요청시 포함) ...
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(getISODateString(new Date()));
   const [time, setTime] = useState('09:00');

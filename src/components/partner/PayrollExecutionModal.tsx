@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, orderBy, writeBatch, doc } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 import './PayrollExecutionModal.css';
 
@@ -30,7 +30,8 @@ interface PayrollItem {
         base: number;      
         food: number;      
         qual: number;      
-        long: number;      
+        long: number;
+        bonus: number; // [NEW] 상여 추가
     };
 
     totalPay: number;     
@@ -67,10 +68,14 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
     const [targetMonth, setTargetMonth] = useState(new Date().toISOString().slice(0, 7)); 
     const [payrollList, setPayrollList] = useState<PayrollItem[]>([]);
     
-    // [NEW] 과거 내역 관련 상태
+    // 과거 내역 관련 상태
     const [historyList, setHistoryList] = useState<PayrollExecutionDoc[]>([]);
     const [viewMode, setViewMode] = useState<'create' | 'view'>('create'); // 작성모드 vs 조회모드
     const [selectedHistory, setSelectedHistory] = useState<PayrollExecutionDoc | null>(null);
+
+    // [NEW] 상여금 데이터 관리를 위한 상태
+    const [bonusMap, setBonusMap] = useState<Record<string, number>>({}); // 직원별 상여금 합계 { uid: amount }
+    const [bonusDocIds, setBonusDocIds] = useState<string[]>([]); // 처리해야 할 상여금 문서 ID들
 
     // [1] 과거 내역 불러오기
     const fetchHistory = async () => {
@@ -89,11 +94,45 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
         fetchHistory();
     }, [partnerUid]);
 
-    // [2] 급여 계산 로직 (작성 모드일 때만 자동 계산)
+    // [2] 상여금 조회 및 급여 초기 계산 로직
     useEffect(() => {
         if (viewMode === 'create') {
-            const initialList = staffList.map(s => calculatePayroll(s, false, false, getDaysInMonth()));
-            setPayrollList(initialList);
+            const initPayroll = async () => {
+                // A. 미처리된 급여 포함 상여금 조회
+                const bMap: Record<string, number> = {};
+                const bIds: string[] = [];
+                
+                try {
+                    const qBonus = query(
+                        collection(db, 'users', partnerUid, 'bonuses'),
+                        where('paymentMethod', '==', 'salary_include'),
+                        where('isProcessed', '==', false)
+                    );
+                    const snap = await getDocs(qBonus);
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const uid = data.staffUid;
+                        const amt = Number(data.amount) || 0;
+                        
+                        bMap[uid] = (bMap[uid] || 0) + amt; // 직원별 합산
+                        bIds.push(doc.id); // 나중에 처리 상태 업데이트용
+                    });
+                } catch (e) {
+                    console.error("상여금 조회 실패", e);
+                }
+
+                setBonusMap(bMap);
+                setBonusDocIds(bIds);
+
+                // B. 급여 리스트 계산 (상여금 반영)
+                const initialList = staffList.map(s => {
+                    const bonusAmount = bMap[s.uid] || 0;
+                    return calculatePayroll(s, false, false, getDaysInMonth(), bonusAmount);
+                });
+                setPayrollList(initialList);
+            };
+
+            initPayroll();
         }
     }, [staffList, targetMonth, viewMode]);
 
@@ -115,8 +154,14 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
         return new Date(y, m, 0).getDate();
     };
 
-    // 급여 계산 함수
-    const calculatePayroll = (staff: StaffData, isProbation: boolean, isMidJoin: boolean, workDays: number): PayrollItem => {
+    // [수정] 급여 계산 함수 (bonus 추가)
+    const calculatePayroll = (
+        staff: StaffData, 
+        isProbation: boolean, 
+        isMidJoin: boolean, 
+        workDays: number,
+        bonusAmount: number = 0 // [NEW] 상여금 인자
+    ): PayrollItem => {
         const daysInMonth = getDaysInMonth();
         const dayRatio = isMidJoin ? (workDays / daysInMonth) : 1;
         const probRatio = isProbation ? 0.9 : 1;
@@ -131,8 +176,10 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
         const calcQual = Math.floor(rawQual * probRatio * dayRatio);
         const calcLong = Math.floor(rawLong * dayRatio);
 
-        const totalPay = calcBase + calcFood + calcQual + calcLong;
-        const taxablePay = calcBase + calcQual + calcLong;
+        // [NEW] 총 급여에 상여금 포함
+        const totalPay = calcBase + calcFood + calcQual + calcLong + bonusAmount;
+        // [NEW] 과세 대상에 상여금 포함 (식대는 비과세 한도가 있지만 여기선 단순화)
+        const taxablePay = calcBase + calcQual + calcLong + bonusAmount;
 
         const np = Math.floor(taxablePay * 0.045);
         const hi = Math.floor(taxablePay * 0.03545);
@@ -144,10 +191,8 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
         const children = dependents >= 2 ? (staff.childCount || 0) : 0;
         
         let it = 0;
-        // (간단 근사치 로직 - 실제로는 StaffDetailModal 로직 공유 권장)
         if (taxablePay > 1060000) { 
              const annual = taxablePay * 12;
-             // 공제 대략 적용 (근로소득공제 + 인적공제)
              const taxBase = annual - (annual * 0.3) - (dependents * 1500000); 
              if(taxBase > 0) it = Math.floor(taxBase * 0.06 / 12 / 10) * 10; 
         }
@@ -163,7 +208,7 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
             isProbation,
             isMidJoin,
             workDays: isMidJoin ? workDays : daysInMonth,
-            payDetails: { base: calcBase, food: calcFood, qual: calcQual, long: calcLong },
+            payDetails: { base: calcBase, food: calcFood, qual: calcQual, long: calcLong, bonus: bonusAmount }, // [NEW] bonus 저장
             totalPay,
             taxablePay,
             deductions: { np, hi, ltc, ei, it, lit, total: totalDed },
@@ -173,7 +218,7 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
     };
 
     const handleOptionChange = (uid: string, field: 'isProbation' | 'isMidJoin' | 'workDays', value: any) => {
-        if (viewMode === 'view') return; // 조회 모드에선 수정 불가
+        if (viewMode === 'view') return;
 
         setPayrollList(prev => prev.map(item => {
             if (item.uid !== uid) return item;
@@ -181,11 +226,15 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
             const newProbation = field === 'isProbation' ? value : item.isProbation;
             const newMidJoin = field === 'isMidJoin' ? value : item.isMidJoin;
             const newWorkDays = field === 'workDays' ? Number(value) : item.workDays;
-            return calculatePayroll(staff, newProbation, newMidJoin, newWorkDays);
+            
+            // [NEW] 재계산 시 기존에 조회된 상여금 정보 유지
+            const currentBonus = bonusMap[uid] || 0;
+            
+            return calculatePayroll(staff, newProbation, newMidJoin, newWorkDays, currentBonus);
         }));
     };
 
-    // [NEW] 집행 확정 (DB 저장)
+    // [NEW] 집행 확정 (DB 저장 및 상여 처리 상태 업데이트)
     const handleExecute = async () => {
         if (payrollList.length === 0) return;
         if (!confirm(`${targetMonth} 급여를 확정하시겠습니까?\n확정 후에는 수정할 수 없으며 기록으로 남습니다.`)) return;
@@ -193,39 +242,54 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
         const totalAmount = payrollList.reduce((sum, item) => sum + item.netPay, 0);
 
         try {
-            await addDoc(collection(db, 'users', partnerUid, 'payroll_executions'), {
+            const batch = writeBatch(db);
+
+            // 1. 급여 대장 저장
+            const newDocRef = doc(collection(db, 'users', partnerUid, 'payroll_executions'));
+            batch.set(newDocRef, {
                 targetMonth,
                 baseDate,
                 totalAmount,
                 totalCount: payrollList.length,
                 createdAt: serverTimestamp(),
-                items: payrollList // 현재 계산된 리스트 스냅샷 저장
+                items: payrollList
             });
+
+            // 2. 포함된 상여금 내역을 '처리됨(isProcessed: true)'으로 업데이트
+            bonusDocIds.forEach(bonusId => {
+                const bonusRef = doc(db, 'users', partnerUid, 'bonuses', bonusId);
+                batch.update(bonusRef, { 
+                    isProcessed: true, 
+                    processedAt: serverTimestamp(), 
+                    payrollPeriod: targetMonth 
+                });
+            });
+
+            await batch.commit();
 
             alert("급여 집행이 완료되었습니다.");
             fetchHistory(); // 목록 갱신
+            // 작성모드 유지 or 뷰모드 전환 등 선택 (여기선 초기화)
+            handleNewMode();
         } catch (e) {
             console.error(e);
             alert("저장 중 오류가 발생했습니다.");
         }
     };
 
-    // [NEW] 과거 내역 조회
     const handleHistoryClick = (doc: PayrollExecutionDoc) => {
         setSelectedHistory(doc);
-        setPayrollList(doc.items); // 당시 스냅샷 데이터로 교체
+        setPayrollList(doc.items);
         setTargetMonth(doc.targetMonth);
         setViewMode('view');
     };
 
-    // [NEW] 새 급여 작성 모드로 복귀
     const handleNewMode = () => {
         setTargetMonth(new Date().toISOString().slice(0, 7));
         setViewMode('create');
         setSelectedHistory(null);
     };
 
-    // 엑셀 다운로드
     const handleExportExcel = () => {
         const wsData = payrollList.map(item => ({
             '이름': item.name,
@@ -233,6 +297,7 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
             '식대': item.payDetails.food,
             '자격수당': item.payDetails.qual,
             '근속수당': item.payDetails.long,
+            '상여(포함)': item.payDetails.bonus, // [NEW] 엑셀에도 추가
             '지급총액': item.totalPay,
             '국민연금': item.deductions.np,
             '건강보험': item.deductions.hi,
@@ -292,7 +357,8 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
                                 <th rowSpan={2} style={{width:'60px'}}>중도</th>
                                 <th rowSpan={2} style={{width:'50px'}}>일수</th>
                                 
-                                <th colSpan={4} style={{background:'#e3f2fd'}}>지급 내역</th>
+                                {/* [NEW] ColSpan 증가 (4->5) */}
+                                <th colSpan={5} style={{background:'#e3f2fd'}}>지급 내역</th>
                                 <th rowSpan={2} style={{background:'#bbdefb'}}>지급계</th>
                                 
                                 <th colSpan={4}>4대보험</th>
@@ -307,6 +373,7 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
                                 <th style={{background:'#e3f2fd'}}>식대</th>
                                 <th style={{background:'#e3f2fd'}}>자격</th>
                                 <th style={{background:'#e3f2fd'}}>근속</th>
+                                <th style={{background:'#e3f2fd', color:'#e65100'}}>상여</th> {/* [NEW] 상여 헤더 */}
                                 
                                 <th>국민</th><th>건강</th><th>장기</th><th>고용</th>
                                 <th>소득</th><th>지방</th>
@@ -348,6 +415,11 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
                                     <td className="right">{item.payDetails.food.toLocaleString()}</td>
                                     <td className="right">{item.payDetails.qual.toLocaleString()}</td>
                                     <td className="right">{item.payDetails.long.toLocaleString()}</td>
+                                    {/* [NEW] 상여금 표시 */}
+                                    <td className="right" style={{color:'#e65100', fontWeight: item.payDetails.bonus > 0 ? 'bold' : 'normal'}}>
+                                        {item.payDetails.bonus.toLocaleString()}
+                                    </td>
+
                                     <td className="right bold" style={{background:'#bbdefb'}}>{item.totalPay.toLocaleString()}</td>
                                     
                                     <td className="right">{item.deductions.np.toLocaleString()}</td>
@@ -367,11 +439,10 @@ const PayrollExecutionModal: React.FC<Props> = ({ partnerUid, staffList, baseDat
                     </table>
                 </div>
 
-                {/* 하단 영역: 작성 모드면 저장버튼, 공통으로 히스토리 리스트 */}
                 <div className="payroll-bottom-section">
                     {viewMode === 'create' && (
                         <div className="action-row">
-                            <span className="info-txt">※ 집행 확정 시 수정할 수 없습니다.</span>
+                            <span className="info-txt">※ 집행 확정 시 수정할 수 없습니다. (포함된 상여 내역은 '처리완료'됩니다)</span>
                             <button className="btn-exec" onClick={handleExecute}>집행 확정 (저장)</button>
                         </div>
                     )}
