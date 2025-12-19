@@ -278,3 +278,307 @@
   font-weight: 700 !important;
   color: #8B95A1 !important;
 }
+
+/* =========================================
+   [기존 스타일 유지] (기본 레이아웃 등)
+   ... (기존 코드가 있다면 유지하고 아래 내용을 추가하세요)
+   ========================================= */
+
+/* --- [NEW] Leave Management Area (작성 팝업) --- */
+.leave-management-area {
+  background-color: #F0F4F8;
+  border: 1px solid #DCE2E8;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.leave-status-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #4E5968;
+}
+
+.ls-label {
+  font-weight: 700;
+  color: #333;
+  margin-right: 4px;
+}
+
+.ls-divider {
+  color: #ccc;
+  font-size: 10px;
+}
+
+.ls-arrow {
+  color: #8B95A1;
+  font-size: 12px;
+  margin: 0 2px;
+}
+
+/* 연차 배지 스타일 */
+.ls-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.2px;
+}
+
+.ls-badge.total {
+  background-color: #E8F3FF;
+  color: #3182F6;
+  border: 1px solid #D0E6FF;
+}
+
+.ls-badge.used {
+  background-color: #F2F4F6;
+  color: #6B7684;
+  border: 1px solid #E5E8EB;
+}
+
+.ls-badge.remain {
+  background-color: #E3FCEF;
+  color: #008A45;
+  border: 1px solid #CFF7E2;
+}
+
+.ls-badge.remain.warning {
+  background-color: #FFF0F0;
+  color: #E02020;
+  border: 1px solid #FFDCDC;
+}
+
+/* 날짜 선택 옆 사용 일수 배지 */
+.using-days-badge {
+  margin-left: auto; /* 우측 정렬 */
+  padding: 0 14px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  background-color: #333;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  animation: fadeIn 0.3s ease;
+  white-space: nowrap;
+}
+
+.using-days-badge strong {
+  color: #FFB300;
+  margin: 0 4px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.using-days-badge.over {
+  background-color: #E02020; /* 초과 시 빨간색 */
+}
+
+.leave-warning-text {
+  font-size: 12px;
+  color: #E02020;
+  margin: 10px 0 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+/* --- [NEW] Leave Detail Summary (상세 팝업 - 휴가 현황판) --- */
+.leave-detail-summary {
+  background-color: #fff;
+  border: 1px solid #E5E8EB;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.lds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px dashed #E5E8EB;
+  padding-bottom: 12px;
+}
+
+.lds-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lds-date {
+  font-size: 13px;
+  color: #666;
+  font-family: monospace; /* 날짜 숫자 가독성 */
+}
+
+.lds-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lds-stat-item {
+  flex: 1;
+  background-color: #F9FAFB;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.lds-stat-item .label {
+  font-size: 11px;
+  color: #8B95A1;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.lds-stat-item .value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
+
+.lds-stat-item.minus {
+  background-color: #FFF0F0;
+}
+.lds-stat-item.minus .value {
+  color: #E02020;
+}
+
+.lds-stat-item.result {
+  background-color: #E3FCEF;
+  border: 1px solid #CFF7E2;
+}
+.lds-stat-item.result .value {
+  color: #008A45;
+}
+
+/* --- [NEW] Revoke Button (승인 취소) --- */
+.btn-revoke {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background-color: #FF9800; /* 오렌지색 경고 */
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+  margin-left: auto; /* 우측 정렬 */
+}
+
+.btn-revoke:hover {
+  background-color: #F57C00;
+}
+
+.btn-revoke svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* --- 애니메이션 --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- [NEW] Toolbar & Date Picker --- */
+.ap-toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.date-filter-box {
+  background: white;
+  border: 1px solid #E5E8EB;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #333;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: #666;
+  margin-right: 4px;
+}
+
+.date-filter-box input[type="date"] {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #333;
+}
+
+.date-filter-box .tilde {
+  color: #999;
+}
+
+/* --- [NEW] Leave Duration Selector --- */
+.leave-duration-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  background-color: #fff;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #E5E8EB;
+}
+
+.ld-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.ld-option:hover {
+  background-color: #F9FAFB;
+}
+
+.ld-option.active {
+  background-color: #E8F3FF;
+  color: #3182F6;
+  font-weight: 700;
+  border-color: #3182F6;
+}
+
+.ld-option input {
+  display: none; /* 기본 라디오 버튼 숨김 */
+}
