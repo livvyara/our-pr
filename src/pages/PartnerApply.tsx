@@ -149,7 +149,6 @@ const PartnerApply: React.FC = () => {
         </div>
       </div>
 
-      <Footer />
       {isMobileMenuOpen && isMobile && <MobileMenu onClose={() => setIsMobileMenuOpen(false)} />}
     </div>
   );

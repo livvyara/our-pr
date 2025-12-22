@@ -351,7 +351,6 @@ const PartnerApplyForm: React.FC = () => {
         </div>
       </main>
 
-      <Footer /> 
       {isMobileMenuOpen && isMobile && <MobileMenu onClose={handleMenuClose} />}
     </div>
   );
