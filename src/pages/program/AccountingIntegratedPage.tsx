@@ -55,7 +55,7 @@ const AccountingIntegratedPage: React.FC = () => {
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
   
-  // 모바일 아코디언 상태 관리 (Set으로 여러 개 열기 가능)
+  // 모바일 아코디언 상태 관리
   const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
 
   // 필터 State
@@ -273,6 +273,7 @@ const AccountingIntegratedPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Filter Panel */}
       <div className="aip-filter-panel">
         <div className="aip-filter-row top">
           <div className="aip-mode-group">
@@ -355,7 +356,7 @@ const AccountingIntegratedPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. PC VIEW (TABLE) - Visible only on Desktop (> 1024px) */}
+      {/* 1. PC VIEW (TABLE) */}
       {/* ========================================================================= */}
       <div className="aip-desktop-view">
         <div className="aip-table-container">
@@ -401,6 +402,7 @@ const AccountingIntegratedPage: React.FC = () => {
                         <td className="aip-text-center">
                           <span className={`aip-badge ${item.inOut === '매출' ? 'sales' : 'purchase'}`}>{item.inOut}</span>
                         </td>
+                        {/* [복원] PC 테이블 상호명 클릭 이벤트 */}
                         <td>
                           <div className="aip-cell-vendor" onClick={() => setSelectedItem(item)} title={item.traderName}>
                               {item.traderName}
@@ -446,7 +448,7 @@ const AccountingIntegratedPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. MOBILE VIEW (ACCORDION) - Visible only on Mobile/Tablet (<= 1024px) */}
+      {/* 2. MOBILE VIEW (ACCORDION) */}
       {/* ========================================================================= */}
       <div className="aip-mobile-view">
         <div className="aip-mobile-list">
@@ -464,11 +466,20 @@ const AccountingIntegratedPage: React.FC = () => {
 
                     return (
                         <div key={item.id} className="aip-mobile-card" style={isClassified ? {backgroundColor: 'var(--aip-bg-assigned)'} : {}}>
-                            {/* Always Visible Header */}
+                            {/* Header */}
                             <div className="aip-mobile-card-header" onClick={() => toggleExpand(item.id)}>
                                 <div className="aip-mobile-header-left">
                                     <span className="aip-mobile-date">{item.date}</span>
-                                    <span className="aip-mobile-vendor-title">{item.traderName}</span>
+                                    {/* [복원] 모바일 상호명 클릭 이벤트 (stopPropagation 사용) */}
+                                    <span 
+                                        className="aip-mobile-vendor-title" 
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            setSelectedItem(item); 
+                                        }}
+                                    >
+                                        {item.traderName}
+                                    </span>
                                 </div>
                                 <div className="aip-mobile-header-right">
                                     <div className="aip-mobile-badge-group">
@@ -496,12 +507,6 @@ const AccountingIntegratedPage: React.FC = () => {
                                         <div className="aip-mobile-row" style={{marginTop:'4px'}}>
                                             <span className="aip-mobile-label">합계</span>
                                             <span className="aip-mobile-value total">{item.totalAmount.toLocaleString()}원</span>
-                                        </div>
-                                        {/* 상세보기 클릭 유도 */}
-                                        <div style={{marginTop:'8px', textAlign:'right'}}>
-                                            <span style={{fontSize:'12px', color:'#3182f6', fontWeight:600, cursor:'pointer'}} onClick={(e) => { e.stopPropagation(); setSelectedItem(item); }}>
-                                                상세 영수증 보기 &gt;
-                                            </span>
                                         </div>
                                     </div>
 
@@ -584,7 +589,7 @@ const AccountingIntegratedPage: React.FC = () => {
   );
 };
 
-// --- Modals (Previous implementations maintained) ---
+// --- Modals ---
 const TaxInvoiceDetailModal: React.FC<{ item: UnifiedItem, onClose: () => void }> = ({ item, onClose }) => {
     const d = item.originalData;
     const themeClass = item.inOut === '매출' ? 'aip-theme-red' : 'aip-theme-blue';

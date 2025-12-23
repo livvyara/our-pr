@@ -175,7 +175,20 @@
 
 .aip-mobile-header-left { display: flex; flex-direction: column; gap: 4px; }
 .aip-mobile-date { font-size: 12px; color: #888; font-weight: 500; }
-.aip-mobile-vendor-title { font-size: 16px; font-weight: 700; color: var(--aip-text-primary); }
+/* [NEW] Mobile Vendor Title Clickable Style */
+.aip-mobile-vendor-title { 
+    font-size: 16px; 
+    font-weight: 700; 
+    color: var(--aip-text-primary); 
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: all 0.2s;
+}
+.aip-mobile-vendor-title:hover, .aip-mobile-vendor-title:active {
+    color: var(--aip-primary);
+    text-decoration-color: var(--aip-primary);
+}
 
 .aip-mobile-header-right { display: flex; align-items: center; gap: 10px; }
 .aip-mobile-badge-group { display: flex; gap: 4px; }
@@ -211,8 +224,8 @@
 .aip-badge.sales { color: var(--aip-sales-text); background: var(--aip-sales-bg); }
 .aip-badge.purchase { color: var(--aip-purchase-text); background: var(--aip-purchase-bg); }
 
-.aip-cell-vendor { font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.aip-cell-vendor:hover { color: var(--aip-primary); }
+.aip-cell-vendor { font-weight: 600; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.2s; }
+.aip-cell-vendor:hover { color: var(--aip-primary); text-decoration: underline; }
 
 .aip-table-select, .aip-input.memo { width: 100%; padding: 6px; border: 1px solid transparent; border-radius: 4px; background: transparent; font-size: 12px; cursor: pointer; box-sizing: border-box; }
 .aip-table-select:focus, .aip-table-select:hover, .aip-input.memo:focus { background: var(--aip-input-bg); border-color: var(--aip-border); }
@@ -224,3 +237,51 @@
 .aip-btn-link.done { background: #333; color: #fff; border-color: #333; }
 
 .aip-no-data { text-align: center; padding: 60px 0; color: var(--aip-text-tertiary); }
+
+/* --- Invoice Modal Styles (Real Tax Invoice Look) --- */
+.aip-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+}
+.aip-modal-paper {
+    background: #fff; width: 100%; max-height: 90vh; overflow-y: auto;
+    border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: flex; flex-direction: column;
+}
+.aip-theme-red { border-top: 4px solid #f04452; }
+.aip-theme-blue { border-top: 4px solid #3182f6; }
+
+.aip-modal-header {
+    padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #eee;
+}
+.aip-modal-title { font-size: 18px; font-weight: 700; margin: 0; }
+.aip-modal-body { padding: 20px; }
+
+/* Real Invoice Table Style */
+.aip-invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; font-size: 13px; }
+.aip-invoice-table th, .aip-invoice-table td { border: 1px solid #ccc; padding: 8px; }
+.aip-invoice-table th { background-color: #f9f9f9; color: #555; font-weight: 600; text-align: center; }
+.aip-theme-red .aip-invoice-table { border-color: #f04452; }
+.aip-theme-red .aip-invoice-table th, .aip-theme-red .aip-invoice-table td { border-color: #f8caced0; }
+.aip-theme-red .aip-invoice-table th { background-color: #fff5f6; color: #d63031; }
+
+.aip-theme-blue .aip-invoice-table { border-color: #3182f6; }
+.aip-theme-blue .aip-invoice-table th, .aip-theme-blue .aip-invoice-table td { border-color: #cce0ff; }
+.aip-theme-blue .aip-invoice-table th { background-color: #f0f7ff; color: #0052cc; }
+
+.aip-text-right { text-align: right; }
+.aip-text-center { text-align: center; }
+.aip-font-bold { font-weight: 700; }
+
+/* Upload Modal Specific */
+.aip-upload-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 20px 0; }
+.aip-upload-btn { 
+    border: 1px solid #e5e8eb; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.aip-upload-btn:hover { background-color: #f9fafb; border-color: var(--aip-primary); }
+.aip-upload-btn h4 { margin: 0; font-size: 16px; font-weight: 700; color: var(--aip-text-primary); }
+.aip-upload-btn p { margin: 0; font-size: 12px; color: var(--aip-text-secondary); }
