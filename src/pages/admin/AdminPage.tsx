@@ -255,7 +255,6 @@ const AdminPage: React.FC = () => {
         )}
       </main>
 
-      <Footer /> 
       
       {/* 모바일 메뉴 오버레이 */}
       {isMobileMenuOpen && isMobile && (

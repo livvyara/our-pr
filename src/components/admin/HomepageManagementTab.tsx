@@ -1,43 +1,30 @@
-// src/components/admin/HomepageManagementTab.tsx
-
 import React, { useState, useEffect } from 'react';
 // import { getFirestore, ... } from 'firebase/firestore'; 
 import './HomepageManagementTab.css';
 import MainMenuManager from './MainMenuManager'; 
-import SubMenuManager from './SubMenuManager'; // [⭐ 1. 추가]
+import SubMenuManager from './SubMenuManager'; 
 import GuideManagementTab from './GuideManagementTab';
+// [⭐ 추가] 방금 만든 대화형 메인 관리 페이지 Import
+// (경로는 실제 파일 위치에 맞춰 조정해주세요. 예: ../../pages/admin/HomeAdminPage)
+import HomeAdminPage from '../../pages/admin/HomeAdminPage'; 
 
-// Props 정의 (AdminPage로부터 받음 - 현재는 없음)
 interface HomepageManagementTabProps {
-  // (알림 카운트 등이 필요하면 여기에 추가)
+  // props...
 }
 
 const HomepageManagementTab: React.FC<HomepageManagementTabProps> = () => {
-  // 1. 2개의 하위 탭 상태 ('main-header' 또는 'sub-header')
+  // 탭 상태 관리 ('main-header', 'sub-header', 'main-survey', 'guide')
   const [activeTab, setActiveTab] = useState('main-header'); 
   
-  // (데이터 로드 useEffect는 이제 각 하위 컴포넌트가 담당)
   useEffect(() => {
-    //
+    // 탭 변경 시 필요한 로직
   }, [activeTab]);
 
-
-  // 5-A. "메인헤더 메뉴관리" 탭 렌더링
-  const renderMainHeaderTab = () => (
-    <MainMenuManager />
-  );
-
-  // 5-B. "서브헤더 메뉴관리" 탭 렌더링
-  const renderSubHeaderTab = () => (
-    // [⭐ 2. 수정] 뼈대 대신 실제 컴포넌트 렌더링
-    <SubMenuManager />
-  );
-
   return (
-    <div>
+    <div className="homepage-management-container">
       <h2>홈페이지 관리</h2>
       
-      {/* 1. 내부 메인 탭 (2개) */}
+      {/* 1. 내부 메인 탭 */}
       <div className="homepage-main-tabs">
         <button
           className={`homepage-tab-button ${activeTab === 'main-header' ? 'active' : ''}`}
@@ -51,7 +38,13 @@ const HomepageManagementTab: React.FC<HomepageManagementTabProps> = () => {
         >
           서브헤더 메뉴관리
         </button>
-      {/* [⭐ 추가] 이용안내 관리 탭 */}
+        {/* [⭐ 추가] 메인 설문(대화형) 관리 탭 */}
+        <button
+          className={`homepage-tab-button ${activeTab === 'main-survey' ? 'active' : ''}`}
+          onClick={() => setActiveTab('main-survey')}
+        >
+          메인 설문 관리
+        </button>
         <button
           className={`homepage-tab-button ${activeTab === 'guide' ? 'active' : ''}`}
           onClick={() => setActiveTab('guide')}
@@ -60,10 +53,14 @@ const HomepageManagementTab: React.FC<HomepageManagementTabProps> = () => {
         </button>
       </div>
       
-      {activeTab === 'main-header' ? renderMainHeaderTab() : 
-       activeTab === 'sub-header' ? renderSubHeaderTab() : 
-       <GuideManagementTab /> // [⭐ 추가]
-      }
+      {/* 2. 탭 컨텐츠 렌더링 */}
+      <div className="homepage-tab-content">
+        {activeTab === 'main-header' && <MainMenuManager />}
+        {activeTab === 'sub-header' && <SubMenuManager />}
+        {/* [⭐ 추가] HomeAdminPage 컴포넌트 렌더링 */}
+        {activeTab === 'main-survey' && <HomeAdminPage />}
+        {activeTab === 'guide' && <GuideManagementTab />}
+      </div>
     </div>
   );
 };

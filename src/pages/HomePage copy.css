@@ -1,0 +1,224 @@
+/* src/pages/HomePage.css */
+
+:root {
+  /* --- Modern Atelier Theme --- */
+  --a-bg: #fdfdfd;       /* 따뜻한 톤의 화이트 */
+  --a-bg-light: #f4f4f4; /* 밝은 회색 배경 */
+  --a-text-main: #222222; /* 진한 차콜 */
+  --a-text-sub: #666666;  /* 중간 회색 */
+  --a-accent: #9c8258;    /* 고급스러운 브론즈 골드 */
+  --a-border: #e0e0e0;
+  
+  --a-font: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* 부드러운 애니메이션 */
+  --a-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Base */
+.home-page-container.atelier-theme {
+  font-family: var(--a-font);
+  background-color: var(--a-bg);
+  color: var(--a-text-main);
+  width: 100%;
+  overflow-x: hidden;
+  word-break: keep-all; /* 한글 줄바꿈 최적화 */
+
+}
+
+a, button { cursor: pointer; }
+
+/* Utilities */
+.a-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+
+.a-container.center { text-align: center; }
+.a-section { padding: 140px 0; }
+.bg-light { background-color: var(--a-bg-light); }
+.a-label { 
+  display: inline-block; font-size: 14px; font-weight: 600; color: var(--a-accent); 
+  letter-spacing: 2px; margin-bottom: 20px; position: relative;
+}
+.a-label::after {
+  content: ''; display: block; width: 100%; height: 1px; background: var(--a-accent);
+  margin-top: 5px; opacity: 0.5;
+}
+
+/* Animation Classes */
+.fade-up {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 1s var(--a-ease), transform 1s var(--a-ease);
+}
+.fade-up.in-view { opacity: 1; transform: translateY(0); }
+
+/* --- 1. Hero Slider (Crucial) --- */
+.a-hero-slider {
+  position: relative; width: 100%; height: 85vh; /* 화면 꽉 차게 */
+  min-height: 600px; background: #000; overflow: hidden;
+  /* 헤더에 가려지지 않도록 상단 패딩 제거 */
+  margin-top: 0; 
+}
+
+.a-slide-item {
+  position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease-in-out;
+  z-index: 1;
+}
+.a-slide-item.active { opacity: 1; z-index: 2; }
+
+/* 배경 이미지 (천천히 줌인 효과) */
+.a-slide-bg {
+  width: 100%; height: 100%; background-size: cover; background-position: center;
+  transform: scale(1); transition: transform 6s linear;
+}
+.a-slide-item.active .a-slide-bg { transform: scale(1.05); }
+
+/* 어두운 오버레이 */
+.a-slide-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1;
+}
+
+/* 슬라이드 텍스트 컨텐츠 */
+.a-slide-content {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  color: #fff;
+}
+
+.a-slide-title {
+  font-size: 56px; font-weight: 700; margin-bottom: 20px; line-height: 1.2;
+  opacity: 0; transform: translateY(30px);
+}
+.a-slide-desc {
+  font-size: 20px; font-weight: 400; opacity: 0.9; margin-bottom: 40px;
+  opacity: 0; transform: translateY(30px);
+}
+.a-slide-btn {
+  padding: 15px 40px; background: transparent; color: #fff;
+  border: 1px solid rgba(255,255,255,0.6); font-size: 16px; font-weight: 600;
+  transition: all 0.3s; opacity: 0; transform: translateY(30px); border-radius: 4px;
+}
+.a-slide-btn:hover { background: #fff; color: #000; border-color: #fff; }
+
+/* 텍스트 등장 애니메이션 (활성화될 때 실행) */
+.a-slide-item.active .animate {
+  animation: slideUpFade 1s var(--a-ease) forwards;
+}
+.a-slide-item.active .delay { animation-delay: 0.2s; }
+.a-slide-item.active .delay-2 { animation-delay: 0.4s; }
+
+@keyframes slideUpFade {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 슬라이드 인디케이터 */
+.a-slide-dots {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 15px; z-index: 10;
+}
+.a-dot {
+  width: 10px; height: 10px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.3); transition: all 0.3s; padding: 0;
+}
+.a-dot.active { background: #fff; transform: scale(1.2); }
+
+/* --- 2. Intro Section --- */
+.a-intro { background-color: var(--a-bg); }
+.a-heading { font-size: 42px; font-weight: 700; margin-bottom: 30px; line-height: 1.3; }
+.a-desc { font-size: 18px; color: var(--a-text-sub); line-height: 1.8; }
+
+/* --- 3. Projects Gallery --- */
+.a-header-row {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 60px; padding-bottom: 20px; border-bottom: 1px solid var(--a-border);
+}
+.a-section-title { font-size: 32px; font-weight: 700; margin: 0; }
+.a-link-btn {
+  background: none; border: none; font-size: 15px; color: var(--a-text-sub);
+  transition: color 0.3s;
+}
+.a-link-btn:hover { color: var(--a-text-main); }
+
+.a-project-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+}
+.a-project-card { cursor: pointer; }
+.a-img-wrap {
+  width: 100%; aspect-ratio: 4/3; overflow: hidden; position: relative;
+  margin-bottom: 20px;
+}
+.a-img-wrap img {
+  width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;
+}
+.a-img-hover {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s;
+}
+.a-img-hover span {
+  color: #fff; border: 1px solid #fff; padding: 10px 24px; font-size: 14px;
+}
+.a-project-card:hover img { transform: scale(1.05); }
+.a-project-card:hover .a-img-hover { opacity: 1; }
+
+.a-cat { font-size: 13px; color: var(--a-accent); margin-bottom: 8px; display: block; }
+.a-title { font-size: 20px; font-weight: 600; margin: 0; }
+
+/* --- 4. Services --- */
+.a-header-desc { color: var(--a-text-sub); margin: 0; margin-bottom: 5px; }
+.a-service-list {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-top: 60px;
+}
+.a-service-item {
+  display: flex; align-items: flex-start; padding: 30px;
+  border: 1px solid var(--a-border); background: #fff;
+  transition: all 0.3s;
+}
+.a-service-item:hover {
+  border-color: var(--a-accent); transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.s-num {
+  font-size: 18px; font-weight: 700; color: var(--a-accent); margin-right: 20px;
+  padding-top: 2px;
+}
+.s-text h4 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+.s-text p { font-size: 15px; color: var(--a-text-sub); line-height: 1.6; }
+
+/* --- 5. CTA Section --- */
+.a-cta {
+  position: relative; padding: 160px 0; text-align: center; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.a-cta-bg {
+  position: absolute; inset: 0; background: #1a1a1a; /* 어두운 배경색 고정 */
+  z-index: 0;
+}
+.a-cta-content { position: relative; z-index: 2; max-width: 600px; padding: 0 20px; }
+.a-cta-content h2 { font-size: 40px; font-weight: 700; margin-bottom: 20px; }
+.a-cta-content p { font-size: 18px; color: rgba(255,255,255,0.8); margin-bottom: 50px; }
+
+.a-btn-solid {
+  padding: 18px 50px; background: #fff; color: #000; border: none;
+  font-size: 16px; font-weight: 700; transition: transform 0.3s, background 0.3s;
+  border-radius: 4px;
+}
+.a-btn-solid:hover { background: var(--a-accent); color: #fff; transform: scale(1.05); }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 1024px) {
+  .a-project-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .a-slide-title { font-size: 32px; }
+  .a-slide-desc { font-size: 16px; }
+  .a-section { padding: 80px 0; }
+  .a-heading { font-size: 30px; }
+  
+  .a-header-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .a-project-grid { grid-template-columns: 1fr; gap: 40px; }
+  
+  .a-service-list { grid-template-columns: 1fr; gap: 20px; }
+  
+  .a-cta-content h2 { font-size: 28px; }
+}
