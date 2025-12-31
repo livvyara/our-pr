@@ -151,11 +151,19 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
       } catch (err) { console.error(err); } 
   };
 
-  // Print Logic
+  // Print Logic [MODIFIED FOR LANDSCAPE AND A3/A4 SUPPORT]
   const handlePrintSchedule = useReactToPrint({ 
-    contentRef: schedulePrintRef, documentTitle: `${currentSiteName}_공사일정표`, 
-    pageStyle: `@page { size: A4 landscape; margin: 0; }` 
+    contentRef: schedulePrintRef, 
+    documentTitle: `${currentSiteName}_공사일정표`, 
+    // 수정: A4 고정을 제거하고 landscape만 지정. margin을 주어 프린터 여백 대응.
+    pageStyle: `
+      @page { size: landscape; margin: 10mm; } 
+      @media print { 
+        body { -webkit-print-color-adjust: exact; } 
+      }
+    ` 
   });
+  
   const handlePrintNotice = useReactToPrint({ 
     contentRef: noticePrintRef, documentTitle: `${currentSiteName}_공사안내문`, 
     pageStyle: `@page { size: A4 portrait; margin: 0; }` 
@@ -373,18 +381,18 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
       {/* Settings Modal */}
       {showNoticeSettings && (
           <div className="ppm-settings-overlay">
-              <div className="ppm-settings-modal">
-                  <div className="ppm-settings-header">
-                      <h3 className="ppm-settings-title">안내문 정보 설정</h3>
-                      <button onClick={()=>setShowNoticeSettings(false)} style={{background:'none',border:'none',cursor:'pointer'}}><Icons.Close /></button>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'column', gap:'16px'}}>
-                      <div><label className="ppm-label">회사명</label><input name="companyName" value={noticeSettings.companyName} onChange={handleNoticeSettingChange} className="ppm-input" /></div>
-                      <div><label className="ppm-label">불편 신고 연락처</label><input name="complaintContact" value={noticeSettings.complaintContact} onChange={handleNoticeSettingChange} className="ppm-input" /></div>
-                      <div><label className="ppm-label">현장 책임자</label><input name="managerContact" value={noticeSettings.managerContact} onChange={handleNoticeSettingChange} className="ppm-input" /></div>
-                      <button className="ppm-btn-primary" onClick={saveNoticeSettings}>저장 완료</button>
-                  </div>
-              </div>
+            <div className="ppm-settings-modal">
+                <div className="ppm-settings-header">
+                    <h3 className="ppm-settings-title">안내문 정보 설정</h3>
+                    <button onClick={()=>setShowNoticeSettings(false)} style={{background:'none',border:'none',cursor:'pointer'}}><Icons.Close /></button>
+                </div>
+                <div style={{display:'flex', flexDirection:'column', gap:'16px'}}>
+                    <div><label className="ppm-label">회사명</label><input name="companyName" value={noticeSettings.companyName} onChange={handleNoticeSettingChange} className="ppm-input" /></div>
+                    <div><label className="ppm-label">불편 신고 연락처</label><input name="complaintContact" value={noticeSettings.complaintContact} onChange={handleNoticeSettingChange} className="ppm-input" /></div>
+                    <div><label className="ppm-label">현장 책임자</label><input name="managerContact" value={noticeSettings.managerContact} onChange={handleNoticeSettingChange} className="ppm-input" /></div>
+                    <button className="ppm-btn-primary" onClick={saveNoticeSettings}>저장 완료</button>
+                </div>
+            </div>
           </div>
       )}
 
@@ -393,7 +401,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
           <div ref={schedulePrintRef}>
               {printPages.map((weeksChunk, pageIndex) => (
                   <div key={pageIndex} className="ppm-print-page landscape">
-                      <div style={{textAlign:'center', marginBottom:'10px'}}>
+                      <div style={{textAlign:'center', marginBottom:'10px', height: '40px'}}>
                           <h1 style={{margin:0, fontSize:'24px', fontWeight:'900'}}>{currentSiteName} 공사 일정표</h1>
                           <p style={{margin:0, fontSize:'12px', color:'#555'}}>{dateRangeString}</p>
                       </div>
@@ -422,7 +430,9 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
                               ))}
                           </div>
                       </div>
-                      <img src={logoSrc} className="ppm-footer-logo" />
+                      <div style={{height: '30px', textAlign: 'center', marginTop: '10px'}}>
+                         <img src={logoSrc} className="ppm-footer-logo" />
+                      </div>
                   </div>
               ))}
           </div>

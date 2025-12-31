@@ -302,3 +302,42 @@
 .order-request-no-data {
     text-align: center; padding: 60px; color: #999; font-size: 14px;
 }
+
+.order-request-btn-mini.detail {
+    background: #6c757d;
+    color: #fff;
+    border-color: #6c757d;
+}
+.order-request-btn-mini.detail:hover {
+    background: #5a6268;
+}
+
+/* [추가] 모달(팝업) 관련 스타일 - 통합 관리 페이지 스타일 복사 */
+.aip-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+    padding: 20px;
+}
+.aip-modal-paper {
+    background: #fff; width: 100%; max-height: 90vh; overflow-y: auto;
+    border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: flex; flex-direction: column;
+}
+.aip-theme-blue { border-top: 4px solid #3182f6; }
+
+.aip-modal-header {
+    padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #eee;
+}
+.aip-modal-title { font-size: 18px; font-weight: 700; margin: 0; }
+.aip-modal-body { padding: 20px; }
+
+/* 세금계산서 테이블 스타일 */
+.aip-invoice-table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; font-size: 13px; }
+.aip-invoice-table th, .aip-invoice-table td { border: 1px solid #ccc; padding: 8px; }
+.aip-invoice-table th { background-color: #f9f9f9; color: #555; font-weight: 600; text-align: center; }
+
+/* 팝업 내 텍스트 정렬 유틸 */
+.aip-text-right { text-align: right; }
+.aip-text-center { text-align: center; }

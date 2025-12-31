@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { auth } from '../../firebase-config';
-import { sendSystemMessage } from '../../utils/chatService'; 
-import './ChangeOrderModal.css'; 
+import { sendSystemMessage } from '../../utils/chatService';
+import './ChangeOrderModal.css';
 
-// --- [High-End Icons] ---
+// --- [Premium Icon System] ---
+// 선의 굵기와 라운드 값을 조정하여 고급스러운 느낌을 줍니다.
 const Icons = {
-  Close: () => <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
-  List: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
-  Plus: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  Trash: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-  Check: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>,
-  ArrowLeft: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>,
-  CreditCard: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>,
-  Refresh: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+  Close: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+  List: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
+  Plus: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  Trash: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
+  Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  ArrowLeft: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+  CreditCard: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>,
+  Refresh: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>,
+  Document: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
 };
 
 interface ChangeOrderItem {
@@ -44,7 +46,6 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
   const [orders, setOrders] = useState<ChangeOrderDoc[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<ChangeOrderDoc | null>(null);
 
-  // [History API] 모바일 뒤로가기 제어
   useEffect(() => {
     window.history.pushState({ modal: 'ChangeOrderModal' }, '', window.location.href);
     const handlePopState = () => onClose();
@@ -54,7 +55,6 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
 
   const handleManualClose = () => window.history.back();
 
-  // [Memo] 목록 화면용 통합 합계 계산 (전체 / 결제완료 / 미결제 분리)
   const listSummaries = useMemo(() => {
       const initial = { supply: 0, tax: 0, total: 0 };
       const createInit = () => ({ ...initial });
@@ -64,12 +64,10 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
           const orderTax = order.items.reduce((s, i) => s + i.tax, 0);
           const orderTotal = order.totalAmount;
 
-          // 1. 전체 합계 누적
           acc.total.supply += orderSupply;
           acc.total.tax += orderTax;
           acc.total.total += orderTotal;
 
-          // 2. 상태별 누적 (paid vs others)
           const target = order.status === 'paid' ? 'paid' : 'unpaid';
           acc[target].supply += orderSupply;
           acc[target].tax += orderTax;
@@ -79,7 +77,6 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
       }, { total: createInit(), paid: createInit(), unpaid: createInit() });
   }, [orders]);
 
-  // [Memo] 입력 폼용 실시간 합계
   const currentFormSummary = useMemo(() => {
       const supply = items.reduce((sum, i) => sum + i.supplyPrice, 0);
       const tax = items.reduce((sum, i) => sum + i.tax, 0);
@@ -217,10 +214,10 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
 
   const getStatusBadge = (status: string) => {
       switch(status) {
-          case 'pending_partner': return <span className="ppm-status pending">대표승인 대기</span>;
-          case 'pending_customer': return <span className="ppm-status waiting">고객승인 대기</span>;
-          case 'approved': return <span className="ppm-status approved">최종승인 완료</span>;
-          case 'paid': return <span className="ppm-status paid">결제 완료</span>;
+          case 'pending_partner': return <span className="ppm-badge pending">대표승인 대기</span>;
+          case 'pending_customer': return <span className="ppm-badge waiting">고객승인 대기</span>;
+          case 'approved': return <span className="ppm-badge approved">최종승인 완료</span>;
+          case 'paid': return <span className="ppm-badge paid">결제 완료</span>;
           default: return <span>-</span>;
       }
   };
@@ -228,216 +225,250 @@ const ChangeOrderModal: React.FC<Props> = ({ siteId, siteName, partnerUid, userR
   return (
     <div className="ppm-overlay">
       <div className="ppm-container">
-        
         {/* Header */}
         <div className="ppm-header">
-          <div className="ppm-title-group">
+          <div className="ppm-header-left">
             {activeTab !== 'list' && (
-                <button className="ppm-back-btn" onClick={() => setActiveTab('list')}><Icons.ArrowLeft /></button>
+                <button className="ppm-icon-btn" onClick={() => setActiveTab('list')} aria-label="뒤로">
+                    <Icons.ArrowLeft />
+                </button>
             )}
-            <div>
-                <h3>추가/변경 견적 협의</h3>
-                <span className="ppm-site-name">{siteName}</span>
+            <div className="ppm-header-text">
+                <h3>변경 견적서</h3>
+                <span className="ppm-subtitle">{siteName}</span>
             </div>
           </div>
-          <button className="ppm-close-btn" onClick={handleManualClose}><Icons.Close /></button>
+          <button className="ppm-icon-btn" onClick={handleManualClose} aria-label="닫기">
+              <Icons.Close />
+          </button>
         </div>
 
+        {/* Content Body */}
         <div className="ppm-body">
+            {/* --- LIST TAB --- */}
             {activeTab === 'list' && (
-                <>
-                    {/* 대시보드형 합계 패널 */}
-                    <div className="ppm-dashboard-summary">
-                        <div className="summary-grid">
-                            <div className="grid-head label">구분</div>
-                            <div className="grid-head value">공급가액</div>
-                            <div className="grid-head value">부가세</div>
-                            <div className="grid-head value">합계</div>
+    <div className="ppm-view-list fade-in">
+        {/* [수정됨] Dashboard Summary : 심플 카드 + 상세 텍스트 추가 */}
+        <div className="ppm-dashboard">
+            {/* 1. 총 합계 (가장 강조) */}
+            <div className="dashboard-main-row">
+                <span className="label">총 견적 합계</span>
+                <div className="value-group">
+                    <span className="value total">{listSummaries.total.total.toLocaleString()}원</span>
+                    <span className="sub-text">
+                        (공급 {listSummaries.total.supply.toLocaleString()} / 세액 {listSummaries.total.tax.toLocaleString()})
+                    </span>
+                </div>
+            </div>
 
-                            {/* Total Row */}
-                            <div className="grid-row total">
-                                <div className="cell label">총 견적</div>
-                                <div className="cell value">{listSummaries.total.supply.toLocaleString()}</div>
-                                <div className="cell value">{listSummaries.total.tax.toLocaleString()}</div>
-                                <div className="cell value bold">{listSummaries.total.total.toLocaleString()}</div>
-                            </div>
+            <div className="dashboard-divider"></div>
 
-                            {/* Paid Row */}
-                            <div className="grid-row paid">
-                                <div className="cell label">결제 완료</div>
-                                <div className="cell value">{listSummaries.paid.supply.toLocaleString()}</div>
-                                <div className="cell value">{listSummaries.paid.tax.toLocaleString()}</div>
-                                <div className="cell value bold">{listSummaries.paid.total.toLocaleString()}</div>
-                            </div>
-
-                            {/* Unpaid Row */}
-                            <div className="grid-row unpaid">
-                                <div className="cell label">미결제</div>
-                                <div className="cell value">{listSummaries.unpaid.supply.toLocaleString()}</div>
-                                <div className="cell value">{listSummaries.unpaid.tax.toLocaleString()}</div>
-                                <div className="cell value bold">{listSummaries.unpaid.total.toLocaleString()}</div>
-                            </div>
-                        </div>
+            {/* 2. 결제 완료 & 미결제 (좌우 배치) */}
+            <div className="dashboard-sub-row">
+                {/* 결제 완료 */}
+                <div className="dashboard-item">
+                    <div className="item-header">
+                        <span className="dot paid"></span>
+                        <span className="label">결제 완료</span>
                     </div>
+                    <span className="value paid">{listSummaries.paid.total.toLocaleString()}원</span>
+                    <span className="sub-text">
+                        공급 {listSummaries.paid.supply.toLocaleString()}
+                    </span>
+                    <span className="sub-text">
+                        세액 {listSummaries.paid.tax.toLocaleString()}
+                    </span>
+                </div>
 
-                    <div className="ppm-list-toolbar" style={{marginTop:'12px'}}>
-                        <div style={{flex:1}}></div> 
+                {/* 미결제 */}
+                <div className="dashboard-item">
+                    <div className="item-header">
+                        <span className="dot unpaid"></span>
+                        <span className="label">미결제</span>
+                    </div>
+                    <span className="value unpaid">{listSummaries.unpaid.total.toLocaleString()}원</span>
+                    <span className="sub-text">
+                        공급 {listSummaries.unpaid.supply.toLocaleString()}
+                    </span>
+                    <span className="sub-text">
+                        세액 {listSummaries.unpaid.tax.toLocaleString()}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div className="ppm-list-header-action">
+                        <span className="list-count">총 {orders.length}건</span>
                         {userRole !== 'customer' && (
-                            <button className="ppm-btn-primary small" onClick={() => setActiveTab('form')}>
+                            <button className="ppm-btn-text-primary" onClick={() => setActiveTab('form')}>
                                 <Icons.Plus /> 신규 등록
                             </button>
                         )}
                     </div>
                     
-                    <div className="ppm-list">
-                        {orders.length === 0 ? <div className="ppm-empty-state"><Icons.List /><p>등록된 내역이 없습니다.</p></div> : 
-                        orders.map(order => (
-                            <div key={order.id} className={`ppm-card ${order.status === 'paid' ? 'is-paid' : ''}`} onClick={() => { setSelectedOrder(order); setActiveTab('detail'); }}>
-                                <div className="ppm-card-top">
-                                    {getStatusBadge(order.status)}
-                                    <span className="ppm-card-date">{order.createdAt?.toDate().toLocaleDateString()}</span>
-                                </div>
-                                <h4 className="ppm-card-title">{order.title}</h4>
-                                <div className="ppm-card-bottom">
-                                    <span className="ppm-card-author">작성자: {order.authorName}</span>
-                                    <strong className="ppm-card-amount">{order.totalAmount.toLocaleString()} 원</strong>
-                                </div>
+                    <div className="ppm-order-list">
+                        {orders.length === 0 ? (
+                            <div className="ppm-empty-state">
+                                <div className="empty-icon"><Icons.Document /></div>
+                                <p>등록된 변경 견적서가 없습니다.</p>
                             </div>
-                        ))
-                        }
-                    </div>
-                </>
-            )}
-
-            {activeTab === 'form' && (
-                <div className="ppm-form-container">
-                    <div className="ppm-input-group">
-                        <label>제목 (변경 사유) <span className="req">*</span></label>
-                        <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 거실 조명 추가 요청건" className="ppm-input" autoFocus />
-                    </div>
-                    
-                    <div className="ppm-items-area">
-                        {items.map((item, idx) => (
-                            <div key={idx} className="ppm-item-card-edit">
-                                <div className="ppm-item-header">
-                                    <span className="ppm-item-idx">#{idx + 1}</span>
-                                    {items.length > 1 && (
-                                        <button onClick={() => removeItemRow(idx)} className="ppm-btn-icon-del"><Icons.Trash /></button>
-                                    )}
-                                </div>
-                                <div className="ppm-grid-inputs">
-                                    <div className="ppm-input-wrapper name">
-                                        <input type="text" value={item.name} onChange={e => handleItemChange(idx, 'name', e.target.value)} placeholder="품명" />
+                        ) : (
+                            orders.map(order => (
+                                <div key={order.id} className="ppm-card order-item" onClick={() => { setSelectedOrder(order); setActiveTab('detail'); }}>
+                                    <div className="order-item-top">
+                                        {getStatusBadge(order.status)}
+                                        <span className="date">{order.createdAt?.toDate().toLocaleDateString()}</span>
                                     </div>
-                                    <div className="ppm-input-row-half">
-                                        <input type="text" value={item.unit} onChange={e => handleItemChange(idx, 'unit', e.target.value)} placeholder="단위" className="center" />
-                                        <input type="text" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', e.target.value)} placeholder="수량" className="right" />
-                                    </div>
-                                    <div className="ppm-input-wrapper">
-                                        <input type="text" value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} placeholder="단가 (원)" className="right" />
-                                    </div>
-                                    <div className="ppm-readonly-row">
-                                        <span>공급가: {item.supplyPrice.toLocaleString()}</span>
-                                        <span>세액: {item.tax.toLocaleString()}</span>
-                                    </div>
-                                    <div className="ppm-input-wrapper">
-                                        <input type="text" value={item.note} onChange={e => handleItemChange(idx, 'note', e.target.value)} placeholder="비고 (선택)" />
-                                    </div>
-                                    <div className="ppm-item-total">
-                                        합계: <strong>{item.totalPrice.toLocaleString()} 원</strong>
+                                    <h4 className="order-title">{order.title}</h4>
+                                    <div className="order-item-bottom">
+                                        <span className="author">{order.authorName}</span>
+                                        <strong className="amount">{order.totalAmount.toLocaleString()}원</strong>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
-                    
-                    <button className="ppm-btn-dashed" onClick={addItemRow}><Icons.Plus /> 품목 추가</button>
                 </div>
             )}
 
-            {activeTab === 'detail' && selectedOrder && (
-                <div className="ppm-detail-container">
-                    <div className="ppm-detail-header">
-                        <h4>{selectedOrder.title}</h4>
-                        {getStatusBadge(selectedOrder.status)}
+            {/* --- FORM TAB --- */}
+            {activeTab === 'form' && (
+                <div className="ppm-view-form fade-in">
+                    <div className="ppm-input-group">
+                        <label>제목(변경 사유)</label>
+                        <input type="text" className="ppm-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 자재 변경으로 인한 증액" autoFocus />
                     </div>
-                    <div className="ppm-detail-meta">
-                        <span>작성일: {selectedOrder.createdAt?.toDate().toLocaleDateString()}</span>
-                        <span>작성자: {selectedOrder.authorName}</span>
+                    
+                    <div className="ppm-items-wrapper">
+                        {items.map((item, idx) => (
+                            <div key={idx} className="ppm-card item-card">
+                                <div className="item-card-header">
+                                    <span className="item-idx">#{idx + 1}</span>
+                                    {items.length > 1 && (
+                                        <button onClick={() => removeItemRow(idx)} className="ppm-icon-btn-sm danger"><Icons.Trash /></button>
+                                    )}
+                                </div>
+                                <div className="item-card-body">
+                                    <div className="ppm-input-group">
+                                        <input type="text" className="ppm-input bold" value={item.name} onChange={e => handleItemChange(idx, 'name', e.target.value)} placeholder="품명 입력" />
+                                    </div>
+                                    <div className="ppm-grid-3">
+                                        <input type="text" className="ppm-input center" value={item.unit} onChange={e => handleItemChange(idx, 'unit', e.target.value)} placeholder="단위" />
+                                        <input type="text" className="ppm-input right" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', e.target.value)} placeholder="수량" inputMode="numeric" />
+                                        <input type="text" className="ppm-input right" value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', e.target.value)} placeholder="단가" inputMode="numeric" />
+                                    </div>
+                                    <div className="ppm-input-group">
+                                        <input type="text" className="ppm-input" value={item.note} onChange={e => handleItemChange(idx, 'note', e.target.value)} placeholder="비고 (선택)" />
+                                    </div>
+                                    <div className="item-total-row">
+                                        <span className="label">합계 (VAT포함)</span>
+                                        <span className="value">{item.totalPrice.toLocaleString()}원</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <button className="ppm-dashed-btn" onClick={addItemRow}>
+                        <Icons.Plus /> 품목 추가
+                    </button>
+                </div>
+            )}
+
+            {/* --- DETAIL TAB --- */}
+            {activeTab === 'detail' && selectedOrder && (
+                <div className="ppm-view-detail fade-in">
+                    <div className="detail-status-bar">
+                        {getStatusBadge(selectedOrder.status)}
+                        <span className="date">{selectedOrder.createdAt?.toDate().toLocaleString()}</span>
+                    </div>
+                    
+                    <h2 className="detail-title">{selectedOrder.title}</h2>
+                    
+                    <div className="detail-author-info">
+                        <div className="avatar-placeholder">{selectedOrder.authorName[0]}</div>
+                        <div className="info-text">
+                            <span className="name">{selectedOrder.authorName}</span>
+                            <span className="role">작성자</span>
+                        </div>
                     </div>
 
-                    <div className="ppm-detail-items">
+                    <div className="ppm-divider"></div>
+
+                    <div className="detail-items">
                         {selectedOrder.items.map((item, i) => (
-                            <div key={i} className="ppm-item-card-view">
-                                <div className="ppm-view-row main">
-                                    <span className="ppm-view-name">{item.name}</span>
-                                    <span className="ppm-view-total">{item.totalPrice.toLocaleString()} 원</span>
+                            <div key={i} className="detail-item-row">
+                                <div className="row-main">
+                                    <span className="name">{item.name}</span>
+                                    <span className="price">{item.totalPrice.toLocaleString()}원</span>
                                 </div>
-                                <div className="ppm-view-row sub">
-                                    <span>{item.quantity}{item.unit} x {item.unitPrice}원</span>
-                                    <span className="ppm-view-tax">(VAT {item.tax.toLocaleString()})</span>
+                                <div className="row-sub">
+                                    {item.quantity}{item.unit} x {item.unitPrice}원
+                                    <span className="vat-hint">(공급 {item.supplyPrice.toLocaleString()} / 세액 {item.tax.toLocaleString()})</span>
                                 </div>
-                                {item.note && <div className="ppm-view-note">Note: {item.note}</div>}
+                                {item.note && <div className="row-note">{item.note}</div>}
                             </div>
                         ))}
                     </div>
 
-                    <div className="ppm-total-summary-card">
-                        <div className="row"><span>공급가액</span><span>{(selectedOrder.totalAmount - selectedOrder.items.reduce((s,i)=>s+i.tax,0)).toLocaleString()} 원</span></div>
-                        <div className="row"><span>부가세</span><span>{selectedOrder.items.reduce((s,i)=>s+i.tax,0).toLocaleString()} 원</span></div>
-                        <div className="divider"></div>
-                        <div className="row total"><span>최종 합계</span><span>{selectedOrder.totalAmount.toLocaleString()} 원</span></div>
+                    <div className="detail-summary-card">
+                        <div className="summary-line">
+                            <span>공급가액</span>
+                            <span>{(selectedOrder.totalAmount - selectedOrder.items.reduce((s,i)=>s+i.tax,0)).toLocaleString()}원</span>
+                        </div>
+                        <div className="summary-line">
+                            <span>부가세</span>
+                            <span>{selectedOrder.items.reduce((s,i)=>s+i.tax,0).toLocaleString()}원</span>
+                        </div>
+                        <div className="summary-divider"></div>
+                        <div className="summary-line total">
+                            <span>최종 합계</span>
+                            <span className="total-val">{selectedOrder.totalAmount.toLocaleString()}원</span>
+                        </div>
                     </div>
                 </div>
             )}
         </div>
 
+        {/* Footer Actions */}
         <div className="ppm-footer">
             {activeTab === 'form' ? (
-                <div className="ppm-footer-form">
-                    <div className="ppm-live-summary">
-                        <div className="summary-item"><span>공급가</span> <strong>{currentFormSummary.supply.toLocaleString()}</strong></div>
-                        <div className="summary-item"><span>부가세</span> <strong>{currentFormSummary.tax.toLocaleString()}</strong></div>
-                        <div className="summary-item total"><span>합계</span> <strong>{currentFormSummary.total.toLocaleString()}</strong></div>
+                <div className="ppm-footer-row">
+                    <div className="live-total">
+                        <span className="label">총 합계</span>
+                        <strong className="value">{currentFormSummary.total.toLocaleString()}원</strong>
                     </div>
-                    <div className="ppm-footer-btns">
-                        <button className="ppm-btn-secondary" onClick={() => setActiveTab('list')}>취소</button>
-                        <button className="ppm-btn-primary" onClick={handleSubmit} disabled={isSubmitting}>등록하기</button>
-                    </div>
+                    <button className="ppm-btn primary" onClick={handleSubmit} disabled={isSubmitting}>
+                        작성 완료
+                    </button>
                 </div>
             ) : activeTab === 'detail' ? (
-                <div className="ppm-footer-detail">
+                <div className="ppm-footer-column">
                     {userRole === 'partner' && selectedOrder?.status === 'pending_partner' && (
-                        <button className="ppm-btn-primary full" onClick={() => handleApprove(selectedOrder)}>승인 (고객 전송)</button>
+                        <button className="ppm-btn primary" onClick={() => handleApprove(selectedOrder)}>고객에게 전송 (승인)</button>
                     )}
                     {userRole === 'customer' && selectedOrder?.status === 'pending_customer' && (
-                        <button className="ppm-btn-primary full" onClick={() => handleApprove(selectedOrder!)}>최종 승인</button>
+                        <button className="ppm-btn primary" onClick={() => handleApprove(selectedOrder!)}>최종 승인하기</button>
                     )}
-                    
-                    {userRole === 'partner' && (
-                        <>
-                            {selectedOrder?.status === 'approved' && (
-                                <button className="ppm-btn-primary full" onClick={() => handlePaymentToggle(selectedOrder, 'paid')}>
-                                    <Icons.CreditCard /> 결제 완료 처리
-                                </button>
-                            )}
-                            {selectedOrder?.status === 'paid' && (
-                                <button className="ppm-btn-secondary full" onClick={() => handlePaymentToggle(selectedOrder, 'approved')}>
-                                    <Icons.Refresh /> 결제 완료 되돌리기
-                                </button>
-                            )}
-                        </>
+                    {userRole === 'partner' && selectedOrder?.status === 'approved' && (
+                        <button className="ppm-btn primary" onClick={() => handlePaymentToggle(selectedOrder!, 'paid')}>
+                            <Icons.CreditCard /> 결제 완료 처리
+                        </button>
                     )}
-
+                    {userRole === 'partner' && selectedOrder?.status === 'paid' && (
+                        <button className="ppm-btn outline" onClick={() => handlePaymentToggle(selectedOrder!, 'approved')}>
+                            <Icons.Refresh /> 결제 상태 되돌리기
+                        </button>
+                    )}
+                    {/* 조건에 맞지 않을 때 기본 목록 버튼 */}
                     {(!((userRole === 'partner' && selectedOrder?.status === 'pending_partner') || (userRole === 'customer' && selectedOrder?.status === 'pending_customer') || (userRole === 'partner' && (selectedOrder?.status === 'approved' || selectedOrder?.status === 'paid')))) && (
-                         <button className="ppm-btn-secondary full" onClick={() => setActiveTab('list')}>목록으로</button>
+                         <button className="ppm-btn secondary" onClick={() => setActiveTab('list')}>목록으로</button>
                     )}
                 </div>
             ) : (
-                <button className="ppm-btn-secondary" onClick={handleManualClose}>닫기</button>
+                <button className="ppm-btn secondary" onClick={handleManualClose}>닫기</button>
             )}
         </div>
-
       </div>
     </div>
   );

@@ -322,14 +322,23 @@
     position: relative; box-sizing: border-box;
   }
   
-  .ppm-print-page.landscape { width: 297mm; height: 210mm; padding: 10mm 15mm; }
-  .ppm-print-table-wrap { width: 100%; height: 100%; display: flex; flex-direction: column; border: 2px solid #000; }
+  /* Modified for A3/A4 compatibility */
+  .ppm-print-page.landscape { 
+      width: 100%; 
+      height: 100vh; /* Fills the page based on @page setting */
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .ppm-print-table-wrap { width: 100%; flex: 1; display: flex; flex-direction: column; border: 2px solid #000; }
   
-  .ppm-print-thead { display: flex; border-bottom: 1px solid #000; height: 40px; background: #eee !important; }
+  .ppm-print-thead { display: flex; border-bottom: 1px solid #000; height: 40px; background: #eee !important; flex-shrink: 0; }
   .ppm-print-th { flex: 1; text-align: center; line-height: 40px; font-weight: bold; border-right: 1px solid #000; font-size: 14px; }
   .ppm-print-th:last-child { border-right: none; }
   
   .ppm-print-tbody { flex: 1; display: flex; flex-direction: column; }
+  /* Ensure exactly 5 rows fill the available height */
   .ppm-print-tr { flex: 1; display: flex; border-bottom: 1px solid #ccc; }
   .ppm-print-tr:last-child { border-bottom: none; }
   .ppm-print-td { flex: 1; border-right: 1px solid #ccc; padding: 4px; position: relative; }
