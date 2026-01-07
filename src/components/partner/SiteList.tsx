@@ -5,6 +5,10 @@ import {
 } from 'firebase/firestore';
 import './SiteList.css'; 
 import SiteAddModal from './SiteAddModal';
+import { 
+  Search, Filter, Plus, Settings, Eye, ChevronDown, ChevronUp, 
+  Building, Users, ArrowUp, ArrowDown 
+} from 'lucide-react';
 
 type SiteStatus = '미팅중' | '계약대기' | '계약완료' | '공사전' | '공사중' | '공사완료' | '보류' | '취소' | 'deleted';
 
@@ -59,6 +63,9 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
   const [meetingMap, setMeetingMap] = useState<Record<string, CellContent>>({});
   const [meetingDateMap, setMeetingDateMap] = useState<Record<string, Date>>({});
   const [recentMemoMap, setRecentMemoMap] = useState<Record<string, CellContent>>({}); 
+
+  // 모바일 아코디언 상태
+  const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
 
   const db = getFirestore();
 
@@ -234,6 +241,13 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
     return result;
   }, [allSites, searchTerm, currentOrder, visibleStatuses, meetingDateMap]);
 
+  // 요약 정보 (디자인 통일성을 위해 추가)
+  const summary = useMemo(() => {
+      const total = processedSites.length;
+      const active = processedSites.filter(s => ['공사중', '미팅중', '계약대기'].includes(s.status)).length;
+      return { total, active };
+  }, [processedSites]);
+
   const openSortModal = () => { setTempOrder([...currentOrder]); setIsSortModalOpen(true); };
   const moveSortItem = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...tempOrder];
@@ -253,142 +267,231 @@ const SiteList: React.FC<SiteListProps> = ({ onSiteSelect, partnerUid }) => {
   };
   const saveVisibility = () => { setVisibleStatuses(tempVisible); setIsVisibilityModalOpen(false); };
 
+  const toggleExpand = (id: string) => {
+    const newSet = new Set(expandedItemIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setExpandedItemIds(newSet);
+  };
+
   return (
-    <div className="site-list-page-container">
-      
+    <div className="slp-container">
       {/* 1. 헤더 */}
-      <div className="site-list-header-wrapper">
-        <div className="site-list-title">
+      <div className="slp-header">
+        <div className="slp-title-area">
           <h2>현장 목록</h2>
           <p>등록된 현장을 조회하고 관리합니다.</p>
         </div>
+      </div>
 
-        {/* 2. 컨트롤 패널 */}
-        <div className="site-list-control-panel">
-            <div className="site-list-filter-row">
+      {/* 2. 필터 패널 */}
+      <div className="slp-filter-panel">
+        <div className="slp-filter-row">
+            <div className="slp-filter-item search">
+                <Search size={18} className="search-icon"/>
                 <input
                     type="text"
+                    className="slp-input search"
                     placeholder="현장명, 주소, 고객명으로 검색"
-                    className="site-list-search-input"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             
-            <div className="site-list-action-group">
-                <button className="site-list-btn-manual" onClick={openSortModal}>
-                    ⚙️ 정렬 순서
+            <div className="slp-action-group">
+                <button className="slp-btn slp-btn-secondary" onClick={openSortModal}>
+                    <Settings size={16} /> 정렬 순서
                 </button>
-                <button className="site-list-btn-manual" onClick={openVisibilityModal}>
-                    👁️ 노출 변경
+                <button className="slp-btn slp-btn-secondary" onClick={openVisibilityModal}>
+                    <Eye size={16} /> 노출 변경
                 </button>
-                <button className="site-list-btn-primary" onClick={() => setIsAddModalOpen(true)}>
-                    + 현장 추가
+                <button className="slp-btn slp-btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                    <Plus size={16} /> 현장 추가
                 </button>
             </div>
         </div>
       </div>
+
+      {/* 3. 요약 카드 (Summary Grid) */}
+      <div className="slp-summary-grid">
+        <div className="slp-card summary">
+          <div className="slp-card-header"><Building size={16} /> 전체 현장</div>
+          <div className="slp-card-value">{summary.total}개</div>
+        </div>
+        <div className="slp-card summary">
+          <div className="slp-card-header"><Users size={16} /> 진행 중</div>
+          <div className="slp-card-value text-primary">{summary.active}개</div>
+        </div>
+      </div>
       
-      {/* 3. 테이블 영역 */}
-      <div className="site-list-result-section">
-        <div className="site-list-table-wrapper">
-            <table className="site-list-table">
-                <thead>
-                  <tr>
-                    <th style={{width:'150px'}}>현장명</th>
-                    <th style={{width:'100px', textAlign:'center'}}>고객명</th>
-                    <th style={{width:'120px', textAlign:'center'}}>연락처</th>
-                    <th>주소</th>
-                    <th style={{width:'80px', textAlign:'center'}}>상태</th>
-                    <th style={{width:'180px'}}>미팅약속</th>
-                    <th style={{width:'180px'}}>최근메모</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                      <tr><td colSpan={7} className="site-list-loading-td">로딩 중...</td></tr>
-                  ) : processedSites.length === 0 ? (
-                      <tr><td colSpan={7} className="site-list-no-data">조건에 맞는 현장이 없습니다.</td></tr>
-                  ) : (
-                    processedSites.map(site => (
-                        <tr key={site.uid} className={site.status === 'deleted' ? 'row-deleted' : ''}>
-                          {/* 현장명: 모바일에서 카드 헤더로 쓰임 */}
-                          <td data-label="현장명">
-                            <button className="site-link-text" onClick={() => onSiteSelect(site.uid)}>
-                              {site.siteName}
-                            </button>
-                          </td>
-                          <td data-label="고객명" style={{textAlign:'center'}}>{site.client1Name}</td>
-                          <td data-label="연락처" style={{textAlign:'center'}}>{formatPhoneNumber(site.client1Phone)}</td>
-                          <td data-label="주소" title={site.address}>{site.address}</td>
-                          <td data-label="상태" style={{textAlign:'center'}}>
-                              <span className={`site-status-badge ${site.status}`}>
-                                  {site.status === 'deleted' ? '삭제대기' : site.status}
-                              </span>
-                          </td>
-                          <td data-label="미팅약속" title={meetingMap[site.uid]?.full || ''}>
-                              {meetingMap[site.uid] ? (
-                                  <span className="cell-meeting">{meetingMap[site.uid].display}</span>
-                              ) : <span className="cell-empty">-</span>}
-                          </td>
-                          <td data-label="최근메모" title={recentMemoMap[site.uid]?.full || ''}>
-                              {recentMemoMap[site.uid] ? (
-                                  <span className="cell-memo">{recentMemoMap[site.uid].display}</span>
-                              ) : <span className="cell-empty">-</span>}
-                          </td>
-                        </tr>
-                    ))
-                  )}
-                </tbody>
-            </table>
+      {/* 4. 데스크탑 테이블 뷰 */}
+      <div className="slp-desktop-view">
+        <div className="slp-table-container">
+            <div className="slp-table-wrapper">
+                <table className="slp-table">
+                    <thead>
+                      <tr>
+                        <th style={{width:'180px'}}>현장명</th>
+                        <th style={{width:'100px'}} className="text-center">고객명</th>
+                        <th style={{width:'140px'}} className="text-center">연락처</th>
+                        <th>주소</th>
+                        <th style={{width:'100px'}} className="text-center">상태</th>
+                        <th style={{width:'200px'}}>미팅약속</th>
+                        <th style={{width:'200px'}}>최근메모</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isLoading ? (
+                          <tr><td colSpan={7} className="slp-no-data">로딩 중...</td></tr>
+                      ) : processedSites.length === 0 ? (
+                          <tr><td colSpan={7} className="slp-no-data">조건에 맞는 현장이 없습니다.</td></tr>
+                      ) : (
+                        processedSites.map(site => (
+                            <tr key={site.uid} className={site.status === 'deleted' ? 'row-deleted' : ''}>
+                              <td>
+                                <button className="slp-link-text" onClick={() => onSiteSelect(site.uid)}>
+                                  {site.siteName}
+                                </button>
+                              </td>
+                              <td className="text-center">{site.client1Name}</td>
+                              <td className="text-center">{formatPhoneNumber(site.client1Phone)}</td>
+                              <td title={site.address}>{site.address}</td>
+                              <td className="text-center">
+                                  <span className={`slp-badge status ${site.status}`}>
+                                      {site.status === 'deleted' ? '삭제대기' : site.status}
+                                  </span>
+                              </td>
+                              <td title={meetingMap[site.uid]?.full || ''}>
+                                  {meetingMap[site.uid] ? (
+                                      <span className="text-primary font-bold">{meetingMap[site.uid].display}</span>
+                                  ) : <span className="text-tertiary">-</span>}
+                              </td>
+                              <td title={recentMemoMap[site.uid]?.full || ''}>
+                                  {recentMemoMap[site.uid] ? (
+                                      <span className="text-secondary">{recentMemoMap[site.uid].display}</span>
+                                  ) : <span className="text-tertiary">-</span>}
+                              </td>
+                            </tr>
+                        ))
+                      )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+
+      {/* 5. 모바일 카드 뷰 (아코디언) */}
+      <div className="slp-mobile-view">
+        <div className="slp-mobile-list">
+            {isLoading ? (
+                <div className="slp-no-data">로딩 중...</div>
+            ) : processedSites.length === 0 ? (
+                <div className="slp-no-data">조건에 맞는 현장이 없습니다.</div>
+            ) : (
+                processedSites.map(site => {
+                    const isExpanded = expandedItemIds.has(site.uid);
+                    return (
+                        <div key={site.uid} className={`slp-mobile-card ${site.status === 'deleted' ? 'deleted' : ''}`}>
+                            <div className="slp-mobile-card-header" onClick={() => toggleExpand(site.uid)}>
+                                <div className="slp-mobile-header-left">
+                                    <div className="site-info-main">
+                                        <span className="site-name" onClick={(e) => { e.stopPropagation(); onSiteSelect(site.uid); }}>
+                                            {site.siteName}
+                                        </span>
+                                        <span className={`slp-badge status ${site.status}`}>
+                                            {site.status === 'deleted' ? '삭제대기' : site.status}
+                                        </span>
+                                    </div>
+                                    <span className="client-info">{site.client1Name} • {formatPhoneNumber(site.client1Phone)}</span>
+                                </div>
+                                <div className="slp-mobile-header-right">
+                                    <ChevronDown size={20} className={`slp-chevron ${isExpanded ? 'open' : ''}`} />
+                                </div>
+                            </div>
+
+                            {isExpanded && (
+                                <div className="slp-mobile-expanded">
+                                    <div className="slp-mobile-body">
+                                        <div className="slp-info-row">
+                                            <span className="label">주소</span>
+                                            <span className="value address">{site.address}</span>
+                                        </div>
+                                        <div className="slp-info-row">
+                                            <span className="label">미팅약속</span>
+                                            <span className="value text-primary">
+                                                {meetingMap[site.uid] ? meetingMap[site.uid].display : '-'}
+                                            </span>
+                                        </div>
+                                        <div className="slp-info-row">
+                                            <span className="label">최근메모</span>
+                                            <span className="value text-secondary">
+                                                {recentMemoMap[site.uid] ? recentMemoMap[site.uid].display : '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="slp-mobile-actions">
+                                        <button className="slp-btn-link primary" onClick={() => onSiteSelect(site.uid)}>
+                                            상세 보기
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
+            )}
         </div>
       </div>
 
       {/* 모달: 현장 추가 */}
       {isAddModalOpen && <SiteAddModal partnerUid={partnerUid} onClose={() => setIsAddModalOpen(false)} onSuccess={() => fetchSites()} />}
       
-      {/* 모달: 정렬 순서 (기존 유지) */}
+      {/* 모달: 정렬 순서 */}
       {isSortModalOpen && (
-        <div className="site-list-modal-backdrop" onClick={() => setIsSortModalOpen(false)}>
-          <div className="site-list-modal-paper" onClick={e => e.stopPropagation()}>
-            <h3 className="site-list-modal-title">상태값 정렬 순서</h3>
-            <ul className="site-list-modal-list">
+        <div className="slp-modal-overlay" onClick={() => setIsSortModalOpen(false)}>
+          <div className="slp-modal-paper" onClick={e => e.stopPropagation()}>
+            <div className="slp-modal-header">
+                <h3>상태값 정렬 순서</h3>
+            </div>
+            <ul className="slp-sort-list">
               {tempOrder.map((status, index) => (
-                <li key={status} className="site-list-modal-item">
+                <li key={status} className="slp-sort-item">
                   <span>{index + 1}. {status}</span>
-                  <div>
-                    <button className="site-list-sort-btn" onClick={() => moveSortItem(index, 'up')} disabled={index === 0}>▲</button>
-                    <button className="site-list-sort-btn" onClick={() => moveSortItem(index, 'down')} disabled={index === tempOrder.length - 1}>▼</button>
+                  <div className="btn-group">
+                    <button className="slp-icon-btn" onClick={() => moveSortItem(index, 'up')} disabled={index === 0}><ArrowUp size={16}/></button>
+                    <button className="slp-icon-btn" onClick={() => moveSortItem(index, 'down')} disabled={index === tempOrder.length - 1}><ArrowDown size={16}/></button>
                   </div>
                 </li>
               ))}
             </ul>
-            <div className="site-list-modal-footer">
-              <button className="site-list-btn-cancel" onClick={() => setIsSortModalOpen(false)}>취소</button>
-              <button className="site-list-btn-save" onClick={saveSortOrder}>저장</button>
+            <div className="slp-modal-footer">
+              <button className="slp-btn slp-btn-secondary" onClick={() => setIsSortModalOpen(false)}>취소</button>
+              <button className="slp-btn slp-btn-primary" onClick={saveSortOrder}>저장</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 모달: 노출 변경 (기존 유지) */}
+      {/* 모달: 노출 변경 */}
       {isVisibilityModalOpen && (
-        <div className="site-list-modal-backdrop" onClick={() => setIsVisibilityModalOpen(false)}>
-          <div className="site-list-modal-paper" onClick={e => e.stopPropagation()}>
-            <h3 className="site-list-modal-title">현장 노출 설정</h3>
-            <ul className="site-list-modal-list">
+        <div className="slp-modal-overlay" onClick={() => setIsVisibilityModalOpen(false)}>
+          <div className="slp-modal-paper" onClick={e => e.stopPropagation()}>
+            <div className="slp-modal-header">
+                <h3>현장 노출 설정</h3>
+            </div>
+            <ul className="slp-check-list">
               {ALL_STATUSES.map((status) => (
-                <li key={status} className="site-list-modal-item">
-                  <label className="site-list-checkbox-label">
+                <li key={status} className="slp-check-item">
+                  <label>
                     <input type="checkbox" checked={tempVisible.includes(status)} onChange={() => toggleVisibility(status)} />
                     {status === 'deleted' ? '삭제대기' : status}
                   </label>
                 </li>
               ))}
             </ul>
-            <div className="site-list-modal-footer">
-              <button className="site-list-btn-cancel" onClick={() => setIsVisibilityModalOpen(false)}>취소</button>
-              <button className="site-list-btn-save" onClick={saveVisibility}>저장</button>
+            <div className="slp-modal-footer">
+              <button className="slp-btn slp-btn-secondary" onClick={() => setIsVisibilityModalOpen(false)}>취소</button>
+              <button className="slp-btn slp-btn-primary" onClick={saveVisibility}>저장</button>
             </div>
           </div>
         </div>

@@ -11,32 +11,15 @@ import WorkerModal from '../../components/partner/WorkerModal';
 import TradeManageModal from '../../components/partner/TradeManageModal';
 import BulkTradeEditModal from '../../components/partner/BulkTradeEditModal';
 import BulkTypeEditModal from '../../components/partner/BulkTypeEditModal';
+import { 
+  Search, Filter, Edit2, Trash2, Plus, Settings, ChevronDown, 
+  Users, Briefcase 
+} from 'lucide-react';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- [High-End Icons] ---
-const Icons = {
-  Search: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-  ),
-  Filter: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-  ),
-  Edit: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-  ),
-  Trash: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-  ),
-  Plus: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  ),
-  Settings: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg {...props} width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-  )
-};
 export interface WorkerData {
   id: string; workerName: string; companyName: string; trade: string; phoneNumber: string;
   workerType: 'agency' | 'freelance'; residentNumber: string; bankName: string; accountNumber: string;
@@ -61,6 +44,9 @@ const WorkerManagementPage: React.FC = () => {
   const [editTarget, setEditTarget] = useState<WorkerData | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'workerName', direction: 'asc' });
+
+  // 모바일 아코디언 상태
+  const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
 
   // --- Auth & Initial Data ---
   useEffect(() => {
@@ -136,6 +122,11 @@ const WorkerManagementPage: React.FC = () => {
       return filtered;
   }, [workers, searchQuery, selectedTrade, sortConfig]);
 
+  // 요약 정보 (통일성 위해 추가)
+  const summary = useMemo(() => {
+      return { count: processedWorkers.length };
+  }, [processedWorkers]);
+
   // --- Handlers ---
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSelectedIds(e.target.checked ? new Set(processedWorkers.map(w => w.id)) : new Set());
@@ -153,140 +144,230 @@ const WorkerManagementPage: React.FC = () => {
       } catch(e) { alert("삭제 실패"); }
   }
 
+  const toggleExpand = (id: string) => {
+    const newSet = new Set(expandedItemIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setExpandedItemIds(newSet);
+  };
+
   // --- Bulk Actions ---
   const handleBulkUpdate = async (newTrade: string) => { /* Same Logic */ };
   const handleBulkTypeUpdate = async (newType: 'agency' | 'freelance') => { /* Same Logic */ };
 
   return (
-    <div className="worker-page">
-      <div className="worker-container">
-        
-        {/* Header */}
-        <div className="worker-header">
-          <div className="worker-title-group">
-             <h2>작업자 관리</h2>
-             <span className="worker-subtitle">현장 인력 DB 및 노무 관리</span>
-          </div>
-          <button className="worker-add-btn" onClick={() => { setEditTarget(null); setIsModalOpen(true); }}>
-              <Icons.Plus /> <span>신규 등록</span>
-          </button>
+    <div className="wmp-container">
+      <div className="wmp-header">
+        <div className="wmp-title-area">
+          <h2>작업자 관리</h2>
+          <p>현장 인력 DB 및 노무 정보를 통합 관리하세요.</p>
         </div>
+      </div>
 
-        {/* Control Bar */}
-        <div className="worker-controls">
-           <div className="worker-search-group">
-               <div className="search-input-wrap">
-                   <Icons.Search />
-                   <input type="text" placeholder="이름, 업체명 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-               </div>
-               <div className="select-wrap">
-                   <select value={selectedTrade} onChange={(e) => setSelectedTrade(e.target.value)}>
-                       {tradeOptions.map((t, i) => <option key={i} value={t}>{t === '전체' ? '전체 공종' : t}</option>)}
-                   </select>
-                   <Icons.Filter className="select-icon" />
-               </div>
-           </div>
-           
-           <div className="worker-actions-group">
-               <button className="worker-action-btn" onClick={() => setIsTradeManagerOpen(true)} title="공종 설정"><Icons.Settings /></button>
-               {selectedIds.size > 0 && (
-                   <>
-                       <button className="worker-action-btn text" onClick={() => setIsBulkTypeEditOpen(true)}>유형 변경</button>
-                       <button className="worker-action-btn text" onClick={() => setIsBulkEditOpen(true)}>공종 변경</button>
-                   </>
-               )}
-           </div>
+      {/* Filter Panel (Unified Style) */}
+      <div className="wmp-filter-panel">
+        <div className="wmp-filter-row">
+            <div className="wmp-filter-item search">
+                <Search size={18} className="search-icon"/>
+                <input 
+                    type="text" 
+                    className="wmp-input search" 
+                    placeholder="이름, 업체명 검색" 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                />
+            </div>
+            
+            <div className="wmp-filter-item">
+                <select className="wmp-select" value={selectedTrade} onChange={(e) => setSelectedTrade(e.target.value)}>
+                    {tradeOptions.map((t, i) => <option key={i} value={t}>{t === '전체' ? '전체 공종' : t}</option>)}
+                </select>
+            </div>
+
+            <div className="wmp-action-group">
+                <button className="wmp-btn wmp-btn-secondary" onClick={() => setIsTradeManagerOpen(true)}>
+                    <Settings size={16} /> 공종 설정
+                </button>
+                {selectedIds.size > 0 && (
+                    <>
+                        <button className="wmp-btn wmp-btn-secondary" onClick={() => setIsBulkTypeEditOpen(true)}>유형 변경</button>
+                        <button className="wmp-btn wmp-btn-secondary" onClick={() => setIsBulkEditOpen(true)}>공종 변경</button>
+                    </>
+                )}
+                <button className="wmp-btn wmp-btn-primary" onClick={() => { setEditTarget(null); setIsModalOpen(true); }}>
+                    <Plus size={16} /> 신규 등록
+                </button>
+            </div>
         </div>
+      </div>
 
-        {/* List Section */}
-        <div className="worker-list-area">
-            {loading ? (
-                <div className="worker-loading"><div className="spinner"></div></div>
-            ) : processedWorkers.length === 0 ? (
-                <div className="worker-empty">등록된 작업자가 없습니다.</div>
-            ) : (
-                <div className="worker-table-wrapper">
-                    {/* PC Table */}
-                    <table className="worker-table">
-                        <thead>
-                            <tr>
-                                <th className="th-check">
-                                    <input type="checkbox" checked={processedWorkers.length > 0 && selectedIds.size === processedWorkers.length} onChange={handleSelectAll} />
-                                </th>
-                                <th onClick={() => handleSort('workerName')}>이름</th>
-                                <th onClick={() => handleSort('companyName')}>소속</th>
-                                <th onClick={() => handleSort('trade')}>공종</th>
-                                <th onClick={() => handleSort('phoneNumber')}>연락처</th>
-                                <th>주민번호</th>
-                                <th>계좌정보</th>
-                                <th className="th-action">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {processedWorkers.map(worker => (
+      {/* Summary Grid (Added for Consistency) */}
+      <div className="wmp-summary-grid">
+        <div className="wmp-card summary">
+          <div className="wmp-card-header"><Users size={16} /> 총 작업자</div>
+          <div className="wmp-card-value">{summary.count}명</div>
+        </div>
+        <div className="wmp-card summary">
+          <div className="wmp-card-header"><Briefcase size={16} /> 등록 공종</div>
+          <div className="wmp-card-value">{tradeOptions.length - 1}개</div>
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="wmp-desktop-view">
+        <div className="wmp-table-container">
+            <div className="wmp-table-wrapper">
+                <table className="wmp-table">
+                    <thead>
+                        <tr>
+                            <th className="th-check">
+                                <input type="checkbox" checked={processedWorkers.length > 0 && selectedIds.size === processedWorkers.length} onChange={handleSelectAll} />
+                            </th>
+                            <th onClick={() => handleSort('workerName')} className="sortable">이름 (구분)</th>
+                            <th onClick={() => handleSort('companyName')} className="sortable">소속</th>
+                            <th onClick={() => handleSort('trade')} className="sortable">공종</th>
+                            <th onClick={() => handleSort('phoneNumber')} className="sortable">연락처</th>
+                            <th>주민번호</th>
+                            <th>계좌정보</th>
+                            <th className="text-center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <tr><td colSpan={8} className="wmp-no-data">로딩 중...</td></tr>
+                        ) : processedWorkers.length === 0 ? (
+                            <tr><td colSpan={8} className="wmp-no-data">등록된 작업자가 없습니다.</td></tr>
+                        ) : (
+                            processedWorkers.map(worker => (
                                 <tr key={worker.id} className={selectedIds.has(worker.id) ? 'selected' : ''}>
                                     <td className="td-check">
                                         <input type="checkbox" checked={selectedIds.has(worker.id)} onChange={() => handleSelectRow(worker.id)} />
                                     </td>
-                                    <td className="td-name" onClick={() => { setEditTarget(worker); setIsModalOpen(true); }}>{worker.workerName}</td>
+                                    <td>
+                                        <div className="wmp-worker-profile" onClick={() => { setEditTarget(worker); setIsModalOpen(true); }}>
+                                            <div className="wmp-avatar">{worker.workerName.charAt(0)}</div>
+                                            <div className="wmp-worker-info">
+                                                <span className="name">{worker.workerName}</span>
+                                                <span className={`wmp-badge type ${worker.workerType}`}>
+                                                    {worker.workerType === 'agency' ? '인력소' : '프리랜서'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>{worker.companyName || '-'}</td>
-                                    <td><span className="trade-badge">{worker.trade}</span></td>
+                                    <td><span className="wmp-badge trade">{worker.trade}</span></td>
                                     <td>{worker.phoneNumber}</td>
                                     <td>{worker.residentNumber ? worker.residentNumber.substring(0,8)+'******' : '-'}</td>
-                                    <td className="td-bank">{worker.bankName} {worker.accountNumber}</td>
-                                    <td className="td-action">
-                                        <button className="btn-icon edit" onClick={() => { setEditTarget(worker); setIsModalOpen(true); }}><Icons.Edit /></button>
-                                        <button className="btn-icon del" onClick={() => handleDelete(worker.id)}><Icons.Trash /></button>
+                                    <td>
+                                        <div className="wmp-bank-info">
+                                            <span>{worker.bankName}</span>
+                                            <span className="account">{worker.accountNumber}</span>
+                                        </div>
+                                    </td>
+                                    <td className="text-center">
+                                        <div className="wmp-action-btns">
+                                            <button className="wmp-icon-btn" onClick={() => { setEditTarget(worker); setIsModalOpen(true); }}>
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button className="wmp-icon-btn danger" onClick={() => handleDelete(worker.id)}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
 
-                    {/* Mobile Card List (CSS Display Switch) */}
-                    <div className="worker-mobile-list">
-                         {processedWorkers.map(worker => (
-                             <div key={worker.id} className={`worker-card ${selectedIds.has(worker.id) ? 'selected' : ''}`} onClick={() => { setEditTarget(worker); setIsModalOpen(true); }}>
-                                 <div className="card-header">
-                                     <div className="card-check" onClick={(e) => { e.stopPropagation(); handleSelectRow(worker.id); }}>
-                                         <input type="checkbox" checked={selectedIds.has(worker.id)} readOnly />
-                                     </div>
-                                     <div className="card-info">
-                                         <span className="card-name">{worker.workerName}</span>
-                                         <span className="card-company">{worker.companyName}</span>
-                                     </div>
-                                     <span className="trade-badge">{worker.trade}</span>
-                                 </div>
-                                 <div className="card-body">
-                                     <div className="card-row"><span>연락처</span>{worker.phoneNumber}</div>
-                                     <div className="card-row"><span>주민번호</span>{worker.residentNumber ? worker.residentNumber.substring(0,8)+'******' : '-'}</div>
-                                     <div className="card-row"><span>계좌</span>{worker.bankName} {worker.accountNumber}</div>
-                                 </div>
-                                 <div className="card-footer">
-                                     <button className="btn-card-action del" onClick={(e) => { e.stopPropagation(); handleDelete(worker.id); }}>삭제</button>
-                                     <button className="btn-card-action edit" onClick={(e) => { e.stopPropagation(); setEditTarget(worker); setIsModalOpen(true); }}>수정</button>
-                                 </div>
-                             </div>
-                         ))}
-                    </div>
-                </div>
+      {/* Mobile Card View (Accordion) */}
+      <div className="wmp-mobile-view">
+        <div className="wmp-mobile-list">
+            {loading ? (
+                <div className="wmp-no-data">로딩 중...</div>
+            ) : processedWorkers.length === 0 ? (
+                <div className="wmp-no-data">등록된 작업자가 없습니다.</div>
+            ) : (
+                processedWorkers.map(worker => {
+                    const isExpanded = expandedItemIds.has(worker.id);
+                    return (
+                        <div key={worker.id} className={`wmp-mobile-card ${selectedIds.has(worker.id) ? 'selected' : ''}`}>
+                            <div className="wmp-mobile-card-header" onClick={() => toggleExpand(worker.id)}>
+                                <div className="wmp-mobile-header-left">
+                                    <div className="card-check" onClick={(e) => { e.stopPropagation(); handleSelectRow(worker.id); }}>
+                                        <input type="checkbox" checked={selectedIds.has(worker.id)} readOnly />
+                                    </div>
+                                    <div className="wmp-worker-profile">
+                                        <div className="wmp-avatar small">{worker.workerName.charAt(0)}</div>
+                                        <div className="wmp-worker-info">
+                                            <div className="name-row">
+                                                <span className="name">{worker.workerName}</span>
+                                                <span className={`wmp-badge type ${worker.workerType}`}>
+                                                    {worker.workerType === 'agency' ? '인력' : '프리'}
+                                                </span>
+                                            </div>
+                                            <span className="company">{worker.companyName}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="wmp-mobile-header-right">
+                                    <span className="wmp-badge trade">{worker.trade}</span>
+                                    <ChevronDown size={20} className={`wmp-chevron ${isExpanded ? 'open' : ''}`} />
+                                </div>
+                            </div>
+
+                            {isExpanded && (
+                                <div className="wmp-mobile-expanded">
+                                    <div className="wmp-mobile-body">
+                                        <div className="wmp-info-row">
+                                            <span className="label">연락처</span>
+                                            <span className="value">{worker.phoneNumber}</span>
+                                        </div>
+                                        <div className="wmp-info-row">
+                                            <span className="label">주민번호</span>
+                                            <span className="value">{worker.residentNumber ? worker.residentNumber.substring(0,8)+'******' : '-'}</span>
+                                        </div>
+                                        <div className="wmp-info-row bank">
+                                            <span className="label">계좌</span>
+                                            <span className="value">{worker.bankName} {worker.accountNumber}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="wmp-mobile-actions">
+                                        <div className="btn-row">
+                                            <button className="wmp-btn-link" onClick={() => { setEditTarget(worker); setIsModalOpen(true); }}>
+                                                <Edit2 size={16} /> 수정
+                                            </button>
+                                            <button className="wmp-btn-link danger" onClick={() => handleDelete(worker.id)}>
+                                                <Trash2 size={16} /> 삭제
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
             )}
         </div>
-
-        {/* Modals */}
-        {isModalOpen && currentUid && (
-            <WorkerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} partnerUid={currentUid} targetWorker={editTarget} tradeOptions={tradeOptions} userName={currentUserInfo.name} />
-        )}
-        {isTradeManagerOpen && currentUid && (
-            <TradeManageModal onClose={() => setIsTradeManagerOpen(false)} partnerUid={currentUid} onUpdate={() => fetchTrades(currentUid)} />
-        )}
-        {isBulkEditOpen && (
-            <BulkTradeEditModal isOpen={isBulkEditOpen} onClose={() => setIsBulkEditOpen(false)} selectedCount={selectedIds.size} tradeOptions={tradeOptions} onConfirm={handleBulkUpdate} />
-        )}
-        {isBulkTypeEditOpen && (
-            <BulkTypeEditModal isOpen={isBulkTypeEditOpen} onClose={() => setIsBulkTypeEditOpen(false)} selectedCount={selectedIds.size} onConfirm={handleBulkTypeUpdate} />
-        )}
       </div>
+
+      {/* Modals */}
+      {isModalOpen && currentUid && (
+          <WorkerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} partnerUid={currentUid} targetWorker={editTarget} tradeOptions={tradeOptions} userName={currentUserInfo.name} />
+      )}
+      {isTradeManagerOpen && currentUid && (
+          <TradeManageModal onClose={() => setIsTradeManagerOpen(false)} partnerUid={currentUid} onUpdate={() => fetchTrades(currentUid)} />
+      )}
+      {isBulkEditOpen && (
+          <BulkTradeEditModal isOpen={isBulkEditOpen} onClose={() => setIsBulkEditOpen(false)} selectedCount={selectedIds.size} tradeOptions={tradeOptions} onConfirm={handleBulkUpdate} />
+      )}
+      {isBulkTypeEditOpen && (
+          <BulkTypeEditModal isOpen={isBulkTypeEditOpen} onClose={() => setIsBulkTypeEditOpen(false)} selectedCount={selectedIds.size} onConfirm={handleBulkTypeUpdate} />
+      )}
     </div>
   );
 };

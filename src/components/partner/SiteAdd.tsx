@@ -3,8 +3,12 @@ import './SiteAdd.css';
 import { K_BRAND_COLOR } from '../../constants';
 import { auth } from '../../firebase-config';
 import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { 
+  Building, User, Calendar, MapPin, CheckCircle, AlertCircle, 
+  Briefcase, Home 
+} from 'lucide-react';
 
-// 주소 데이터 (변경 없음)
+// 주소 데이터 (기존 유지)
 const ADDRESS_DATA: { [key: string]: string[] } = {
   "서울특별시": ["강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구", "동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중구", "중랑구"],
   "경기도": ["수원시", "성남시", "의정부시", "안양시", "부천시", "광명시", "평택시", "동두천시", "안산시", "고양시", "과천시", "구리시", "남양주시", "오산시", "시흥시", "군포시", "의왕시", "하남시", "용인시", "파주시", "이천시", "안성시", "김포시", "화성시", "광주시", "양주시", "포천시", "여주시", "연천군", "가평군", "양평군"],
@@ -186,153 +190,190 @@ const SiteAdd: React.FC<SiteAddProps> = ({ partnerUid }) => {
   };
 
   return (
-    <div className="site-add-page-container">
-      
-      <div className="site-add-header-wrapper">
-        <div className="site-add-title">
+    <div className="sap-container">
+      {/* 1. Header */}
+      <div className="sap-header">
+        <div className="sap-title-area">
           <h2>현장 등록</h2>
           <p>새로운 현장(프로젝트) 정보를 입력하고 관리합니다.</p>
         </div>
+      </div>
 
-        <div className="site-add-control-panel">
-            <span className="site-add-label-text">공간 유형</span>
-            <div className="site-add-mode-buttons">
-                <button 
-                    className={`site-add-mode-btn ${siteType === 'commercial' ? 'active' : ''}`} 
-                    onClick={() => setSiteType('commercial')}
-                >
-                    상업 공간
-                </button>
-                <button 
-                    className={`site-add-mode-btn ${siteType === 'residential' ? 'active' : ''}`} 
-                    onClick={() => setSiteType('residential')}
-                >
-                    주거 공간
-                </button>
-            </div>
-            <span className="site-add-info-text">
-                필수 입력 항목을 모두 작성해야 등록이 가능합니다.
-            </span>
+      {/* 2. Type Selection (Tabs) */}
+      <div className="sap-type-selector">
+        <div className="sap-type-label">공간 유형 선택</div>
+        <div className="sap-type-tabs">
+            <button 
+                className={`sap-type-tab ${siteType === 'commercial' ? 'active' : ''}`}
+                onClick={() => setSiteType('commercial')}
+            >
+                <Briefcase size={18} /> 상업 공간
+            </button>
+            <button 
+                className={`sap-type-tab ${siteType === 'residential' ? 'active' : ''}`}
+                onClick={() => setSiteType('residential')}
+            >
+                <Home size={18} /> 주거 공간
+            </button>
         </div>
       </div>
 
-      <div className="site-add-form-container">
-          <form onSubmit={handleSubmit}>
-            
-            <div className="site-add-section-title">기본 정보</div>
-            <div className="site-add-form-row">
-                <div className="site-add-form-group" style={{flex: 2}}>
-                    <label className="site-add-form-label">현장명 (별칭) <span className="site-add-required">*</span></label>
-                    <input type="text" name="siteName" className="site-add-input" value={formData.siteName} onChange={handleChange} required placeholder="예: 봉선동 카페 현장" />
-                </div>
-                <div className="site-add-form-group" style={{flex: 1}}>
-                    <label className="site-add-form-label">공사 예산 (원)</label>
-                    <input type="text" inputMode="numeric" name="budget" placeholder="0" className="site-add-input" value={formData.budget} onChange={handleBudgetChange} style={{textAlign:'right'}} />
-                </div>
+      {/* 3. Input Form */}
+      <form onSubmit={handleSubmit} className="sap-form-wrapper">
+        
+        {/* Section 1: Basic Info */}
+        <div className="sap-card">
+            <div className="sap-card-header">
+                <Building className="sap-icon" /> 기본 정보
             </div>
-
-            <div className="site-add-form-row">
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">현장 주소 <span className="site-add-required">*</span></label>
-                    <div className="site-add-address-group">
-                        <select className="site-add-select site-add-addr-select" value={sido} onChange={handleSidoChange} required>
-                            <option value="">시/도 선택</option>
-                            {Object.keys(ADDRESS_DATA).map(area => <option key={area} value={area}>{area}</option>)}
-                        </select>
-                        <select className="site-add-select site-add-addr-select" value={sigungu} onChange={e => setSigungu(e.target.value)} required disabled={!sido}>
-                            <option value="">시/군/구 선택</option>
-                            {sido && ADDRESS_DATA[sido]?.map(dist => <option key={dist} value={dist}>{dist}</option>)}
-                        </select>
+            <div className="sap-card-body">
+                <div className="sap-form-row">
+                    <div className="sap-input-group flex-2">
+                        <label className="sap-label">현장명 (별칭) <span className="req">*</span></label>
                         <input 
                             type="text" 
-                            className="site-add-input" 
-                            value={detailAddress} 
-                            onChange={e => setDetailAddress(e.target.value)} 
-                            placeholder={siteType === 'residential' ? "도로명/지번" : "상세 주소 입력"} 
+                            name="siteName" 
+                            className="sap-input" 
+                            value={formData.siteName} 
+                            onChange={handleChange} 
                             required 
+                            placeholder="예: 봉선동 카페 현장" 
                         />
                     </div>
-                    {/* 주거공간일 경우 아파트 상세 입력 - 스타일 수정 (flex 속성 제거, CSS로 제어) */}
-                    {siteType === 'residential' && (
-                        <div className="site-add-address-group" style={{marginTop:'8px'}}>
-                            <input type="text" className="site-add-input" value={aptName} onChange={e => setAptName(e.target.value)} placeholder="아파트/건물명" />
-                            <input type="text" className="site-add-input" value={aptDong} onChange={e => setAptDong(e.target.value)} placeholder="동" style={{width:'80px'}} />
-                            <input type="text" className="site-add-input" value={aptHo} onChange={e => setAptHo(e.target.value)} placeholder="호" style={{width:'80px'}} />
+                    <div className="sap-input-group flex-1">
+                        <label className="sap-label">공사 예산 (원)</label>
+                        <input 
+                            type="text" 
+                            inputMode="numeric" 
+                            name="budget" 
+                            placeholder="0" 
+                            className="sap-input right-align" 
+                            value={formData.budget} 
+                            onChange={handleBudgetChange} 
+                        />
+                    </div>
+                </div>
+
+                <div className="sap-form-row">
+                    <div className="sap-input-group full">
+                        <label className="sap-label">현장 주소 <span className="req">*</span></label>
+                        <div className="sap-address-grid">
+                            <select className="sap-select" value={sido} onChange={handleSidoChange} required>
+                                <option value="">시/도 선택</option>
+                                {Object.keys(ADDRESS_DATA).map(area => <option key={area} value={area}>{area}</option>)}
+                            </select>
+                            <select className="sap-select" value={sigungu} onChange={e => setSigungu(e.target.value)} required disabled={!sido}>
+                                <option value="">시/군/구 선택</option>
+                                {sido && ADDRESS_DATA[sido]?.map(dist => <option key={dist} value={dist}>{dist}</option>)}
+                            </select>
+                            <input 
+                                type="text" 
+                                className="sap-input detail" 
+                                value={detailAddress} 
+                                onChange={e => setDetailAddress(e.target.value)} 
+                                placeholder={siteType === 'residential' ? "도로명/지번" : "상세 주소 입력"} 
+                                required 
+                            />
                         </div>
-                    )}
+                        {siteType === 'residential' && (
+                            <div className="sap-address-detail-grid">
+                                <input type="text" className="sap-input" value={aptName} onChange={e => setAptName(e.target.value)} placeholder="아파트/건물명" />
+                                <div className="dong-ho-wrap">
+                                    <input type="text" className="sap-input center" value={aptDong} onChange={e => setAptDong(e.target.value)} placeholder="동" />
+                                    <input type="text" className="sap-input center" value={aptHo} onChange={e => setAptHo(e.target.value)} placeholder="호" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div className="site-add-divider"></div>
-
-            <div className="site-add-section-title">고객 정보</div>
-            <div className="site-add-form-row">
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">고객명 1 <span className="site-add-required">*</span></label>
-                    <input type="text" name="client1Name" className="site-add-input" value={formData.client1Name} onChange={handleChange} required />
+        {/* Section 2: Client Info */}
+        <div className="sap-card">
+            <div className="sap-card-header">
+                <User className="sap-icon" /> 고객 정보
+            </div>
+            <div className="sap-card-body">
+                <div className="sap-form-row">
+                    <div className="sap-input-group">
+                        <label className="sap-label">고객명 1 <span className="req">*</span></label>
+                        <input type="text" name="client1Name" className="sap-input" value={formData.client1Name} onChange={handleChange} required />
+                    </div>
+                    <div className="sap-input-group">
+                        <label className="sap-label">연락처 1 <span className="req">*</span></label>
+                        <input type="tel" name="client1Phone" className="sap-input" placeholder="010-0000-0000" value={formData.client1Phone} onChange={handlePhoneChange} required maxLength={13} />
+                    </div>
                 </div>
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">연락처 1 <span className="site-add-required">*</span></label>
-                    <input type="tel" name="client1Phone" className="site-add-input" placeholder="010-0000-0000" value={formData.client1Phone} onChange={handlePhoneChange} required maxLength={13} />
-                </div>
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">고객명 2</label>
-                    <input type="text" name="client2Name" className="site-add-input" value={formData.client2Name} onChange={handleChange} />
-                </div>
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">연락처 2</label>
-                    <input type="tel" name="client2Phone" className="site-add-input" placeholder="010-0000-0000" value={formData.client2Phone} onChange={handlePhoneChange} maxLength={13} />
+                <div className="sap-form-row">
+                    <div className="sap-input-group">
+                        <label className="sap-label">고객명 2 (선택)</label>
+                        <input type="text" name="client2Name" className="sap-input" value={formData.client2Name} onChange={handleChange} />
+                    </div>
+                    <div className="sap-input-group">
+                        <label className="sap-label">연락처 2 (선택)</label>
+                        <input type="tel" name="client2Phone" className="sap-input" placeholder="010-0000-0000" value={formData.client2Phone} onChange={handlePhoneChange} maxLength={13} />
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div className="site-add-divider"></div>
-
-            <div className="site-add-section-title">공사 및 일정 정보</div>
-            <div className="site-add-form-row">
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">면적 (평/m²)</label>
-                    <input type="text" name="area" placeholder="예: 30평" className="site-add-input" value={formData.area} onChange={handleChange} />
-                </div>
-                <div className="site-add-form-group">
-                    <label className="site-add-form-label">공사 시작일</label>
-                    <input type="date" name="startDate" className="site-add-input" value={formData.startDate} onChange={handleChange} />
+        {/* Section 3: Schedule & Detail */}
+        <div className="sap-card">
+            <div className="sap-card-header">
+                <Calendar className="sap-icon" /> 공사 및 일정
+            </div>
+            <div className="sap-card-body">
+                <div className="sap-form-row">
+                    <div className="sap-input-group">
+                        <label className="sap-label">면적 (평/m²)</label>
+                        <input type="text" name="area" placeholder="예: 30평" className="sap-input" value={formData.area} onChange={handleChange} />
+                    </div>
+                    <div className="sap-input-group">
+                        <label className="sap-label">공사 시작일</label>
+                        <input type="date" name="startDate" className="sap-input" value={formData.startDate} onChange={handleChange} />
+                    </div>
                 </div>
 
                 {siteType === 'commercial' ? (
-                    <>
-                        <div className="site-add-form-group">
-                            <label className="site-add-form-label">업종</label>
-                            <input type="text" name="businessType" placeholder="예: 카페, 식당" className="site-add-input" value={formData.businessType} onChange={handleChange} />
+                    <div className="sap-form-row">
+                        <div className="sap-input-group">
+                            <label className="sap-label">업종</label>
+                            <input type="text" name="businessType" placeholder="예: 카페, 식당" className="sap-input" value={formData.businessType} onChange={handleChange} />
                         </div>
-                        <div className="site-add-form-group">
-                            <label className="site-add-form-label">오픈 예정일</label>
-                            <input type="date" name="openDate" className="site-add-input" value={formData.openDate} onChange={handleChange} />
+                        <div className="sap-input-group">
+                            <label className="sap-label">오픈 예정일</label>
+                            <input type="date" name="openDate" className="sap-input" value={formData.openDate} onChange={handleChange} />
                         </div>
-                    </>
+                    </div>
                 ) : (
-                    <>
-                        <div className="site-add-form-group">
-                            <label className="site-add-form-label">입주 예정일</label>
-                            <input type="date" name="moveInDate" className="site-add-input" value={formData.moveInDate} onChange={handleChange} />
+                    <div className="sap-form-row">
+                        <div className="sap-input-group">
+                            <label className="sap-label">입주 예정일</label>
+                            <input type="date" name="moveInDate" className="sap-input" value={formData.moveInDate} onChange={handleChange} />
                         </div>
-                        <div className="site-add-form-group"></div>
-                    </>
+                        <div className="sap-input-group empty-pc"></div>
+                    </div>
                 )}
             </div>
+        </div>
 
-            <div className="site-add-btn-row">
-                <button 
-                    type="submit" 
-                    className="site-add-submit-btn"
-                    style={{ backgroundColor: K_BRAND_COLOR }}
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting ? '처리 중...' : '현장 등록 완료'}
-                </button>
+        <div className="sap-action-area">
+            <div className="sap-info-msg">
+                <AlertCircle size={16} /> 필수 정보를 모두 입력해야 등록이 가능합니다.
             </div>
+            <button 
+                type="submit" 
+                className="sap-submit-btn"
+                style={{ backgroundColor: K_BRAND_COLOR }}
+                disabled={isSubmitting}
+            >
+                <CheckCircle size={18} />
+                {isSubmitting ? '처리 중...' : '현장 등록 완료'}
+            </button>
+        </div>
 
-          </form>
-      </div>
+      </form>
     </div>
   );
 };

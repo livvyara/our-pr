@@ -1,223 +1,129 @@
-/* SiteDeleteList.css */
-
-/* 1. 페이지 레이아웃 */
-.site-delete-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    width: 100%;
-    box-sizing: border-box;
+:root {
+  /* --- Design Tokens --- */
+  --sdl-bg-page: #f2f4f6;
+  --sdl-bg-white: #ffffff;
+  --sdl-primary: #3182f6;
+  --sdl-primary-dark: #1b64da;
+  --sdl-text-primary: #191f28;
+  --sdl-text-secondary: #8b95a1;
+  --sdl-text-tertiary: #b0b8c1;
+  --sdl-border: #e5e8eb;
+  --sdl-danger: #f04452;
+  --sdl-danger-bg: #fff5f5;
+  --sdl-success: #34c759;
+  --sdl-success-bg: #e8faf0;
+  
+  --sdl-radius-card: 16px;
+  --sdl-radius-btn: 5px;
+  --sdl-touch-target: 52px;
 }
 
-/* 2. 헤더 영역 */
-.site-delete-header-wrapper {
-    background: #fff;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+/* --- Global Layout --- */
+.sdl-container {
+  padding: 30px;
+  background-color: var(--sdl-bg-page);
+  min-height: 100vh;
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  color: var(--sdl-text-primary);
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-.site-delete-title h2 {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #333;
+@media (max-width: 1024px) {
+  .sdl-container {
+    padding: 16px;
+    padding-bottom: 100px;
+  }
 }
 
-.site-delete-title p {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+/* --- Header --- */
+.sdl-header { margin-bottom: 24px; }
+.sdl-title-area h2 { font-size: 24px; font-weight: 700; margin: 0 0 8px 0; color: var(--sdl-text-primary); }
+.sdl-title-area p { font-size: 14px; color: var(--sdl-text-secondary); margin: 0; }
+
+/* --- Summary Grid --- */
+.sdl-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+.sdl-card.summary { background: #fff; padding: 20px; border-radius: var(--sdl-radius-card); box-shadow: 0 2px 12px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+.sdl-card-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--sdl-text-secondary); margin-bottom: 8px; }
+.sdl-card-value { font-size: 24px; font-weight: 800; color: var(--sdl-text-primary); }
+@media (max-width: 1024px) { .sdl-summary-grid { gap: 12px; margin-bottom: 24px; } }
+
+/* --- Section Headers --- */
+.sdl-section { margin-bottom: 40px; }
+.sdl-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 4px; }
+.sdl-section-header h3 { font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; }
+
+/* --- View Switching --- */
+.sdl-desktop-view { display: block; }
+.sdl-mobile-view { display: none; }
+@media (max-width: 1024px) {
+  .sdl-desktop-view { display: none; }
+  .sdl-mobile-view { display: block; }
 }
 
-/* 3. 섹션 타이틀 (운영중/삭제대기 구분) */
-.site-delete-section-header {
-    margin-top: 40px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+/* --- Desktop Table --- */
+.sdl-table-container { background: #fff; border-radius: var(--sdl-radius-card); box-shadow: 0 2px 12px rgba(0,0,0,0.03); overflow: hidden; width: 100%; }
+.sdl-table-wrapper { width: 100%; overflow-x: auto; }
+.sdl-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.sdl-table th { background-color: #f9fafb; color: var(--sdl-text-secondary); font-weight: 600; padding: 14px 12px; text-align: left; border-bottom: 1px solid var(--sdl-border); white-space: nowrap; }
+.sdl-table td { padding: 14px 12px; border-bottom: 1px solid var(--sdl-border); color: var(--sdl-text-primary); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sdl-table tr:hover td { background-color: #fafafa; }
+.row-deleted td { background-color: #fffbfb; }
 
-.site-delete-section-header h3 {
-    font-size: 16px;
-    font-weight: 800;
-    margin: 0;
-}
+/* Utils */
+.text-center { text-align: center; }
+.text-success { color: var(--sdl-success); }
+.text-danger { color: var(--sdl-danger); }
+.text-secondary { color: var(--sdl-text-secondary); }
+.text-tertiary { color: var(--sdl-text-tertiary); }
+.font-bold { font-weight: 700; }
+.line-through { text-decoration: line-through; }
 
-.site-delete-section-header.active h3 { color: #2e7d32; }
-.site-delete-section-header.deleted h3 { color: #c62828; }
+/* Badges */
+.sdl-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.sdl-badge.active { background-color: var(--sdl-success-bg); color: var(--sdl-success); }
+.sdl-badge.deleted { background-color: var(--sdl-text-tertiary); color: #fff; }
 
-.site-delete-count-badge {
-    background-color: #f1f3f5;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    color: #555;
-}
+/* Buttons */
+.sdl-btn-mini { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+.sdl-btn-mini.delete { background-color: #fff; border-color: var(--sdl-danger); color: var(--sdl-danger); }
+.sdl-btn-mini.delete:hover { background-color: var(--sdl-danger-bg); }
+.sdl-btn-mini.restore { background-color: var(--sdl-success); color: #fff; }
+.sdl-btn-mini.restore:hover { opacity: 0.9; }
 
-/* 4. 테이블 영역 (Result Section 스타일 적용) */
-.site-delete-result-section {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    /* overflow: hidden; -> 모바일 카드뷰 그림자 잘림 방지 위해 제거 */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    margin-bottom: 20px;
-}
+.sdl-no-data { text-align: center; padding: 60px 0; color: var(--sdl-text-tertiary); font-size: 14px; }
+.sdl-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: var(--sdl-text-secondary); }
+.spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--sdl-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.site-delete-table-wrapper {
-    width: 100%;
-}
+/* --- Mobile Card (Accordion) --- */
+.sdl-mobile-card { background: #fff; border-radius: 12px; border: 1px solid var(--sdl-border); box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow: hidden; margin-bottom: 12px; transition: all 0.2s ease; }
+.sdl-mobile-card.deleted { background-color: #fffbfb; border-color: #ffebee; opacity: 0.8; }
 
-.site-delete-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px; /* 폰트 12px 통일 */
-    white-space: nowrap;
-}
+.sdl-mobile-card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: transparent; transition: background-color 0.1s; }
+.sdl-mobile-card-header:active { background-color: rgba(0,0,0,0.05); }
 
-.site-delete-table th {
-    background-color: #f1f3f5;
-    color: #333;
-    font-weight: 700;
-    padding: 12px 8px;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
+.sdl-mobile-header-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.site-row { display: flex; align-items: center; gap: 8px; }
+.site-name { font-size: 16px; font-weight: 700; color: var(--sdl-text-primary); }
+.address { font-size: 13px; color: var(--sdl-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.site-delete-table td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-    color: #444;
-}
+.sdl-mobile-header-right { margin-left: 10px; }
+.sdl-chevron { color: var(--sdl-text-tertiary); transition: transform 0.2s; }
+.sdl-chevron.open { transform: rotate(180deg); }
 
-.site-delete-table tr:hover {
-    background-color: #fafafa !important;
-}
+/* Expanded Content */
+.sdl-mobile-expanded { padding: 0 16px 16px 16px; border-top: 1px dashed var(--sdl-border); animation: slideDown 0.2s ease-out; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-/* 데이터 없음 / 로딩 */
-.site-delete-no-data {
-    text-align: center; padding: 60px; color: #999; font-size: 14px;
-}
+.sdl-mobile-body { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.sdl-info-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.sdl-info-row .label { color: var(--sdl-text-secondary); font-weight: 500; }
+.sdl-info-row .value { color: var(--sdl-text-primary); font-weight: 600; }
 
-/* 버튼 스타일 */
-.site-delete-btn-mini {
-    padding: 4px 10px;
-    font-size: 11px;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-    color: #fff;
-}
-
-.site-delete-btn-mini.delete {
-    background-color: #dc3545; /* 빨간색 */
-    border-color: #dc3545;
-}
-.site-delete-btn-mini.delete:hover { background-color: #c82333; }
-
-.site-delete-btn-mini.restore {
-    background-color: #28a745; /* 초록색 */
-    border-color: #28a745;
-}
-.site-delete-btn-mini.restore:hover { background-color: #218838; }
-
-
-/* =========================================
-   [Mobile Responsive] 모바일 카드뷰 변환
-   가로 스크롤 방지를 위해 테이블을 카드로 변환
-   ========================================= */
-@media (max-width: 768px) {
-    .site-delete-page-container {
-        padding: 15px;
-    }
-
-    /* 테이블 요소들을 블록으로 변환 */
-    .site-delete-table, 
-    .site-delete-table tbody, 
-    .site-delete-table tr, 
-    .site-delete-table td {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    /* 헤더 숨김 */
-    .site-delete-table thead {
-        display: none; 
-    }
-
-    /* 행(Row)을 카드(Card)로 스타일링 */
-    .site-delete-table tr {
-        margin-bottom: 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        padding: 15px;
-    }
-
-    /* 셀(Cell) 스타일 */
-    .site-delete-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 8px 0;
-        border-bottom: 1px solid #f5f5f5;
-        font-size: 13px;
-        white-space: normal; /* 텍스트 줄바꿈 허용 */
-        word-break: break-all;
-    }
-
-    .site-delete-table td:last-child {
-        border-bottom: none;
-        padding-top: 15px;
-        justify-content: flex-end; /* 버튼 우측 정렬 */
-    }
-
-    /* data-label 속성을 이용해 라벨 표시 */
-    .site-delete-table td::before {
-        content: attr(data-label);
-        float: left;
-        font-weight: bold;
-        color: #888;
-        margin-right: 10px;
-        font-size: 12px;
-        min-width: 60px;
-        text-align: left;
-    }
-
-    /* [Active Section] 현장명 강조 */
-    .site-delete-table tr td[data-label="현장명"] {
-        background-color: #f8f9fa;
-        margin: -15px -15px 10px -15px; /* 카드 헤더처럼 확장 */
-        padding: 12px 15px;
-        border-bottom: 1px solid #eee;
-        border-radius: 8px 8px 0 0;
-        font-weight: 800;
-        color: #333;
-        font-size: 15px;
-        justify-content: flex-start;
-    }
-    .site-delete-table tr td[data-label="현장명"]::before {
-        display: none; /* 헤더에서는 라벨 숨김 */
-    }
-
-    /* 관리 버튼 확장 */
-    .site-delete-btn-mini {
-        width: 100%;
-        padding: 8px 0;
-        font-size: 13px;
-    }
-}
+.sdl-mobile-actions { margin-top: 16px; background: #f9fafb; padding: 12px; border-radius: 8px; display: flex; }
+.sdl-btn-link { flex: 1; height: 40px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; }
+.sdl-btn-link.delete { background-color: #fff; border: 1px solid var(--sdl-danger); color: var(--sdl-danger); }
+.sdl-btn-link.restore { background-color: var(--sdl-success); border: none; color: #fff; box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3); }

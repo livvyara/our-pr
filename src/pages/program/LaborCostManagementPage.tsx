@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, getDoc,
@@ -10,31 +10,29 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import LaborCostModal from '../../components/partner/LaborCostModal';
 import './LaborCostManagementPage.css';
+import { 
+  Download, Plus, Trash2, Edit2, Filter, ChevronDown, ChevronUp, 
+  Users, DollarSign, Calendar 
+} from 'lucide-react';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- [Icons] ---
-const Icons = {
-  Download: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-  Plus: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  Edit: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
-  Trash: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-  Filter: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-};
-
 const LaborCostManagementPage: React.FC = () => {
   const [laborList, setLaborList] = useState<any[]>([]);
   const [currentUid, setCurrentUid] = useState<string | null>(null);
   const [currentUserInfo, setCurrentUserInfo] = useState<{uid: string, name: string}>({uid:'', name:''});
-   
+    
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); 
-  const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid' | 'separate'>('all');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // 모바일 아코디언 상태
+  const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -67,19 +65,32 @@ const LaborCostManagementPage: React.FC = () => {
     setLoading(true);
     const q = query(collection(db, 'users', uid, 'labor_costs'), where('paymentMonth', '==', month), orderBy('createdAt', 'desc'));
     return onSnapshot(q, (snap) => {
-        setLaborList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLaborList(snap.docs.map(d => {
+            const data = d.data();
+            const status = data.paymentStatus || (data.isPaid ? 'paid' : 'unpaid');
+            return { id: d.id, ...data, paymentStatus: status };
+        }));
         setLoading(false);
     });
   };
 
-  const filteredList = laborList.filter((item) => {
-      if (paymentFilter === 'paid') return item.isPaid === true;
-      if (paymentFilter === 'unpaid') return !item.isPaid; 
-      return true;
-  });
+  const filteredList = useMemo(() => {
+      return laborList.filter((item) => {
+          const status = item.paymentStatus;
+          if (paymentFilter === 'all') return true;
+          return status === paymentFilter;
+      });
+  }, [laborList, paymentFilter]);
+
+  // 요약 정보 계산 (통일성을 위해 추가)
+  const summary = useMemo(() => {
+      const count = filteredList.length;
+      const totalAmount = filteredList.reduce((acc, cur) => acc + (cur.finalAmount || 0), 0);
+      return { count, totalAmount };
+  }, [filteredList]);
 
   const handleDelete = async (id: string) => {
-      if (!confirm("삭제하시겠습니까?")) return;
+      if (!confirm("정말 삭제하시겠습니까? 복구할 수 없습니다.")) return;
       if (!currentUid) return;
       await deleteDoc(doc(db, 'users', currentUid, 'labor_costs', id));
   };
@@ -87,13 +98,25 @@ const LaborCostManagementPage: React.FC = () => {
   const handleStatusChange = async (id: string, newStatus: string) => {
       if (!currentUid) return;
       try {
-          await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), { isPaid: newStatus === '지급완료' });
+          const isPaidBool = newStatus !== 'unpaid'; 
+          await updateDoc(doc(db, 'users', currentUid, 'labor_costs', id), { 
+              paymentStatus: newStatus,
+              isPaid: isPaidBool 
+          });
       } catch (e) { console.error(e); alert("오류가 발생했습니다."); }
   };
 
-  // [엑셀 다운로드 핸들러 - 유지]
+  const toggleExpand = (id: string) => {
+    const newSet = new Set(expandedItemIds);
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
+    setExpandedItemIds(newSet);
+  };
+
   const handleExcelDownload = async () => {
-      if (filteredList.length === 0) return alert("데이터가 없습니다.");
+      const exportList = filteredList.filter(item => item.paymentStatus !== 'separate');
+
+      if (exportList.length === 0) return alert("노무 신고 가능한 데이터가 없습니다. (별도지급 건 제외)");
       if (!currentUid) return;
       
       const workersSnap = await getDocs(collection(db, 'users', currentUid, 'workers'));
@@ -101,7 +124,8 @@ const LaborCostManagementPage: React.FC = () => {
       workersSnap.forEach(doc => { workerMap[doc.id] = doc.data(); });
 
       const consolidatedMap: { [key: string]: any } = {};
-      filteredList.forEach(item => {
+      
+      exportList.forEach(item => {
           const wId = item.workerId;
           if (consolidatedMap[wId]) {
               consolidatedMap[wId].preTaxAmount += (item.preTaxAmount || 0);
@@ -213,166 +237,230 @@ const LaborCostManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="labor-page">
-      <div className="labor-container">
-        <div className="labor-header">
-          <div className="title-group">
-            <h2>노무 관리</h2>
-            <span className="subtitle">현장별 인건비 지급 내역 관리</span>
-          </div>
-          <div className="control-bar">
-             <div className="filter-group">
-                 <input type="month" className="input-month" value={currentMonth} onChange={e => setCurrentMonth(e.target.value)} />
-                 <div className="select-wrap">
-                     <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value as any)}>
-                         <option value="all">전체 내역</option>
-                         <option value="unpaid">미지급 건</option>
-                         <option value="paid">지급완료 건</option>
-                     </select>
-                     <Icons.Filter />
-                 </div>
-             </div>
-             <div className="action-group">
-                 <button className="btn-manual" onClick={handleExcelDownload}><Icons.Download /> 엑셀 다운로드</button>
-                 <button className="btn-primary" onClick={() => { setEditTarget(null); setIsModalOpen(true); }}><Icons.Plus /> 노무 등록</button>
-             </div>
-          </div>
+    <div className="lcm-container">
+      <div className="lcm-header">
+        <div className="lcm-title-area">
+          <h2>노무 관리</h2>
+          <p>현장별 인건비 지급 현황을 한눈에 관리하고 엑셀로 다운로드하세요.</p>
         </div>
+      </div>
 
-        <div className="labor-list-area">
-            {loading ? (
-                <div className="labor-loading"><div className="spinner"></div></div>
-            ) : filteredList.length === 0 ? (
-                <div className="labor-empty">등록된 노무 내역이 없습니다.</div>
-            ) : (
-                <div className="labor-content-wrapper">
-                    {/* PC Table 수정: 은행, 계좌번호 열 추가 */}
-                    <table className="labor-table">
-                        <thead>
-                            <tr>
-                                <th>성명 (구분)</th>
-                                <th>현장명</th>
-                                <th className="tac">근무일수</th>
-                                <th className="tar">세전금액</th>
-                                <th className="tar">공제액</th>
-                                <th className="tar">실지급액</th>
-                                {/* [추가] 은행 및 계좌번호 헤더 */}
-                                <th>은행</th>
-                                <th>계좌번호</th>
-                                <th>지급일</th>
-                                <th className="tac">상태</th>
-                                <th className="tac">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredList.map(item => (
-                                <tr key={item.id} className={item.isPaid ? 'row-paid' : ''}>
+      {/* Filter Panel (Unified Style) */}
+      <div className="lcm-filter-panel">
+        <div className="lcm-filter-row">
+            <div className="lcm-filter-item">
+                <input 
+                    type="month" 
+                    className="lcm-input" 
+                    value={currentMonth} 
+                    onChange={e => setCurrentMonth(e.target.value)} 
+                />
+            </div>
+            
+            <div className="lcm-filter-item">
+                <select className="lcm-select" value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value as any)}>
+                    <option value="all">전체 내역</option>
+                    <option value="unpaid">미지급 건</option>
+                    <option value="paid">지급완료 건</option>
+                    <option value="separate">별도지급 건</option>
+                </select>
+            </div>
+
+            <button className="lcm-btn lcm-btn-secondary" onClick={handleExcelDownload} style={{marginLeft: 'auto'}}>
+                <Download size={16} /> 엑셀 다운로드
+            </button>
+            <button className="lcm-btn lcm-btn-primary" onClick={() => { setEditTarget(null); setIsModalOpen(true); }}>
+                <Plus size={16} /> 노무 등록
+            </button>
+        </div>
+      </div>
+
+      {/* Summary Grid (Added for Consistency) */}
+      <div className="lcm-summary-grid">
+        <div className="lcm-card summary">
+          <div className="lcm-card-header"><Users size={16} /> 총 인원</div>
+          <div className="lcm-card-value">{summary.count}명</div>
+        </div>
+        <div className="lcm-card summary">
+          <div className="lcm-card-header"><DollarSign size={16} /> 총 지급액</div>
+          <div className="lcm-card-value">{summary.totalAmount.toLocaleString()}원</div>
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="lcm-desktop-view">
+        <div className="lcm-table-container">
+            <div className="lcm-table-wrapper">
+                <table className="lcm-table">
+                    <thead>
+                        <tr>
+                            <th className="col-name">성명 (구분)</th>
+                            <th className="col-site">현장명</th>
+                            <th className="col-days text-center">근무일수</th>
+                            <th className="col-money text-right">세전금액</th>
+                            <th className="col-money text-right">공제액</th>
+                            <th className="col-money text-right">실지급액</th>
+                            <th className="col-bank">계좌정보</th>
+                            <th className="col-status text-center">상태</th>
+                            <th className="col-action text-center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <tr><td colSpan={9} className="lcm-no-data">로딩 중...</td></tr>
+                        ) : filteredList.length === 0 ? (
+                            <tr><td colSpan={9} className="lcm-no-data">조회된 내역이 없습니다.</td></tr>
+                        ) : (
+                            filteredList.map(item => (
+                                <tr key={item.id} className={item.paymentStatus === 'paid' ? 'row-dimmed' : ''}>
                                     <td>
-                                        <div className="worker-info">
-                                            <strong>{item.workerName}</strong>
-                                            <span className={`type-badge ${item.workerType}`}>{item.workerType === 'agency' ? '인력' : '프리'}</span>
+                                        <div className="lcm-worker-profile">
+                                            <div className="lcm-avatar">{item.workerName.charAt(0)}</div>
+                                            <div className="lcm-worker-info">
+                                                <span className="name">{item.workerName}</span>
+                                                <span className={`lcm-badge type ${item.workerType}`}>
+                                                    {item.workerType === 'agency' ? '인력소' : '프리랜서'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </td>
                                     <td>{item.siteName}</td>
-                                    <td className="tac">{item.totalDays}일</td>
-                                    <td className="tar">{item.preTaxAmount.toLocaleString()}</td>
-                                    <td className="tar text-red">-{item.deductionAmount.toLocaleString()}</td>
-                                    <td className="tar bold highlight">{item.finalAmount.toLocaleString()}</td>
-                                    {/* [추가] 은행 및 계좌번호 데이터 표시 */}
-                                    <td>{item.bankName}</td>
-                                    <td>{item.accountNumber}</td>
-                                    <td className="text-sub">{item.paymentCycle?.join(', ')}</td>
-                                    <td className="tac">
+                                    <td className="text-center">{item.totalDays}일</td>
+                                    <td className="text-right text-secondary">{item.preTaxAmount.toLocaleString()}</td>
+                                    <td className="text-right text-danger">-{item.deductionAmount.toLocaleString()}</td>
+                                    <td className="text-right font-bold text-primary">{item.finalAmount.toLocaleString()}</td>
+                                    <td>
+                                        <div className="lcm-bank-info">
+                                            <span>{item.bankName}</span>
+                                            <span className="account">{item.accountNumber}</span>
+                                        </div>
+                                    </td>
+                                    <td className="text-center">
                                         <select 
-                                            className={`status-chip ${item.isPaid ? 'paid' : 'unpaid'}`}
-                                            value={item.isPaid ? '지급완료' : '미지급'}
+                                            className={`lcm-status-select ${item.paymentStatus}`}
+                                            value={item.paymentStatus}
                                             onChange={(e) => handleStatusChange(item.id, e.target.value)}
                                         >
-                                            <option value="미지급">미지급</option>
-                                            <option value="지급완료">지급완료</option>
+                                            <option value="unpaid">미지급</option>
+                                            <option value="paid">완료</option>
+                                            <option value="separate">별도</option>
                                         </select>
+                                        {item.paymentCycle && <div className="lcm-pay-date">{item.paymentCycle.join(', ')}</div>}
                                     </td>
-                                    <td className="tac">
-                                        <div className="btn-group">
-                                            <button className="btn-icon" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}><Icons.Edit /></button>
-                                            <button className="btn-icon del" onClick={() => handleDelete(item.id)}><Icons.Trash /></button>
+                                    <td className="text-center">
+                                        <div className="lcm-action-btns">
+                                            <button className="lcm-icon-btn" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button className="lcm-icon-btn danger" onClick={() => handleDelete(item.id)}>
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
 
-                    {/* Mobile Card List 수정: 계좌 정보 추가 */}
-                    <div className="labor-mobile-list">
-                         {filteredList.map(item => (
-                             <div key={item.id} className={`labor-card ${item.isPaid ? 'paid' : ''}`}>
-                                 <div className="card-header">
-                                     <div className="worker-profile">
-                                         <span className="name">{item.workerName}</span>
-                                         <span className={`type-badge ${item.workerType}`}>{item.workerType === 'agency' ? '인력' : '프리'}</span>
-                                     </div>
-                                     <select 
-                                         className={`status-chip small ${item.isPaid ? 'paid' : 'unpaid'}`}
-                                         value={item.isPaid ? '지급완료' : '미지급'}
-                                         onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                                     >
-                                         <option value="미지급">미지급</option>
-                                         <option value="지급완료">완료</option>
-                                     </select>
-                                 </div>
-                                 
-                                 <div className="card-body">
-                                     <div className="info-row site">
-                                         <span className="label">현장</span>
-                                         <span className="value">{item.siteName}</span>
-                                     </div>
-                                     <div className="info-grid">
-                                         <div className="grid-item">
-                                             <span className="label">근무일수</span>
-                                             <span className="value">{item.totalDays}일</span>
-                                         </div>
-                                         <div className="grid-item">
-                                             <span className="label">세전금액</span>
-                                             <span className="value">{item.preTaxAmount.toLocaleString()}</span>
-                                         </div>
-                                         <div className="grid-item">
-                                             <span className="label text-red">공제액</span>
-                                             <span className="value text-red">-{item.deductionAmount.toLocaleString()}</span>
-                                         </div>
-                                     </div>
-                                     <div className="total-row">
-                                         <span className="label">실지급액</span>
-                                         <span className="value total">{item.finalAmount.toLocaleString()} 원</span>
-                                     </div>
-                                     {/* [추가] 모바일 뷰 계좌정보 */}
-                                     <div className="bank-info-row" style={{marginTop:'8px', fontSize:'13px', color:'#555', textAlign:'right'}}>
-                                         {item.bankName} {item.accountNumber}
-                                     </div>
-                                     <div className="date-row">
-                                         지급일: {item.paymentCycle?.join(', ')}
-                                     </div>
-                                 </div>
+      {/* Mobile Card View (Accordion) */}
+      <div className="lcm-mobile-view">
+        <div className="lcm-mobile-list">
+            {loading ? (
+                <div className="lcm-no-data">로딩 중...</div>
+            ) : filteredList.length === 0 ? (
+                <div className="lcm-no-data">조회된 내역이 없습니다.</div>
+            ) : (
+                filteredList.map(item => {
+                    const isExpanded = expandedItemIds.has(item.id);
+                    return (
+                        <div key={item.id} className="lcm-mobile-card">
+                            <div className="lcm-mobile-card-header" onClick={() => toggleExpand(item.id)}>
+                                <div className="lcm-mobile-header-left">
+                                    <div className="lcm-worker-profile">
+                                        <div className="lcm-avatar small">{item.workerName.charAt(0)}</div>
+                                        <div className="lcm-worker-info">
+                                            <div className="name-row">
+                                                <span className="name">{item.workerName}</span>
+                                                <span className={`lcm-badge type ${item.workerType}`}>
+                                                    {item.workerType === 'agency' ? '인력' : '프리'}
+                                                </span>
+                                            </div>
+                                            <span className="site">{item.siteName}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="lcm-mobile-header-right">
+                                    <span className={`lcm-badge status ${item.paymentStatus}`}>
+                                        {item.paymentStatus === 'unpaid' ? '미지급' : item.paymentStatus === 'paid' ? '완료' : '별도'}
+                                    </span>
+                                    <ChevronDown size={20} className={`lcm-chevron ${isExpanded ? 'open' : ''}`} />
+                                </div>
+                            </div>
 
-                                 <div className="card-footer">
-                                     <button className="card-btn edit" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>수정</button>
-                                     <button className="card-btn del" onClick={() => handleDelete(item.id)}>삭제</button>
-                                 </div>
-                             </div>
-                         ))}
-                    </div>
-                </div>
+                            {isExpanded && (
+                                <div className="lcm-mobile-expanded">
+                                    <div className="lcm-mobile-body">
+                                        <div className="lcm-info-row">
+                                            <span className="label">근무일수</span>
+                                            <span className="value">{item.totalDays}일</span>
+                                        </div>
+                                        <div className="lcm-info-row">
+                                            <span className="label">세전금액</span>
+                                            <span className="value">{item.preTaxAmount.toLocaleString()}</span>
+                                        </div>
+                                        <div className="lcm-info-row">
+                                            <span className="label text-danger">공제액</span>
+                                            <span className="value text-danger">-{item.deductionAmount.toLocaleString()}</span>
+                                        </div>
+                                        <div className="lcm-info-row total">
+                                            <span className="label">실지급액</span>
+                                            <span className="value text-primary">{item.finalAmount.toLocaleString()}원</span>
+                                        </div>
+                                        <div className="lcm-info-row bank">
+                                            <span className="label">계좌</span>
+                                            <span className="value">{item.bankName} {item.accountNumber}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="lcm-mobile-actions">
+                                        <select 
+                                            className="lcm-mobile-select"
+                                            value={item.paymentStatus}
+                                            onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                                        >
+                                            <option value="unpaid">미지급</option>
+                                            <option value="paid">지급완료</option>
+                                            <option value="separate">별도지급</option>
+                                        </select>
+                                        <div className="btn-row">
+                                            <button className="lcm-btn-link" onClick={() => { setEditTarget(item); setIsModalOpen(true); }}>
+                                                <Edit2 size={16} /> 수정
+                                            </button>
+                                            <button className="lcm-btn-link danger" onClick={() => handleDelete(item.id)}>
+                                                <Trash2 size={16} /> 삭제
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
             )}
         </div>
-
-        {isModalOpen && currentUid && (
-            <LaborCostModal 
-                isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
-                partnerUid={currentUid} targetLabor={editTarget} currentMonth={currentMonth}
-                onRefresh={() => {}} userName={currentUserInfo.name} 
-            />
-        )}
       </div>
+
+      {isModalOpen && currentUid && (
+          <LaborCostModal 
+              isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+              partnerUid={currentUid} targetLabor={editTarget} currentMonth={currentMonth}
+              onRefresh={() => {}} userName={currentUserInfo.name} 
+          />
+      )}
     </div>
   );
 };

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, type FormEvent } from 'react';
-import { 
-  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, getDoc, setDoc 
+import {
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, getDoc, setDoc, getDocs, where
 } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useReactToPrint } from 'react-to-print';
-import logoSrc from '../../assets/logo.png'; 
-import './ConstructionScheduleModal.css'; 
+import logoSrc from '../../assets/logo.png';
+import './ConstructionScheduleModal.css';
 
 // --- [Icons] ---
 const Icons = {
@@ -13,13 +13,16 @@ const Icons = {
   Print: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>,
   Settings: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
   Upload: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
-  Alert: () => <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  Alert: () => <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+  Image: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  Check: () => <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
 };
 
 // Types
 interface ScheduleEntry { id: string; date: string; processes: string[]; isNoisy: boolean; createdAt: Timestamp; siteName: string; }
 interface NoticeSettings { companyName: string; complaintContact: string; managerContact: string; blogUrl: string; instaUrl: string; youtubeUrl: string; logoUrl: string; }
 interface ContractInfo { siteType: 'apartment' | 'residential' | 'commercial'; address: string; aptName?: string; aptDong?: string; aptHo?: string; startDate?: string; endDate?: string; }
+interface FileEntry { id: string; url: string; name: string; category: string; } // For Rendering Print
 interface ModalProps { siteId: string; partnerUid: string; onClose: () => void; viewOnly?: boolean; }
 
 // Utils
@@ -41,7 +44,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
   const db = getFirestore();
   const storage = getStorage();
   
-  // State
+  // Schedule State
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [currentSiteName, setCurrentSiteName] = useState('현장');
   const [siteStartDate, setSiteStartDate] = useState<string>(''); 
@@ -59,9 +62,17 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
   const [showNoticeSettings, setShowNoticeSettings] = useState(false);
   const [noticeSettings, setNoticeSettings] = useState<NoticeSettings>({ companyName: '', complaintContact: '', managerContact: '', blogUrl: '', instaUrl: '', youtubeUrl: '', logoUrl: '' });
   
-  const logoInputRef = useRef<HTMLInputElement>(null);
+  // Rendering Print State
+  const [showRenderModal, setShowRenderModal] = useState(false);
+  const [renderFiles, setRenderFiles] = useState<FileEntry[]>([]);
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
+  const [renderLogoUrl, setRenderLogoUrl] = useState<string>('');
+  
+  const logoInputRef = useRef<HTMLInputElement>(null); // For Notice
+  const renderLogoInputRef = useRef<HTMLInputElement>(null); // For Rendering
   const schedulePrintRef = useRef<HTMLDivElement>(null);
   const noticePrintRef = useRef<HTMLDivElement>(null);
+  const renderPrintRef = useRef<HTMLDivElement>(null);
 
   // Fetch Logic
   useEffect(() => {
@@ -97,6 +108,35 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
     };
     fetchData();
   }, [siteId, partnerUid, db]);
+
+  // [UPDATED] Fetch Render Files: Filter by Category '3d-render' at Database Level
+  useEffect(() => {
+      if (showRenderModal) {
+          const fetchRenderData = async () => {
+              try {
+                  // Fetch Config for Render Logo
+                  const configDoc = await getDoc(doc(db, 'users', partnerUid, 'sites', siteId, 'config', 'rendering'));
+                  if (configDoc.exists()) {
+                      setRenderLogoUrl(configDoc.data().logoUrl || '');
+                  }
+                  
+                  // [OPTIMIZATION] Filter only '3d-render' category
+                  const filesQuery = query(
+                      collection(db, 'users', partnerUid, 'sites', siteId, 'files'), 
+                      where('category', '==', '3d-render'),
+                      orderBy('createdAt', 'desc')
+                  );
+                  
+                  const snapshot = await getDocs(filesQuery);
+                  const files: FileEntry[] = [];
+                  snapshot.forEach(d => files.push({ id: d.id, ...d.data() } as FileEntry));
+                  
+                  setRenderFiles(files);
+              } catch (e) { console.error("Error fetching render files:", e); }
+          };
+          fetchRenderData();
+      }
+  }, [showRenderModal, siteId, partnerUid, db]);
 
   // Handlers
   const handleEdit = (schedule: ScheduleEntry) => {
@@ -136,9 +176,9 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
     setInputDateEnd(siteEndDate); setInputDateStart(siteStartDate);
   };
   
+  // Notice Settings
   const handleNoticeSettingChange = (e: React.ChangeEvent<HTMLInputElement>) => { const { name, value } = e.target; setNoticeSettings(prev => ({ ...prev, [name]: value })); };
   const saveNoticeSettings = async () => { try { await setDoc(doc(db, 'users', partnerUid, 'sites', siteId, 'config', 'notice'), noticeSettings, { merge: true }); setShowNoticeSettings(false); } catch (e) { console.error(e); } };
-  
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => { 
       if (!e.target.files || e.target.files.length === 0) return; 
       const file = e.target.files[0]; 
@@ -151,25 +191,65 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
       } catch (err) { console.error(err); } 
   };
 
-  // Print Logic [MODIFIED FOR LANDSCAPE AND A3/A4 SUPPORT]
+  // Rendering Print Handlers
+  const handleToggleFileSelection = (fileId: string) => {
+      setSelectedFileIds(prev => {
+          const next = new Set(prev);
+          if (next.has(fileId)) next.delete(fileId); else next.add(fileId);
+          return next;
+      });
+  };
+  
+  const handleRenderLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files || e.target.files.length === 0) return;
+      const file = e.target.files[0];
+      const fileRef = storageRef(storage, `sites/${siteId}/rendering_logo_${Date.now()}`);
+      try {
+          const result = await uploadBytes(fileRef, file);
+          const url = await getDownloadURL(result.ref);
+          setRenderLogoUrl(url);
+          // Save for persistent use
+          await setDoc(doc(db, 'users', partnerUid, 'sites', siteId, 'config', 'rendering'), { logoUrl: url }, { merge: true });
+      } catch (err) { console.error(err); } 
+  };
+
+  // [UPDATED] Print Logic - Default to Landscape A4
+  const handlePrintRender = useReactToPrint({
+      contentRef: renderPrintRef,
+      documentTitle: `${currentSiteName}_렌더링`,
+      pageStyle: `
+        @page { size: landscape; margin: 0; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; margin: 0; padding: 0; }
+            .render-print-page { page-break-after: always; width: 100vw; height: 100vh; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; background: #fff; }
+            .render-main-img { width: 100%; height: 100%; object-fit: contain; }
+            .render-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; opacity: 0.6; z-index: 10; pointer-events: none; filter: grayscale(100%); }
+        }
+      `
+  });
+
+  // Print Logic (Schedule & Notice)
   const handlePrintSchedule = useReactToPrint({ 
     contentRef: schedulePrintRef, 
     documentTitle: `${currentSiteName}_공사일정표`, 
-    // 수정: A4 고정을 제거하고 landscape만 지정. margin을 주어 프린터 여백 대응.
     pageStyle: `
       @page { size: landscape; margin: 10mm; } 
+      @media print { body { -webkit-print-color-adjust: exact; } }
+    ` 
+  });
+  const handlePrintNotice = useReactToPrint({ 
+    contentRef: noticePrintRef, 
+    documentTitle: `${currentSiteName}_공사안내문`, 
+    pageStyle: `
+      @page { size: portrait; margin: 0mm; } 
       @media print { 
-        body { -webkit-print-color-adjust: exact; } 
+        body { -webkit-print-color-adjust: exact; margin: 0; padding: 0; } 
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
       }
     ` 
   });
-  
-  const handlePrintNotice = useReactToPrint({ 
-    contentRef: noticePrintRef, documentTitle: `${currentSiteName}_공사안내문`, 
-    pageStyle: `@page { size: A4 portrait; margin: 0; }` 
-  });
 
-  // Calendar Logic
+  // Data Generation
   const generateCalendarData = () => {
       const baseStart = siteStartDate ? new Date(siteStartDate) : new Date();
       const calendarStart = new Date(baseStart);
@@ -195,9 +275,8 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
   const allWeeks = generateCalendarData();
   const dateRangeString = (siteStartDate && siteEndDate) ? `${siteStartDate} ~ ${siteEndDate}` : '';
 
-  // Notice Data
   const getNoticeContent = () => { 
-      const period = (siteStartDate && siteEndDate) ? `${siteStartDate} ~ ${siteEndDate}` : '미정';
+      const period = (siteStartDate && siteEndDate) ? `${siteStartDate} ~ ${siteEndDate}` : '일정 미정';
       let locationText = `[${currentSiteName}]`; let projectName = `${currentSiteName} 인테리어 공사`;
       if (contractInfo) {
           if (contractInfo.siteType === 'apartment') {
@@ -276,6 +355,11 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
                         <button className="ppm-btn-secondary" onClick={handlePrintSchedule}><Icons.Print /> 일정표</button>
                         <button className="ppm-btn-secondary" onClick={handlePrintNotice}><Icons.Print /> 안내문</button>
                     </div>
+                    
+                    <button className="ppm-btn-secondary" onClick={() => setShowRenderModal(true)} style={{width:'100%'}}>
+                        <Icons.Image /> 3D 렌더링 출력
+                    </button>
+
                     <button className="ppm-btn-secondary" onClick={() => setShowNoticeSettings(true)} style={{width:'100%'}}>
                         <Icons.Settings /> 설정
                     </button>
@@ -302,7 +386,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
                 </button>
             </div>
 
-            {/* Mobile View Header (Shown only when Sidebar is hidden in ViewOnly mode on mobile) */}
+            {/* Mobile View Header */}
             {viewOnly && (
                 <div className="ppm-mobile-view-only-header">
                     <h3>{currentSiteName}</h3>
@@ -378,7 +462,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
         </div>
       </div>
 
-      {/* Settings Modal */}
+      {/* Notice Settings Modal */}
       {showNoticeSettings && (
           <div className="ppm-settings-overlay">
             <div className="ppm-settings-modal">
@@ -396,33 +480,90 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
           </div>
       )}
 
-      {/* Print Templates */}
+      {/* [NEW] Rendering Print Modal Overlay (Simplified) */}
+      {showRenderModal && (
+          <div className="ppm-render-overlay">
+              <div className="ppm-render-modal">
+                  <div className="ppm-render-header">
+                      <h3>3D 렌더링 출력</h3>
+                      <button onClick={() => setShowRenderModal(false)} className="close-btn"><Icons.Close /></button>
+                  </div>
+                  
+                  <div className="ppm-render-body">
+                      {/* Sidebar for Render Settings */}
+                      <div className="ppm-render-sidebar">
+                          <div className="setting-group">
+                              <label>회사 로고 (워터마크)</label>
+                              <div className="logo-preview-box" onClick={() => renderLogoInputRef.current?.click()}>
+                                  {renderLogoUrl ? <img src={renderLogoUrl} alt="Logo" /> : <div className="placeholder"><Icons.Upload /> 로고 업로드</div>}
+                              </div>
+                              <input type="file" ref={renderLogoInputRef} style={{display:'none'}} accept="image/*" onChange={handleRenderLogoUpload} />
+                              <p className="help-text">등록된 로고는 계속 저장됩니다.</p>
+                          </div>
+
+                          <div className="selected-count">
+                              선택된 이미지: <strong>{selectedFileIds.size}</strong>장
+                          </div>
+                          <button className="ppm-btn-primary" onClick={handlePrintRender} disabled={selectedFileIds.size === 0}>
+                              <Icons.Print /> 출력하기
+                          </button>
+                      </div>
+
+                      {/* Image Grid */}
+                      <div className="ppm-render-grid-area">
+                          {renderFiles.length === 0 ? (
+                              <div className="empty-msg">등록된 3D 렌더링 이미지가 없습니다.</div>
+                          ) : (
+                              <div className="ppm-render-grid">
+                                  {renderFiles.map(file => (
+                                      <div 
+                                          key={file.id} 
+                                          className={`ppm-render-item ${selectedFileIds.has(file.id) ? 'selected' : ''}`}
+                                          onClick={() => handleToggleFileSelection(file.id)}
+                                      >
+                                          <img src={file.url} alt={file.name} loading="lazy" />
+                                          <div className="check-overlay"><Icons.Check /></div>
+                                          <span className="file-name">{file.name}</span>
+                                      </div>
+                                  ))}
+                              </div>
+                          )}
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
+     {/* Print Templates (Hidden) */}
       <div className="ppm-print-container">
+          {/* Schedule Template */}
           <div ref={schedulePrintRef}>
               {printPages.map((weeksChunk, pageIndex) => (
-                  <div key={pageIndex} className="ppm-print-page landscape">
-                      <div style={{textAlign:'center', marginBottom:'10px', height: '40px'}}>
-                          <h1 style={{margin:0, fontSize:'24px', fontWeight:'900'}}>{currentSiteName} 공사 일정표</h1>
-                          <p style={{margin:0, fontSize:'12px', color:'#555'}}>{dateRangeString}</p>
+                  <div key={pageIndex} className="ppm-print-doc landscape">
+                      <div className="print-header">
+                          <h1>{currentSiteName} 공사 일정표</h1>
+                          <p>{dateRangeString}</p>
                       </div>
-                      <div className="ppm-print-table-wrap">
-                          <div className="ppm-print-thead">
-                              <div className="ppm-print-th">일</div><div className="ppm-print-th">월</div><div className="ppm-print-th">화</div><div className="ppm-print-th">수</div><div className="ppm-print-th">목</div><div className="ppm-print-th">금</div><div className="ppm-print-th">토</div>
+                      <div className="print-grid-wrap">
+                          <div className="print-grid-head">
+                              <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
                           </div>
-                          <div className="ppm-print-tbody">
+                          <div className="print-grid-body">
                               {weeksChunk.map((week, wIdx) => (
-                                  <div key={wIdx} className="ppm-print-tr">
-                                      {week === null ? Array(7).fill(null).map((_,i)=><div key={i} className="ppm-print-td"></div>) : week.map((day, dIdx) => {
-                                          if(!day) return <div key={dIdx} className="ppm-print-td"></div>;
+                                  <div key={wIdx} className="print-row">
+                                      {week === null ? Array(7).fill(null).map((_,i)=><div key={i} className="print-cell empty"></div>) : week.map((day, dIdx) => {
+                                          if(!day) return <div key={dIdx} className="print-cell empty"></div>;
                                           return (
-                                              <div key={dIdx} className="ppm-print-td">
-                                                  <div style={{fontSize:'12px', fontWeight:'bold', marginBottom:'4px', color: dIdx===0?'red':dIdx===6?'blue':'#000'}}>
+                                              <div key={dIdx} className="print-cell">
+                                                  <div className={`print-day ${dIdx===0?'sun':dIdx===6?'sat':''}`}>
                                                       {day.dayNum}
-                                                      {day.schedules.some((s:any)=>s.isNoisy) && <span style={{fontSize:'9px', border:'1px solid red', color:'red', padding:'0 2px', marginLeft:'4px', borderRadius:'4px'}}>소음</span>}
+                                                      {day.schedules.some((s:any)=>s.isNoisy) && <span className="print-noise">소음</span>}
                                                   </div>
-                                                  {day.schedules.map((s:any) => s.processes.map((p:string, pi:number) => (
-                                                      <div key={pi} style={{fontSize:'10px', background:'#eee', padding:'1px', marginBottom:'1px', borderRadius:'2px'}}>{p}</div>
-                                                  )))}
+                                                  <div className="print-content">
+                                                    {day.schedules.map((s:any) => s.processes.map((p:string, pi:number) => (
+                                                        <span key={pi} className="print-tag">{p}</span>
+                                                    )))}
+                                                  </div>
                                               </div>
                                           )
                                       })}
@@ -430,46 +571,91 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
                               ))}
                           </div>
                       </div>
-                      <div style={{height: '30px', textAlign: 'center', marginTop: '10px'}}>
-                         <img src={logoSrc} className="ppm-footer-logo" />
+                      <div className="print-footer">
+                         <img src={logoSrc} />
                       </div>
                   </div>
               ))}
           </div>
 
+          {/* Notice Template */}
           <div ref={noticePrintRef}>
-              <div className="ppm-print-page portrait">
-                  <div className="ppm-notice-layout">
-                      <div>
-                        <div className="ppm-notice-header">
-                            <h1 className="ppm-notice-title">공사 안내문</h1>
-                            {noticeSettings.logoUrl && <img src={noticeSettings.logoUrl} style={{height:'40px', marginTop:'10px'}} />}
+            <div className="ppm-premium-notice-wrap">
+                <div className="ppm-premium-notice-page">
+                    <header className="ppm-premium-notice-header">
+                        <div className="header-titles">
+                            <span className="ppm-premium-notice-subtitle">INTERIOR WORK NOTICE</span>
+                            <h1 className="ppm-premium-notice-title">인테리어 공사 안내문</h1>
                         </div>
-                        <div className="ppm-notice-body">
-                            <p>안녕하세요. <strong>{noticeContent.company}</strong>입니다.<br/>
-                            입주민 여러분의 쾌적한 주거 환경을 위해 항상 노력하고 있습니다.</p>
-                            <p style={{marginTop:'20px'}}>
-                                <strong>{noticeContent.locationText}</strong> 내부 인테리어 공사가 아래와 같이 진행될 예정입니다.<br/>
-                                공사 기간 중 발생할 수 있는 소음 및 통행의 불편에 대해 입주민 여러분의 깊은 양해 부탁드립니다.<br/>
-                                최대한 안전하고 신속하게 공사를 마무리하도록 하겠습니다.
+                        <div className="ppm-premium-notice-top-bar"></div>
+                    </header>
+
+                    <main className="ppm-premium-notice-body">
+                        <div className="ppm-premium-notice-message">
+                            <p>
+                                <strong>입주민 여러분, 안녕하십니까.</strong><br />
+                                품격 있는 주거 공간을 위한 인테리어 공사가 예정되어 있어 안내 말씀 드립니다.
                             </p>
-                            <div className="ppm-notice-info-box">
-                                <div className="ppm-notice-label">공 사 명</div>
-                                <div className="ppm-notice-val">{noticeContent.projectName}</div>
-                                <div className="ppm-notice-label">공사기간</div>
-                                <div className="ppm-notice-val">{noticeContent.period}</div>
-                                {noticeSettings.companyName && <><div className="ppm-notice-label">시공업체</div><div className="ppm-notice-val">{noticeSettings.companyName}</div></>}
-                                <div className="ppm-notice-label">불편문의</div>
-                                <div className="ppm-notice-val" style={{fontSize:'22px', fontWeight:'bold'}}>{noticeSettings.complaintContact || noticeSettings.managerContact}</div>
+                            <p>
+                                공사 기간 중 발생하는 소음과 분진 등으로 인해 다소 불편하시더라도
+                                입주민 여러분의 너그러운 양해를 부탁드립니다.<br />
+                                <strong>{noticeSettings.companyName || '시공사'}</strong>는 이웃분들의 불편을 최소화하기 위해
+                                안전하고 신속하게 공사를 마무리하겠습니다.
+                            </p>
+                        </div>
+
+                        <div className="ppm-premium-notice-grid">
+                            <div className="ppm-premium-notice-row">
+                                <div className="ppm-premium-notice-label">공 사 명</div>
+                                <div className="ppm-premium-notice-value">{noticeContent.projectName}</div>
+                            </div>
+                            <div className="ppm-premium-notice-row">
+                                <div className="ppm-premium-notice-label">공사 기간</div>
+                                <div className="ppm-premium-notice-value period">{noticeContent.period}</div>
+                            </div>
+                            <div className="ppm-premium-notice-row">
+                                <div className="ppm-premium-notice-label">장 소</div>
+                                <div className="ppm-premium-notice-value">{noticeContent.locationText}</div>
+                            </div>
+                            <div className="ppm-premium-notice-contact-box">
+                                <div className="contact-item">
+                                    <span className="contact-label">현장 책임자</span>
+                                    <span className="contact-value">{noticeSettings.managerContact || '-'}</span>
+                                </div>
+                                <div className="contact-divider"></div>
+                                <div className="contact-item highlight">
+                                    <span className="contact-label">불편 문의</span>
+                                    <span className="contact-value">{noticeSettings.complaintContact || '-'}</span>
+                                </div>
                             </div>
                         </div>
-                      </div>
-                      <div style={{textAlign:'center', marginTop:'40px'}}>
-                          <p style={{fontSize:'14px', marginBottom:'30px'}}>입주민 여러분의 가정에 평안과 행복이 가득하시길 기원합니다.</p>
-                          <img src={logoSrc} className="ppm-footer-logo" />
-                      </div>
+                    </main>
+
+                    <footer className="ppm-premium-notice-footer">
+                        <div className="ppm-premium-notice-sign">
+                            <p className="ppm-premium-notice-closing">감사합니다.</p>
+                            <span className="name">{noticeSettings.companyName || '시공사'}</span>
+                        </div>
+                        <div className="ppm-premium-bottom-branding">
+                            <p className="brand-slogan">소비자의 안전한 공사를 위한 플랫폼</p>
+                            <p className="brand-name-bold">아워프로젝트</p>
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://our-pr.com" className="brand-qr" alt="QR Code" />
+                        </div>
+                    </footer>
+                </div>
+            </div>
+          </div>
+
+          {/* [NEW] Rendering Print Template (Always Landscape) */}
+          <div ref={renderPrintRef}>
+              {renderFiles.filter(f => selectedFileIds.has(f.id)).map(file => (
+                  <div key={file.id} className="render-print-page">
+                      {/* Full size image (contain) */}
+                      <img src={file.url} className="render-main-img" alt="Rendering" />
+                      {/* Centered Watermark Logo */}
+                      {renderLogoUrl && <img src={renderLogoUrl} className="render-watermark" alt="Logo" />}
                   </div>
-              </div>
+              ))}
           </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
    Based on PPM Global Design System
    ========================================================================== */
 
-/* 1. Core Variables & Reset (Inherited from PPM) */
+/* 1. Core Variables & Reset */
 :root {
   /* Color Palette */
   --ppm-primary: #3182F6;
@@ -40,7 +40,7 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* 2. Modal Layout (Schedule Specific Override) */
+/* 2. Modal Layout */
 .ppm-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background-color: var(--ppm-bg-overlay);
@@ -50,13 +50,12 @@
   animation: ppmFadeIn 0.25s ease-out;
 }
 
-/* Schedule Modal needs more width than standard PPM modal */
 .ppm-container.schedule-mode {
   background: var(--ppm-bg-modal);
   width: 100%; max-width: 1600px; height: 90vh;
   border-radius: var(--ppm-radius-lg);
   box-shadow: var(--ppm-shadow-modal);
-  display: flex; flex-direction: row; /* Horizontal Layout for PC */
+  display: flex; flex-direction: row;
   overflow: hidden;
   position: relative;
   animation: ppmScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -65,7 +64,7 @@
 @keyframes ppmFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ppmScaleUp { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-/* 3. Sidebar (Control Panel) */
+/* 3. Sidebar */
 .ppm-sidebar {
   width: 380px; flex-shrink: 0;
   background-color: #fff;
@@ -80,7 +79,7 @@
 .ppm-sidebar-title { font-size: 24px; font-weight: 800; color: var(--ppm-text-main); margin: 0; letter-spacing: -0.5px; }
 .ppm-sidebar-desc { margin-top: 8px; font-size: 14px; color: var(--ppm-text-sub); line-height: 1.5; }
 
-/* 4. Inputs & Forms (Matching PPM Standards) */
+/* 4. Inputs & Forms */
 .ppm-form-group { margin-bottom: 24px; }
 .ppm-label { display: block; font-size: 13px; font-weight: 600; color: var(--ppm-text-sub); margin-bottom: 6px; }
 
@@ -100,7 +99,6 @@
   box-shadow: var(--ppm-shadow-focus);
 }
 
-/* Checkbox Card (Specialized) */
 .ppm-check-card {
   display: flex; align-items: center; gap: 12px;
   padding: 0 16px; height: var(--ppm-input-height);
@@ -114,17 +112,17 @@
 .ppm-check-label { font-size: 14px; font-weight: 600; color: var(--ppm-text-main); }
 .ppm-check-card.checked .ppm-check-label { color: var(--ppm-danger); }
 
-/* Buttons */
 .ppm-btn-primary {
   width: 100%; height: 52px;
   background: var(--ppm-primary); color: #fff;
-  border: none; border-radius: 5px; /* User Request: Radius 5px */
+  border: none; border-radius: 5px; 
   font-size: 15px; font-weight: 700; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: var(--ppm-ease);
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 .ppm-btn-primary:hover { background: var(--ppm-primary-hover); transform: translateY(-1px); }
+.ppm-btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; }
 
 .ppm-btn-secondary {
   height: 52px; background: #fff; border: 1px solid var(--ppm-border);
@@ -145,7 +143,7 @@
 
 .ppm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-/* 5. Bottom Tools (Sidebar Footer) */
+/* 5. Bottom Tools */
 .ppm-bottom-tools {
   margin-top: auto; padding-top: 32px;
   border-top: 1px solid var(--ppm-border);
@@ -153,7 +151,6 @@
 }
 .ppm-tool-label { font-size: 11px; font-weight: 800; color: var(--ppm-text-placeholder); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 
-/* Dropzone */
 .ppm-dropzone {
   border: 1px dashed var(--ppm-border);
   border-radius: var(--ppm-radius-md);
@@ -164,7 +161,7 @@
 .ppm-dropzone:hover { border-color: var(--ppm-text-sub); background: #f1f5f9; }
 .ppm-dropzone-text { font-size: 13px; color: var(--ppm-text-sub); font-weight: 500; display: block; margin-top: 4px; }
 
-/* 6. Main Content (Calendar View) */
+/* 6. Content View & Calendar */
 .ppm-content-view {
   flex: 1; display: flex; flex-direction: column;
   background-color: var(--ppm-bg-modal);
@@ -180,7 +177,6 @@
 .ppm-view-title { font-size: 28px; font-weight: 800; color: var(--ppm-text-main); margin: 0; }
 .ppm-view-period { font-size: 14px; font-weight: 600; color: var(--ppm-text-sub); background: #f1f5f9; padding: 6px 12px; border-radius: 20px; }
 
-/* PC Close Button */
 .ppm-close-icon {
   position: absolute; top: 24px; right: 24px;
   width: 44px; height: 44px; border-radius: 50%;
@@ -191,20 +187,16 @@
 }
 .ppm-close-icon:hover { background: var(--ppm-bg-grouped); transform: rotate(90deg); }
 
-/* [NEW] Mobile Close Button Style (Hidden on Desktop) */
 .ppm-close-mobile-btn {
-  display: none; /* Hide on PC */
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  border: none; background: transparent;
+  display: none; width: 40px; height: 40px;
+  border-radius: 50%; border: none; background: transparent;
   align-items: center; justify-content: center;
   cursor: pointer; color: var(--ppm-text-main);
   transition: var(--ppm-ease);
 }
 .ppm-close-mobile-btn:hover { background: var(--ppm-bg-grouped); }
-.ppm-close-mobile-btn.show { display: flex; } /* Force show helper class */
+.ppm-close-mobile-btn.show { display: flex; }
 
-/* Calendar Table */
 .ppm-calendar-container {
   flex: 1; overflow-y: auto;
   border: 1px solid var(--ppm-border);
@@ -212,7 +204,6 @@
   background: #fff;
 }
 .ppm-cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-
 .ppm-cal-th {
   background: #f8fafc; padding: 16px;
   border-bottom: 1px solid var(--ppm-border); border-right: 1px solid var(--ppm-border);
@@ -220,7 +211,6 @@
   position: sticky; top: 0; z-index: 5;
 }
 .ppm-cal-th:last-child { border-right: none; }
-
 .ppm-cal-td {
   vertical-align: top; padding: 8px; height: 140px;
   border-bottom: 1px solid var(--ppm-border); border-right: 1px solid var(--ppm-border);
@@ -229,23 +219,11 @@
 .ppm-cal-td:last-child { border-right: none; }
 .ppm-cal-td:hover { background-color: #fafafa; }
 
-/* Day Number & Chips */
-.ppm-day-num {
-  width: 28px; height: 28px; line-height: 28px; text-align: center;
-  border-radius: 50%; font-size: 13px; font-weight: 600; margin-bottom: 8px; display: inline-block;
-}
+.ppm-day-num { width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; font-size: 13px; font-weight: 600; margin-bottom: 8px; display: inline-block; }
 .ppm-day-num.sun { color: var(--ppm-danger); background: #fef2f2; }
 .ppm-day-num.sat { color: var(--ppm-primary); background: #eff6ff; }
-
-.ppm-proc-chip {
-  display: block; padding: 4px 8px; margin-bottom: 4px; border-radius: 6px;
-  font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  border: 1px solid transparent;
-}
-.ppm-badge-noise {
-  float: right; font-size: 10px; color: var(--ppm-danger); border: 1px solid #fee2e2;
-  background: #fff; padding: 2px 6px; border-radius: 10px; font-weight: 700;
-}
+.ppm-proc-chip { display: block; padding: 4px 8px; margin-bottom: 4px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent; }
+.ppm-badge-noise { float: right; font-size: 10px; color: var(--ppm-danger); border: 1px solid #fee2e2; background: #fff; padding: 2px 6px; border-radius: 10px; font-weight: 700; }
 
 /* 7. Settings Modal */
 .ppm-settings-overlay {
@@ -261,102 +239,196 @@
 .ppm-settings-header { display: flex; justify-content: space-between; margin-bottom: 24px; align-items: center; }
 .ppm-settings-title { font-size: 20px; font-weight: 700; color: var(--ppm-text-main); margin: 0; }
 
-/* 8. Responsive (Mobile/Tablet) */
+/* -----------------------------------------------------
+   [NEW] 8. Rendering Print Modal Styles
+   ----------------------------------------------------- */
+.ppm-render-overlay {
+  position: absolute; inset: 0; z-index: 150;
+  background: #fff; /* Cover entire schedule modal */
+  display: flex; flex-direction: column;
+}
+
+.ppm-render-modal {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.ppm-render-header {
+  height: 60px; border-bottom: 1px solid var(--ppm-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+.ppm-render-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
+.ppm-render-header .close-btn { background:none; border:none; cursor:pointer; }
+
+.ppm-render-body {
+  flex: 1; display: flex; overflow: hidden;
+}
+
+.ppm-render-sidebar {
+  width: 320px; border-right: 1px solid var(--ppm-border);
+  padding: 24px; background: #f8fafc;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+.ppm-render-grid-area {
+  flex: 1; padding: 24px; overflow-y: auto; background: #fff;
+}
+
+/* Render Sidebar Settings */
+.setting-group label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; }
+
+/* (Removed size selector styles as requested) */
+
+.logo-preview-box {
+  width: 100%; height: 120px; border: 1px dashed var(--ppm-border); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; overflow: hidden;
+}
+.logo-preview-box img { max-height: 80%; max-width: 80%; object-fit: contain; }
+.logo-preview-box .placeholder { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 13px; gap: 4px; }
+.help-text { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+
+.selected-count { font-size: 14px; text-align: right; margin-bottom: 4px; }
+
+/* Render Grid */
+.ppm-render-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px;
+}
+.ppm-render-item {
+  position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent;
+}
+.ppm-render-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+.ppm-render-item:hover img { transform: scale(1.05); }
+
+.ppm-render-item .check-overlay {
+  position: absolute; inset: 0; background: rgba(49, 130, 246, 0.4);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  opacity: 0; transition: opacity 0.2s;
+}
+.ppm-render-item.selected { border-color: var(--ppm-primary); }
+.ppm-render-item.selected .check-overlay { opacity: 1; }
+.ppm-render-item .file-name {
+  position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.empty-msg { text-align: center; color: #94a3b8; margin-top: 40px; }
+
+
+/* 9. Responsive */
 .ppm-mobile-list { display: none; }
 .ppm-mobile-view-only-header { display: none; }
 
 @media (max-width: 1024px) {
-  .ppm-container.schedule-mode {
-    flex-direction: column;
-    height: 100vh; max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .ppm-sidebar {
-    width: 100%; border-right: none; border-bottom: 1px solid var(--ppm-border);
-    padding: 20px; flex-shrink: 0; height: auto;
-  }
-  
-  .ppm-sidebar-desc { display: none; }
-  .ppm-bottom-tools { display: none !important; }
-
-  /* Content View on Mobile */
-  .ppm-content-view {
-    padding: 20px; overflow-y: auto; display: block;
-  }
-  
-  /* Hide PC Table & Header */
+  .ppm-container.schedule-mode { flex-direction: column; height: 100vh; max-height: 100vh; border-radius: 0; }
+  .ppm-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--ppm-border); padding: 20px; flex-shrink: 0; height: auto; }
+  .ppm-sidebar-desc, .ppm-bottom-tools { display: none !important; }
+  .ppm-content-view { padding: 20px; overflow-y: auto; display: block; }
   .ppm-calendar-container, .ppm-view-header { display: none; }
-  
-  /* Show Mobile Header in ViewOnly Mode */
-  .ppm-mobile-view-only-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--ppm-text-main);
-  }
-
-  /* Show Mobile List */
+  .ppm-mobile-view-only-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--ppm-text-main); }
   .ppm-mobile-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
-  
-  .ppm-m-card {
-    background: #fff; border: 1px solid var(--ppm-border); border-radius: var(--ppm-radius-md); padding: 16px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  }
+  .ppm-m-card { background: #fff; border: 1px solid var(--ppm-border); border-radius: var(--ppm-radius-md); padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
   .ppm-m-head { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 700; color: var(--ppm-text-main); }
   .ppm-m-body { display: flex; flex-wrap: wrap; gap: 6px; }
-
-  /* [KEY FIX] Show Close Button on Mobile Sidebar */
   .ppm-close-mobile-btn { display: flex; margin-left: 10px; }
+  
+  /* Mobile Render Modal Adjustments */
+  .ppm-render-body { flex-direction: column-reverse; }
+  .ppm-render-sidebar { width: 100%; border-right: none; border-top: 1px solid var(--ppm-border); height: auto; padding: 16px; }
+  .ppm-render-grid-area { padding: 16px; }
 }
 
-/* 9. Print Styles */
+/* 10. Print Styles */
 .ppm-print-container { display: none; }
 
 @media print {
   @page { margin: 0; size: auto; }
-  body { background: #fff; -webkit-print-color-adjust: exact; }
+  body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .ppm-overlay, .ppm-sidebar, .ppm-content-view, .ppm-close-icon { display: none !important; }
   .ppm-print-container { display: block !important; }
   
-  .ppm-print-page {
-    background: white; overflow: hidden; page-break-after: always;
-    position: relative; box-sizing: border-box;
-  }
+  /* Schedule Print Styles (Landscape) */
+  .ppm-print-doc.landscape { width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; }
+  .print-header { text-align: center; margin-bottom: 10px; }
+  .print-header h1 { font-size: 24px; margin: 0 0 5px 0; }
+  .print-header p { font-size: 12px; color: #666; margin: 0; }
+  .print-grid-wrap { flex: 1; border: 2px solid #000; display: flex; flex-direction: column; }
+  .print-grid-head { display: flex; height: 35px; background: #eee; border-bottom: 1px solid #000; align-items: center; font-weight: bold; font-size: 12px; text-align: center; }
+  .print-grid-head div { flex: 1; border-right: 1px solid #000; height: 100%; line-height: 35px; }
+  .print-grid-head div:last-child { border-right: none; }
+  .print-grid-body { flex: 1; display: flex; flex-direction: column; }
+  .print-row { flex: 1; display: flex; border-bottom: 1px solid #ccc; }
+  .print-row:last-child { border-bottom: none; }
+  .print-cell { flex: 1; border-right: 1px solid #ccc; padding: 4px; position: relative; }
+  .print-cell:last-child { border-right: none; }
+  .print-day { font-size: 10px; font-weight: bold; display: flex; justify-content: space-between; margin-bottom: 2px; }
+  .print-day.sun { color: red; } .print-day.sat { color: blue; }
+  .print-noise { font-size: 8px; border: 1px solid red; color: red; border-radius: 4px; padding: 0 2px; }
+  .print-content { display: flex; flex-direction: column; gap: 1px; }
+  .print-tag { font-size: 9px; background: #f0f0f0; padding: 1px 2px; border-radius: 2px; }
+  .print-footer { text-align: center; margin-top: 10px; }
+  .print-footer img { height: 15px; }
+
+  /* Notice Print Styles (Portrait, Clean) */
+  .ppm-premium-notice-wrap { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; background: #fff; margin: 0; padding: 0; }
+  .ppm-premium-notice-page { width: 210mm; height: 297mm; padding: 10mm 8mm 8mm 8mm; box-sizing: border-box; display: flex; flex-direction: column; position: relative; font-family: 'Pretendard', sans-serif; color: #111; }
+  .ppm-premium-notice-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 30px; text-align: center; }
+  .header-titles { width: 100%; text-align: center; }
+  .ppm-premium-notice-subtitle { display: block; font-size: 14px; font-weight: 700; letter-spacing: 4px; color: #666; margin-bottom: 5px; font-family: 'Helvetica', sans-serif; }
+  .ppm-premium-notice-title { font-size: 42px; font-weight: 900; letter-spacing: -1px; margin: 0; line-height: 1.1; color: #000; }
+  .ppm-premium-notice-top-bar { width: 100%; height: 4px; background-color: #000; margin-top: 20px; }
+  .ppm-premium-notice-body { flex: 1; display: flex; flex-direction: column; padding: 10px 0; }
+  .ppm-premium-notice-message { font-size: 19px; line-height: 2.2; color: #000; margin-bottom: 40px; word-break: keep-all; text-align: justify; }
+  .ppm-premium-notice-message p { margin-bottom: 20px; }
+  .ppm-premium-notice-message strong { font-weight: 700; color: #000; }
+  .ppm-premium-notice-grid { display: flex; flex-direction: column; border-top: 2px solid #000; }
+  .ppm-premium-notice-row { display: flex; align-items: center; padding: 20px 10px; border-bottom: 1px solid #e5e5e5; }
+  .ppm-premium-notice-label { width: 110px; font-size: 19px; font-weight: 800; color: #444; }
+  .ppm-premium-notice-value { flex: 1; font-size: 20px; font-weight: 500; color: #000; }
+  .ppm-premium-notice-value.period { font-family: 'Roboto', 'Pretendard', sans-serif; letter-spacing: 0.5px; }
+  .ppm-premium-notice-contact-box { margin-top: 30px; background: #fff; border: 1px solid #000; padding: 30px; display: flex; justify-content: space-around; align-items: center; }
+  .contact-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .contact-label { font-size: 16px; font-weight: 700; color: #555; text-transform: uppercase; }
+  .contact-value { font-size: 24px; font-weight: 800; color: #000; font-family: 'Roboto', sans-serif; }
+  .contact-divider { width: 1px; height: 50px; background: #ccc; }
+  .ppm-premium-notice-footer { display: flex; flex-direction: column; justify-content: flex-end; margin-top: 20px; }
+  .ppm-premium-notice-sign { text-align: right; margin-bottom: 40px; }
+  .ppm-premium-notice-closing { font-size: 18px; font-weight: 500; margin-bottom: 12px; color: #000; }
+  .ppm-premium-notice-sign .name { font-size: 26px; font-weight: 900; color: #000; display: block; }
+  .ppm-premium-bottom-branding { text-align: center; padding-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .brand-slogan { font-size: 14px; color: #444; font-weight: 600; margin: 0; }
+  .brand-name-bold { font-size: 20px; color: #000; font-weight: 900; margin: 0 0 10px 0; }
+  .brand-qr { width: 80px; height: 80px; mix-blend-mode: multiply; }
   
-  /* Modified for A3/A4 compatibility */
-  .ppm-print-page.landscape { 
+  /* [NEW] Rendering Print Styles */
+  .render-print-page { 
+      page-break-after: always; 
+      width: 100vw; 
+      height: 100vh; 
+      overflow: hidden; 
+      position: relative; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background: #fff; 
+  }
+  .render-print-page:last-child { page-break-after: auto; }
+
+  /* Image fills the page but maintains aspect ratio (Contain) */
+  .render-main-img { 
       width: 100%; 
-      height: 100vh; /* Fills the page based on @page setting */
-      padding: 0;
-      display: flex;
-      flex-direction: column;
+      height: 100%; 
+      object-fit: contain; 
   }
 
-  .ppm-print-table-wrap { width: 100%; flex: 1; display: flex; flex-direction: column; border: 2px solid #000; }
-  
-  .ppm-print-thead { display: flex; border-bottom: 1px solid #000; height: 40px; background: #eee !important; flex-shrink: 0; }
-  .ppm-print-th { flex: 1; text-align: center; line-height: 40px; font-weight: bold; border-right: 1px solid #000; font-size: 14px; }
-  .ppm-print-th:last-child { border-right: none; }
-  
-  .ppm-print-tbody { flex: 1; display: flex; flex-direction: column; }
-  /* Ensure exactly 5 rows fill the available height */
-  .ppm-print-tr { flex: 1; display: flex; border-bottom: 1px solid #ccc; }
-  .ppm-print-tr:last-child { border-bottom: none; }
-  .ppm-print-td { flex: 1; border-right: 1px solid #ccc; padding: 4px; position: relative; }
-  .ppm-print-td:last-child { border-right: none; }
-  
-  .ppm-print-page.portrait { width: 210mm; height: 297mm; padding: 15mm 20mm; }
-  .ppm-notice-layout { height: 100%; display: flex; flex-direction: column; font-family: serif; }
-  
-  .ppm-notice-header { text-align: center; padding-bottom: 20px; border-bottom: 3px double #000; margin-bottom: 30px; }
-  .ppm-notice-title { font-size: 48px; font-weight: 900; letter-spacing: 10px; margin: 0; }
-  .ppm-notice-body { flex: 1; padding: 20px 0; font-size: 16px; line-height: 2; }
-  
-  .ppm-notice-info-box {
-    border: 2px solid #000; padding: 30px; margin-top: 30px;
-    display: grid; grid-template-columns: 100px 1fr; gap: 15px; align-items: center;
+  /* Watermark Centered */
+  .render-watermark { 
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      width: 25%; /* Adjustable logo size */
+      opacity: 0.6; 
+      z-index: 10; 
+      pointer-events: none; 
+      filter: grayscale(100%); /* Optional: B&W watermark */
   }
-  .ppm-notice-label { font-weight: 900; font-size: 18px; text-align-last: justify; }
-  .ppm-notice-val { font-size: 18px; font-weight: 500; }
-  
-  .ppm-footer-logo { width: 200px; margin: 20px auto 0; display: block; }
 }

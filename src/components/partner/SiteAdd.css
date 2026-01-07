@@ -1,280 +1,253 @@
-/* SiteAdd.css */
-
-/* 1. 페이지 레이아웃 (와이드 모드) */
-.site-add-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    width: 100%;
-    box-sizing: border-box;
+:root {
+  /* --- Design Tokens --- */
+  --sap-bg-page: #f2f4f6;
+  --sap-bg-white: #ffffff;
+  --sap-primary: #3182f6;
+  --sap-primary-dark: #1b64da;
+  --sap-text-primary: #191f28;
+  --sap-text-secondary: #8b95a1;
+  --sap-text-tertiary: #b0b8c1;
+  --sap-border: #e5e8eb;
+  --sap-input-bg: #f9fafb;
+  --sap-danger: #f04452;
+  
+  --sap-radius-card: 16px;
+  --sap-radius-btn: 8px;
+  --sap-radius-input: 8px;
+  --sap-touch-target: 52px;
 }
 
-/* 2. 헤더 영역 */
-.site-add-header-wrapper {
-    background: #fff;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+/* --- Layout --- */
+.sap-container {
+  padding: 30px;
+  background-color: var(--sap-bg-page);
+  min-height: 100vh;
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  color: var(--sap-text-primary);
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 1000px; /* 폼이 너무 넓어지지 않게 제한 */
+  margin: 0 auto;
 }
 
-.site-add-title h2 {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #333;
+@media (max-width: 1024px) {
+  .sap-container {
+    padding: 16px;
+    padding-bottom: 100px;
+  }
 }
 
-.site-add-title p {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+/* --- Header --- */
+.sap-header { margin-bottom: 24px; }
+.sap-title-area h2 { font-size: 24px; font-weight: 700; margin: 0 0 8px 0; color: var(--sap-text-primary); }
+.sap-title-area p { font-size: 14px; color: var(--sap-text-secondary); margin: 0; }
+
+/* --- Type Selector (Tabs) --- */
+.sap-type-selector {
+  margin-bottom: 24px;
+}
+.sap-type-label {
+  font-size: 13px; font-weight: 600; color: var(--sap-text-secondary); margin-bottom: 8px;
+}
+.sap-type-tabs {
+  display: flex;
+  background: var(--sap-bg-white);
+  padding: 4px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.sap-type-tab {
+  flex: 1;
+  height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sap-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.sap-type-tab.active {
+  background: var(--sap-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.3);
 }
 
-/* 3. 컨트롤 패널 (회색 박스) */
-.site-add-control-panel {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    gap: 20px;
-    flex-wrap: wrap; /* 화면 줄어들면 줄바꿈 허용 */
+/* --- Form Cards --- */
+.sap-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.site-add-label-text {
-    font-size: 13px;
-    font-weight: bold;
-    color: #333;
+.sap-card {
+  background: var(--sap-bg-white);
+  border-radius: var(--sap-radius-card);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  overflow: hidden;
 }
 
-/* 모드 버튼 */
-.site-add-mode-buttons {
-    display: flex;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
+.sap-card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--sap-border);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sap-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fafafa;
+}
+.sap-icon { color: var(--sap-primary); width: 18px; height: 18px; }
+
+.sap-card-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.site-add-mode-btn {
-    padding: 8px 30px;
-    border: none;
-    background: #fff;
-    font-size: 13px;
-    cursor: pointer;
-    border-right: 1px solid #ddd;
-    color: #555;
-    transition: all 0.2s;
-    font-weight: 500;
-    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+/* --- Inputs --- */
+.sap-form-row {
+  display: flex;
+  gap: 16px;
+}
+.sap-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.sap-input-group.flex-2 { flex: 2; }
+.sap-input-group.flex-1 { flex: 1; }
+.sap-input-group.full { width: 100%; }
+
+.sap-label { font-size: 13px; font-weight: 600; color: var(--sap-text-secondary); }
+.req { color: var(--sap-danger); margin-left: 2px; }
+
+.sap-input, .sap-select {
+  height: var(--sap-touch-target);
+  padding: 0 16px;
+  border: 1px solid var(--sap-border);
+  border-radius: var(--sap-radius-input);
+  background-color: var(--sap-input-bg);
+  font-size: 15px;
+  color: var(--sap-text-primary);
+  box-sizing: border-box;
+  transition: all 0.2s;
+  width: 100%;
+}
+.sap-input:focus, .sap-select:focus {
+  outline: none;
+  border-color: var(--sap-primary);
+  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.1);
+  background-color: #fff;
+}
+.sap-input.right-align { text-align: right; }
+.sap-input.center { text-align: center; }
+
+/* Address Grid */
+.sap-address-grid {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sap-address-grid .sap-select {
+  width: 140px; /* 시/도, 시/군/구 고정 */
+  flex-shrink: 0;
+}
+.sap-address-grid .sap-input.detail {
+  flex: 1;
 }
 
-.site-add-mode-btn:last-child {
-    border-right: none;
+.sap-address-detail-grid {
+  display: flex;
+  gap: 8px;
+}
+.sap-address-detail-grid .sap-input { flex: 1; }
+.dong-ho-wrap {
+  display: flex;
+  gap: 8px;
+  width: 200px;
+  flex-shrink: 0;
 }
 
-.site-add-mode-btn.active {
-    background-color: #333;
-    color: #fff;
-    font-weight: bold;
+/* --- Action Area --- */
+.sap-action-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
 }
 
-.site-add-info-text {
-    font-size: 13px;
-    color: #888;
-    margin-left: auto;
+.sap-info-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--sap-text-secondary);
 }
 
-/* 4. 입력 폼 영역 */
-.site-add-form-container {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    width: 100%; 
-    box-sizing: border-box;
+.sap-submit-btn {
+  height: 56px;
+  padding: 0 32px;
+  border: none;
+  border-radius: var(--sap-radius-btn);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(49, 130, 246, 0.2);
+  transition: all 0.2s;
 }
+.sap-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(49, 130, 246, 0.3); }
+.sap-submit-btn:disabled { background-color: #b0b8c1 !important; cursor: not-allowed; transform: none; box-shadow: none; }
 
-.site-add-form-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 24px;
-    width: 100%;
-}
-
-.site-add-form-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0; /* Flexbox overflow 방지 */
-}
-
-.site-add-form-label {
-    font-size: 13px;
-    font-weight: bold;
-    color: #444;
-}
-
-.site-add-required {
-    color: #d32f2f;
-    margin-left: 2px;
-    font-weight: bold;
-}
-
-.site-add-input, .site-add-select {
-    height: 38px;
-    padding: 0 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 13px;
-    box-sizing: border-box;
-    width: 100%;
-    transition: border-color 0.2s;
-    background-color: #fff;
-}
-
-.site-add-input:focus, .site-add-select:focus {
-    border-color: #333;
-    outline: none;
-}
-
-.site-add-input::placeholder {
-    color: #bbb;
-}
-
-/* 주소 입력 그룹 */
-.site-add-address-group {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-}
-
-.site-add-addr-select {
-    width: 150px;
-    flex-shrink: 0;
-}
-
-/* 섹션 타이틀 */
-.site-add-section-title {
-    font-size: 16px;
-    font-weight: 800;
-    color: #333;
-    margin-bottom: 15px;
-    padding-left: 10px;
-    border-left: 4px solid #333;
-    line-height: 1;
-}
-
-/* 구분선 */
-.site-add-divider {
-    height: 1px;
-    background-color: #eee;
-    margin: 40px 0;
-}
-
-/* 버튼 영역 */
-.site-add-btn-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-}
-
-.site-add-submit-btn {
-    padding: 0 50px;
-    height: 44px;
-    border: none;
-    border-radius: 5px;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-.site-add-submit-btn:hover { opacity: 0.9; }
-.site-add-submit-btn:disabled { background-color: #ccc !important; cursor: not-allowed; }
-
-
-/* =========================================
-   [Mobile Responsive] 모바일 대응 스타일
-   ========================================= */
+/* --- Mobile Responsive --- */
 @media (max-width: 768px) {
-    /* 1. 컨테이너 패딩 축소 */
-    .site-add-page-container {
-        padding: 15px;
-    }
+  .sap-form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .sap-card-body { padding: 16px; }
+  
+  /* Address Mobile */
+  .sap-address-grid {
+    flex-wrap: wrap;
+  }
+  .sap-address-grid .sap-select {
+    width: calc(50% - 4px); /* 반반 */
+    flex-grow: 1;
+  }
+  .sap-address-grid .sap-input.detail {
+    width: 100%;
+  }
 
-    /* 2. 컨트롤 패널 세로 정렬 */
-    .site-add-control-panel {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 15px;
-    }
-    
-    .site-add-mode-buttons {
-        width: 100%; /* 버튼 그룹 꽉 차게 */
-    }
-    
-    .site-add-mode-btn {
-        flex: 1; /* 버튼 너비 균등 분할 */
-        text-align: center;
-        padding: 10px 0;
-    }
+  .sap-address-detail-grid {
+    flex-direction: column;
+  }
+  .dong-ho-wrap { width: 100%; }
 
-    .site-add-info-text {
-        margin-left: 0; /* 우측 정렬 해제 */
-        margin-top: 5px;
-    }
-
-    /* 3. 폼 컨테이너 및 로우(Row) */
-    .site-add-form-container {
-        padding: 20px 15px;
-    }
-
-    .site-add-form-row {
-        flex-direction: column; /* 가로 -> 세로 배치 */
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    /* 인라인 스타일 flex 무시하고 100%로 강제 설정 */
-    .site-add-form-group {
-        width: 100% !important; 
-        flex: auto !important;
-    }
-
-    /* 4. 주소 입력 그룹 (줄바꿈 처리) */
-    .site-add-address-group {
-        flex-wrap: wrap; /* 공간 부족시 줄바꿈 */
-    }
-
-    .site-add-addr-select {
-        width: calc(50% - 4px); /* 시/도, 시/군/구 반반 배치 */
-        flex-shrink: 1;
-    }
-
-    .site-add-address-group .site-add-input {
-        width: 100%; /* 상세주소는 한 줄 차지 */
-    }
-
-    /* 5. 폰트 사이즈 조정 (모바일 가독성) */
-    .site-add-input, .site-add-select {
-        font-size: 14px; /* 조금 더 크게 */
-        height: 42px; /* 터치하기 편하게 높이 증가 */
-    }
-
-    /* 6. 하단 버튼 */
-    .site-add-submit-btn {
-        width: 100%; /* 버튼 꽉 차게 */
-        height: 48px;
-        font-size: 15px;
-    }
+  /* Action Area Mobile */
+  .sap-action-area {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .sap-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .sap-info-msg { justify-content: center; }
+  
+  .empty-pc { display: none; }
 }

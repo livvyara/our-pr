@@ -1,309 +1,193 @@
-/* SiteList.css */
+:root {
+  /* --- Color Palette --- */
+  --slp-bg-page: #f2f4f6;
+  --slp-bg-white: #ffffff;
+  --slp-primary: #3182f6;
+  --slp-primary-dark: #1b64da;
+  --slp-text-primary: #191f28;
+  --slp-text-secondary: #8b95a1;
+  --slp-text-tertiary: #b0b8c1;
+  --slp-border: #e5e8eb;
+  --slp-input-bg: #f9fafb;
+  
+  /* Status Colors (Site Status) */
+  --slp-status-meeting-bg: #e3f2fd; --slp-status-meeting-text: #1565c0;
+  --slp-status-wait-bg: #fff3e0; --slp-status-wait-text: #e65100;
+  --slp-status-contract-bg: #e8f5e9; --slp-status-contract-text: #2e7d32;
+  --slp-status-before-bg: #f3e5f5; --slp-status-before-text: #7b1fa2;
+  --slp-status-ing-bg: #fff8e1; --slp-status-ing-text: #f57f17;
+  --slp-status-complete-bg: #e0f2f1; --slp-status-complete-text: #00695c;
+  --slp-status-hold-bg: #eceff1; --slp-status-hold-text: #546e7a;
+  --slp-status-cancel-bg: #ffebee; --slp-status-cancel-text: #c62828;
+  --slp-status-del-bg: #333333; --slp-status-del-text: #ffffff;
 
-/* 1. 페이지 레이아웃 */
-.site-list-page-container {
-    padding: 30px;
-    background-color: #fff;
-    min-height: 100vh;
-    font-family: 'Pretendard', sans-serif;
-    color: #333;
-    width: 100%;
-    box-sizing: border-box;
+  /* Dimensions */
+  --slp-radius-card: 16px;
+  --slp-radius-btn: 5px;
+  --slp-radius-input: 8px;
 }
 
-/* 2. 헤더 영역 */
-.site-list-header-wrapper {
-    background: #fff;
-    border-bottom: 2px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+/* --- Global Layout --- */
+.slp-container {
+  padding: 30px;
+  background-color: var(--slp-bg-page);
+  min-height: 100vh;
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  color: var(--slp-text-primary);
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-.site-list-title h2 {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #333;
+@media (max-width: 1024px) {
+  .slp-container {
+    padding: 16px;
+    padding-bottom: 100px;
+  }
 }
 
-.site-list-title p {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
+/* --- Header Area --- */
+.slp-header { margin-bottom: 24px; }
+.slp-title-area h2 { font-size: 24px; font-weight: 700; margin: 0 0 8px 0; color: var(--slp-text-primary); }
+.slp-title-area p { font-size: 14px; color: var(--slp-text-secondary); margin: 0; }
+
+/* --- Filter Panel --- */
+.slp-filter-panel {
+  background: var(--slp-bg-white);
+  padding: 20px;
+  border-radius: var(--slp-radius-card);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  margin-bottom: 24px;
 }
 
-/* 3. 컨트롤 패널 */
-.site-list-control-panel {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    flex-wrap: wrap;
-    gap: 15px;
+.slp-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.site-list-filter-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1; /* 남은 공간 차지 */
-    min-width: 280px; /* 최소 너비 보장 */
+/* Inputs & Buttons */
+.slp-filter-item.search { position: relative; flex: 1; min-width: 200px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--slp-text-tertiary); pointer-events: none; }
+
+.slp-input {
+  height: 40px; padding: 0 12px; border: 1px solid var(--slp-border);
+  border-radius: var(--slp-radius-input); background-color: var(--slp-input-bg);
+  font-size: 14px; color: var(--slp-text-primary); min-width: 140px; box-sizing: border-box;
+}
+.slp-input.search { padding-left: 36px; width: 100%; }
+.slp-input:focus { outline: none; border-color: var(--slp-primary); background: #fff; }
+
+.slp-action-group { display: flex; gap: 8px; margin-left: auto; }
+
+.slp-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 0 16px; height: 40px; font-size: 14px; font-weight: 600; border: none;
+  cursor: pointer; border-radius: var(--slp-radius-btn); white-space: nowrap; transition: all 0.2s;
+}
+.slp-btn-primary { background-color: var(--slp-primary); color: #fff; box-shadow: 0 2px 8px rgba(49, 130, 246, 0.2); }
+.slp-btn-primary:hover { background-color: var(--slp-primary-dark); transform: translateY(-1px); }
+.slp-btn-secondary { background-color: var(--slp-bg-white); border: 1px solid var(--slp-border); color: var(--slp-text-primary); }
+.slp-btn-secondary:hover { background-color: #f8f9fa; }
+
+/* Mobile Filters Override */
+@media (max-width: 1024px) {
+  .slp-filter-panel { padding: 16px; }
+  .slp-filter-row { flex-direction: column; align-items: stretch; }
+  .slp-action-group { margin-left: 0; flex-wrap: wrap; }
+  .slp-btn { flex: 1; }
 }
 
-/* 검색 인풋 */
-.site-list-search-input {
-    padding: 0 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 13px;
-    height: 38px;
-    box-sizing: border-box;
-    width: 100%; /* 부모에 맞춰 꽉 차게 */
-    max-width: 400px;
-    transition: all 0.2s;
-}
-.site-list-search-input:focus { border-color: #333; outline: none; }
+/* --- Summary Grid --- */
+.slp-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.slp-card.summary { background: #fff; padding: 20px; border-radius: var(--slp-radius-card); box-shadow: 0 2px 12px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+.slp-card.summary::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: var(--slp-primary); }
+.slp-card-header { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--slp-text-secondary); margin-bottom: 8px; }
+.slp-card-value { font-size: 24px; font-weight: 800; color: var(--slp-text-primary); }
+@media (max-width: 1024px) { .slp-summary-grid { gap: 12px; } }
 
-/* 액션 버튼 그룹 */
-.site-list-action-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap; /* 모바일 줄바꿈 */
+/* --- View Switching --- */
+.slp-desktop-view { display: block; }
+.slp-mobile-view { display: none; }
+@media (max-width: 1024px) {
+  .slp-desktop-view { display: none; }
+  .slp-mobile-view { display: block; }
 }
 
-.site-list-btn-manual {
-    padding: 0 16px;
-    height: 38px;
-    background-color: #fff;
-    color: #333;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-.site-list-btn-manual:hover { background-color: #f5f5f5; border-color: #bbb; }
+/* --- Desktop Table --- */
+.slp-table-container { background: #fff; border-radius: var(--slp-radius-card); box-shadow: 0 2px 12px rgba(0,0,0,0.03); overflow: hidden; width: 100%; }
+.slp-table-wrapper { width: 100%; overflow-x: auto; }
+.slp-table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.slp-table th { background-color: #f9fafb; color: var(--slp-text-secondary); font-weight: 600; padding: 14px 12px; text-align: left; border-bottom: 1px solid var(--slp-border); white-space: nowrap; }
+.slp-table td { padding: 14px 12px; border-bottom: 1px solid var(--slp-border); color: var(--slp-text-primary); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slp-table tr:hover td { background-color: #fafafa; }
+.row-deleted td { color: var(--slp-text-tertiary); text-decoration: line-through; background-color: #fcfcfc; }
 
-.site-list-btn-primary {
-    padding: 0 20px;
-    height: 38px;
-    background-color: #1976d2;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    white-space: nowrap;
-}
-.site-list-btn-primary:hover { background-color: #1565c0; }
+/* Table Column Utils */
+.text-center { text-align: center; }
+.font-bold { font-weight: 700; }
+.text-primary { color: var(--slp-primary); }
+.text-secondary { color: var(--slp-text-secondary); }
+.text-tertiary { color: var(--slp-text-tertiary); }
 
+/* Link Text */
+.slp-link-text { font-weight: 700; color: var(--slp-text-primary); background: none; border: none; cursor: pointer; padding: 0; font-size: 14px; text-decoration: underline; text-decoration-color: transparent; transition: all 0.2s; }
+.slp-link-text:hover { color: var(--slp-primary); text-decoration-color: var(--slp-primary); }
 
-/* 4. 테이블 영역 */
-.site-list-result-section {
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    /* overflow: hidden; -> 모바일 카드뷰를 위해 제거하거나 주의 */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
+/* Badges */
+.slp-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.slp-badge.미팅중 { background: var(--slp-status-meeting-bg); color: var(--slp-status-meeting-text); border: 1px solid #bbdefb; }
+.slp-badge.계약대기 { background: var(--slp-status-wait-bg); color: var(--slp-status-wait-text); border: 1px solid #ffe0b2; }
+.slp-badge.계약완료 { background: var(--slp-status-contract-bg); color: var(--slp-status-contract-text); border: 1px solid #c8e6c9; }
+.slp-badge.공사전 { background: var(--slp-status-before-bg); color: var(--slp-status-before-text); border: 1px solid #e1bee7; }
+.slp-badge.공사중 { background: var(--slp-status-ing-bg); color: var(--slp-status-ing-text); border: 1px solid #ffecb3; }
+.slp-badge.공사완료 { background: var(--slp-status-complete-bg); color: var(--slp-status-complete-text); border: 1px solid #b2dfdb; }
+.slp-badge.보류 { background: var(--slp-status-hold-bg); color: var(--slp-status-hold-text); border: 1px solid #cfd8dc; }
+.slp-badge.취소 { background: var(--slp-status-cancel-bg); color: var(--slp-status-cancel-text); border: 1px solid #ffcdd2; }
+.slp-badge.deleted { background: var(--slp-status-del-bg); color: var(--slp-status-del-text); }
 
-.site-list-table-wrapper {
-    width: 100%;
-    /* overflow-x: auto; -> PC에선 필요하지만 모바일에선 카드뷰라 스크롤 안생기게 처리 */
-}
+.slp-no-data { text-align: center; padding: 60px 0; color: var(--slp-text-tertiary); font-size: 14px; }
 
-.site-list-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    white-space: nowrap;
-}
+/* --- Mobile Card (Accordion) --- */
+.slp-mobile-list { display: flex; flex-direction: column; gap: 12px; }
+.slp-mobile-card { background: #fff; border-radius: 12px; border: 1px solid var(--slp-border); box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow: hidden; transition: all 0.2s ease; }
+.slp-mobile-card.deleted { opacity: 0.6; }
 
-.site-list-table th {
-    background-color: #f1f3f5;
-    color: #333;
-    font-weight: 700;
-    padding: 12px 8px;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
+.slp-mobile-card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background-color: transparent; transition: background-color 0.1s; }
+.slp-mobile-card-header:active { background-color: rgba(0,0,0,0.05); }
 
-.site-list-table td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-    color: #444;
-}
+.slp-mobile-header-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.slp-mobile-header-right { display: flex; align-items: center; gap: 10px; margin-left: 10px; }
+.slp-chevron { color: #b0b8c1; transition: transform 0.2s; }
+.slp-chevron.open { transform: rotate(180deg); }
 
-.site-list-table tr:hover { background-color: #fafafa !important; }
+.site-info-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.site-info-main .site-name { font-size: 16px; font-weight: 700; color: var(--slp-text-primary); text-decoration: underline; text-decoration-color: transparent; }
+.site-info-main .site-name:hover { text-decoration-color: var(--slp-primary); }
+.client-info { font-size: 13px; color: var(--slp-text-secondary); }
 
-/* 상태 뱃지 및 링크 스타일 */
-.site-link-text {
-    font-weight: 600; color: #333; cursor: pointer; text-decoration: underline;
-    text-underline-offset: 3px; text-decoration-color: transparent; background: none; border: none; padding: 0; font-size: 13px;
-}
-.site-link-text:hover { color: #1976d2; text-decoration-color: #1976d2; }
+/* Expanded Content */
+.slp-mobile-expanded { padding: 0 16px 16px 16px; border-top: 1px dashed var(--slp-border); animation: slideDown 0.2s ease-out; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-.site-status-badge {
-    display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; min-width: 50px; text-align: center;
-}
-/* (뱃지 색상 코드는 기존 유지) */
-.site-status-badge.미팅중 { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-.site-status-badge.계약대기 { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
-.site-status-badge.계약완료 { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-.site-status-badge.공사전 { background: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
-.site-status-badge.공사중 { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
-.site-status-badge.공사완료 { background: #e0f2f1; color: #00695c; border: 1px solid #b2dfdb; }
-.site-status-badge.보류 { background: #eceff1; color: #546e7a; border: 1px solid #cfd8dc; }
-.site-status-badge.취소 { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
-.site-status-badge.deleted { background: #333; color: #fff; border: 1px solid #000; }
+.slp-mobile-body { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.slp-info-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; gap: 10px; }
+.slp-info-row .label { color: var(--slp-text-secondary); font-weight: 500; min-width: 60px; }
+.slp-info-row .value { color: var(--slp-text-primary); font-weight: 600; text-align: right; word-break: break-word; }
+.slp-info-row .value.address { font-size: 13px; line-height: 1.4; }
 
-.row-deleted td { color: #aaa; text-decoration: line-through; background-color: #f9f9f9; }
-.cell-meeting { font-weight: bold; color: #1976d2; cursor: help; }
-.cell-memo { color: #555; cursor: help; }
-.cell-empty { color: #ccc; }
+.slp-mobile-actions { margin-top: 16px; background: #f9fafb; padding: 16px; border-radius: 8px; display: flex; }
+.slp-btn-link { flex: 1; height: 40px; border: 1px solid var(--slp-border); background: #fff; border-radius: 6px; font-size: 14px; font-weight: 700; color: var(--slp-text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.slp-btn-link.primary { color: #fff; background-color: var(--slp-primary); border: none; }
 
-.site-list-loading-td { text-align: center; padding: 50px; color: #888; font-style: italic; }
-.site-list-no-data { text-align: center; padding: 60px; color: #999; font-size: 14px; }
-
-/* 모달 스타일 (기존 유지) */
-.site-list-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; }
-.site-list-modal-paper { background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 400px; padding: 30px; border: 1px solid #ddd; display: flex; flex-direction: column; max-width: 90%; }
-.site-list-modal-title { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: #333; text-align: center; }
-.site-list-modal-list { list-style: none; padding: 0; margin: 0 0 20px 0; border: 1px solid #eee; border-radius: 4px; max-height: 300px; overflow-y: auto; }
-.site-list-modal-item { padding: 10px 15px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-.site-list-modal-item:last-child { border-bottom: none; }
-.site-list-sort-btn { background: #fff; border: 1px solid #ddd; padding: 2px 6px; margin-left: 4px; cursor: pointer; border-radius: 3px; font-size: 11px; }
-.site-list-checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; }
-.site-list-modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
-.site-list-btn-cancel { padding: 8px 20px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: #555; }
-.site-list-btn-save { padding: 8px 20px; border: none; background: #333; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: #fff; }
-
-
-/* =========================================
-   [Mobile Responsive] 모바일 카드뷰 변환
-   가로 스크롤 방지를 위해 테이블을 카드로 변환
-   ========================================= */
-@media (max-width: 768px) {
-    .site-list-page-container {
-        padding: 15px;
-    }
-
-    /* 컨트롤 패널 세로 정렬 */
-    .site-list-control-panel {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 15px;
-    }
-
-    .site-list-filter-row {
-        width: 100%;
-    }
-
-    .site-list-action-group {
-        justify-content: space-between;
-    }
-    
-    .site-list-action-group button {
-        flex: 1; /* 버튼 너비 균등 분할 */
-    }
-
-    /* --- [핵심] 테이블 -> 카드 변환 스타일 --- */
-    .site-list-table, 
-    .site-list-table tbody, 
-    .site-list-table tr, 
-    .site-list-table td {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    /* 헤더 숨김 */
-    .site-list-table thead {
-        display: none; 
-    }
-
-    /* 행(Row)을 카드(Card)처럼 스타일링 */
-    .site-list-table tr {
-        margin-bottom: 15px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        padding: 15px;
-    }
-
-    /* 셀(Cell) 스타일: 라벨 + 내용 */
-    .site-list-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 8px 0;
-        border-bottom: 1px solid #f5f5f5;
-        font-size: 13px;
-        /* 긴 내용 줄바꿈 허용 */
-        white-space: normal; 
-        word-break: break-word;
-    }
-
-    .site-list-table td:last-child {
-        border-bottom: none;
-    }
-
-    /* data-label 속성을 이용해 가상 요소로 라벨 표시 */
-    .site-list-table td::before {
-        content: attr(data-label);
-        float: left;
-        font-weight: bold;
-        color: #888;
-        margin-right: 10px;
-        font-size: 12px;
-        min-width: 60px; /* 라벨 최소 너비 */
-        text-align: left;
-    }
-
-    /* 특수 스타일 조정 */
-    /* 현장명(첫번째 셀) 강조 */
-    .site-list-table td:first-child {
-        background-color: #f8f9fa;
-        margin: -15px -15px 10px -15px; /* 카드의 헤더처럼 보이게 확장 */
-        padding: 12px 15px;
-        border-bottom: 1px solid #eee;
-        border-radius: 8px 8px 0 0;
-        justify-content: flex-start; /* 왼쪽 정렬 */
-    }
-    
-    .site-list-table td:first-child::before {
-        display: none; /* 현장명 라벨은 숨김 */
-    }
-
-    .site-link-text {
-        font-size: 16px;
-        font-weight: 800;
-        color: #1976d2;
-    }
-
-    /* 상태 뱃지 우측 정렬 유지 */
-    .site-list-table td[data-label="상태"] {
-        justify-content: space-between;
-    }
-}
+/* Modals */
+.slp-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: flex; justify-content: center; align-items: center; padding: 20px; }
+.slp-modal-paper { background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 400px; padding: 24px; display: flex; flex-direction: column; }
+.slp-modal-header h3 { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; text-align: center; }
+.slp-sort-list, .slp-check-list { list-style: none; padding: 0; margin: 0 0 20px 0; border: 1px solid var(--slp-border); border-radius: 8px; max-height: 300px; overflow-y: auto; }
+.slp-sort-item, .slp-check-item { padding: 12px 16px; border-bottom: 1px solid var(--slp-border); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.slp-sort-item:last-child, .slp-check-item:last-child { border-bottom: none; }
+.slp-icon-btn { background: #fff; border: 1px solid var(--slp-border); padding: 4px; border-radius: 4px; cursor: pointer; color: var(--slp-text-secondary); display: flex; align-items: center; }
+.slp-modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
