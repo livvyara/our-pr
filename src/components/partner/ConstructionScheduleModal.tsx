@@ -321,7 +321,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
                         <label className="ppm-label">날짜 선택</label>
                         <div className="ppm-row-2">
                             <input type="date" className="ppm-input" value={inputDateStart} onChange={e => setInputDateStart(e.target.value)} required />
-                            {!isEditing && <input type="date" className="ppm-input" value={inputDateEnd} onChange={e => setInputDateEnd(e.target.value)} />}
+                            {!isEditing && <input type="date" className="ppm-input"  onChange={e => setInputDateEnd(e.target.value)} />}
                         </div>
                     </div>
 
