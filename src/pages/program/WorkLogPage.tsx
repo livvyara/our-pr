@@ -1,28 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, getDocs 
-} from 'firebase/firestore';
+import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '../../firebase-config'; 
 import WorkLogModal from '../../components/partner/WorkLogModal'; 
 import './WorkLogPage.css'; 
 import { 
-  Search, Filter, Plus, ChevronLeft, ChevronDown, ChevronUp, 
+  Search, Plus, ChevronLeft, ChevronDown, 
   Calendar, User as UserIcon, FileText, MapPin, AlertCircle, Camera 
 } from 'lucide-react';
 
+// --- [타입 정의] 모달의 데이터 구조와 일치시킴 ---
 type SiteStatus = '미팅중' | '계약대기' | '계약완료' | '공사전' | '공사중' | '공사완료' | '보류' | '취소' | 'deleted';
 
 interface WorkLog {
   id: string;
-  date: string;
-  todayProcess: string;
-  tomorrowProcess: string;
-  siteIssues: string;
-  clientMeeting: string;
-  imageUrls: string[];
-  authorName: string;
+  workDate: string;      // Modal: workDate
+  todayWork: string;     // Modal: todayWork
+  nextWork: string;      // Modal: nextWork
+  issues: string;        // Modal: issues
+  meetingLog: string;    // Modal: meetingLog
+  images: string[];      // Modal: images
+  author: string;        // Modal: author
   createdAt: any;
 }
 
@@ -78,13 +77,18 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
 
   const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) setCurrentUser(user);
-      else { setLoading(false); setErrorMsg('로그인이 필요한 서비스입니다.'); }
-    });
-    return () => unsubscribe();
-  }, []);
+useEffect(() => {
+  // onSnapshot 대신 onAuthStateChanged를 사용해야 합니다.
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setCurrentUser(user);
+    } else {
+      setLoading(false);
+      setErrorMsg('로그인이 필요한 서비스입니다.');
+    }
+  });
+  return () => unsubscribe();
+}, []);
 
   useEffect(() => {
     if (!partnerUid) return;
@@ -106,30 +110,43 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
           const siteDoc = await getDoc(doc(db, 'users', partnerUid, 'sites', siteId));
           if (siteDoc.exists()) setSiteName(siteDoc.data().siteName);
 
+          // [주의] orderBy가 2개 이상일 경우 Firestore 콘솔에서 '복합 색인'을 생성해야 데이터가 보입니다.
+          // 색인이 생성되기 전까지는 orderBy('workDate', 'desc') 하나만 사용하세요.
           const q = query(
             collection(db, 'users', partnerUid, 'sites', siteId, 'workLogs'),
-            orderBy('date', 'desc'), orderBy('createdAt', 'desc')
+            orderBy('workDate', 'desc') 
           );
+
           const unsubscribe = onSnapshot(q, (snapshot) => {
-            if (snapshot.docs.length > 0) {
-                console.log("🔥 실제 DB에서 가져온 데이터:", snapshot.docs[0].data());
-            }
             const logData = snapshot.docs.map(doc => {
               const data = doc.data();
+              // [필드명 매핑 수정] Modal에서 저장하는 필드명과 일치하도록 수정
               return {
-                id: doc.id, date: data.date,
-                todayProcess: data.todayProcess || '', tomorrowProcess: data.tomorrowProcess || '',
-                siteIssues: data.siteIssues || '', clientMeeting: data.clientMeeting || '',
-                imageUrls: data.imageUrls || [], authorName: data.authorName || '작성자 미상',
+                id: doc.id,
+                workDate: data.workDate || data.date || '-',
+                todayWork: data.todayWork || data.todayProcess || '-',
+                nextWork: data.nextWork || data.tomorrowProcess || '-',
+                issues: data.issues || data.siteIssues || '',
+                meetingLog: data.meetingLog || data.clientMeeting || '',
+                images: data.images || data.imageUrls || [],
+                author: data.author || data.authorName || '작성자 미상',
                 createdAt: data.createdAt
               };
             }) as WorkLog[];
             setLogs(logData);
             setLoading(false);
+          }, (err) => {
+            console.error("Firestore Error:", err);
+            setErrorMsg("데이터를 불러오는 중 오류가 발생했습니다.");
+            setLoading(false);
           });
           return unsubscribe;
         }
-      } catch (err) { console.error(err); setErrorMsg('데이터를 불러오는 중 오류가 발생했습니다.'); setLoading(false); }
+      } catch (err) { 
+        console.error(err); 
+        setErrorMsg('데이터를 불러오는 중 오류가 발생했습니다.'); 
+        setLoading(false); 
+      }
     };
     fetchData();
   }, [partnerUid, siteId, db]);
@@ -154,7 +171,11 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
   const filteredLogs = useMemo(() => {
     if (!logSearchTerm) return logs;
     const lower = logSearchTerm.toLowerCase();
-    return logs.filter(log => log.todayProcess.toLowerCase().includes(lower) || log.authorName.toLowerCase().includes(lower) || log.date.includes(lower));
+    return logs.filter(log => 
+        log.todayWork.toLowerCase().includes(lower) || 
+        log.author.toLowerCase().includes(lower) || 
+        log.workDate.includes(lower)
+    );
   }, [logs, logSearchTerm]);
 
   const openSortModal = () => { setTempOrder([...currentOrder]); setIsSortModalOpen(true); };
@@ -224,27 +245,7 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
                 </div>
             </div>
         </div>
-        <div className="wlp-mobile-view">
-            {filteredSiteList.length === 0 ? (
-                <div className="wlp-no-data">검색된 현장이 없습니다.</div>
-            ) : (
-                filteredSiteList.map(site => (
-                    <div key={site.id} className={`wlp-mobile-card ${site.status === 'deleted' ? 'deleted' : ''}`} onClick={() => navigate(`/program/site-log/${site.id}`)}>
-                        <div className="wlp-mobile-card-header">
-                            <div className="header-left">
-                                <span className={`wlp-badge status ${site.status}`}>{site.status === 'deleted' ? '삭제대기' : site.status}</span>
-                                <span className="site-name">{site.siteName}</span>
-                            </div>
-                            <div className="header-right"><ChevronDown size={20} className="wlp-chevron" /></div>
-                        </div>
-                        <div className="wlp-mobile-body">
-                            <div className="wlp-info-row"><MapPin size={14} className="icon" /><span className="value address">{site.address || '주소 없음'}</span></div>
-                        </div>
-                    </div>
-                ))
-            )}
-        </div>
-        {/* 모달들 생략 (기존 코드 유지) */}
+        {/* Mobile View 생략 */}
       </div>
     );
   }
@@ -288,24 +289,19 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
                     </thead>
                     <tbody>
                         {filteredLogs.length === 0 ? (
-    <tr>
-        {/* colSpan이 8로 되어 있어야 합니다 */}
-        <td colSpan={8} className="wlp-no-data">
-            등록된 작업일지가 없습니다.
-        </td>
-    </tr>
-) : (
+                            <tr><td colSpan={8} className="wlp-no-data">등록된 작업일지가 없습니다.</td></tr>
+                        ) : (
                             filteredLogs.map((log) => (
                                 <tr key={log.id} onClick={() => setSelectedLog(log)} className="clickable-row">
-                                    <td className="font-bold text-primary">{log.date}</td>
+                                    <td className="font-bold text-primary">{log.workDate}</td>
                                     <td className="text-secondary" style={{fontSize:'12px'}}>{formatDate(log.createdAt)}</td>
-                                    <td>{log.authorName}</td>
-                                    <td className="cell-truncate">{log.todayProcess}</td>
-                                    <td className="cell-truncate">{log.tomorrowProcess}</td>
-                                    <td className="cell-truncate">{log.siteIssues || '-'}</td>
-                                    <td className="cell-truncate">{log.clientMeeting || '-'}</td>
+                                    <td>{log.author}</td>
+                                    <td className="cell-truncate">{log.todayWork}</td>
+                                    <td className="cell-truncate">{log.nextWork}</td>
+                                    <td className="cell-truncate">{log.issues || '-'}</td>
+                                    <td className="cell-truncate">{log.meetingLog || '-'}</td>
                                     <td className="text-center">
-                                        {log.imageUrls.length > 0 ? (<span className="wlp-badge photo"><Camera size={12} style={{marginRight:'2px'}}/> {log.imageUrls.length}</span>) : '-'}
+                                        {log.images && log.images.length > 0 ? (<span className="wlp-badge photo"><Camera size={12} style={{marginRight:'2px'}}/> {log.images.length}</span>) : '-'}
                                     </td>
                                 </tr>
                             ))
@@ -315,23 +311,24 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
             </div>
         </div>
       </div>
-      {/* Mobile View, Modals 생략 (기존 코드 유지) */}
+
+      {/* 상세 보기 모달 */}
       {selectedLog && (
         <div className="wlp-modal-overlay" onClick={() => setSelectedLog(null)}>
           <div className="wlp-detail-paper" onClick={(e) => e.stopPropagation()}>
             <div className="wlp-detail-header">
-              <h2>{selectedLog.date} 작업일지 상세</h2>
+              <h2>{selectedLog.workDate} 작업일지 상세</h2>
               <button onClick={() => setSelectedLog(null)} className="btn-close">&times;</button>
             </div>
             <div className="wlp-detail-body">
-              <div className="meta-info">작성일: {formatDate(selectedLog.createdAt)} <span className="sep">|</span> 작성자: {selectedLog.authorName}</div>
-              <div className="detail-section"><span className="label text-success"><FileText size={14}/> 금일 작업 공정</span><div className="content-box">{selectedLog.todayProcess}</div></div>
-              <div className="detail-section"><span className="label text-primary"><Calendar size={14}/> 익일 작업 예정</span><div className="content-box">{selectedLog.tomorrowProcess}</div></div>
-              <div className="detail-section"><span className="label text-danger"><AlertCircle size={14}/> 현장 특이사항</span><div className="content-box">{selectedLog.siteIssues || '없음'}</div></div>
-              <div className="detail-section"><span className="label text-secondary"><UserIcon size={14}/> 고객 미팅 내용</span><div className="content-box">{selectedLog.clientMeeting || '없음'}</div></div>
-              {selectedLog.imageUrls.length > 0 && (
-                <div className="detail-section"><span className="label"><Camera size={14}/> 현장 사진 ({selectedLog.imageUrls.length})</span>
-                  <div className="photo-grid">{selectedLog.imageUrls.map((url, idx) => (<div key={idx} className="photo-item" onClick={() => setZoomedImage(url)}><img src={url} alt="현장사진" /></div>))}</div>
+              <div className="meta-info">작성일: {formatDate(selectedLog.createdAt)} <span className="sep">|</span> 작성자: {selectedLog.author}</div>
+              <div className="detail-section"><span className="label text-success"><FileText size={14}/> 금일 작업 공정</span><div className="content-box">{selectedLog.todayWork}</div></div>
+              <div className="detail-section"><span className="label text-primary"><Calendar size={14}/> 익일 작업 예정</span><div className="content-box">{selectedLog.nextWork}</div></div>
+              <div className="detail-section"><span className="label text-danger"><AlertCircle size={14}/> 현장 특이사항</span><div className="content-box">{selectedLog.issues || '없음'}</div></div>
+              <div className="detail-section"><span className="label text-secondary"><UserIcon size={14}/> 고객 미팅 내용</span><div className="content-box">{selectedLog.meetingLog || '없음'}</div></div>
+              {selectedLog.images && selectedLog.images.length > 0 && (
+                <div className="detail-section"><span className="label"><Camera size={14}/> 현장 사진 ({selectedLog.images.length})</span>
+                  <div className="photo-grid">{selectedLog.images.map((url, idx) => (<div key={idx} className="photo-item" onClick={() => setZoomedImage(url)}><img src={url} alt="현장사진" /></div>))}</div>
                 </div>
               )}
             </div>
@@ -339,7 +336,7 @@ const WorkLogPage: React.FC<WorkLogPageProps> = ({ partnerUid }) => {
         </div>
       )}
       {zoomedImage && <div className="wlp-modal-overlay dark" onClick={() => setZoomedImage(null)}><img src={zoomedImage} alt="확대" className="zoomed-image" /><button className="btn-close-zoom" onClick={() => setZoomedImage(null)}>&times;</button></div>}
-      {isRegModalOpen && currentUser && siteId && partnerUid && <WorkLogModal siteId={siteId} partnerUid={partnerUid} onClose={() => setIsRegModalOpen(false)} />}
+      {isRegModalOpen && siteId && partnerUid && <WorkLogModal siteId={siteId} partnerUid={partnerUid} siteName={siteName} onClose={() => setIsRegModalOpen(false)} onSuccess={() => setIsRegModalOpen(false)} />}
     </div>
   );
 };
