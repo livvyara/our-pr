@@ -5,9 +5,10 @@
   --bm-bg: #FFFFFF;
   --bm-bg-sub: #F2F4F6;
   --bm-text-main: #191F28;
-  --bm-text-sub: #8B95A1;
+  --bm-text-sub: #4E5968; /* 8B95A1에서 가독성을 위해 상향 조정 */
   --bm-border: #E5E8EB;
   --bm-danger: #FF4D4D;
+  --bm-success: #219653; /* 지급 완료용 브랜드 그린 */
   --bm-radius-L: 24px;
   --bm-radius-M: 16px;
   --bm-radius-S: 12px;
@@ -223,4 +224,86 @@
   .bm-date-range { width: 100%; justify-content: space-between; }
   .date-input-wrap { flex: 1; }
   .date-input-wrap input { width: 100%; }
+}
+
+.bm-list-item.is-paid {
+  opacity: 0.65;
+  background-color: #F9FAFB;
+  cursor: default;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: #E5E8EB;
+}
+.bm-list-item.is-paid .item-name,
+.bm-list-item.is-paid .item-amount {
+  color: #8B95A1;
+}
+
+/* List Item Internal Layout */
+.bm-list-item {
+  background: #fff; border: 1px solid var(--bm-border); border-radius: var(--bm-radius-M);
+  padding: 20px 24px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  position: relative; box-shadow: var(--bm-shadow-card);
+}
+.bm-list-item:hover:not(.is-paid) { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-color: #D1D6DB; }
+.bm-list-item.active { border: 2px solid var(--bm-primary); background-color: #F8FBFF; }
+
+/* Action Group Styling */
+.item-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+
+/* 지급 버튼 스타일 */
+.item-paid-btn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  background: #fff;
+  border: 1px solid var(--bm-border);
+  color: var(--bm-text-sub);
+}
+.item-paid-btn:hover {
+  border-color: var(--bm-primary);
+  color: var(--bm-primary);
+  background: #F8FBFF;
+}
+.item-paid-btn.done {
+  background: var(--bm-success);
+  color: #fff;
+  border-color: var(--bm-success);
+}
+.item-paid-btn.done:hover {
+  background: #1B7F46;
+  border-color: #1B7F46;
+}
+
+/* 삭제 버튼 스타일 조정 */
+.item-delete-btn {
+  background: #F9FAFB; border: 1px solid #E5E8EB; border-radius: 8px;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  color: var(--bm-text-sub); cursor: pointer; transition: all 0.2s;
+}
+.item-delete-btn:hover { background: #FFF0F0; color: var(--bm-danger); border-color: #FFD6D6; }
+
+/* 리스트 호버 시에만 버튼 노출 (지급완료 건 제외) */
+.bm-list-item:not(.is-paid) .item-action-group {
+  opacity: 0;
+  transform: translateX(10px);
+}
+.bm-list-item:hover .item-action-group, 
+.bm-list-item.is-paid .item-action-group {
+  opacity: 1;
+  transform: translateX(0);
 }

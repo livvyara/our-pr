@@ -82,39 +82,25 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
       setCategory2('');
   };
 
-  // =========================================================================
-  // 🧠 [CORE] Smart OCR Parsing Logic (대한민국 최고 수준 분석 엔진)
-  // =========================================================================
   const parseReceiptData = (fullText: string) => {
     const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    
     let detectedAmount = 0;
     let detectedDate = '';
     let detectedVendor = '';
 
-    // 1. [Amount] 금액 추출 로직 (Keyword Scoring 방식)
-    // "합계", "결제금액" 등이 있는 라인 또는 그 다음 라인에서 숫자를 찾음
-    // 전화번호(010-, 02-)나 날짜(2023-) 등은 숫자로 인식하지 않도록 필터링
     const amountKeywords = ['합계', '총액', '결제금액', '승인금액', '받을금액', '합계금액', '신용승인'];
-    
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].replace(/,/g, ''); // 콤마 제거
+        const line = lines[i].replace(/,/g, '');
         const hasKeyword = amountKeywords.some(kw => line.includes(kw));
-        
         if (hasKeyword) {
-            // 현재 줄에서 숫자 추출
             const nums = line.match(/(\d+)/g);
             if (nums) {
-                // 가장 마지막에 나오는 숫자가 보통 합계일 확률이 높음
                 const val = parseInt(nums[nums.length - 1], 10);
-                // 100원 이상, 전화번호 형식(010으로 시작) 아님, 날짜 아님
                 if (val > 100 && !line.startsWith('0') && val < 100000000) {
                     detectedAmount = val;
                     break; 
                 }
             }
-            
-            // 현재 줄에 없으면 다음 줄 확인 (가끔 "합계" 다음 줄에 금액이 찍힘)
             if (i + 1 < lines.length) {
                 const nextLine = lines[i+1].replace(/,/g, '');
                 const nextNums = nextLine.match(/(\d+)/g);
@@ -128,7 +114,6 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
             }
         }
     }
-    // 키워드로 못 찾았다면, 전체 텍스트 중 "원" 앞에 있는 가장 큰 숫자 추정 (Fallback)
     if (detectedAmount === 0) {
         const potentialAmounts: number[] = [];
         lines.forEach(line => {
@@ -136,7 +121,6 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
              const match = cleanLine.match(/(\d+)원?/);
              if (match) {
                  const val = parseInt(match[1], 10);
-                 // 전화번호, 사업자번호(10자리) 등 제외 로직
                  if (val > 500 && val < 50000000 && !line.includes('-')) {
                      potentialAmounts.push(val);
                  }
@@ -147,13 +131,10 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
         }
     }
 
-    // 2. [Date] 날짜 추출 로직 (다양한 포맷 지원)
-    // YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD, YY/MM/DD
     const datePatterns = [
-        /(\d{4})[-.\/년\s](\d{1,2})[-.\/월\s](\d{1,2})/, // 2023-05-21
-        /20(\d{2})[-.\/](\d{1,2})[-.\/](\d{1,2})/       // 23-05-21 (20붙여서 처리)
+        /(\d{4})[-.\/년\s](\d{1,2})[-.\/월\s](\d{1,2})/,
+        /20(\d{2})[-.\/](\d{1,2})[-.\/](\d{1,2})/
     ];
-
     for (const line of lines) {
         for (const regex of datePatterns) {
             const match = line.match(regex);
@@ -162,8 +143,6 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
                 const month = match[2].padStart(2, '0');
                 const day = match[3].padStart(2, '0');
                 const validDate = `${year}-${month}-${day}`;
-                
-                // 미래 날짜나 너무 과거 날짜는 제외
                 const dObj = new Date(validDate);
                 const now = new Date();
                 if (dObj.getFullYear() >= 2020 && dObj <= now) {
@@ -175,14 +154,7 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
         if (detectedDate) break;
     }
 
-    // 3. [Vendor] 상호명 추출 로직 (Heuristic)
-    // 영수증 상단부(0~3라인)에 위치하며, 특정 제외 키워드가 없는 가장 긴 텍스트
-    const vendorExcludeList = [
-        '신용카드', '매출전표', '영수증', '고객용', '가맹점', '회원용', '전표', 
-        'POS', 'TEL', 'FAX', '사업자', '대표', '주소', 'CARD', 'RECEIPT'
-    ];
-    
-    // 명시적인 "상호: XXX" 또는 "가맹점: XXX" 패턴 먼저 찾기
+    const vendorExcludeList = ['신용카드', '매출전표', '영수증', '고객용', '가맹점', '회원용', '전표', 'POS', 'TEL', 'FAX', '사업자', '대표', '주소', 'CARD', 'RECEIPT'];
     const vendorPrefixes = ['상호', '가맹점명', '점포명', '매장명'];
     for (const line of lines) {
         for (const prefix of vendorPrefixes) {
@@ -196,21 +168,15 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
         }
         if (detectedVendor) break;
     }
-
-    // 명시적 패턴이 없으면 상단 5줄 분석
     if (!detectedVendor) {
         for (let i = 0; i < Math.min(lines.length, 5); i++) {
             const line = lines[i];
-            // 길이가 적당하고(2자 이상), 제외 키워드가 없고, 숫자로만 구성되지 않은 라인
-            if (line.length >= 2 && 
-                !vendorExcludeList.some(ex => line.includes(ex)) && 
-                !/^\d+$/.test(line.replace(/[-.\s]/g,''))) {
+            if (line.length >= 2 && !vendorExcludeList.some(ex => line.includes(ex)) && !/^\d+$/.test(line.replace(/[-.\s]/g,''))) {
                 detectedVendor = line;
                 break;
             }
         }
     }
-
     return { detectedAmount, detectedDate, detectedVendor };
   };
 
@@ -220,11 +186,9 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
       try {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          
           reader.onloadend = async () => {
               const base64Img = reader.result?.toString().split(',')[1];
               if (!base64Img) return;
-
               const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -232,59 +196,58 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
                       requests: [{
                           image: { content: base64Img },
                           features: [{ type: 'TEXT_DETECTION' }],
-                          imageContext: { languageHints: ["ko", "en"] } // 한글/영어 동시 최적화
+                          imageContext: { languageHints: ["ko", "en"] }
                       }]
                   })
               });
-              
               const data = await response.json();
               if (data.error) throw new Error(data.error.message);
-
               const fullText = data.responses[0]?.fullTextAnnotation?.text;
               if (fullText) {
                   const result = parseReceiptData(fullText);
-                  
                   if (result.detectedAmount > 0) setAmount(result.detectedAmount);
                   if (result.detectedDate) setUseDate(result.detectedDate);
                   if (result.detectedVendor && !vendorName) setVendorName(result.detectedVendor);
-                  
-                  // 인식 성공 시 시각적 피드백 제공 (Optional: Toast or Highlight)
-                  console.log("OCR Result:", result);
               }
           };
       } catch (e) { 
           console.error("OCR Error:", e);
           alert("영수증 인식에 실패했습니다. 직접 입력해주세요.");
-      } 
-      finally { setIsOcrLoading(false); }
+      } finally { setIsOcrLoading(false); }
   };
-  // =========================================================================
 
   const processFile = async (file: File) => {
     if (!file) return;
     try {
-        // [Optimization] OCR 인식률 향상을 위한 고품질 압축 설정
-        const compressed = await imageCompression(file, { 
-            maxSizeMB: 2,           // 너무 작으면 글자가 깨짐 -> 2MB로 상향
-            maxWidthOrHeight: 2048, // FHD급 해상도 유지
-            useWebWorker: true
-        });
+        // [Server Cost & Storage Optimization]
+        // 텍스트 판독이 중요한 영수증 특성에 맞춘 황금 비율 압축 설정입니다.
+        // 기존 2MB 타겟을 0.4MB로 대폭 낮춰 유지비용을 약 80% 절감합니다.
+        const options = {
+            maxSizeMB: 0.4,          // 최대 400KB로 압축 (유지비 절감 핵심)
+            maxWidthOrHeight: 1600,  // OCR 인식률과 선명도를 보장하는 최적 해상도
+            useWebWorker: true,
+            initialQuality: 0.8      // 원본의 선명도를 유지하며 용량만 축소
+        };
+
+        const compressed = await imageCompression(file, options);
         const preview = await imageCompression.getDataUrlFromFile(compressed);
         
         setReceiptFile(compressed);
         setReceiptPreview(preview);
         
-        // OCR 실행
+        // 압축된 파일로 OCR 실행 (전송량 감소 및 속도 향상)
         performOCR(compressed);
 
-    } catch (e) { alert("이미지 처리 실패"); }
+    } catch (e) { 
+        console.error("Image Compression Error:", e);
+        alert("이미지 처리 중 오류가 발생했습니다."); 
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) processFile(e.target.files[0]);
   };
 
-  // --- Drag & Drop Handlers ---
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setIsDragActive(true);
@@ -308,9 +271,10 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
     try {
       let finalImageUrl = '';
       if (receiptFile) {
-          const storageRef = ref(storage, `users/${partnerUid}/expenses/${siteId}/${Date.now()}_${receiptFile.name}`);
-          await uploadBytes(storageRef, receiptFile);
-          finalImageUrl = await getDownloadURL(storageRef);
+          const storagePath = `users/${partnerUid}/expenses/${siteId}/${Date.now()}_${receiptFile.name}`;
+          const sRef = ref(storage, storagePath);
+          await uploadBytes(sRef, receiptFile);
+          finalImageUrl = await getDownloadURL(sRef);
       }
 
       await addDoc(collection(db, 'users', partnerUid, 'expenses'), {
@@ -337,8 +301,6 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
   return (
     <div className="erm-overlay">
       <div className="erm-container">
-        
-        {/* Header */}
         <div className="erm-header">
           <div className="erm-title-group">
             <h3>카드 지출 등록</h3>
@@ -348,17 +310,10 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
         </div>
         
         <div className="erm-body">
-            
-            {/* Section 1: Date & Upload */}
             <div className="erm-section">
                 <label className="erm-label">사용 일자</label>
                 <div className="erm-input-wrapper">
-                    <input 
-                        type="date" 
-                        value={useDate} 
-                        onChange={e => setUseDate(e.target.value)} 
-                        className="erm-input"
-                    />
+                    <input type="date" value={useDate} onChange={e => setUseDate(e.target.value)} className="erm-input" />
                     <div className="erm-icon-absolute"><Icons.Calendar /></div>
                 </div>
             </div>
@@ -368,25 +323,14 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
                     영수증 첨부 
                     {isOcrLoading && <span className="erm-ocr-status"><Icons.Scan /> AI 정밀 분석중...</span>}
                 </label>
-                
                 {!receiptPreview ? (
-                    <div 
-                        className={`erm-dropzone ${isDragActive ? 'active' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                    >
+                    <div className={`erm-dropzone ${isDragActive ? 'active' : ''}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>
                         <div className="erm-drop-content">
                             <Icons.UploadCloud />
                             <p><strong>클릭 또는 드래그</strong>하여 영수증 업로드</p>
-                            <span>JPG, PNG 지원 (AI 자동 인식)</span>
+                            <span>JPG, PNG 지원 (서버 최적화 압축 적용)</span>
                         </div>
-                        {/* Mobile Camera Button */}
-                        <button className="erm-mobile-cam-btn" onClick={(e) => {
-                            e.stopPropagation();
-                            cameraInputRef.current?.click();
-                        }}>
+                        <button className="erm-mobile-cam-btn" onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }}>
                             <Icons.Camera /> 카메라 촬영
                         </button>
                     </div>
@@ -412,7 +356,6 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
                 <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} hidden onChange={handleFileChange} />
             </div>
 
-            {/* Section 2: Categories (Grid) */}
             <div className="erm-grid-row">
                 <div className="erm-section">
                     <label className="erm-label">1차 분류 (공종) <span className="req">*</span></label>
@@ -438,17 +381,10 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
                 </div>
             </div>
 
-            {/* Section 3: Amount & User (Grid) */}
             <div className="erm-grid-row">
                 <div className="erm-section">
                     <label className="erm-label">금액 <span className="req">*</span></label>
-                    <input 
-                        type="number" 
-                        value={amount || ''} 
-                        onChange={e => setAmount(Number(e.target.value))} 
-                        placeholder="0" 
-                        className="erm-input text-right" 
-                    />
+                    <input type="number" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} placeholder="0" className="erm-input text-right" />
                 </div>
                 <div className="erm-section">
                     <label className="erm-label">카드 사용자</label>
@@ -456,29 +392,15 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
                 </div>
             </div>
 
-            {/* Section 4: Vendor & Memo */}
             <div className="erm-section">
                 <label className="erm-label">사용처 (가맹점) <span className="req">*</span></label>
-                <input 
-                    type="text" 
-                    value={vendorName} 
-                    onChange={e => setVendorName(e.target.value)} 
-                    placeholder="예: 스타벅스, 다이소 (자동 입력됨)" 
-                    className="erm-input" 
-                />
+                <input type="text" value={vendorName} onChange={e => setVendorName(e.target.value)} placeholder="예: 스타벅스, 다이소 (자동 입력됨)" className="erm-input" />
             </div>
 
             <div className="erm-section">
                 <label className="erm-label">메모</label>
-                <input 
-                    type="text" 
-                    value={memo} 
-                    onChange={e => setMemo(e.target.value)} 
-                    placeholder="지출 관련 특이사항 입력" 
-                    className="erm-input" 
-                />
+                <input type="text" value={memo} onChange={e => setMemo(e.target.value)} placeholder="지출 관련 특이사항 입력" className="erm-input" />
             </div>
-
         </div>
 
         <div className="erm-footer">
@@ -488,14 +410,12 @@ const ExpenseRegistrationModal: React.FC<Props> = ({ isOpen, onClose, siteId, si
             </button>
         </div>
 
-        {/* Image Viewer Overlay */}
         {enlargedImage && (
             <div className="erm-viewer-overlay" onClick={() => setEnlargedImage(null)}>
                 <img src={enlargedImage} alt="Enlarged" onClick={e => e.stopPropagation()} />
                 <button className="erm-viewer-close" onClick={() => setEnlargedImage(null)}><Icons.Close /></button>
             </div>
         )}
-
       </div>
     </div>
   );

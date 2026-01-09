@@ -109,3 +109,284 @@
 .loading-td { text-align: center; padding: 50px; color: #888; }
 .no-data { text-align: center; padding: 50px; color: #999; }
 .empty-state { text-align: center; padding: 100px 0; color: #aaa; font-size: 16px; border: 2px dashed #eee; border-radius: 8px; margin-top: 20px; }
+
+.type-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+}
+.type-badge.sales { background: #e3f2fd; color: #3182f6; }
+.type-badge.expense { background: #fff5f5; color: #f04452; }
+
+.site-name-cell {
+    font-weight: 700;
+    color: #4a5568;
+    background: #f7fafc;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.receipt-viewer-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 3000;
+    backdrop-filter: blur(4px);
+}
+
+.receipt-viewer-content {
+    background: #fff;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.viewer-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.viewer-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+    text-align: center;
+}
+
+.viewer-body img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.viewer-footer {
+    padding: 15px;
+    text-align: center;
+    background: #f9fafb;
+}
+
+.external-btn {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.summary-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.summary-card {
+    flex: 1;
+    background: #fff;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    text-align: center;
+    border: 1px solid #f1f3f5;
+}
+
+.summary-card.sales { border-bottom: 4px solid #3182f6; }
+.summary-card.purchase { border-bottom: 4px solid #f04452; }
+.summary-card.profit { border-bottom: 4px solid #00c471; }
+
+.card-header { font-size: 14px; font-weight: 700; color: #718096; margin-bottom: 8px; }
+.card-total { font-size: 24px; font-weight: 800; color: #1a1f27; }
+.text-blue { color: #3182f6; }
+.text-red { color: #f04452; }
+
+/* 테이블 스타일 */
+.settlement-table-wrapper {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.settlement-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.settlement-table th {
+    background: #f9fafb;
+    padding: 15px;
+    font-weight: 700;
+    color: #4b5563;
+    border-bottom: 1px solid #eee;
+}
+
+.settlement-table td {
+    padding: 14px 15px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #1f2937;
+}
+
+.settlement-table tr:hover { background: #f8fbff; }
+
+/* 영수증 버튼 */
+.receipt-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #edf2f7;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #4a5568;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.receipt-btn:hover { background: #e2e8f0; color: #3182f6; }
+
+.settlement-page-container {
+    padding: 30px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    font-family: 'Pretendard', sans-serif;
+}
+
+/* 헤더 & 타이틀 */
+.settlement-header-wrapper {
+    background: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
+
+.settlement-title h2 { font-size: 26px; font-weight: 800; color: #1a1f27; margin: 0 0 10px 0; }
+.settlement-title p { font-size: 15px; color: #6b7280; margin: 0; }
+
+/* 뷰 전환 탭 */
+.view-mode-tabs {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+    background: #f1f3f5;
+    padding: 5px;
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.mode-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-tab.active {
+    background: #fff;
+    color: #3182f6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 컨트롤 패널 */
+.settlement-control-panel {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #edf2f7;
+}
+
+.main-select {
+    width: 100%;
+    max-width: 500px;
+    padding: 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #2d3748;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.main-select:focus { border-color: #3182f6; outline: none; }
+
+.info-tip {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* 직원별 기간 필터 레이아웃 */
+.staff-filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.date-range-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input {
+    padding: 10px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.date-input:focus {
+    border-color: #3182f6;
+}
+
+.date-sep {
+    color: #a0aec0;
+    font-weight: bold;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .date-range-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .date-input-group {
+        width: 100%;
+    }
+    .date-input {
+        flex: 1;
+    }
+}

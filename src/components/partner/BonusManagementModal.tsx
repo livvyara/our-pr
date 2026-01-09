@@ -17,7 +17,7 @@ const Icons = {
 interface StaffData { uid: string; name: string; }
 interface Props { partnerUid: string; staffList: StaffData[]; onClose: () => void; }
 type PaymentMethod = 'salary_include' | 'separate_transfer' | 'cash';
-interface BonusData { id: string; staffUid: string; staffName: string; amount: number; date: string; paymentMethod: PaymentMethod; description: string; createdAt: any; }
+interface BonusData { id: string; staffUid: string; staffName: string; amount: number; date: string; paymentMethod: PaymentMethod; description: string; createdAt: any; isPaid: boolean; } // isPaid 추가
 
 const BonusManagementModal: React.FC<Props> = ({ partnerUid, staffList, onClose }) => {
   const db = getFirestore();
@@ -75,6 +75,7 @@ const BonusManagementModal: React.FC<Props> = ({ partnerUid, staffList, onClose 
         paymentMethod: paymentMethod,
         description: description,
         isProcessed: paymentMethod === 'salary_include' ? false : true, 
+        isPaid: editingId ? (bonusList.find(b => b.id === editingId)?.isPaid || false) : false, // 수정 시 기존 상태 유지, 신규 시 false
       };
 
       if (editingId) {
@@ -100,7 +101,18 @@ const BonusManagementModal: React.FC<Props> = ({ partnerUid, staffList, onClose 
     } catch (e) { console.error("삭제 실패", e); alert("삭제 중 오류가 발생했습니다."); }
   };
 
+  const handleTogglePaid = async (id: string, currentStatus: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(currentStatus ? "지급 완료를 취소하시겠습니까?" : "지급 완료 상태로 변경하시겠습니까?")) return;
+    try {
+      await updateDoc(doc(db, 'users', partnerUid, 'bonuses', id), { isPaid: !currentStatus });
+      if (editingId === id && !currentStatus) resetForm(); // 현재 수정 중인 건을 완료 처리하면 폼 초기화
+      fetchBonuses();
+    } catch (e) { console.error("업데이트 실패", e); }
+  };
+
   const handleEditClick = (item: BonusData) => {
+    if (item.isPaid) return; // 지급 완료 건은 수정 불가
     setEditingId(item.id);
     setTargetStaffUid(item.staffUid);
     setAmount(item.amount);
@@ -122,7 +134,7 @@ const BonusManagementModal: React.FC<Props> = ({ partnerUid, staffList, onClose 
 
   // --- [Filtering Logic] ---
   const filteredList = bonusList.filter(item => 
-    item.staffName.includes(searchKeyword) || item.description.includes(searchKeyword)
+    item.staffName.includes(searchKeyword) || (item.description && item.description.includes(searchKeyword))
   );
 
   return (
@@ -236,12 +248,16 @@ const BonusManagementModal: React.FC<Props> = ({ partnerUid, staffList, onClose 
 
             <div className="bm-list-container">
                 <div className="bm-list-header">
-                    <span>일자 / 대상</span>
-                    <span>내용 / 금액</span>
+                    <span>일자 / 대상 / 상태</span>
+                    <span>내용 / 금액 / 관리</span>
                 </div>
                 <div className="bm-list-content">
                     {filteredList.map((item) => (
-                        <div key={item.id} className={`bm-list-item ${editingId === item.id ? 'active' : ''}`} onClick={() => handleEditClick(item)}>
+                        <div 
+                          key={item.id} 
+                          className={`bm-list-item ${editingId === item.id ? 'active' : ''} ${item.isPaid ? 'is-paid' : ''}`} 
+                          onClick={() => handleEditClick(item)}
+                        >
                             <div className="item-left">
                                 <span className="item-date">{item.date}</span>
                                 <span className="item-name">{item.staffName}</span>
@@ -253,9 +269,18 @@ const BonusManagementModal: React.FC<Props> = ({ partnerUid, staffList, onClose 
                             <div className="item-right">
                                 <span className="item-desc">{item.description || '-'}</span>
                                 <span className="item-amount">{Number(item.amount).toLocaleString()}원</span>
-                                <button className="item-delete-btn" onClick={(e) => handleDelete(item.id, e)} title="삭제">
-                                    <Icons.Trash />
-                                </button>
+                                <div className="item-action-group">
+                                    <button 
+                                      className={`item-paid-btn ${item.isPaid ? 'done' : ''}`} 
+                                      onClick={(e) => handleTogglePaid(item.id, !!item.isPaid, e)}
+                                      title={item.isPaid ? "지급 완료됨" : "지급 처리"}
+                                    >
+                                      {item.isPaid ? <><Icons.Check /> 지급완료</> : "지급하기"}
+                                    </button>
+                                    <button className="item-delete-btn" onClick={(e) => handleDelete(item.id, e)} title="삭제">
+                                        <Icons.Trash />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
