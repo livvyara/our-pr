@@ -4,15 +4,16 @@ import React, { useState, useEffect, useCallback, type ChangeEvent } from 'react
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, orderBy, query, serverTimestamp } from 'firebase/firestore';
 import './MenuManagement.css';
 
-// [⭐ 1. 수정] DB/Ref 선언을 컴포넌트 밖으로 이동 (무한 루프 방지)
+// [⭐ 1. DB/Ref 선언]
 const db = getFirestore();
-const menuCollectionRef = collection(db, 'mainMenus'); // 'mainMenus' 컬렉션 사용
+const menuCollectionRef = collection(db, 'mainMenus'); 
 
 // Firestore에 저장될 메인 메뉴 데이터 타입
 interface MainMenuData {
   id?: string; 
   key: string; 
   title: string; 
+  path?: string; // [⭐ 추가] 이동 경로 (선택 사항)
   order: number; 
   roles: string[]; 
 }
@@ -21,6 +22,7 @@ interface MainMenuData {
 interface EditFormState {
   key: string;
   title: string;
+  path: string; // [⭐ 추가] 폼 상태에도 path 추가
   order: number;
   roles: Record<string, boolean>; 
 }
@@ -38,11 +40,10 @@ const MainMenuManager: React.FC = () => {
   const [formState, setFormState] = useState<EditFormState>({
     key: '',
     title: '',
+    path: '', // [⭐ 추가] 초기값
     order: 100,
     roles: { customer: true, partner: false, seller: false, contract: false },
   });
-
-  // [⭐ 2. 수정] 'db', 'menuCollectionRef' 선언 삭제 (밖으로 이동됨)
 
   // 1. 데이터 로드
   const fetchMenus = useCallback(async () => {
@@ -55,11 +56,11 @@ const MainMenuManager: React.FC = () => {
     });
     setMenus(menuList);
     setIsLoading(false);
-  }, [menuCollectionRef]); // [정상] 이제 menuCollectionRef는 안정적임
+  }, []);
 
   useEffect(() => {
     fetchMenus();
-  }, [fetchMenus]); // [정상] 이제 fetchMenus는 안정적임
+  }, [fetchMenus]);
 
   // 2. 폼 초기화/취소
   const resetForm = () => {
@@ -68,6 +69,7 @@ const MainMenuManager: React.FC = () => {
     setFormState({
       key: '',
       title: '',
+      path: '', // [⭐ 추가] 초기화
       order: (menus.length + 1) * 10, 
       roles: { customer: true, partner: false, seller: false, contract: false },
     });
@@ -86,6 +88,7 @@ const MainMenuManager: React.FC = () => {
     setFormState({
       key: menu.key,
       title: menu.title,
+      path: menu.path || '', // [⭐ 추가] 기존 경로 로드 (없으면 빈 문자열)
       order: menu.order,
       roles: rolesState,
     });
@@ -133,7 +136,7 @@ const MainMenuManager: React.FC = () => {
     
     setIsLoading(true);
 
-    // [수정] admin/subadmin 강제 추가
+    // admin/subadmin 강제 추가
     const selectedRolesFromForm = ALL_ROLES.filter(role => formState.roles[role]);
     const rolesSet = new Set(selectedRolesFromForm);
     rolesSet.add('admin');
@@ -143,12 +146,14 @@ const MainMenuManager: React.FC = () => {
     const docData = {
       key: formState.key,
       title: formState.title,
+      path: formState.path, // [⭐ 추가] 경로 저장
       order: Number(formState.order),
-      roles: finalRoles, // [수정]
+      roles: finalRoles,
       updatedAt: serverTimestamp(),
     };
 
     try {
+      // Key를 문서 ID로 사용
       const docRef = doc(db, 'mainMenus', formState.key);
       await setDoc(docRef, docData, { merge: true }); 
 
@@ -169,13 +174,14 @@ const MainMenuManager: React.FC = () => {
         <h3>메인 메뉴 목록 (Firestore)</h3>
         <div className="menu-table-wrapper">
           <table className="menu-table">
-            <thead>
+<thead>
               <tr>
-                <th>순서(Order)</th>
-                <th>Key (ID)</th>
-                <th>표시될 이름 (Title)</th>
-                <th>접근 가능 등급 (Roles)</th>
-                <th>관리</th>
+                <th style={{ width: '10%' }}>순서</th>
+                <th style={{ width: '15%' }}>Key (ID)</th>
+                <th style={{ width: '20%' }}>메뉴명 (Title)</th>
+                <th style={{ width: '25%' }}>이동 경로 (Path)</th>
+                <th style={{ width: '20%' }}>접근 권한</th>
+                <th style={{ width: '10%' }}>관리</th>
               </tr>
             </thead>
             <tbody>
@@ -184,6 +190,10 @@ const MainMenuManager: React.FC = () => {
                   <td>{menu.order}</td>
                   <td>{menu.key}</td>
                   <td>{menu.title}</td>
+                  {/* [⭐ 추가] 경로 표시 */}
+                  <td style={{ color: menu.path ? '#2563eb' : '#999', fontSize: '0.9rem' }}>
+                    {menu.path || '(하위 메뉴용)'}
+                  </td>
                   <td className="roles-list">{menu.roles.join(', ') || '(없음)'}</td>
                   <td className="actions-cell">
                     <button className="action-button btn-edit" onClick={() => handleEditClick(menu)}>수정</button>
@@ -191,6 +201,11 @@ const MainMenuManager: React.FC = () => {
                   </td>
                 </tr>
               ))}
+              {menus.length === 0 && (
+                <tr>
+                    <td colSpan={6} style={{textAlign:'center', padding:'20px'}}>등록된 메뉴가 없습니다.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -198,6 +213,10 @@ const MainMenuManager: React.FC = () => {
 
       <div className="menu-form-container">
         <h3>{editingId ? '메뉴 수정' : '새 메인 메뉴 추가'}</h3>
+        <p style={{fontSize:'13px', color:'#666', marginBottom:'15px'}}>
+            * <strong>이동 경로</strong>를 입력하면 클릭 시 해당 페이지로 바로 이동합니다.<br/>
+            * 비워두면 클릭 시 하위 메뉴(SubNav)가 열리는 드롭다운 메뉴로 동작합니다.
+        </p>
         <form className="menu-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="key">메뉴 Key (ID)</label>
@@ -220,12 +239,26 @@ const MainMenuManager: React.FC = () => {
               className="form-input" 
               value={formState.title}
               onChange={handleFormChange}
-              placeholder="예: 아워서포터"
+              placeholder="예: 회사소개"
               required
             />
           </div>
+          
+          {/* [⭐ 추가] 경로 입력 필드 */}
           <div className="form-group">
-            <label className="form-label" htmlFor="order">정렬 순서 (숫자, 낮을수록 먼저)</label>
+            <label className="form-label" htmlFor="path">이동 경로 (선택사항)</label>
+            <input 
+              id="path" 
+              name="path" 
+              className="form-input" 
+              value={formState.path}
+              onChange={handleFormChange}
+              placeholder="예: /about (비워두면 드롭다운 메뉴)"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="order">정렬 순서 (숫자)</label>
             <input 
               id="order" 
               name="order" 

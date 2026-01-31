@@ -191,3 +191,39 @@
   .search-bar-wrapper { width: 160px; }
   .icon-action-btn { width: 36px; height: 36px; }
 }
+
+/* --- Header.css 맨 아래에 추가 --- */
+
+/* [중요] MainLayout의 #sticky-header-wrapper 안에 있을 때는 
+  Header의 fixed 속성을 해제하고 흐름에 따르게 만듭니다.
+*/
+#sticky-header-wrapper .desktop-header,
+#sticky-header-wrapper .mobile-header {
+    position: relative !important; /* fixed 강제 해제 */
+    top: auto !important;
+    left: auto !important;
+    box-shadow: none !important; /* Wrapper에 그림자가 있으므로 제거 */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* 구분선만 유지 */
+}
+
+/* [중요] MainLayout의 헤더 그룹(#sticky-header-wrapper) 안에 있을 때의 스타일 재정의 */
+
+/* 1. 헤더가 붕 뜨지 않고 자리를 차지하게 만듦 */
+#sticky-header-wrapper .desktop-header,
+#sticky-header-wrapper .mobile-header,
+#sticky-header-wrapper header {
+    position: relative !important; /* fixed 속성 무력화 */
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    box-shadow: none !important; /* 그룹 전체에 그림자가 있으므로 헤더 개별 그림자 제거 */
+}
+
+/* 2. 서브메뉴가 헤더 바로 아래에 붙도록 설정 */
+#sticky-header-wrapper .submenu-wrapper {
+    position: relative !important;
+    display: block !important;
+    background-color: #ffffff !important;
+    z-index: 9999 !important;
+    border-top: 1px solid #f1f1f1;
+}

@@ -139,7 +139,7 @@ const PartnerApply: React.FC = () => {
           <div className="pa-cta-box pa-fade-up" style={{ transitionDelay: '0.4s' }}>
             <div className="pa-cta-content">
               <h2>지금 바로 합류하세요</h2>
-              <p>아워프로젝트의 검증된 파트너가 되어 더 큰 성공을 만들어가세요.</p>
+              <p>730디자인그룹의 검증된 파트너가 되어 더 큰 성공을 만들어가세요.</p>
             </div>
             <button className="pa-btn-apply" onClick={() => navigate('/apply/partner')}>
               파트너 신청하기

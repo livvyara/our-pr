@@ -11,13 +11,7 @@ export interface AdminMenu {
 export const ALL_ADMIN_MENUS: AdminMenu[] = [
   { key: 'user-manage', title: '회원관리' },
   { key: 'partner-manage', title: '파트너 관리' },
-  { key: 'seller-manage', title: '셀러 관리' },
-  { key: 'supporter-manage', title: '서포터 관리' },
   { key: 'homepage-manage', title: '홈페이지 관리' },
-  {
-    key: 'shopping-mall',
-    title: '쇼핑몰 관리',
-  },
   { key: 'activity-log', title: '활동로그' }, // [⭐ 추가]
   // (권한관리는 admin만 보이도록 Sidebar에서 별도 처리)
 ];

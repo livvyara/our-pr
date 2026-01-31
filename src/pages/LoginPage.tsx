@@ -159,7 +159,7 @@ const LoginPage: React.FC = () => {
             <img src={logoImage} alt="Logo" className="lp-logo" />
           </Link>
           <h1 className="lp-title">로그인</h1>
-          <p className="lp-subtitle">아워프로젝트에 오신 것을 환영합니다.</p>
+          <p className="lp-subtitle">730디자인그룹에 오신 것을 환영합니다.</p>
         </div>
 
         {/* Form Section */}
@@ -263,7 +263,7 @@ const LoginPage: React.FC = () => {
         </form>
       </div>
       <div className="lp-footer">
-          © OurProject. All rights reserved.
+          © 730디자인그룹. All rights reserved.
       </div>
     </div>
   );

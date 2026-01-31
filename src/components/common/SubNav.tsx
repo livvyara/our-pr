@@ -1,3 +1,5 @@
+// src/components/common/SubNav.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CONTENT_MAX_WIDTH } from '../../constants';
@@ -6,7 +8,6 @@ import { useMenu } from '../../contexts/MenuContext';
 
 interface SubNavProps {
   selectedMenuKey: string;
-  // onClose 제거됨
 }
 
 const SubNav: React.FC<SubNavProps> = ({ selectedMenuKey }) => {
@@ -14,8 +15,6 @@ const SubNav: React.FC<SubNavProps> = ({ selectedMenuKey }) => {
   const { subMenus: subMenusMap } = useMenu();
 
   const subMenus = subMenusMap.get(selectedMenuKey) || [];
-
-  // [삭제됨] 외부 클릭 감지 로직 (useEffect, handleClickOutside)
 
   if (subMenus.length === 0) {
     return null; 
@@ -25,15 +24,15 @@ const SubNav: React.FC<SubNavProps> = ({ selectedMenuKey }) => {
     <div className="sn-container">
       <div className="sn-content" style={{ maxWidth: CONTENT_MAX_WIDTH }}>
         <div className="sn-scroll-track">
-            {subMenus.map((subMenu, index) => (
+          {subMenus.map((subMenu, index) => (
             <button
-                key={index}
-                className="sn-menu-btn"
-                onClick={() => navigate(subMenu.path)}
+              key={index}
+              className="sn-menu-btn"
+              onClick={() => navigate(subMenu.path)}
             >
-                {subMenu.title}
+              {subMenu.title}
             </button>
-            ))}
+          ))}
         </div>
       </div>
     </div>

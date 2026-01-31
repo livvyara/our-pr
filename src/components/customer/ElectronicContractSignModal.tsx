@@ -259,7 +259,7 @@ const ElectronicContractSignModal: React.FC<Props> = ({ siteId, partnerUid, data
               <div className="doc-footer-section">
                 <p className="doc-legal-notice">
                   위와 같이 계약을 체결하고 이를 증명하기 위하여 본 계약서를 전자문서로 작성하여, 
-                  '갑'과 '을'이 전자서명 후 아워프로젝트 서버에 보관한다.
+                  '갑'과 '을'이 전자서명 후 730디자인그룹 서버에 보관한다.
                 </p>
                 <div className="doc-sign-date">{new Date().toLocaleDateString()} 작성</div>
 

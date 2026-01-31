@@ -193,7 +193,7 @@ const JoinSitePage: React.FC = () => {
       </div>
       
       <div className="join-site-footer">
-          Safe Construction with OurProject
+          Safe Construction with 730디자인그룹
       </div>
     </div>
   );

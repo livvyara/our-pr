@@ -115,7 +115,7 @@ export const closeSiteChat = async (siteId: string) => {
     try {
         const chatRef = doc(db, 'chats', siteId);
         
-        const closeMsg = `[공사 완료 안내]\n본 현장의 공사가 완료되어 채팅방이 비활성화됩니다.\n\nAS가 필요하실 경우 아래 링크를 통해 접수해 주세요.\n👉 AS 접수 바로가기\n https://ourproject.co.kr/as-request`;
+        const closeMsg = `[공사 완료 안내]\n본 현장의 공사가 완료되어 채팅방이 비활성화됩니다.\n\nAS가 필요하실 경우 아래 링크를 통해 접수해 주세요.\n👉 AS 접수 바로가기\n https://0730.co.kr/request`;
         
         await addDoc(collection(db, 'chats', siteId, 'messages'), {
             text: closeMsg,

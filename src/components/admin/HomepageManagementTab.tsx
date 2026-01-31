@@ -39,18 +39,7 @@ const HomepageManagementTab: React.FC<HomepageManagementTabProps> = () => {
           서브헤더 메뉴관리
         </button>
         {/* [⭐ 추가] 메인 설문(대화형) 관리 탭 */}
-        <button
-          className={`homepage-tab-button ${activeTab === 'main-survey' ? 'active' : ''}`}
-          onClick={() => setActiveTab('main-survey')}
-        >
-          메인 설문 관리
-        </button>
-        <button
-          className={`homepage-tab-button ${activeTab === 'guide' ? 'active' : ''}`}
-          onClick={() => setActiveTab('guide')}
-        >
-          이용안내 관리
-        </button>
+
       </div>
       
       {/* 2. 탭 컨텐츠 렌더링 */}

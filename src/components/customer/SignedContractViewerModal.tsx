@@ -227,7 +227,7 @@ const SignedContractViewerModal: React.FC<Props> = ({ data, onClose, onRequestRe
 
             {/* Signatures */}
             <div className="doc-footer">
-              <p>본 계약의 성립을 증명하기 위해 전자서명을 진행하였으며,<br/>아워프로젝트 서버에 원본이 보관됩니다.</p>
+              <p>본 계약의 성립을 증명하기 위해 전자서명을 진행하였으며,<br/>730디자인그룹 서버에 원본이 보관됩니다.</p>
               <div className="date-today">{getSignedDate()} 체결완료</div>
 
               <div className="sign-grid">

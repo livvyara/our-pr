@@ -1,9 +1,19 @@
-// src/contexts/MenuContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getFirestore, collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase-config'; // (경로가 ../firebase-config인지 확인 필요)
-import { type MainMenuData, type SubMenuItemData, type SubMenuDocument } from '../types/MenuTypes';
+import { auth } from '../firebase-config';
+// [수정] MainMenuData는 아래에서 직접 정의하므로 import에서 제외합니다.
+import { type SubMenuItemData, type SubMenuDocument } from '../types/MenuTypes';
+
+// [⭐ 핵심 수정] MainMenuData 인터페이스 정의 추가 (path 속성 포함)
+export interface MainMenuData {
+  id?: string;
+  key: string;
+  title: string;
+  order: number;
+  roles: string[];
+  path?: string; // [⭐ 중요] 이 속성이 있어야 MainLayout 오류가 사라집니다.
+}
 
 // 1. 컨텍스트가 제공할 데이터 타입
 interface MenuContextState {
@@ -58,7 +68,9 @@ export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const filteredMainMenus: MainMenuData[] = [];
         
         mainMenusSnapshot.forEach((doc) => {
+          // Firestore 데이터를 MainMenuData 타입으로 캐스팅 (path 포함됨)
           const menu = { id: doc.id, ...doc.data() } as MainMenuData;
+          
           // (보안) 이 메뉴가 현재 userRole을 허용하는지 확인
           if (menu.roles && menu.roles.includes(userRole)) {
             filteredMainMenus.push(menu);
@@ -67,6 +79,7 @@ export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 5-3. 서브 메뉴 로드 및 role 필터링
         const subMenusMap = new Map<string, SubMenuItemData[]>();
+        // filteredMainMenus가 비동기 루프에 사용되므로 Promise.all 사용 권장하나, 순차 처리 유지
         for (const mainMenu of filteredMainMenus) {
           const subMenuDocRef = doc(db, 'subMenus', mainMenu.key);
           const subMenuDocSnap = await getDoc(subMenuDocRef);
@@ -91,7 +104,6 @@ export const MenuProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       } catch (error) {
         console.error("동적 메뉴 로딩 실패:", error);
-        // (Firestore 보안 규칙이 'menus'/'subMenus' 읽기를 허용하는지 확인 필요)
         setState({
           isLoading: false,
           mainMenus: [], // 에러 시 빈 메뉴

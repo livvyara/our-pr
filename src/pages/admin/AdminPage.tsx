@@ -3,12 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// 컴포넌트 임포트
-import Header from '../../components/common/Header';
-import SubNav from '../../components/common/SubNav';
-import MobileMenu from '../../components/common/MobileMenu'; 
-import Footer from '../../components/common/Footer';
-import RoleHeader from '../../components/common/RoleHeader'; 
+// 컴포넌트 임포트 (레이아웃 관련 컴포넌트 제거됨)
 import AdminSidebar from '../../components/admin/AdminSidebar'; 
 import RoleManagementTab from '../../components/admin/RoleManagementTab'; 
 import UserManagementTab from '../../components/admin/UserManagementTab';
@@ -27,7 +22,6 @@ import { getFirestore, doc, getDoc, collection, query, where, getCountFromServer
 import { onAuthStateChanged } from 'firebase/auth';
 
 // CSS 임포트
-import '../HomePage.css'; 
 import './AdminPage.css'; 
 
 const AdminPage: React.FC = () => {
@@ -35,8 +29,6 @@ const AdminPage: React.FC = () => {
   const db = getFirestore();
 
   // --- 상태 관리 ---
-  const [selectedMenu, setSelectedMenu] = useState('menu1'); 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768); 
   const [isLoading, setIsLoading] = useState(true); 
   const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'subadmin' | null>(null);
@@ -51,7 +43,7 @@ const AdminPage: React.FC = () => {
   const [supporterPendingCount, setSupporterPendingCount] = useState(0); 
   const [supporterInfoChangeCount, setSupporterInfoChangeCount] = useState(0); 
 
-  // --- 권한 확인 및 반응형 로직 ---
+  // --- 권한 확인 및 로직 ---
   useEffect(() => {
     
     // 1. 권한 확인
@@ -75,38 +67,42 @@ const AdminPage: React.FC = () => {
             setIsLoading(false); 
 
             // 카운트 조회
-            // (파트너)
-            const appCollectionRef = collection(db, "partnerApplications");
-            const qApps = query(appCollectionRef, where("status", "==", "pending"));
-            const countSnapshotApps = await getCountFromServer(qApps);
-            setPartnerPendingCount(countSnapshotApps.data().count);
-            
-            const changeCollectionRef = collection(db, "partnerInfoChangeRequests");
-            const qChanges = query(changeCollectionRef, where("status", "==", "pending"));
-            const countSnapshotChanges = await getCountFromServer(qChanges);
-            setPartnerInfoChangeCount(countSnapshotChanges.data().count);
-            
-            // (셀러)
-            const sellerAppRef = collection(db, "sellerApplications");
-            const qSellerApps = query(sellerAppRef, where("status", "==", "pending"));
-            const countSellerApps = await getCountFromServer(qSellerApps);
-            setSellerPendingCount(countSellerApps.data().count);
+            try {
+                // (파트너)
+                const appCollectionRef = collection(db, "partnerApplications");
+                const qApps = query(appCollectionRef, where("status", "==", "pending"));
+                const countSnapshotApps = await getCountFromServer(qApps);
+                setPartnerPendingCount(countSnapshotApps.data().count);
+                
+                const changeCollectionRef = collection(db, "partnerInfoChangeRequests");
+                const qChanges = query(changeCollectionRef, where("status", "==", "pending"));
+                const countSnapshotChanges = await getCountFromServer(qChanges);
+                setPartnerInfoChangeCount(countSnapshotChanges.data().count);
+                
+                // (셀러)
+                const sellerAppRef = collection(db, "sellerApplications");
+                const qSellerApps = query(sellerAppRef, where("status", "==", "pending"));
+                const countSellerApps = await getCountFromServer(qSellerApps);
+                setSellerPendingCount(countSellerApps.data().count);
 
-            const sellerChangeRef = collection(db, "sellerInfoChangeRequests");
-            const qSellerChanges = query(sellerChangeRef, where("status", "==", "pending"));
-            const countSellerChanges = await getCountFromServer(qSellerChanges);
-            setSellerInfoChangeCount(countSellerChanges.data().count);
+                const sellerChangeRef = collection(db, "sellerInfoChangeRequests");
+                const qSellerChanges = query(sellerChangeRef, where("status", "==", "pending"));
+                const countSellerChanges = await getCountFromServer(qSellerChanges);
+                setSellerInfoChangeCount(countSellerChanges.data().count);
 
-            // (서포터)
-            const supporterAppRef = collection(db, "supporterApplications");
-            const qSupporterApps = query(supporterAppRef, where("status", "==", "pending"));
-            const countSupporterApps = await getCountFromServer(qSupporterApps);
-            setSupporterPendingCount(countSupporterApps.data().count);
+                // (서포터)
+                const supporterAppRef = collection(db, "supporterApplications");
+                const qSupporterApps = query(supporterAppRef, where("status", "==", "pending"));
+                const countSupporterApps = await getCountFromServer(qSupporterApps);
+                setSupporterPendingCount(countSupporterApps.data().count);
 
-            const supporterChangeRef = collection(db, "supporterInfoChangeRequests");
-            const qSupporterChanges = query(supporterChangeRef, where("status", "==", "pending"));
-            const countSupporterChanges = await getCountFromServer(qSupporterChanges);
-            setSupporterInfoChangeCount(countSupporterChanges.data().count);
+                const supporterChangeRef = collection(db, "supporterInfoChangeRequests");
+                const qSupporterChanges = query(supporterChangeRef, where("status", "==", "pending"));
+                const countSupporterChanges = await getCountFromServer(qSupporterChanges);
+                setSupporterInfoChangeCount(countSupporterChanges.data().count);
+            } catch (error) {
+                console.error("카운트 조회 중 오류:", error);
+            }
 
           } else {
             alert('접근 권한이 없습니다.');
@@ -122,13 +118,9 @@ const AdminPage: React.FC = () => {
       }
     });
 
-    // 2. 반응형 로직
+    // 2. 반응형 로직 (AdminPage 내부 구조용)
     const handleResize = () => {
-      const isCurrentlyMobile = window.innerWidth < 768;
-      setIsMobile(isCurrentlyMobile);
-      if (!isCurrentlyMobile) {
-          setIsMobileMenuOpen(false);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
     window.addEventListener('resize', handleResize);
     
@@ -144,7 +136,6 @@ const AdminPage: React.FC = () => {
     if (isLoading) return; 
 
     if (currentUserRole === 'admin') {
-      // 기본 메뉴를 무엇으로 할지 (여기선 user-manage 유지)
       if (!activeAdminMenu) setActiveAdminMenu('user-manage'); 
     } else if (currentUserRole === 'subadmin') {
       if (!activeAdminMenu) setActiveAdminMenu(allowedMenus[0] || ''); 
@@ -153,9 +144,6 @@ const AdminPage: React.FC = () => {
 
 
   // --- 핸들러 함수 ---
-  const handleMenuSelect = (key: string) => { setSelectedMenu(key); };
-  const handleHamburgerPressed = () => { setIsMobileMenuOpen(true); };
-  const handleMenuClose = () => { setIsMobileMenuOpen(false); };
   const handleAdminMenuClick = (menuKey: string) => { 
     setActiveAdminMenu(menuKey);
   };
@@ -203,33 +191,20 @@ const AdminPage: React.FC = () => {
   // --- 로딩 중 뷰 ---
   if (isLoading) {
     return (
-      <div className="page-container">
-        <main className="main-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
           <h2>권한을 확인 중입니다...</h2>
-        </main>
-      </div>
+        </div>
     );
   }
 
   // 기본 뷰
   return (
-    <div className="page-container">
-      
-      {!isMobile && <RoleHeader />}
-      
-      <Header
-        onMenuSelected={handleMenuSelect}
-        isMobile={isMobile}
-        onHamburgerPressed={handleHamburgerPressed}
-      />
-      
-
-      <main 
-        className="main-content admin-main-layout"
-        style={{ padding: 0 }}
-      >
+    // MainLayout이 이미 Header/Footer를 감싸고 있으므로
+    // 여기서는 사이드바와 컨텐츠만 렌더링합니다.
+    <div className="admin-page-layout">
         {!isMobile && currentUserRole ? ( 
-          <>
+          <div className="admin-flex-container" style={{ display: 'flex', minHeight: '100%' }}>
+            {/* 왼쪽: 사이드바 */}
             <AdminSidebar 
               activeMenu={activeAdminMenu} 
               onMenuClick={handleAdminMenuClick} 
@@ -242,24 +217,19 @@ const AdminPage: React.FC = () => {
               supporterPendingCount={supporterPendingCount}
               supporterInfoChangeCount={supporterInfoChangeCount}
             />
-            <div className="admin-content-area">
+            
+            {/* 오른쪽: 콘텐츠 영역 */}
+            <div className="admin-content-area" style={{ flex: 1, padding: '24px', backgroundColor: '#f9f9f9' }}>
               {renderAdminContent()}
             </div>
-          </>
+          </div>
         ) : (
           // 모바일 뷰 (임시)
-          <div style={{ padding: '20px' }}>
+          <div style={{ padding: '40px', textAlign: 'center' }}>
             <h2>관리자 페이지 (모바일)</h2>
-            <p>모바일 관리자 UI는 별도 기획이 필요합니다.</p>
+            <p>모바일 환경에서는 관리자 페이지 기능을 제한적으로 제공하거나<br/>PC 환경에서 접속해 주세요.</p>
           </div>
         )}
-      </main>
-
-      
-      {/* 모바일 메뉴 오버레이 */}
-      {isMobileMenuOpen && isMobile && (
-        <MobileMenu onClose={handleMenuClose} />
-      )}
     </div>
   );
 };

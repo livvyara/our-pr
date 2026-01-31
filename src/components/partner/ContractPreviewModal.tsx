@@ -211,7 +211,7 @@ const ContractPreviewModal: React.FC<Props> = ({ data, onClose }) => {
                             )}
 
                              <div className="doc-footer">
-                                <p>위와 같이 계약을 체결하고 이를 증명하기 위하여 본 계약서를 전자문서로 작성하여,<br/>'갑'과 '을'이 전자서명 후 아워프로젝트 서버에 보관한다.</p>
+                                <p>위와 같이 계약을 체결하고 이를 증명하기 위하여 본 계약서를 전자문서로 작성하여,<br/>'갑'과 '을'이 전자서명 후 730디자인그룹 서버에 보관한다.</p>
                                 <p className="date-today">{new Date().toLocaleDateString()} 작성</p>
                                 
                                 <div className="sign-area">

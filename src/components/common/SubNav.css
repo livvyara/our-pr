@@ -3,28 +3,30 @@
 :root {
   --sn-height: 50px;
   --sn-bg: #ffffff;
-  --sn-border: #e0e0e0;
-  --sn-text-idle: #444444; /* [수정] #888 -> #444 (더 진하게) */
-  --sn-text-active: #000000; /* 호버 시 완전 검정 */
+  --sn-border: #f1f1f1; /* 더 부드러운 경계선 */
+  --sn-text-idle: #444444; 
+  --sn-text-active: #000000;
+  --sn-hover-bg: #f8f9fa; /* 미세한 호버 배경 */
 }
 
-/* 컨테이너 (고정 위치) */
+/* [중요] 컨테이너 스타일 전면 수정 
+  - position: fixed 제거 (MainLayout이 제어함)
+  - top, left 제거
+*/
 .sn-container {
   width: 100%;
   height: var(--sn-height);
   background-color: var(--sn-bg);
-  border-bottom: 1px solid var(--sn-border);
+  border-top: 1px solid var(--sn-border); /* 헤더와 구분선 */
+  /* border-bottom은 선택사항 (깔끔함을 위해 제거하거나 연하게 유지) */
+  
   display: flex;
   justify-content: center;
-
-  /* 헤더 바로 아래 고정 (Fixed) */
-  position: fixed;
-  top: 50px; /* 헤더 높이 */
-  left: 0;
-  z-index: 990;
   
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-  transition: top 0.3s ease;
+  /* 레이아웃 흐름을 따르도록 설정 */
+  position: relative; 
+  z-index: 100;
+  box-sizing: border-box;
 }
 
 /* 내부 콘텐츠 래퍼 */
@@ -34,18 +36,22 @@
   display: flex;
   align-items: center;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 /* 가로 스크롤 트랙 */
 .sn-scroll-track {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* 버튼 사이 간격 */
   height: 100%;
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
+  
+  /* 스크롤바 숨김 */
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -60,27 +66,33 @@
   border: none;
   cursor: pointer;
   padding: 0 16px;
-  height: 34px;
+  height: 36px; /* 터치 영역 확보 */
   
   display: flex;
   align-items: center;
   justify-content: center;
   
+  font-family: 'Pretendard', sans-serif;
   font-size: 14px;
-  font-weight: 500; /* 폰트 굵기도 약간 보완 */
-  color: var(--sn-text-idle); /* #444 적용됨 */
-  border-radius: 17px;
+  font-weight: 500;
+  color: var(--sn-text-idle);
+  border-radius: 6px; /* 둥근 사각형 */
   transition: all 0.2s ease;
-  white-space: nowrap;
+  white-space: nowrap; /* 줄바꿈 방지 */
 }
 
 /* 호버 및 활성 상태 */
 .sn-menu-btn:hover {
   color: var(--sn-text-active);
-  background-color: #f5f5f5;
+  background-color: var(--sn-hover-bg);
   font-weight: 600;
 }
 
+.sn-menu-btn:active {
+  transform: scale(0.98); /* 클릭 시 살짝 눌리는 효과 */
+}
+
+/* 현재 활성화된 메뉴 (필요 시 클래스 추가) */
 .sn-menu-btn.active {
   color: var(--sn-text-active);
   background-color: #eeeeee;
@@ -90,16 +102,20 @@
 /* 모바일 반응형 */
 @media (max-width: 768px) {
   .sn-container {
-    top: 70px;
-    overflow: hidden;
+    height: 48px; /* 모바일에서는 조금 더 얇게 */
   }
   
   .sn-content {
     padding: 0 16px;
   }
   
+  .sn-scroll-track {
+    gap: 4px;
+  }
+  
   .sn-menu-btn {
-    padding: 0 14px;
+    padding: 0 12px;
     font-size: 13px;
+    height: 32px;
   }
 }

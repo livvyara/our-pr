@@ -1,312 +1,226 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { 
-  // [네비게이션 아이콘]
-  ArrowRight, ChevronLeft,
-  // [기타 아이콘]
-  Lock, MessageCircle, Mail,
-  User, Briefcase, Wrench, Store, Calculator, Grid, Search, MapPin,
-  Hammer, HardHat, PaintBucket, Ruler, Truck, Warehouse, BrickWall, Construction,
-  Home, Sofa, BedDouble, Lamp, Armchair, Bath, Droplets, Utensils,
-  CreditCard, Wallet, BadgeDollarSign, Receipt, ClipboardCheck,
-  Calendar, Clock, Hourglass, Timer,
-  Phone, Star, Heart, Camera, Image, ShieldCheck, Zap
-} from 'lucide-react';
-import Header from '../components/common/Header'; 
-import './HomeSurvey.css';
+import './HomePage.css'; 
 
-// --- [Type Definitions] ---
-export type StepType = 'choice' | 'region' | 'result_match' | 'auth_gate'; 
+// [슬라이드 데이터]
+const SLIDES = [
+  { 
+    id: 1, 
+    img: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=2600&auto=format&fit=crop", 
+    title: "완벽한 공사를 위한\n최고의 선택", // 줄바꿈을 위해 \n 사용
+    desc: "공사에만 온전히 집중하세요.\n나머지는 730디자인그룹가 해결합니다." 
+  },
+  { 
+    id: 2, 
+    img: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2600&auto=format&fit=crop", 
+    title: "고객과 업체의\n단단한 신뢰", 
+    desc: "730디자인그룹 ERP 시스템으로\n투명하고 안전한 공사를 경험하세요." 
+  },
+  { 
+    id: 3, 
+    img: "https://images.unsplash.com/photo-1600596542815-e328700336f4?q=80&w=2600&auto=format&fit=crop", 
+    title: "데이터로 증명하는\n안전 플랫폼", 
+    desc: "시작부터 끝까지,\n고객이 안심할 수 있는 기준을 만듭니다." 
+  }
+];
 
-export interface SurveyOption {
-  id: string;
-  label: string;
-  icon?: string;
-  nextStepId?: string | null;
-  actionLink?: string | null;
-  value?: string;
-}
+// [프로젝트 데이터]
+const PROJECTS = [
+  { id: 1, title: "성수 아틀리에", category: "상업 공간", img: "https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop" },
+  { id: 2, title: "판교 IT 오피스", category: "업무 공간", img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop" },
+  { id: 3, title: "청담동 쇼룸", category: "상업 공간", img: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1600&auto=format&fit=crop" }
+];
 
-export interface SurveyStep {
-  id: string;
-  type: StepType;
-  question: string;
-  subText?: string;
-  dataKey?: string;
-  options: SurveyOption[];
-  nextStepId?: string | null;
-  
-  // [Auth Gate Fields]
-  kakaoUrl?: string; 
-  naverUrl?: string;
-  emailUrl?: string; // 이메일 회원가입 경로
-  
-  // [Admin Fields]
-  adminTitle?: string;
-  order?: number;
-}
-
-// --- [Region Data] ---
-const REGIONS: { [key: string]: string[] } = {
-  '서울': ['강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구'],
-  '경기': ['수원시', '성남시', '의정부시', '안양시', '부천시', '광명시', '평택시', '동두천시', '안산시', '고양시', '과천시', '구리시', '남양주시', '오산시', '시흥시', '군포시', '의왕시', '하남시', '용인시', '파주시', '이천시', '안성시', '김포시', '화성시', '광주시', '양주시', '포천시', '여주시', '연천군', '가평군', '양평군'],
-  '인천': ['중구', '동구', '미추홀구', '연수구', '남동구', '부평구', '계양구', '서구', '강화군', '옹진군'],
-  '강원': ['춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시', '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군'],
-  '대전': ['동구', '중구', '서구', '유성구', '대덕구'],
-  '대구': ['중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군', '군위군'],
-  '부산': ['중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
-  '울산': ['중구', '남구', '동구', '북구', '울주군'],
-  '광주': ['동구', '서구', '남구', '북구', '광산구'],
-  '세종': ['세종특별자치시'],
-  '제주': ['제주시', '서귀포시']
-};
-
-const IconMap: { [key: string]: React.ComponentType<any> } = {
-  User, Briefcase, Wrench, Store, Calculator, Grid, Search, MapPin, Lock, MessageCircle, Mail,
-  Hammer, HardHat, PaintBucket, Ruler, Truck, Warehouse, BrickWall, Construction,
-  Home, Sofa, BedDouble, Lamp, Armchair, Bath, Droplets, Utensils,
-  CreditCard, Wallet, BadgeDollarSign, Receipt, ClipboardCheck,
-  Calendar, Clock, Hourglass, Timer,
-  Phone, Star, Heart, Camera, Image, ShieldCheck, Zap,
-  ArrowRight, ChevronLeft // 네비게이션용
-};
+// [서비스 데이터]
+const SERVICES = [
+  { id: '01', title: "견적 시스템", desc: "빅데이터를 기반으로 산출하는\n투명하고 합리적인 예산" },
+  { id: '02', title: "공정 관리", desc: "현장의 진행 상황을\n실시간 리포트로 한눈에 확인" },
+  { id: '03', title: "품질 감리", desc: "업계 최고 전문가가 체크하는\n빈틈없는 시공 디테일" },
+  { id: '04', title: "안전 결제", desc: "단계별 지급 시스템으로\n소중한 공사 대금을 안전하게 보호" }
+];
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const db = getFirestore();
-  const auth = getAuth();
-
-  // [State]
-  const [surveyData, setSurveyData] = useState<Record<string, SurveyStep>>({});
-  const [currentStepId, setCurrentStepId] = useState<string>('start');
-  const [history, setHistory] = useState<string[]>([]);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
   
-  // [Auth State]
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [authCheckLoading, setAuthCheckLoading] = useState(true);
+  // 슬라이더 상태
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Region & UI State
-  const [selectedCity, setSelectedCity] = useState('');
-  const [selectedDistrict, setSelectedDistrict] = useState('');
-  const [matchedPartners, setMatchedPartners] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // [1. Auth Monitor]
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthCheckLoading(false); 
-    });
-    return () => unsubscribe();
-  }, [auth]);
+    // 슬라이드 자동 재생 (5초)
+    const slideInterval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+    }, 5000);
 
-  // [2. Load Data]
-  useEffect(() => {
-    const fetchSurvey = async () => {
-      try {
-        const docRef = doc(db, 'system', 'home_survey_config');
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          setSurveyData(snap.data().data);
-        } else {
-          setSurveyData({
-            start: { id: 'start', type: 'choice', question: "시작", options: [], order: 0 }
-          });
+    // 스크롤 애니메이션 옵저버 (IntersectionObserver)
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
         }
-      } catch (e) { console.error(e); } 
-      finally { setLoading(false); }
+      });
+    }, { threshold: 0.15, rootMargin: "0px 0px -50px 0px" }); // 트리거 민감도 조정
+
+    const targets = document.querySelectorAll('.animate-on-scroll');
+    targets.forEach(el => observerRef.current?.observe(el));
+
+    return () => {
+      clearInterval(slideInterval);
+      observerRef.current?.disconnect();
     };
-    fetchSurvey();
   }, []);
 
-  // [3. Auto Pass Logic (Auth Gate)]
-  useEffect(() => {
-    const step = surveyData[currentStepId];
-    if (loading || authCheckLoading) return;
-
-    if (step?.type === 'auth_gate' && currentUser) {
-      // 로그인 회원은 자동 패스
-      const timer = setTimeout(() => {
-        handleNext(step.nextStepId);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStepId, currentUser, authCheckLoading, surveyData, loading]);
-
-  // [Navigation Handler]
-  const handleNext = (nextId: string | null | undefined, dataKey?: string, value?: any) => {
-    if (isAnimating) return;
-    
-    if (dataKey && value) {
-      setAnswers(prev => ({ ...prev, [dataKey]: value }));
-    }
-
-    if (nextId && surveyData[nextId]) {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setHistory(prev => [...prev, currentStepId]);
-        setCurrentStepId(nextId);
-        setSelectedCity('');
-        setSelectedDistrict('');
-        setIsAnimating(false);
-      }, 300);
-    }
+  // 슬라이드 수동 이동
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
   };
-
-  const handleBack = () => {
-    if (history.length === 0) return;
-    setIsAnimating(true);
-    setTimeout(() => {
-      const newHistory = [...history];
-      const prevStep = newHistory.pop();
-      setHistory(newHistory);
-      if (prevStep) setCurrentStepId(prevStep);
-      setIsAnimating(false);
-    }, 300);
-  };
-
-  // [Social Handlers]
-  const handleSocialLogin = (platform: 'kakao' | 'naver', url?: string) => {
-    if (!url) return alert(`${platform} 로그인 설정이 준비되지 않았습니다.`);
-    window.location.href = url; 
-  };
-
-  const handleEmailSignup = (url?: string) => {
-    if (url) navigate(url);
-    else navigate('/signup');
-  };
-
-  if (loading || authCheckLoading) return <div className="hs-loading">잠시만 기다려주세요...</div>;
-
-  const step = surveyData[currentStepId];
-  if (!step) return <div>설정된 질문이 없습니다.</div>;
 
   return (
-    <div className="hs-container">
-      <div className="hs-bg-decoration"></div>
-  
-
-      <main className="hs-main">
-        <div className={`hs-content-wrapper ${isAnimating ? 'fade-out' : 'fade-in'}`}>
-          
-          {history.length > 0 && step.type !== 'result_match' && (
-            <button className="hs-back-btn" onClick={handleBack}>
-              <ChevronLeft size={24} /> 뒤로
-            </button>
-          )}
-
-          <div className="hs-question-area">
-            <h1 className="hs-title">
-              {step.question.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}
-            </h1>
-            {step.subText && (
-  <div 
-    className="hs-subtitle-rich"
-    dangerouslySetInnerHTML={{ __html: step.subText }}
-  />
-)}
-          </div>
-
-          {/* --- Type 1: Choice --- */}
-          {step.type === 'choice' && (
-            <div className="hs-options-grid">
-              {step.options.map((option) => {
-                const IconComp = option.icon ? IconMap[option.icon] : null;
-                return (
-                  <button 
-                    key={option.id} 
-                    className="hs-option-card" 
-                    onClick={() => {
-                      if (option.actionLink) navigate(option.actionLink);
-                      else handleNext(option.nextStepId, step.dataKey, option.value || option.label);
-                    }}
-                  >
-                    <div className="hs-option-icon">{IconComp ? <IconComp size={24} /> : <div className="hs-dot" />}</div>
-                    <span className="hs-option-label">{option.label}</span>
-                    <div className="hs-option-arrow"><ArrowRight size={20} /></div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* --- Type 2: Region --- */}
-          {step.type === 'region' && (
-            <div className="hs-region-container">
-               <div className="hs-select-group">
-                <select value={selectedCity} onChange={(e) => { setSelectedCity(e.target.value); setSelectedDistrict(''); }}>
-                   <option value="">시/도 선택</option>
-                   {Object.keys(REGIONS).map(city => <option key={city} value={city}>{city}</option>)}
-                </select>
-                <select value={selectedDistrict} onChange={(e) => setSelectedDistrict(e.target.value)} disabled={!selectedCity}>
-                   <option value="">시/구/군 선택</option>
-                   {selectedCity && REGIONS[selectedCity]?.map((dist: string) => <option key={dist} value={dist}>{dist}</option>)}
-                </select>
-               </div>
-               <button className={`hs-next-btn ${selectedCity && selectedDistrict ? 'active' : ''}`} onClick={() => {
-                  if (!selectedCity || !selectedDistrict) return alert("지역을 선택해주세요.");
-                  handleNext(step.nextStepId, step.dataKey, `${selectedCity} ${selectedDistrict}`);
-               }}>다음으로 <ArrowRight size={20} /></button>
-            </div>
-          )}
-
-          {/* --- Type 3: Auth Gate (3단 버튼) --- */}
-          {step.type === 'auth_gate' && !currentUser && (
-            <div className="hs-auth-gate-card">
-              <div className="hs-auth-icon-wrap">
-                <Lock size={32} />
+    <div className="home-wrapper">
+      <main className="main-content">
+        
+        {/* 1. Hero Slider Section */}
+        <section className="hero-section" ref={sliderRef}>
+          {SLIDES.map((slide, index) => (
+            <div 
+              key={slide.id} 
+              className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
+            >
+              <div className="hero-bg-wrapper">
+                <div className="hero-bg" style={{ backgroundImage: `url(${slide.img})` }}></div>
+                <div className="hero-overlay"></div>
               </div>
-              <h3>회원가입하고 결과 보기</h3>
-              <p>
-                지금까지 선택하신 내용을 바탕으로<br/>
-                딱 맞는 파트너를 찾으시겠어요?
-              </p>
               
-              <div className="hs-auth-btns-stack">
-                <button className="hs-btn-kakao" onClick={() => handleSocialLogin('kakao', step.kakaoUrl)}>
-                  <MessageCircle size={20} fill="currentColor" /> 카카오로 3초 만에 시작하기
-                </button>
-                
-                <button className="hs-btn-naver" onClick={() => handleSocialLogin('naver', step.naverUrl)}>
-                  <span className="naver-icon">N</span> 네이버로 시작하기
-                </button>
-                
-                <button className="hs-btn-email" onClick={() => handleEmailSignup(step.emailUrl)}>
-                  <Mail size={18} /> 이메일로 회원가입
-                </button>
+              <div className="hero-content container">
+                <div className="text-group">
+                  <h2 className={`hero-title ${index === currentSlide ? 'reveal' : ''}`}>
+                    {slide.title.split('\n').map((line, i) => (
+                      <span key={i} className="block-text">{line}</span>
+                    ))}
+                  </h2>
+                  <p className={`hero-desc ${index === currentSlide ? 'reveal delay-1' : ''}`}>
+                    {slide.desc.split('\n').map((line, i) => (
+                      <React.Fragment key={i}>{line}<br/></React.Fragment>
+                    ))}
+                  </p>
+                  <div className={`btn-wrapper ${index === currentSlide ? 'reveal delay-2' : ''}`}>
+                    <button 
+                      className="btn-hero-primary"
+                      onClick={() => navigate('/guide/apply')}
+                    >
+                      파트너 신청하기
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          ))}
+          
+          {/* Slider Indicators */}
+          <div className="hero-indicators">
+            {SLIDES.map((_, idx) => (
+              <button 
+                key={idx} 
+                className={`indicator-dot ${idx === currentSlide ? 'active' : ''}`}
+                onClick={() => goToSlide(idx)}
+                aria-label={`${idx + 1}번 슬라이드로 이동`}
+              >
+                <span className="dot-fill"></span>
+              </button>
+            ))}
+          </div>
+        </section>
 
-          {/* --- Type 4: Result --- */}
-          {step.type === 'result_match' && (
-            <div className="hs-result-container">
-               {isSearching ? (
-                <div className="hs-searching">
-                  <div className="hs-spinner"></div>
-                  <h3>고객님의 요청사항을 분석 중입니다...</h3>
-                </div>
-              ) : (
-                <div className="hs-match-list">
-                  <p className="hs-match-count">매칭 결과를 확인하세요!</p>
-                  {/* Mock Data */}
-                  <div className="hs-partner-card">
-                    <div className="partner-info"><h4>730 디자인</h4><span className="partner-score">★ 4.9</span></div>
-                    <div className="partner-tags"><span>#주거</span><span>#상업</span></div>
-                    <button className="partner-contact-btn">상담 신청하기</button>
-                  </div>
-                  <button className="hs-home-btn" onClick={() => navigate('/')}>홈으로</button>
-                </div>
-              )}
+        {/* 2. Brand Intro Section */}
+        <section className="section-intro">
+          <div className="container animate-on-scroll fade-up">
+            <span className="section-label">730디자인그룹 비전</span>
+            <h2 className="intro-heading">
+              불투명했던 공사의 기준을<br />
+              <span className="text-accent">데이터와 시스템</span>으로<br />
+              완벽하게 바꿉니다.
+            </h2>
+            <p className="intro-desc">
+              견적부터 마감까지, 모든 과정이 투명하게 기록됩니다.<br />
+              불안함은 시스템에 맡기고, 당신은 공간의 가치에만 집중하세요.
+            </p>
+          </div>
+        </section>
+
+        {/* 3. Projects Section */}
+        <section className="section-projects bg-gray">
+          <div className="container">
+            <div className="section-header animate-on-scroll fade-up">
+              <h2 className="section-title">주요 프로젝트</h2>
+              <button className="btn-text-link">전체 보기</button>
             </div>
-          )}
+            
+            <div className="projects-grid">
+              {PROJECTS.map((project, idx) => (
+                <div key={project.id} className="project-card animate-on-scroll fade-up" style={{ transitionDelay: `${idx * 0.1}s` }}>
+                  <div className="card-image-wrapper">
+                    <img src={project.img} alt={project.title} loading="lazy" />
+                    <div className="hover-curtain">
+                      <span className="view-text">상세 보기</span>
+                    </div>
+                  </div>
+                  <div className="card-info">
+                    <span className="card-category">{project.category}</span>
+                    <h3 className="card-title">{project.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-        </div>
+        {/* 4. Core Solutions Section */}
+        <section className="section-solutions">
+          <div className="container">
+            <div className="section-header animate-on-scroll fade-up">
+              <h2 className="section-title">핵심 솔루션</h2>
+              <p className="section-subtitle">성공적인 공간을 완성하는 4가지 약속</p>
+            </div>
+            
+            <div className="solutions-grid">
+              {SERVICES.map((item, idx) => (
+                <div key={item.id} className="solution-card animate-on-scroll fade-up" style={{ transitionDelay: `${idx * 0.1}s` }}>
+                  <div className="card-top">
+                    <span className="solution-num">{item.id}</span>
+                  </div>
+                  <div className="card-body">
+                    <h4 className="solution-title">{item.title}</h4>
+                    <p className="solution-desc">
+                        {item.desc.split('\n').map((line, i) => (
+                          <React.Fragment key={i}>{line}<br/></React.Fragment>
+                        ))}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 5. CTA (Call to Action) Section */}
+        <section className="section-cta">
+          <div className="container animate-on-scroll scale-up">
+            <div className="cta-box">
+              <h2 className="cta-title">
+                가장 완벽한 공간 경험,<br />
+                지금 시작하세요.
+              </h2>
+              <p className="cta-desc">
+                730디자인그룹과 함께라면 인테리어는 더 이상 걱정거리가 아닙니다.
+              </p>
+              <button className="btn-cta-primary" onClick={() => navigate('/guide/apply')}>
+                파트너 신청하기
+              </button>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
   );

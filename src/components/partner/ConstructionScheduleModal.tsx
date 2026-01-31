@@ -457,7 +457,7 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
             </div>
             
             <div style={{ textAlign: 'center', opacity: 0.5, marginTop: '20px' }}>
-                <img src={logoSrc} alt="OurProject" style={{height:'20px', filter:'grayscale(100%)'}} />
+                <img src={logoSrc} alt="730디자인그룹" style={{height:'20px', filter:'grayscale(100%)'}} />
             </div>
         </div>
       </div>
@@ -638,8 +638,8 @@ const ConstructionScheduleModal: React.FC<ModalProps> = ({ siteId, partnerUid, o
                         </div>
                         <div className="ppm-premium-bottom-branding">
                             <p className="brand-slogan">소비자의 안전한 공사를 위한 플랫폼</p>
-                            <p className="brand-name-bold">아워프로젝트</p>
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://our-pr.com" className="brand-qr" alt="QR Code" />
+                            <p className="brand-name-bold">730디자인그룹</p>
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://0730.com" className="brand-qr" alt="QR Code" />
                         </div>
                     </footer>
                 </div>

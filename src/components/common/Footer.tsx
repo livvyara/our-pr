@@ -44,31 +44,31 @@ const Footer: React.FC = () => {
         {/* Bottom Section: Business Info */}
         <div className="ft-bottom-section">
           <div className="ft-biz-info">
-            <h3 className="ft-company-name">(주)아워프로젝트</h3>
+            <h3 className="ft-company-name">주식회사 730디자인그룹</h3>
             
             {/* Semantic Definition List for Info */}
             <dl className="ft-info-list">
               <div className="ft-info-item">
                 <dt>대표이사</dt>
-                <dd>홍길동</dd>
+                <dd>고슬비</dd>
               </div>
               <div className="ft-info-item">
                 <dt>사업자등록번호</dt>
-                <dd>000-00-00000</dd>
+                <dd>250-86-03528</dd>
               </div>
               <div className="ft-info-item full-width">
                 <dt>주소</dt>
-                <dd>서울특별시 강남구 00000000</dd>
+                <dd>광주광역시 광산구 장덕동 1639번지 센터빌딩 4층</dd>
               </div>
               <div className="ft-info-item full-width">
-                <dt>Beta 개발 담당</dt>
-                <dd className="ft-contact-value">000-0000-0000</dd>
+                <dt>연락처</dt>
+                <dd className="ft-contact-value">070-4047-0104</dd>
               </div>
             </dl>
           </div>
 
           <div className="ft-copyright-area">
-            <span className="ft-copy-text">Copyright © 2025 Our Project. All Rights Reserved.</span>
+            <span className="ft-copy-text">Copyright © 2025 730 Design Group. All Rights Reserved.</span>
           </div>
         </div>
 

@@ -29,11 +29,11 @@ const ROLE_MAP: Record<string, RoleData> = {
     link: '/employee', 
   },
   partner: {
-    text: '파트너 서포터 페이지로 이동',
+    text: '관리ERP 페이지로 이동',
     link: '/program',
   },
     sub_partner: {
-    text: '파트너 서포터 페이지로 이동',
+    text: '관리ERP 페이지로 이동',
     link: '/program',
   },
   seller: {

@@ -367,7 +367,7 @@ const SignUpPage: React.FC = () => {
                         <img src={logoImage} alt="Logo" className="sp-logo" />
                     </Link>
                     <h1>회원가입</h1>
-                    <p>안전한 공사의 시작, 아워프로젝트</p>
+                    <p>안전한 공사의 시작, 730디자인그룹</p>
                 </div>
 
                 <form ref={formRef} onSubmit={finalSignUp} className="sp-form">

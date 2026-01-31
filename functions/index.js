@@ -90,7 +90,7 @@ exports.sendVerificationCode = functions
     try {
         const docRef = admin.firestore().collection("phone_verifications").doc(phoneNumber);
         await docRef.set({ code: verificationCode, expiresAt: expiresAt });
-        const message = `[아워프로젝트] 인증번호 [${verificationCode}]를 입력해주세요.`;
+        const message = `[730디자인그룹] 인증번호 [${verificationCode}]를 입력해주세요.`;
         await executeSmsSend(phoneNumber, message, "휴대폰 인증번호 발송");
         return { success: true, message: "인증번호가 발송되었습니다." };
     } catch (error) {
@@ -186,7 +186,7 @@ exports.approvePartnerApplication = functions
         await batch.commit(); 
 
         // 5. [문자 발송] 승인 문자 발송
-        const message = "[아워프로젝트] 파트너 심사 승인되었습니다.";
+        const message = "[730디자인그룹] 파트너 심사 승인되었습니다.";
         await executeSmsSend(contactPhone, message, "파트너 승인");
         return { success: true, message: "승인 처리 및 문자 발송 완료" };
 
@@ -237,7 +237,7 @@ exports.rejectPartnerApplication = functions
         });
         
         // 5. [문자 발송]
-        const message = `[아워프로젝트] 심사부결 사유 : ${rejectionReason}`;
+        const message = `[730디자인그룹] 심사부결 사유 : ${rejectionReason}`;
         await executeSmsSend(contactPhone, message, "파트너 부결");
         return { success: true, message: "부결 처리 및 문자 발송 완료" };
 
@@ -290,7 +290,7 @@ exports.approveInfoChange = functions
         await batch.commit();
 
         // 5. SMS 발송
-        const message = "[아워프로젝트] 요청하신 정보 변경이 승인되었습니다.";
+        const message = "[730디자인그룹] 요청하신 정보 변경이 승인되었습니다.";
         await executeSmsSend(contactPhone, message, "정보 변경 승인");
 
         return { success: true };
@@ -337,7 +337,7 @@ exports.rejectInfoChange = functions
         });
         
         // 4. SMS 발송
-        const message = `[아워프로젝트] 정보 변경 요청이 거부되었습니다. 사유: ${rejectionReason}`;
+        const message = `[730디자인그룹] 정보 변경 요청이 거부되었습니다. 사유: ${rejectionReason}`;
         await executeSmsSend(contactPhone, message, "정보 변경 부결");
 
         return { success: true };
@@ -391,7 +391,7 @@ exports.approveSellerApplication = functions
         await batch.commit(); 
 
         // 4. [문자 발송]
-        const message = "[아워프로젝트] 셀러 심사 승인되었습니다.";
+        const message = "[730디자인그룹] 셀러 심사 승인되었습니다.";
         await executeSmsSend(contactPhone, message, "셀러 승인");
         return { success: true, message: "승인 처리 및 문자 발송 완료" };
 
@@ -431,7 +431,7 @@ exports.rejectSellerApplication = functions
         });
         
         // 4. [문자 발송]
-        const message = `[아워프로젝트] 셀러 심사부결 사유 : ${rejectionReason}`;
+        const message = `[730디자인그룹] 셀러 심사부결 사유 : ${rejectionReason}`;
         await executeSmsSend(contactPhone, message, "셀러 부결");
         return { success: true, message: "부결 처리 및 문자 발송 완료" };
 
@@ -478,7 +478,7 @@ exports.approveSellerInfoChange = functions
         await batch.commit();
 
         // 5. SMS 발송
-        const message = "[아워프로젝트] 요청하신 셀러 정보 변경이 승인되었습니다.";
+        const message = "[730디자인그룹] 요청하신 셀러 정보 변경이 승인되었습니다.";
         await executeSmsSend(contactPhone, message, "셀러 정보 변경 승인");
         return { success: true };
 
@@ -519,7 +519,7 @@ exports.rejectSellerInfoChange = functions
         });
         
         // 4. SMS 발송
-        const message = `[아워프로젝트] 셀러 정보 변경 요청이 거부되었습니다. 사유: ${rejectionReason}`;
+        const message = `[730디자인그룹] 셀러 정보 변경 요청이 거부되었습니다. 사유: ${rejectionReason}`;
         await executeSmsSend(contactPhone, message, "셀러 정보 변경 부결");
         return { success: true };
 
@@ -573,7 +573,7 @@ exports.approveSupporterApplication = functions
         await batch.commit(); 
 
         // 4. [문자 발송]
-        const message = "[아워프로젝트] 서포터(협력사) 심사 승인되었습니다.";
+        const message = "[730디자인그룹] 서포터(협력사) 심사 승인되었습니다.";
         await executeSmsSend(contactPhone, message, "서포터 승인");
         return { success: true, message: "승인 처리 및 문자 발송 완료" };
 
@@ -613,7 +613,7 @@ exports.rejectSupporterApplication = functions
         });
         
         // 4. [문자 발송]
-        const message = `[아워프로젝트] 서포터(협력사) 심사부결 사유 : ${rejectionReason}`;
+        const message = `[730디자인그룹] 서포터(협력사) 심사부결 사유 : ${rejectionReason}`;
         await executeSmsSend(contactPhone, message, "서포터 부결");
         return { success: true, message: "부결 처리 및 문자 발송 완료" };
 
@@ -662,7 +662,7 @@ exports.approveSupporterInfoChange = functions
         await batch.commit();
 
         // 5. SMS 발송
-        const message = "[아워프로젝트] 요청하신 서포터(협력사) 정보 변경이 승인되었습니다.";
+        const message = "[730디자인그룹] 요청하신 서포터(협력사) 정보 변경이 승인되었습니다.";
         await executeSmsSend(contactPhone, message, "서포터 정보 변경 승인");
 
         return { success: true };
@@ -705,7 +705,7 @@ exports.rejectSupporterInfoChange = functions
         });
         
         // 4. SMS 발송
-        const message = `[아워프로젝트] 서포터(협력사) 정보 변경 요청이 거부되었습니다. 사유: ${rejectionReason}`;
+        const message = `[730디자인그룹] 서포터(협력사) 정보 변경 요청이 거부되었습니다. 사유: ${rejectionReason}`;
         await executeSmsSend(contactPhone, message, "서포터 정보 변경 부결");
 
         return { success: true };
@@ -1463,7 +1463,7 @@ exports.scrapHometaxData = functions
 
             // 4. 홈택스 메인 접속
             console.log("STEP 1: 홈택스 메인 접속 시도");
-            await page.goto('https://www.hometax.go.kr', { waitUntil: 'networkidle', timeout: 60000 });
+            await page.goto('https://www.hometax.go.kr/websquare/websquare.html?w2xPath=/ui/pp/index_pp.xml&menuCd=index3', { waitUntil: 'networkidle', timeout: 60000 });
             
             // 리다이렉트 체크
             if (page.url().includes('security') || page.url().includes('install')) {

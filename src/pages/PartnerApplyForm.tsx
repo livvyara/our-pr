@@ -235,7 +235,7 @@ const PartnerApplyForm: React.FC = () => {
           <div className="paf-header-section paf-fade-up">
             <span className="paf-subtitle">Partner Application</span>
             <h1 className="paf-title">성공을 위한<br/>최고의 파트너십.</h1>
-            <p className="paf-desc">아워프로젝트의 검증된 파트너가 되어 비즈니스를 확장하세요.</p>
+            <p className="paf-desc">730디자인그룹의 검증된 파트너가 되어 비즈니스를 확장하세요.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="paf-form">

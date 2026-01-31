@@ -24,7 +24,7 @@ export const DEFAULT_CONTRACT_TEXT = `제1조 (목적)
 
 [전자계약 체결 안내]
 1. 본 계약은 전자서명법 등 관련 법령에 따라 공인된 전자서명 방식으로 체결됩니다.
-2. 체결된 계약서는 전자문서 형태로 아워프로젝트 서버에 안전하게 보관됩니다.
+2. 체결된 계약서는 전자문서 형태로 730디자인그룹 서버에 안전하게 보관됩니다.
 3. "소비자"와 "시공업자"는 언제든지 서비스 내에서 본 계약서를 열람하거나 출력 및 다운로드할 수 있습니다.`;
 
 const ContractEditorModal: React.FC<Props> = ({ initialContent, initialSpecial, initialSealUrl, onSave, onClose }) => {
