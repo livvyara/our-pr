@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{ padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px); }
+  body{ margin:0; }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+</style>
+<title>생각의 지도</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#EEF1F4; --surface:#FFFFFF; --surface-2:#F5F7F9;
+  --ink:#141A20; --muted:#59656F; --faint:#8B98A3;
+  --line:#D5DDE4; --line-2:#BBC6D0;
+  --accent:#1E5AC8; --accent-ink:#FFFFFF; --accent-soft:#E3EBFA;
+  --danger:#B93A2F;
+  --shadow-1:0 1px 2px rgba(18,28,40,.08);
+  --shadow-2:0 8px 26px rgba(18,28,40,.13);
+  --b1:#CE4437; --b2:#AF7209; --b3:#2A8055; --b4:#2A6FBE; --b5:#6E48BE; --b6:#B44582;
+  --tint:11%; --edge:38%; --grid:rgba(20,26,32,.055);
+  --sheet-scrim:rgba(16,22,28,.34);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --paper:#0F1319; --surface:#191F27; --surface-2:#222A34;
+    --ink:#E7EDF3; --muted:#9AA7B3; --faint:#6E7C88;
+    --line:#2B3441; --line-2:#3B4754;
+    --accent:#6E9CF2; --accent-ink:#0B1018; --accent-soft:#1C2839;
+    --danger:#E2695D;
+    --shadow-1:0 1px 2px rgba(0,0,0,.4);
+    --shadow-2:0 8px 26px rgba(0,0,0,.5);
+    --b1:#E8776A; --b2:#D69F42; --b3:#5CBD87; --b4:#5D9BE0; --b5:#A484E8; --b6:#E077B0;
+    --tint:17%; --edge:46%; --grid:rgba(255,255,255,.05);
+    --sheet-scrim:rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:#0F1319; --surface:#191F27; --surface-2:#222A34;
+  --ink:#E7EDF3; --muted:#9AA7B3; --faint:#6E7C88;
+  --line:#2B3441; --line-2:#3B4754;
+  --accent:#6E9CF2; --accent-ink:#0B1018; --accent-soft:#1C2839;
+  --danger:#E2695D;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 8px 26px rgba(0,0,0,.5);
+  --b1:#E8776A; --b2:#D69F42; --b3:#5CBD87; --b4:#5D9BE0; --b5:#A484E8; --b6:#E077B0;
+  --tint:17%; --edge:46%; --grid:rgba(255,255,255,.05);
+  --sheet-scrim:rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-size:15px; line-height:1.5;
+  -webkit-text-size-adjust:100%; overscroll-behavior:none;
+}
+button{font:inherit; color:inherit; background:none; border:none; cursor:pointer}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+#app{height:100%; display:flex; flex-direction:column; min-height:0}
+
+/* ---------- top bar ---------- */
+.bar{
+  display:flex; align-items:center; gap:.5rem;
+  padding:.5rem .75rem; background:var(--surface);
+  border-bottom:1px solid var(--line); box-shadow:var(--shadow-1);
+  position:relative; z-index:6; flex:0 0 auto;
+}
+#title{
+  flex:1 1 3rem; min-width:0; width:3rem;
+  font-family:"Gowun Batang", serif; font-weight:700; font-size:1.06rem;
+  background:none; border:1px solid transparent; border-radius:.4rem;
+  padding:.2rem .35rem; color:var(--ink);
+  text-overflow:ellipsis;
+}
+#title:hover{border-color:var(--line)}
+#title:focus{border-color:var(--accent); outline:none; background:var(--surface-2)}
+.pill{
+  flex:0 0 auto; font-size:.72rem; letter-spacing:.02em; color:var(--muted);
+  background:var(--surface-2); border:1px solid var(--line);
+  border-radius:999px; padding:.18rem .5rem; white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+  max-width:6.5rem; overflow:hidden; text-overflow:ellipsis;
+}
+.pill[data-state="saving"]{color:var(--accent); border-color:var(--accent)}
+.iconbtn{
+  flex:0 0 auto; width:2.1rem; height:2.1rem; border-radius:.45rem;
+  display:grid; place-items:center; color:var(--muted); border:1px solid transparent;
+}
+.iconbtn:hover{background:var(--surface-2); color:var(--ink)}
+.iconbtn:disabled{opacity:.35; cursor:default}
+.iconbtn svg{width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+
+/* ---------- canvas ---------- */
+#viewport{
+  position:relative; flex:1 1 auto; min-height:0; overflow:hidden;
+  touch-action:none; cursor:grab;
+  background:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 0) 0 0/22px 22px;
+}
+#viewport.panning{cursor:grabbing}
+#world{position:absolute; left:0; top:0; transform-origin:0 0}
+#links{position:absolute; left:0; top:0; overflow:visible; pointer-events:none}
+#links path{fill:none; stroke-linecap:round}
+
+.node{
+  position:absolute; left:0; top:0;
+  width:max-content; max-width:15rem; padding:.45rem .65rem;
+  border-radius:.55rem;
+  background:var(--surface);
+  background:color-mix(in srgb, var(--c, var(--line-2)) var(--tint), var(--surface));
+  border:1px solid var(--line);
+  border-color:color-mix(in srgb, var(--c, var(--line-2)) var(--edge), var(--line));
+  box-shadow:var(--shadow-1);
+  cursor:pointer; user-select:none; -webkit-user-select:none;
+  transition:box-shadow .12s ease, transform .12s ease;
+}
+.node-text{font-size:.9rem; font-weight:500; word-break:break-word; white-space:pre-wrap}
+.node-note{
+  margin-top:.18rem; font-size:.74rem; color:var(--muted);
+  word-break:break-word; white-space:pre-wrap;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+}
+.node.is-root{
+  font-family:"Gowun Batang", serif; font-weight:700;
+  padding:.65rem .95rem; max-width:17rem;
+  border-width:2px; border-color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 9%, var(--surface));
+  box-shadow:var(--shadow-2);
+}
+.node.is-root .node-text{font-size:1.02rem; font-weight:700}
+.node.sel{box-shadow:0 0 0 2px var(--accent), var(--shadow-2)}
+.node.drop{box-shadow:0 0 0 2px var(--accent); border-style:dashed}
+.node.ghost{opacity:.4}
+.toggle{
+  position:absolute; top:50%; width:20px; height:20px; margin-top:-10px;
+  border-radius:999px; background:var(--surface); border:1px solid var(--line-2);
+  color:var(--muted); font-size:.66rem; line-height:1; display:grid; place-items:center;
+  font-variant-numeric:tabular-nums; box-shadow:var(--shadow-1);
+}
+.node.side-r .toggle{right:-11px}
+.node.side-l .toggle{left:-11px}
+.toggle.open{color:var(--faint)}
+
+/* ---------- action bar ---------- */
+#actions{
+  flex:0 0 auto; background:var(--surface); border-top:1px solid var(--line);
+  padding:.45rem .5rem calc(.45rem + env(safe-area-inset-bottom, 0px));
+  box-shadow:0 -6px 18px rgba(18,28,40,.06); position:relative; z-index:5;
+}
+.hint{color:var(--faint); font-size:.8rem; text-align:center; padding:.5rem .25rem}
+.tools{display:flex; gap:.3rem; overflow-x:auto; scrollbar-width:none; padding:.1rem}
+.tools::-webkit-scrollbar{display:none}
+.tool{
+  flex:0 0 auto; display:flex; align-items:center; gap:.3rem;
+  padding:.45rem .6rem; border-radius:.5rem; border:1px solid var(--line);
+  background:var(--surface-2); font-size:.8rem; white-space:nowrap;
+}
+.tool:hover{border-color:var(--line-2)}
+.tool.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.tool.warn{color:var(--danger); border-color:color-mix(in srgb, var(--danger) 35%, var(--line))}
+.tool:disabled{opacity:.35; cursor:default}
+.tool svg{width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.crumb{
+  font-size:.74rem; color:var(--muted); padding:0 .35rem .3rem;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#ideas{display:flex; gap:.3rem; overflow-x:auto; padding:.1rem .1rem .4rem; scrollbar-width:none}
+#ideas::-webkit-scrollbar{display:none}
+.idea{
+  flex:0 0 auto; padding:.35rem .55rem; border-radius:999px; font-size:.78rem;
+  border:1px dashed color-mix(in srgb, var(--accent) 45%, var(--line));
+  background:var(--accent-soft); color:var(--ink);
+}
+.idea.note{border-style:solid; background:var(--surface-2); color:var(--muted); cursor:default}
+
+/* ---------- sheets ---------- */
+.scrim{
+  position:fixed; inset:0; z-index:20; background:var(--sheet-scrim);
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.sheet{
+  width:100%; max-width:34rem; background:var(--surface);
+  border-radius:.9rem .9rem 0 0; border:1px solid var(--line); border-bottom:none;
+  padding:.9rem .9rem calc(.9rem + env(safe-area-inset-bottom, 0px));
+  box-shadow:var(--shadow-2); max-height:82vh; display:flex; flex-direction:column; gap:.6rem;
+}
+.sheet h2{margin:0; font-family:"Gowun Batang", serif; font-size:1rem; font-weight:700}
+.sheet label{display:block; font-size:.74rem; color:var(--muted); margin-bottom:.22rem; letter-spacing:.02em}
+.sheet textarea{
+  width:100%; font:inherit; font-size:.92rem; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:.5rem;
+  padding:.5rem .6rem; resize:vertical;
+}
+.sheet textarea:focus{outline:none; border-color:var(--accent)}
+.row{display:flex; gap:.45rem; justify-content:flex-end}
+.row .tool{padding:.5rem .9rem}
+#outline-list{overflow:auto; margin:0; padding:0; list-style:none; min-height:0}
+#outline-list li{border-bottom:1px solid var(--line)}
+#outline-list button{
+  display:block; width:100%; text-align:left; padding:.5rem .3rem;
+  font-size:.86rem; word-break:break-word;
+}
+#outline-list button:hover{background:var(--surface-2)}
+#outline-list .lvl{color:var(--faint); font-variant-numeric:tabular-nums}
+.copybox{width:100%; height:7rem; font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.76rem}
+@media (max-width:420px){ .node{max-width:11.5rem} .node.is-root{max-width:13rem} }
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <input id="title" value="새 마인드맵" aria-label="마인드맵 제목" autocomplete="off">
+    <span class="pill" id="status">준비 중</span>
+    <button class="iconbtn" id="btn-undo" title="되돌리기" aria-label="되돌리기" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10H9"/></svg></button>
+    <button class="iconbtn" id="btn-fit" title="화면에 맞추기" aria-label="화면에 맞추기"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="iconbtn" id="btn-outline" title="개요" aria-label="개요 보기"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></button>
+  </header>
+
+  <div id="viewport">
+    <div id="world"><svg id="links"></svg></div>
+  </div>
+
+  <div id="actions">
+    <div class="hint" id="hint">가지를 탭하면 편집 도구가 나타납니다</div>
+    <div id="panel" hidden>
+      <div class="crumb" id="crumb"></div>
+      <div id="ideas" hidden></div>
+      <div class="tools">
+        <button class="tool primary" id="t-child"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>하위 가지</button>
+        <button class="tool" id="t-sibling"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M12 12h8"/></svg>같은 층</button>
+        <button class="tool" id="t-edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>편집</button>
+        <button class="tool" id="t-idea"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z"/><path d="M10 20h4"/></svg>아이디어</button>
+        <button class="tool" id="t-color"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/></svg>색</button>
+        <button class="tool" id="t-up"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+        <button class="tool" id="t-down"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
+        <button class="tool warn" id="t-del"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg>삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="edit-scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="가지 편집">
+    <h2 id="edit-title">가지 편집</h2>
+    <div><label for="ed-text">내용</label><textarea id="ed-text" rows="2"></textarea></div>
+    <div><label for="ed-note">메모 (선택)</label><textarea id="ed-note" rows="3"></textarea></div>
+    <div class="row"><button class="tool" id="ed-cancel">취소</button><button class="tool primary" id="ed-save">저장</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="outline-scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="개요">
+    <h2>개요</h2>
+    <ul id="outline-list"></ul>
+    <div><label for="ed-copy">텍스트로 내보내기</label><textarea id="ed-copy" class="copybox" readonly></textarea></div>
+    <div class="row"><button class="tool" id="ol-copy">복사</button><button class="tool primary" id="ol-close">닫기</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(s){ return document.querySelector(s); };
+var uid = function(){ return Math.random().toString(36).slice(2,9); };
+var HUES = ["var(--b1)","var(--b2)","var(--b3)","var(--b4)","var(--b5)","var(--b6)"];
+
+var STARTER = {
+  title: "새 마인드맵",
+  rootId: "root",
+  nodes: {
+    root:{id:"root", text:"여기에 중심 주제", note:"", children:["n1","n2","n3"], collapsed:false},
+    n1:{id:"n1", text:"가지를 탭해 선택", note:"아래 도구로 추가·편집·삭제할 수 있어요", children:["n1a"], collapsed:false, side:"r", color:0},
+    n1a:{id:"n1a", text:"두 번 탭하면 바로 편집", note:"", children:[], collapsed:false},
+    n2:{id:"n2", text:"가지를 끌어 옮기기", note:"다른 가지 위에 놓으면 그 아래로 들어갑니다", children:[], collapsed:false, side:"r", color:2},
+    n3:{id:"n3", text:"두 손가락으로 확대·이동", note:"", children:[], collapsed:false, side:"l", color:3}
+  }
+};
+
+/* ---------------- state ---------------- */
+var S = clone(STARTER);
+var sel = null, history = [], db = null, docRef = null, sampler = null;
+var stamp = uid(), myStamp = null, saveTimer = null, localOnly = false;
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function N(id){ return S.nodes[id]; }
+function kidsOf(id){ var n = N(id); return (n && n.children) ? n.children : []; }
+function visKids(id){ var n = N(id); return (!n || n.collapsed) ? [] : (n.children||[]); }
+function parentOf(id){
+  for (var k in S.nodes){ if ((S.nodes[k].children||[]).indexOf(id) >= 0) return k; }
+  return null;
+}
+function hueOf(id){
+  var cur = id, guard = 0;
+  while (cur && guard++ < 64){
+    var n = N(cur);
+    if (!n) return null;
+    if (typeof n.color === "number") return HUES[n.color % HUES.length];
+    if (cur === S.rootId) return null;
+    cur = parentOf(cur);
+  }
+  return null;
+}
+function descendants(id, out){
+  out = out || [];
+  kidsOf(id).forEach(function(k){ out.push(k); descendants(k, out); });
+  return out;
+}
+function sanitize(d){
+  if (!d || typeof d !== "object" || !d.nodes || !d.nodes[d.rootId || "root"]) return null;
+  var out = { title: String(d.title || "마인드맵"), rootId: d.rootId || "root", nodes: {} };
+  Object.keys(d.nodes).forEach(function(k){
+    var n = d.nodes[k] || {};
+    out.nodes[k] = {
+      id: k,
+      text: String(n.text == null ? "" : n.text),
+      note: String(n.note == null ? "" : n.note),
+      children: Array.isArray(n.children) ? n.children.filter(function(c){ return d.nodes[c]; }) : [],
+      collapsed: !!n.collapsed,
+      side: n.side === "l" ? "l" : (n.side === "r" ? "r" : undefined),
+      color: typeof n.color === "number" ? n.color : undefined
+    };
+  });
+  return out;
+}
+
+/* ---------------- history + persistence ---------------- */
+function snap(){ history.push(clone(S)); if (history.length > 60) history.shift(); $("#btn-undo").disabled = false; }
+function undo(){
+  if (!history.length) return;
+  S = history.pop();
+  if (sel && !N(sel)) sel = null;
+  $("#btn-undo").disabled = !history.length;
+  commit(true);
+}
+function commit(skipSnap){
+  $("#title").value = S.title;
+  render();
+  save();
+}
+function setStatus(text, state){
+  var p = $("#status"); p.textContent = text;
+  if (state) p.setAttribute("data-state", state); else p.removeAttribute("data-state");
+}
+function save(){
+  if (saveTimer) clearTimeout(saveTimer);
+  setStatus("저장 중…", "saving");
+  saveTimer = setTimeout(function(){
+    saveTimer = null;
+    var body = clone(S);
+    myStamp = uid();
+    body.stamp = myStamp;
+    body.updatedAt = new Date().toISOString();
+    try { localStorage.setItem("mindmap:main", JSON.stringify(body)); } catch(e){}
+    if (!docRef){ setStatus(localOnly ? "기기에 저장" : "대기 중"); return; }
+    docRef.set(body).then(function(){
+      setStatus("저장됨");
+    })["catch"](function(err){
+      if (err && err.code === "invalid_argument"){ localOnly = true; docRef = null; setStatus("읽기 전용"); }
+      else setStatus("저장 실패");
+    });
+  }, 450);
+}
+function adopt(data){
+  var clean = sanitize(data);
+  if (!clean) return;
+  S = clean;
+  if (sel && !N(sel)) sel = null;
+  $("#title").value = S.title;
+  render();
+}
+function boot(){
+  try {
+    var raw = localStorage.getItem("mindmap:main");
+    if (raw){ var clean = sanitize(JSON.parse(raw)); if (clean) S = clean; }
+  } catch(e){}
+  $("#title").value = S.title;
+  render(true);
+  setStatus("연결 중…");
+
+  if (!window.claude || !window.claude.use){ localOnly = true; setStatus("기기에 저장"); return; }
+
+  window.claude.use("db").then(function(d){
+    if (!d){ localOnly = true; setStatus("기기에 저장"); return; }
+    db = d;
+    docRef = db.doc("map/main");
+    docRef.onSnapshot(function(s){
+      if (!s.exists){ setStatus("저장됨"); save(); return; }
+      var data = s.data();
+      if (s.metadata.hasPendingWrites) return;
+      if (data.stamp && data.stamp === myStamp){ setStatus("저장됨"); return; }
+      if (editingId || saveTimer) return;
+      adopt(data);
+      setStatus("저장됨");
+    }, function(){ localOnly = true; docRef = null; setStatus("기기에 저장"); });
+  })["catch"](function(){ localOnly = true; setStatus("기기에 저장"); });
+
+  window.claude.use("sample").then(function(s){
+    sampler = s || null;
+    $("#t-idea").hidden = !sampler;
+  })["catch"](function(){ $("#t-idea").hidden = true; });
+}
+
+/* ---------------- layout + render ---------------- */
+var world = $("#world"), links = $("#links"), viewport = $("#viewport");
+var nodeEls = {}, size = {}, pos = {}, sideOf = {};
+var view = { x: 0, y: 0, k: 1 };
+var PAD = 30, HGAP = 46, VGAP = 14;
+var rafPending = false;
+
+function render(fit){
+  var wantFit = fit;
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(function(){ rafPending = false; draw(wantFit); });
+}
+
+function draw(fit){
+  var live = {};
+  (function walk(id){ live[id] = true; visKids(id).forEach(walk); })(S.rootId);
+
+  Object.keys(nodeEls).forEach(function(id){
+    if (!live[id]){ nodeEls[id].remove(); delete nodeEls[id]; }
+  });
+
+  Object.keys(live).forEach(function(id){
+    var n = N(id), e = nodeEls[id];
+    if (!e){
+      e = document.createElement("div");
+      e.className = "node";
+      e.dataset.id = id;
+      e.innerHTML = '<div class="node-text"></div><div class="node-note"></div><button class="toggle" hidden></button>';
+      world.appendChild(e);
+      nodeEls[id] = e;
+    }
+    e.querySelector(".node-text").textContent = n.text || "…";
+    var note = e.querySelector(".node-note");
+    note.textContent = n.note || "";
+    note.hidden = !n.note;
+    var hue = hueOf(id);
+    if (hue) e.style.setProperty("--c", hue); else e.style.removeProperty("--c");
+    e.classList.toggle("is-root", id === S.rootId);
+    e.classList.toggle("sel", id === sel);
+    var total = kidsOf(id).length;
+    var tog = e.querySelector(".toggle");
+    if (total && id !== S.rootId){
+      tog.hidden = false;
+      tog.textContent = n.collapsed ? String(total) : "−";
+      tog.classList.toggle("open", !n.collapsed);
+      tog.setAttribute("aria-label", n.collapsed ? "펼치기" : "접기");
+    } else tog.hidden = true;
+  });
+
+  Object.keys(live).forEach(function(id){
+    var e = nodeEls[id];
+    size[id] = { w: e.offsetWidth, h: e.offsetHeight };
+  });
+
+  pos = {}; sideOf = {};
+  var rootSize = size[S.rootId];
+  var rk = visKids(S.rootId);
+  var right = [], left = [];
+  rk.forEach(function(id){ (N(id).side === "l" ? left : right).push(id); });
+
+  function subH(id){
+    var kids = visKids(id);
+    if (!kids.length) return size[id].h;
+    var h = 0;
+    kids.forEach(function(k, i){ h += subH(k) + (i ? VGAP : 0); });
+    return Math.max(size[id].h, h);
+  }
+  function place(id, dir, x, top){
+    var h = subH(id);
+    pos[id] = { x: dir > 0 ? x : x - size[id].w, y: top + h / 2 - size[id].h / 2 };
+    sideOf[id] = dir > 0 ? "r" : "l";
+    var kids = visKids(id);
+    if (!kids.length) return;
+    var kh = 0;
+    kids.forEach(function(k, i){ kh += subH(k) + (i ? VGAP : 0); });
+    var cy = top + (h - kh) / 2;
+    var nx = dir > 0 ? x + size[id].w + HGAP : x - size[id].w - HGAP;
+    kids.forEach(function(k){ place(k, dir, nx, cy); cy += subH(k) + VGAP; });
+  }
+
+  pos[S.rootId] = { x: 0, y: 0 };
+  sideOf[S.rootId] = "r";
+  var cy0 = rootSize.h / 2;
+
+  function band(list){ var t = 0; list.forEach(function(k, i){ t += subH(k) + (i ? VGAP : 0); }); return t; }
+  var rTop = cy0 - band(right) / 2, lTop = cy0 - band(left) / 2;
+  right.forEach(function(k){ place(k, 1, rootSize.w + HGAP, rTop); rTop += subH(k) + VGAP; });
+  left.forEach(function(k){ place(k, -1, -HGAP, lTop); lTop += subH(k) + VGAP; });
+
+  var minX = 0, minY = 0, maxX = rootSize.w, maxY = rootSize.h;
+  Object.keys(pos).forEach(function(id){
+    var p = pos[id], s = size[id];
+    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x + s.w); maxY = Math.max(maxY, p.y + s.h);
+  });
+  var dx = PAD - minX, dy = PAD - minY;
+  Object.keys(pos).forEach(function(id){ pos[id].x += dx; pos[id].y += dy; });
+  var W = maxX - minX + PAD * 2, H = maxY - minY + PAD * 2;
+  world.style.width = W + "px";
+  world.style.height = H + "px";
+  links.setAttribute("width", W); links.setAttribute("height", H);
+  links.setAttribute("viewBox", "0 0 " + W + " " + H);
+
+  Object.keys(pos).forEach(function(id){
+    var e = nodeEls[id], p = pos[id];
+    e.style.transform = "translate(" + p.x + "px," + p.y + "px)";
+    e.classList.toggle("side-l", sideOf[id] === "l");
+    e.classList.toggle("side-r", sideOf[id] !== "l");
+  });
+
+  links.innerHTML = "";
+  Object.keys(pos).forEach(function(id){
+    visKids(id).forEach(function(k){
+      var a = pos[id], b = pos[k], sa = size[id], sb = size[k];
+      var rightward = sideOf[k] !== "l";
+      var x1 = rightward ? a.x + sa.w : a.x;
+      var y1 = a.y + sa.h / 2;
+      var x2 = rightward ? b.x : b.x + sb.w;
+      var y2 = b.y + sb.h / 2;
+      if (id === S.rootId){ x1 = rightward ? a.x + sa.w : a.x; y1 = a.y + sa.h / 2; }
+      var mx = (x1 + x2) / 2;
+      var hue = hueOf(k) || "var(--line-2)";
+      var depth = id === S.rootId ? 1 : 2;
+      links.insertAdjacentHTML("beforeend",
+        '<path d="M' + x1 + ' ' + y1 + 'C' + mx + ' ' + y1 + ',' + mx + ' ' + y2 + ',' + x2 + ' ' + y2 +
+        '" stroke="' + hue + '" stroke-width="' + (depth === 1 ? 2.2 : 1.5) + '" opacity="' + (depth === 1 ? 0.85 : 0.6) + '"/>');
+    });
+  });
+  if (fit) fitView(); else applyView();
+  syncPanel();
+}
+function applyView(){
+  world.style.transform = "translate(" + view.x + "px," + view.y + "px) scale(" + view.k + ")";
+}
+function fitView(){
+  var W = world.offsetWidth, H = world.offsetHeight;
+  var vw = viewport.clientWidth, vh = viewport.clientHeight;
+  if (!W || !H || !vw) return;
+  var k = Math.min(vw / W, vh / H, 1.05);
+  if (k < 0.5){
+    view.k = Math.max(0.62, Math.min(1, vw / 520));
+    centerOn(S.rootId);
+    return;
+  }
+  view.k = k;
+  view.x = (vw - W * k) / 2;
+  view.y = (vh - H * k) / 2;
+  applyView();
+}
+function centerOn(id){
+  var p = pos[id], s = size[id];
+  if (!p) return;
+  view.x = viewport.clientWidth / 2 - (p.x + s.w / 2) * view.k;
+  view.y = viewport.clientHeight / 2 - (p.y + s.h / 2) * view.k;
+  applyView();
+}
+function ensureVisible(id){
+  var p = pos[id], s = size[id];
+  if (!p) return;
+  var x = p.x * view.k + view.x, y = p.y * view.k + view.y;
+  var w = s.w * view.k, h = s.h * view.k;
+  var m = 24, vw = viewport.clientWidth, vh = viewport.clientHeight;
+  if (x < m) view.x += m - x;
+  if (y < m) view.y += m - y;
+  if (x + w > vw - m) view.x -= (x + w) - (vw - m);
+  if (y + h > vh - m - 10) view.y -= (y + h) - (vh - m - 10);
+  applyView();
+}
+
+/* ---------------- editing actions ---------------- */
+function lighterSide(){
+  var l = 0, r = 0;
+  kidsOf(S.rootId).forEach(function(id){ if (N(id).side === "l") l++; else r++; });
+  return r > l ? "l" : "r";
+}
+function addChild(parentId){
+  snap();
+  var id = uid();
+  var node = { id: id, text: "", note: "", children: [], collapsed: false };
+  if (parentId === S.rootId){
+    node.side = lighterSide();
+    node.color = kidsOf(S.rootId).length % HUES.length;
+  }
+  S.nodes[id] = node;
+  N(parentId).collapsed = false;
+  N(parentId).children.push(id);
+  sel = id;
+  commit();
+  openEditor(id, true);
+}
+function addSibling(id){
+  var p = parentOf(id);
+  if (!p) return addChild(id);
+  snap();
+  var nid = uid();
+  var node = { id: nid, text: "", note: "", children: [], collapsed: false };
+  if (p === S.rootId){
+    node.side = N(id).side || "r";
+    node.color = kidsOf(S.rootId).length % HUES.length;
+  }
+  S.nodes[nid] = node;
+  var arr = N(p).children;
+  arr.splice(arr.indexOf(id) + 1, 0, nid);
+  sel = nid;
+  commit();
+  openEditor(nid, true);
+}
+function removeNode(id){
+  if (id === S.rootId) return;
+  var p = parentOf(id);
+  if (!p) return;
+  snap();
+  descendants(id).concat([id]).forEach(function(k){ delete S.nodes[k]; });
+  N(p).children = N(p).children.filter(function(c){ return c !== id; });
+  sel = p;
+  commit();
+}
+function move(id, dir){
+  var p = parentOf(id);
+  if (!p) return;
+  var arr = N(p).children, i = arr.indexOf(id), j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  snap();
+  arr.splice(i, 1); arr.splice(j, 0, id);
+  commit();
+}
+function cycleColor(id){
+  snap();
+  var n = N(id);
+  n.color = typeof n.color === "number" ? (n.color + 1) % HUES.length : 0;
+  commit();
+}
+function reparent(id, newParent){
+  if (id === S.rootId || id === newParent) return;
+  if (descendants(id).indexOf(newParent) >= 0) return;
+  var p = parentOf(id);
+  if (p === newParent) return;
+  snap();
+  N(p).children = N(p).children.filter(function(c){ return c !== id; });
+  N(newParent).collapsed = false;
+  N(newParent).children.push(id);
+  if (newParent === S.rootId){
+    N(id).side = lighterSide();
+    if (typeof N(id).color !== "number") N(id).color = kidsOf(S.rootId).length % HUES.length;
+  } else {
+    delete N(id).side;
+  }
+  commit();
+}
+function toggleCollapse(id){
+  snap();
+  N(id).collapsed = !N(id).collapsed;
+  commit();
+}
+
+/* ---------------- editor sheet ---------------- */
+var editingId = null, editingNew = false;
+function openEditor(id, isNew){
+  editingId = id; editingNew = !!isNew;
+  var n = N(id);
+  $("#edit-title").textContent = id === S.rootId ? "중심 주제" : (isNew ? "새 가지" : "가지 편집");
+  $("#ed-text").value = n.text || "";
+  $("#ed-note").value = n.note || "";
+  $("#edit-scrim").hidden = false;
+  setTimeout(function(){ var t = $("#ed-text"); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
+}
+function closeEditor(saveIt){
+  if (!editingId){ $("#edit-scrim").hidden = true; return; }
+  var id = editingId;
+  if (saveIt){
+    var text = $("#ed-text").value.trim(), note = $("#ed-note").value.trim();
+    if (!editingNew) snap();
+    N(id).text = text || N(id).text || "새 가지";
+    N(id).note = note;
+    commit();
+  } else if (editingNew && !N(id).text){
+    removeNode(id);
+  }
+  editingId = null; editingNew = false;
+  $("#edit-scrim").hidden = true;
+}
+
+/* ---------------- ideas (Claude) ---------------- */
+function suggest(id){
+  if (!sampler) return;
+  var box = $("#ideas");
+  box.hidden = false;
+  box.innerHTML = '<span class="idea note">생각하는 중…</span>';
+  var path = [], cur = id, guard = 0;
+  while (cur && guard++ < 32){ path.unshift(N(cur).text || "…"); cur = parentOf(cur); }
+  var have = kidsOf(id).map(function(k){ return N(k).text; }).filter(Boolean);
+  var prompt =
+    "당신은 마인드맵 정리를 돕는 조력자입니다.\n" +
+    "전체 주제: " + (N(S.rootId).text || S.title) + "\n" +
+    "현재 위치: " + path.join(" > ") + "\n" +
+    "이미 있는 하위 항목: " + (have.length ? have.join(", ") : "없음") + "\n\n" +
+    "'" + (N(id).text || "이 주제") + "' 아래에 이어질, 기존 항목과 겹치지 않는 하위 항목 4개를 제안하세요.\n" +
+    "각 항목은 한국어로 2~10글자 내외의 짧은 구절입니다.\n" +
+    'JSON 배열만 출력하세요: ["항목1","항목2","항목3","항목4"]';
+  sampler.json(prompt, { modelTier: "quick" }).then(function(out){
+    var list = Array.isArray(out) ? out : (out && Array.isArray(out.items) ? out.items : []);
+    list = list.filter(function(x){ return typeof x === "string" && x.trim(); }).slice(0, 6);
+    if (!list.length){ box.innerHTML = '<span class="idea note">제안을 가져오지 못했어요</span>'; return; }
+    box.innerHTML = "";
+    list.forEach(function(text){
+      var b = document.createElement("button");
+      b.className = "idea";
+      b.textContent = "+ " + text;
+      b.onclick = function(){
+        snap();
+        var nid = uid();
+        var node = { id: nid, text: text, note: "", children: [], collapsed: false };
+        if (id === S.rootId){ node.side = lighterSide(); node.color = kidsOf(S.rootId).length % HUES.length; }
+        S.nodes[nid] = node;
+        N(id).collapsed = false;
+        N(id).children.push(nid);
+        b.remove();
+        if (!box.children.length) box.hidden = true;
+        commit();
+      };
+      box.appendChild(b);
+    });
+  })["catch"](function(err){
+    var msg = err && err.code === "not_granted" ? "권한이 없어 제안을 쓸 수 없어요"
+            : err && err.code === "rate_limited" ? "잠시 후 다시 시도해 주세요"
+            : "제안을 가져오지 못했어요";
+    box.innerHTML = '<span class="idea note">' + msg + "</span>";
+  });
+}
+
+/* ---------------- panel ---------------- */
+function syncPanel(){
+  var on = !!(sel && N(sel));
+  $("#hint").hidden = on;
+  $("#panel").hidden = !on;
+  if (!on) return;
+  var path = [], cur = sel, guard = 0;
+  while (cur && guard++ < 32){ path.unshift(N(cur).text || "…"); cur = parentOf(cur); }
+  $("#crumb").textContent = path.join("  ›  ");
+  var isRoot = sel === S.rootId;
+  $("#t-sibling").disabled = isRoot;
+  $("#t-del").disabled = isRoot;
+  var p = parentOf(sel), arr = p ? N(p).children : [];
+  $("#t-up").disabled = !p || arr.indexOf(sel) === 0;
+  $("#t-down").disabled = !p || arr.indexOf(sel) === arr.length - 1;
+}
+function select(id){
+  sel = id;
+  $("#ideas").hidden = true;
+  Object.keys(nodeEls).forEach(function(k){ nodeEls[k].classList.toggle("sel", k === id); });
+  syncPanel();
+}
+
+/* ---------------- pointer interaction ---------------- */
+var pointers = {}, panStart = null, pinch = null;
+var press = null, dragging = null, dropTarget = null, lastTap = 0;
+
+viewport.addEventListener("pointerdown", function(ev){
+  var nodeEl = ev.target.closest(".node");
+  var tog = ev.target.closest(".toggle");
+  pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+  var ids = Object.keys(pointers);
+
+  if (tog && nodeEl){ ev.preventDefault(); return; }
+
+  if (ids.length === 2){
+    panStart = null; press = null;
+    var a = pointers[ids[0]], b = pointers[ids[1]];
+    pinch = {
+      d: Math.hypot(a.x - b.x, a.y - b.y),
+      cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2,
+      k: view.k, x: view.x, y: view.y
+    };
+    return;
+  }
+  if (ids.length > 2) return;
+
+  viewport.setPointerCapture(ev.pointerId);
+  if (nodeEl){
+    press = { id: nodeEl.dataset.id, x: ev.clientX, y: ev.clientY, moved: false, t: Date.now() };
+  } else {
+    panStart = { x: ev.clientX, y: ev.clientY, vx: view.x, vy: view.y };
+    viewport.classList.add("panning");
+  }
+}, { passive: false });
+
+viewport.addEventListener("pointermove", function(ev){
+  if (!pointers[ev.pointerId]) return;
+  pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+  var ids = Object.keys(pointers);
+
+  if (pinch && ids.length >= 2){
+    var a = pointers[ids[0]], b = pointers[ids[1]];
+    var d = Math.hypot(a.x - b.x, a.y - b.y);
+    var k = Math.max(0.2, Math.min(2.4, pinch.k * (d / (pinch.d || 1))));
+    var r = viewport.getBoundingClientRect();
+    var cx = pinch.cx - r.left, cy = pinch.cy - r.top;
+    view.k = k;
+    view.x = cx - (cx - pinch.x) * (k / pinch.k);
+    view.y = cy - (cy - pinch.y) * (k / pinch.k);
+    applyView();
+    return;
+  }
+  if (panStart){
+    view.x = panStart.vx + (ev.clientX - panStart.x);
+    view.y = panStart.vy + (ev.clientY - panStart.y);
+    applyView();
+    return;
+  }
+  if (press){
+    var dx = ev.clientX - press.x, dy = ev.clientY - press.y;
+    if (!press.moved && Math.hypot(dx, dy) > 9 && press.id !== S.rootId){
+      press.moved = true;
+      dragging = press.id;
+      nodeEls[dragging].classList.add("ghost");
+    }
+    if (dragging){
+      var el = nodeEls[dragging], p = pos[dragging];
+      el.style.transform = "translate(" + (p.x + dx / view.k) + "px," + (p.y + dy / view.k) + "px)";
+      var hit = hitTest(ev.clientX, ev.clientY, dragging);
+      if (hit !== dropTarget){
+        if (dropTarget && nodeEls[dropTarget]) nodeEls[dropTarget].classList.remove("drop");
+        dropTarget = hit;
+        if (dropTarget && nodeEls[dropTarget]) nodeEls[dropTarget].classList.add("drop");
+      }
+    }
+  }
+}, { passive: false });
+
+function hitTest(cx, cy, skipId){
+  var skip = [skipId].concat(descendants(skipId));
+  var found = null;
+  Object.keys(nodeEls).forEach(function(id){
+    if (skip.indexOf(id) >= 0) return;
+    var r = nodeEls[id].getBoundingClientRect();
+    if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) found = id;
+  });
+  return found;
+}
+
+function endPointer(ev){
+  var wasPress = press, wasDrag = dragging, target = dropTarget;
+  delete pointers[ev.pointerId];
+  if (Object.keys(pointers).length < 2) pinch = null;
+  if (panStart){ panStart = null; viewport.classList.remove("panning"); }
+
+  if (wasDrag){
+    nodeEls[wasDrag] && nodeEls[wasDrag].classList.remove("ghost");
+    if (target && nodeEls[target]) nodeEls[target].classList.remove("drop");
+    dragging = null; dropTarget = null; press = null;
+    if (target) reparent(wasDrag, target); else render();
+    return;
+  }
+  press = null;
+  if (!wasPress) return;
+
+  var tog = ev.target.closest && ev.target.closest(".toggle");
+  if (tog){
+    var owner = ev.target.closest(".node");
+    if (owner) toggleCollapse(owner.dataset.id);
+    return;
+  }
+  var now = Date.now();
+  if (sel === wasPress.id && now - lastTap < 420){ lastTap = 0; openEditor(wasPress.id, false); return; }
+  lastTap = now;
+  select(wasPress.id);
+  ensureVisible(wasPress.id);
+}
+viewport.addEventListener("pointerup", endPointer);
+viewport.addEventListener("pointercancel", function(ev){
+  delete pointers[ev.pointerId];
+  if (dragging){
+    nodeEls[dragging] && nodeEls[dragging].classList.remove("ghost");
+    if (dropTarget && nodeEls[dropTarget]) nodeEls[dropTarget].classList.remove("drop");
+    dragging = null; dropTarget = null; render();
+  }
+  press = null; panStart = null; pinch = null;
+  viewport.classList.remove("panning");
+});
+
+viewport.addEventListener("wheel", function(ev){
+  ev.preventDefault();
+  var r = viewport.getBoundingClientRect();
+  var cx = ev.clientX - r.left, cy = ev.clientY - r.top;
+  if (ev.ctrlKey || ev.metaKey){
+    var k = Math.max(0.2, Math.min(2.4, view.k * Math.pow(0.99, ev.deltaY)));
+    view.x = cx - (cx - view.x) * (k / view.k);
+    view.y = cy - (cy - view.y) * (k / view.k);
+    view.k = k;
+  } else {
+    view.x -= ev.deltaX; view.y -= ev.deltaY;
+  }
+  applyView();
+}, { passive: false });
+
+/* ---------------- keyboard ---------------- */
+document.addEventListener("keydown", function(ev){
+  if (!$("#edit-scrim").hidden){
+    if (ev.key === "Escape"){ ev.preventDefault(); closeEditor(false); }
+    else if (ev.key === "Enter" && !ev.shiftKey && ev.target.id === "ed-text"){ ev.preventDefault(); closeEditor(true); }
+    return;
+  }
+  if (ev.target.tagName === "INPUT" || ev.target.tagName === "TEXTAREA") return;
+  if (!$("#outline-scrim").hidden){ if (ev.key === "Escape") $("#outline-scrim").hidden = true; return; }
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "z"){ ev.preventDefault(); undo(); return; }
+  if (!sel) return;
+  if (ev.key === "Tab"){ ev.preventDefault(); addChild(sel); }
+  else if (ev.key === "Enter"){ ev.preventDefault(); addSibling(sel); }
+  else if (ev.key === "F2"){ ev.preventDefault(); openEditor(sel, false); }
+  else if (ev.key === "Delete" || ev.key === "Backspace"){ ev.preventDefault(); removeNode(sel); }
+  else if (ev.key === "Escape"){ select(null); }
+});
+
+/* ---------------- outline ---------------- */
+function outlineText(){
+  var out = [];
+  (function walk(id, depth){
+    var n = N(id);
+    out.push(new Array(depth + 1).join("  ") + (depth ? "- " : "# ") + (n.text || "") + (n.note ? "  (" + n.note.replace(/\n/g, " ") + ")" : ""));
+    kidsOf(id).forEach(function(k){ walk(k, depth + 1); });
+  })(S.rootId, 0);
+  return out.join("\n");
+}
+function openOutline(){
+  var ul = $("#outline-list");
+  ul.innerHTML = "";
+  (function walk(id, depth){
+    var n = N(id);
+    var li = document.createElement("li");
+    var b = document.createElement("button");
+    b.style.paddingLeft = (0.3 + depth * 0.85) + "rem";
+    var lvl = document.createElement("span");
+    lvl.className = "lvl";
+    lvl.textContent = depth ? "· " : "◆ ";
+    b.appendChild(lvl);
+    b.appendChild(document.createTextNode(n.text || "…"));
+    b.onclick = function(){
+      $("#outline-scrim").hidden = true;
+      var cur = parentOf(id), guard = 0;
+      while (cur && guard++ < 32){ N(cur).collapsed = false; cur = parentOf(cur); }
+      commit();
+      requestAnimationFrame(function(){ select(id); centerOn(id); });
+    };
+    li.appendChild(b);
+    ul.appendChild(li);
+    kidsOf(id).forEach(function(k){ walk(k, depth + 1); });
+  })(S.rootId, 0);
+  $("#ed-copy").value = outlineText();
+  $("#outline-scrim").hidden = false;
+}
+
+/* ---------------- wiring ---------------- */
+$("#title").addEventListener("change", function(){
+  snap();
+  S.title = this.value.trim() || "마인드맵";
+  commit();
+});
+$("#btn-undo").onclick = undo;
+$("#btn-fit").onclick = function(){ fitView(); };
+$("#btn-outline").onclick = openOutline;
+$("#t-child").onclick = function(){ if (sel) addChild(sel); };
+$("#t-sibling").onclick = function(){ if (sel) addSibling(sel); };
+$("#t-edit").onclick = function(){ if (sel) openEditor(sel, false); };
+$("#t-idea").onclick = function(){ if (sel) suggest(sel); };
+$("#t-color").onclick = function(){ if (sel) cycleColor(sel); };
+$("#t-up").onclick = function(){ if (sel) move(sel, -1); };
+$("#t-down").onclick = function(){ if (sel) move(sel, 1); };
+$("#t-del").onclick = function(){ if (sel) removeNode(sel); };
+$("#ed-save").onclick = function(){ closeEditor(true); };
+$("#ed-cancel").onclick = function(){ closeEditor(false); };
+$("#edit-scrim").addEventListener("pointerdown", function(ev){ if (ev.target === this) closeEditor(false); });
+$("#ol-close").onclick = function(){ $("#outline-scrim").hidden = true; };
+$("#outline-scrim").addEventListener("pointerdown", function(ev){ if (ev.target === this) this.hidden = true; });
+$("#ol-copy").onclick = function(){
+  var t = $("#ed-copy");
+  t.select();
+  var done = function(){ $("#ol-copy").textContent = "복사됨"; setTimeout(function(){ $("#ol-copy").textContent = "복사"; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t.value).then(done)["catch"](function(){ $("#ol-copy").textContent = "직접 선택해 복사"; });
+  } else done();
+};
+$("#t-idea").hidden = true;
+window.addEventListener("resize", function(){ render(); });
+if (document.fonts && document.fonts.ready){
+  document.fonts.ready.then(function(){ render(true); })["catch"](function(){});
+}
+
+boot();
+})();
+</script>
+
+</body>
+</html>
