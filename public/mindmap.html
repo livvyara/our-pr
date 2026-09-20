@@ -125,6 +125,21 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   transition:box-shadow .12s ease, transform .12s ease;
 }
 .node-text{font-size:.9rem; font-weight:500; word-break:break-word; white-space:pre-wrap}
+.node-meta{
+  display:flex; gap:.3rem; align-items:center; margin-top:.28rem;
+  font-size:.7rem; font-variant-numeric:tabular-nums;
+}
+.due{color:var(--muted)}
+.dday{
+  padding:.05rem .34rem; border-radius:999px; font-size:.68rem;
+  background:var(--surface-2); border:1px solid var(--line); color:var(--muted);
+}
+.dday.soon{background:var(--accent-soft); color:var(--accent); border-color:transparent}
+.dday.today{background:var(--accent); color:var(--accent-ink); border-color:transparent}
+.dday.over{background:color-mix(in srgb, var(--danger) 16%, var(--surface)); color:var(--danger); border-color:transparent}
+.dday.ok{background:color-mix(in srgb, var(--b3) 16%, var(--surface)); color:var(--b3); border-color:transparent}
+.node.done{opacity:.7}
+.node.done .node-text{text-decoration:line-through; text-decoration-thickness:1px; color:var(--muted)}
 .node-note{
   margin-top:.18rem; font-size:.74rem; color:var(--muted);
   word-break:break-word; white-space:pre-wrap;
@@ -174,14 +189,6 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   font-size:.74rem; color:var(--muted); padding:0 .35rem .3rem;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-#ideas{display:flex; gap:.3rem; overflow-x:auto; padding:.1rem .1rem .4rem; scrollbar-width:none}
-#ideas::-webkit-scrollbar{display:none}
-.idea{
-  flex:0 0 auto; padding:.35rem .55rem; border-radius:999px; font-size:.78rem;
-  border:1px dashed color-mix(in srgb, var(--accent) 45%, var(--line));
-  background:var(--accent-soft); color:var(--ink);
-}
-.idea.note{border-style:solid; background:var(--surface-2); color:var(--muted); cursor:default}
 
 /* ---------- sheets ---------- */
 .scrim{
@@ -201,7 +208,21 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
   background:var(--surface-2); border:1px solid var(--line); border-radius:.5rem;
   padding:.5rem .6rem; resize:vertical;
 }
-.sheet textarea:focus{outline:none; border-color:var(--accent)}
+.sheet input[type="date"]{
+  flex:1 1 auto; min-width:0; font:inherit; font-size:.92rem; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:.5rem; padding:.5rem .6rem;
+}
+.sheet textarea:focus, .sheet input[type="date"]:focus{outline:none; border-color:var(--accent)}
+.daterow{display:flex; gap:.4rem; align-items:center}
+.seg{display:flex; gap:.3rem}
+.seg button{
+  flex:1; padding:.4rem; border-radius:.45rem; font-size:.8rem;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--muted);
+}
+.seg button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.sched-empty{color:var(--faint); font-size:.84rem; padding:.7rem .3rem}
+.sched-when{font-size:.74rem; color:var(--muted); font-variant-numeric:tabular-nums; margin-right:.4rem}
+.sched-done{text-decoration:line-through; color:var(--faint)}
 .row{display:flex; gap:.45rem; justify-content:flex-end}
 .row .tool{padding:.5rem .9rem}
 #outline-list{overflow:auto; margin:0; padding:0; list-style:none; min-height:0}
@@ -236,12 +257,12 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
     <div class="hint" id="hint">가지를 탭하면 편집 도구가 나타납니다</div>
     <div id="panel" hidden>
       <div class="crumb" id="crumb"></div>
-      <div id="ideas" hidden></div>
       <div class="tools">
         <button class="tool primary" id="t-child"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>하위 가지</button>
         <button class="tool" id="t-sibling"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M12 12h8"/></svg>같은 층</button>
         <button class="tool" id="t-edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>편집</button>
-        <button class="tool" id="t-idea"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3z"/><path d="M10 20h4"/></svg>아이디어</button>
+        <button class="tool" id="t-done"><svg viewBox="0 0 24 24"><path d="M4 12.5 9 17.5 20 6.5"/></svg>완료</button>
+        <button class="tool" id="t-date"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>날짜</button>
         <button class="tool" id="t-color"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/></svg>색</button>
         <button class="tool" id="t-up"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
         <button class="tool" id="t-down"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
@@ -256,6 +277,9 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
     <h2 id="edit-title">가지 편집</h2>
     <div><label for="ed-text">내용</label><textarea id="ed-text" rows="2"></textarea></div>
     <div><label for="ed-note">메모 (선택)</label><textarea id="ed-note" rows="3"></textarea></div>
+    <div><label for="ed-due">날짜 (선택)</label>
+      <div class="daterow"><input type="date" id="ed-due"><button class="tool" id="ed-due-clear">지우기</button></div>
+    </div>
     <div class="row"><button class="tool" id="ed-cancel">취소</button><button class="tool primary" id="ed-save">저장</button></div>
   </div>
 </div>
@@ -263,7 +287,9 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 <div class="scrim" id="outline-scrim" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-label="개요">
     <h2>개요</h2>
+    <div class="seg"><button id="seg-tree" class="on">구조</button><button id="seg-sched">일정</button></div>
     <ul id="outline-list"></ul>
+    <ul id="sched-list" hidden></ul>
     <div><label for="ed-copy">텍스트로 내보내기</label><textarea id="ed-copy" class="copybox" readonly></textarea></div>
     <div class="row"><button class="tool" id="ol-copy">복사</button><button class="tool primary" id="ol-close">닫기</button></div>
   </div>
@@ -290,7 +316,7 @@ var STARTER = {
 
 /* ---------------- state ---------------- */
 var S = clone(STARTER);
-var sel = null, history = [], db = null, docRef = null, sampler = null;
+var sel = null, history = [], db = null, docRef = null;
 var stamp = uid(), myStamp = null, saveTimer = null, localOnly = false;
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -328,6 +354,8 @@ function sanitize(d){
       note: String(n.note == null ? "" : n.note),
       children: Array.isArray(n.children) ? n.children.filter(function(c){ return d.nodes[c]; }) : [],
       collapsed: !!n.collapsed,
+      due: typeof n.due === "string" ? n.due : "",
+      done: !!n.done,
       side: n.side === "l" ? "l" : (n.side === "r" ? "r" : undefined),
       color: typeof n.color === "number" ? n.color : undefined
     };
@@ -405,11 +433,42 @@ function boot(){
       setStatus("저장됨");
     }, function(){ localOnly = true; docRef = null; setStatus("기기에 저장"); });
   })["catch"](function(){ localOnly = true; setStatus("기기에 저장"); });
+}
 
-  window.claude.use("sample").then(function(s){
-    sampler = s || null;
-    $("#t-idea").hidden = !sampler;
-  })["catch"](function(){ $("#t-idea").hidden = true; });
+/* ---------------- dates ---------------- */
+var WD = ["일","월","화","수","목","금","토"];
+function parseDay(v){
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || "");
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function today0(){ var t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+function dueInfo(v){
+  var d = parseDay(v);
+  if (!d) return null;
+  var diff = Math.round((d - today0()) / 86400000);
+  var dd = diff === 0 ? "오늘" : diff === 1 ? "내일" : diff === -1 ? "어제"
+         : diff > 0 ? "D-" + diff : Math.abs(diff) + "일 지남";
+  return {
+    label: (d.getMonth() + 1) + "월 " + d.getDate() + "일(" + WD[d.getDay()] + ")",
+    dd: dd, diff: diff,
+    state: diff < 0 ? "over" : diff === 0 ? "today" : diff <= 3 ? "soon" : ""
+  };
+}
+function renderMeta(box, n){
+  var f = n.due ? dueInfo(n.due) : null;
+  box.innerHTML = "";
+  if (!f && !n.done){ box.hidden = true; return; }
+  box.hidden = false;
+  if (f){
+    var a = document.createElement("span");
+    a.className = "due";
+    a.textContent = f.label;
+    box.appendChild(a);
+  }
+  var b = document.createElement("span");
+  b.className = "dday " + (n.done ? "ok" : f ? f.state : "");
+  b.textContent = n.done ? "완료" : f.dd;
+  box.appendChild(b);
 }
 
 /* ---------------- layout + render ---------------- */
@@ -440,7 +499,7 @@ function draw(fit){
       e = document.createElement("div");
       e.className = "node";
       e.dataset.id = id;
-      e.innerHTML = '<div class="node-text"></div><div class="node-note"></div><button class="toggle" hidden></button>';
+      e.innerHTML = '<div class="node-text"></div><div class="node-meta" hidden></div><div class="node-note"></div><button class="toggle" hidden></button>';
       world.appendChild(e);
       nodeEls[id] = e;
     }
@@ -448,6 +507,8 @@ function draw(fit){
     var note = e.querySelector(".node-note");
     note.textContent = n.note || "";
     note.hidden = !n.note;
+    renderMeta(e.querySelector(".node-meta"), n);
+    e.classList.toggle("done", !!n.done);
     var hue = hueOf(id);
     if (hue) e.style.setProperty("--c", hue); else e.style.removeProperty("--c");
     e.classList.toggle("is-root", id === S.rootId);
@@ -639,6 +700,12 @@ function move(id, dir){
   arr.splice(i, 1); arr.splice(j, 0, id);
   commit();
 }
+function toggleDone(id){
+  snap();
+  var n = N(id);
+  n.done = !n.done;
+  commit();
+}
 function cycleColor(id){
   snap();
   var n = N(id);
@@ -676,6 +743,7 @@ function openEditor(id, isNew){
   $("#edit-title").textContent = id === S.rootId ? "중심 주제" : (isNew ? "새 가지" : "가지 편집");
   $("#ed-text").value = n.text || "";
   $("#ed-note").value = n.note || "";
+  $("#ed-due").value = n.due || "";
   $("#edit-scrim").hidden = false;
   setTimeout(function(){ var t = $("#ed-text"); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
 }
@@ -687,60 +755,13 @@ function closeEditor(saveIt){
     if (!editingNew) snap();
     N(id).text = text || N(id).text || "새 가지";
     N(id).note = note;
+    N(id).due = $("#ed-due").value || "";
     commit();
   } else if (editingNew && !N(id).text){
     removeNode(id);
   }
   editingId = null; editingNew = false;
   $("#edit-scrim").hidden = true;
-}
-
-/* ---------------- ideas (Claude) ---------------- */
-function suggest(id){
-  if (!sampler) return;
-  var box = $("#ideas");
-  box.hidden = false;
-  box.innerHTML = '<span class="idea note">생각하는 중…</span>';
-  var path = [], cur = id, guard = 0;
-  while (cur && guard++ < 32){ path.unshift(N(cur).text || "…"); cur = parentOf(cur); }
-  var have = kidsOf(id).map(function(k){ return N(k).text; }).filter(Boolean);
-  var prompt =
-    "당신은 마인드맵 정리를 돕는 조력자입니다.\n" +
-    "전체 주제: " + (N(S.rootId).text || S.title) + "\n" +
-    "현재 위치: " + path.join(" > ") + "\n" +
-    "이미 있는 하위 항목: " + (have.length ? have.join(", ") : "없음") + "\n\n" +
-    "'" + (N(id).text || "이 주제") + "' 아래에 이어질, 기존 항목과 겹치지 않는 하위 항목 4개를 제안하세요.\n" +
-    "각 항목은 한국어로 2~10글자 내외의 짧은 구절입니다.\n" +
-    'JSON 배열만 출력하세요: ["항목1","항목2","항목3","항목4"]';
-  sampler.json(prompt, { modelTier: "quick" }).then(function(out){
-    var list = Array.isArray(out) ? out : (out && Array.isArray(out.items) ? out.items : []);
-    list = list.filter(function(x){ return typeof x === "string" && x.trim(); }).slice(0, 6);
-    if (!list.length){ box.innerHTML = '<span class="idea note">제안을 가져오지 못했어요</span>'; return; }
-    box.innerHTML = "";
-    list.forEach(function(text){
-      var b = document.createElement("button");
-      b.className = "idea";
-      b.textContent = "+ " + text;
-      b.onclick = function(){
-        snap();
-        var nid = uid();
-        var node = { id: nid, text: text, note: "", children: [], collapsed: false };
-        if (id === S.rootId){ node.side = lighterSide(); node.color = kidsOf(S.rootId).length % HUES.length; }
-        S.nodes[nid] = node;
-        N(id).collapsed = false;
-        N(id).children.push(nid);
-        b.remove();
-        if (!box.children.length) box.hidden = true;
-        commit();
-      };
-      box.appendChild(b);
-    });
-  })["catch"](function(err){
-    var msg = err && err.code === "not_granted" ? "권한이 없어 제안을 쓸 수 없어요"
-            : err && err.code === "rate_limited" ? "잠시 후 다시 시도해 주세요"
-            : "제안을 가져오지 못했어요";
-    box.innerHTML = '<span class="idea note">' + msg + "</span>";
-  });
 }
 
 /* ---------------- panel ---------------- */
@@ -753,6 +774,9 @@ function syncPanel(){
   while (cur && guard++ < 32){ path.unshift(N(cur).text || "…"); cur = parentOf(cur); }
   $("#crumb").textContent = path.join("  ›  ");
   var isRoot = sel === S.rootId;
+  $("#t-done").textContent = "";
+  $("#t-done").insertAdjacentHTML("afterbegin", '<svg viewBox="0 0 24 24"><path d="M4 12.5 9 17.5 20 6.5"/></svg>');
+  $("#t-done").appendChild(document.createTextNode(N(sel).done ? "완료 취소" : "완료"));
   $("#t-sibling").disabled = isRoot;
   $("#t-del").disabled = isRoot;
   var p = parentOf(sel), arr = p ? N(p).children : [];
@@ -761,7 +785,6 @@ function syncPanel(){
 }
 function select(id){
   sel = id;
-  $("#ideas").hidden = true;
   Object.keys(nodeEls).forEach(function(k){ nodeEls[k].classList.toggle("sel", k === id); });
   syncPanel();
 }
@@ -931,10 +954,58 @@ function outlineText(){
   var out = [];
   (function walk(id, depth){
     var n = N(id);
-    out.push(new Array(depth + 1).join("  ") + (depth ? "- " : "# ") + (n.text || "") + (n.note ? "  (" + n.note.replace(/\n/g, " ") + ")" : ""));
+    var line = new Array(depth + 1).join("  ");
+    line += depth ? (n.due || n.done ? (n.done ? "- [x] " : "- [ ] ") : "- ") : "# ";
+    line += n.text || "";
+    if (n.due){ var f = dueInfo(n.due); line += " (" + (f ? f.label : n.due) + ")"; }
+    if (n.note) line += "  — " + n.note.replace(/\n/g, " ");
+    out.push(line);
     kidsOf(id).forEach(function(k){ walk(k, depth + 1); });
   })(S.rootId, 0);
   return out.join("\n");
+}
+function buildSchedule(){
+  var ul = $("#sched-list");
+  ul.innerHTML = "";
+  var items = [];
+  (function walk(id){
+    var n = N(id);
+    if (n.due) items.push(n);
+    kidsOf(id).forEach(walk);
+  })(S.rootId);
+  items.sort(function(a, b){
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return a.due < b.due ? -1 : a.due > b.due ? 1 : 0;
+  });
+  if (!items.length){
+    var li = document.createElement("li");
+    li.innerHTML = '<div class="sched-empty">날짜가 붙은 가지가 아직 없습니다. 가지를 고른 뒤 \u2018날짜\u2019를 눌러 보세요.</div>';
+    ul.appendChild(li);
+    return;
+  }
+  items.forEach(function(n){
+    var f = dueInfo(n.due);
+    var li = document.createElement("li");
+    var b = document.createElement("button");
+    var when = document.createElement("span");
+    when.className = "sched-when";
+    when.textContent = f.label + " · " + (n.done ? "완료" : f.dd);
+    var txt = document.createElement("span");
+    if (n.done) txt.className = "sched-done";
+    txt.textContent = n.text || "…";
+    b.appendChild(when);
+    b.appendChild(txt);
+    b.onclick = function(){ focusNode(n.id); };
+    li.appendChild(b);
+    ul.appendChild(li);
+  });
+}
+function focusNode(id){
+  $("#outline-scrim").hidden = true;
+  var cur = parentOf(id), guard = 0;
+  while (cur && guard++ < 32){ N(cur).collapsed = false; cur = parentOf(cur); }
+  commit();
+  requestAnimationFrame(function(){ select(id); centerOn(id); });
 }
 function openOutline(){
   var ul = $("#outline-list");
@@ -949,17 +1020,12 @@ function openOutline(){
     lvl.textContent = depth ? "· " : "◆ ";
     b.appendChild(lvl);
     b.appendChild(document.createTextNode(n.text || "…"));
-    b.onclick = function(){
-      $("#outline-scrim").hidden = true;
-      var cur = parentOf(id), guard = 0;
-      while (cur && guard++ < 32){ N(cur).collapsed = false; cur = parentOf(cur); }
-      commit();
-      requestAnimationFrame(function(){ select(id); centerOn(id); });
-    };
+    b.onclick = function(){ focusNode(id); };
     li.appendChild(b);
     ul.appendChild(li);
     kidsOf(id).forEach(function(k){ walk(k, depth + 1); });
   })(S.rootId, 0);
+  buildSchedule();
   $("#ed-copy").value = outlineText();
   $("#outline-scrim").hidden = false;
 }
@@ -976,13 +1042,27 @@ $("#btn-outline").onclick = openOutline;
 $("#t-child").onclick = function(){ if (sel) addChild(sel); };
 $("#t-sibling").onclick = function(){ if (sel) addSibling(sel); };
 $("#t-edit").onclick = function(){ if (sel) openEditor(sel, false); };
-$("#t-idea").onclick = function(){ if (sel) suggest(sel); };
+$("#t-done").onclick = function(){ if (sel) toggleDone(sel); };
+$("#t-date").onclick = function(){
+  if (!sel) return;
+  openEditor(sel, false);
+  setTimeout(function(){ $("#ed-due").focus(); }, 60);
+};
 $("#t-color").onclick = function(){ if (sel) cycleColor(sel); };
 $("#t-up").onclick = function(){ if (sel) move(sel, -1); };
 $("#t-down").onclick = function(){ if (sel) move(sel, 1); };
 $("#t-del").onclick = function(){ if (sel) removeNode(sel); };
 $("#ed-save").onclick = function(){ closeEditor(true); };
 $("#ed-cancel").onclick = function(){ closeEditor(false); };
+$("#ed-due-clear").onclick = function(){ $("#ed-due").value = ""; };
+$("#seg-tree").onclick = function(){
+  this.classList.add("on"); $("#seg-sched").classList.remove("on");
+  $("#outline-list").hidden = false; $("#sched-list").hidden = true;
+};
+$("#seg-sched").onclick = function(){
+  this.classList.add("on"); $("#seg-tree").classList.remove("on");
+  $("#outline-list").hidden = true; $("#sched-list").hidden = false;
+};
 $("#edit-scrim").addEventListener("pointerdown", function(ev){ if (ev.target === this) closeEditor(false); });
 $("#ol-close").onclick = function(){ $("#outline-scrim").hidden = true; };
 $("#outline-scrim").addEventListener("pointerdown", function(ev){ if (ev.target === this) this.hidden = true; });
@@ -994,7 +1074,6 @@ $("#ol-copy").onclick = function(){
     navigator.clipboard.writeText(t.value).then(done)["catch"](function(){ $("#ol-copy").textContent = "직접 선택해 복사"; });
   } else done();
 };
-$("#t-idea").hidden = true;
 window.addEventListener("resize", function(){ render(); });
 if (document.fonts && document.fonts.ready){
   document.fonts.ready.then(function(){ render(true); })["catch"](function(){});
