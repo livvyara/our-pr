@@ -157,13 +157,13 @@ button{font:inherit; color:inherit; background:none; border:none; cursor:pointer
 .node.drop{box-shadow:0 0 0 2px var(--accent); border-style:dashed}
 .node.ghost{opacity:.4}
 .toggle{
-  position:absolute; top:50%; width:20px; height:20px; margin-top:-10px;
+  position:absolute; top:50%; width:22px; height:22px; margin-top:-11px; touch-action:none;
   border-radius:999px; background:var(--surface); border:1px solid var(--line-2);
   color:var(--muted); font-size:.66rem; line-height:1; display:grid; place-items:center;
   font-variant-numeric:tabular-nums; box-shadow:var(--shadow-1);
 }
-.node.side-r .toggle{right:-11px}
-.node.side-l .toggle{left:-11px}
+.node.side-r .toggle{right:-12px}
+.node.side-l .toggle{left:-12px}
 .toggle.open{color:var(--faint)}
 
 /* ---------- action bar ---------- */
@@ -750,6 +750,9 @@ function toggleCollapse(id){
   snap();
   N(id).collapsed = !N(id).collapsed;
   commit();
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){ ensureVisible(id); });
+  });
 }
 
 /* ---------------- editor sheet ---------------- */
@@ -816,7 +819,7 @@ viewport.addEventListener("pointerdown", function(ev){
   pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
   var ids = Object.keys(pointers);
 
-  if (tog && nodeEl){ ev.preventDefault(); return; }
+  if (tog && nodeEl){ ev.preventDefault(); delete pointers[ev.pointerId]; toggleCollapse(nodeEl.dataset.id); return; }
 
   if (ids.length === 2){
     panStart = null; press = null;
@@ -909,12 +912,6 @@ function endPointer(ev){
   press = null;
   if (!wasPress) return;
 
-  var tog = ev.target.closest && ev.target.closest(".toggle");
-  if (tog){
-    var owner = ev.target.closest(".node");
-    if (owner) toggleCollapse(owner.dataset.id);
-    return;
-  }
   var now = Date.now();
   if (sel === wasPress.id && now - lastTap < 420){ lastTap = 0; openEditor(wasPress.id, false); return; }
   lastTap = now;
